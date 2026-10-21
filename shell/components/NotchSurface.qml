@@ -16,6 +16,8 @@ PanelWindow {
     property string slotName: "c"
     property bool shown: true
     property bool wantsKeyboard: false
+    // Item whose area receives input; defaults to the whole surface.
+    property Item maskItem: body
 
     anchors {
         top: true
@@ -30,7 +32,7 @@ PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     mask: Region {
-        item: body
+        item: root.maskItem
     }
     WlrLayershell.keyboardFocus: wantsKeyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.namespace: "notch-" + slotName
