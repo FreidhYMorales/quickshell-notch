@@ -20,7 +20,10 @@ PR 4 was split to fit the 400-line budget: 4a = pure logic, 4b = `config/` token
 
 - [x] 4.5-4.6 `config/` tokens, `Session` + `Hypr` services (PR 4b, branch `feat/notch-foundation-4b-config-services`)
 
-Remaining: Phases 5-6.
+- [x] 5.1-5.3 Surfaces and shell (PR 5, branch `feat/notch-foundation-5-surfaces`)
+- [x] 6.1-6.3 `CenterStore`, `CenterSurface`, `CenterIdle` (PR 6, branch `feat/notch-foundation-6-center`)
+
+Remaining: none. Next: sdd-verify.
 
 ## TDD Cycle Evidence
 
@@ -126,3 +129,18 @@ PR 5 decisions:
 - V4 lacks `Object.fromEntries` and `Array.flatMap`: found only at runtime, fixed in `earGeometry.mjs`, recorded in AGENTS.md.
 - qmllint cannot resolve `PanelWindow` (uncreatable) so `NotchSurface`/`SpacerSurface` carry tool-only warnings; `make lint` exits 0.
 - `shell.qml` root is `Scope`; the centre slot has no surface until PR 6.
+
+## PR 6 evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | Triangulate | Refactor |
+|---|---|---|---|---|---|---|---|
+| 6.1-6.3 | none (QML) | Runtime | `tests/` 101/101 | smoke failed: V4 rejected object spread in `centerState.mjs` | `make check` green; scratch `qs -p` loads | n/a | n/a |
+| fix | `tests/v4Compat.test.mjs` | Unit | 101/101 | Written; 1 failing (object spread in `centerState.mjs`) | 102/102 | scans every `shell/logic/*.mjs` | `merge` helper (`Object.assign`) replaces spread |
+
+Work Unit Evidence (unit 6): `make check` (fmt-check, lint, 102 tests pass, smoke "config loaded"). Runtime harness: scratch copy run with `timeout 8 qs -p`: "Configuration Loaded", no errors (only an unrelated portal warning). Hover/hot-plug not exercised headlessly: manual checks listed in the PR. Rollback: `shell/notches/center/`, the `CenterSurface` entry in `shell/shell.qml`, `merge` edits in `centerState.mjs`, `tests/v4Compat.test.mjs`.
+
+PR 6 decisions:
+- `CenterStore` is a `pragma Singleton` holding `state`; `dispatch(event)` reduces and runs effects; effects (`polkit.cancel`, `power.run`) are logged only until their services exist. It listens to `Quickshell.screensChanged` and `Session.lockedChanged`.
+- `CenterSurface` reads `CenterStore.viewFor(screen.name)`; hover (debounced by `NotchZone`) dispatches `Hover`. `Expanded` has no content yet, so every mode paints `CenterIdle`.
+- Deviation: Qt V4 rejects object spread, which broke the reducer at load (Node accepts it). `centerState.mjs` now uses a `merge` helper; `tests/v4Compat.test.mjs` guards it. Recorded in AGENTS.md.
+- Under smoke the centre loads and registers nothing global (the reducer is pure; effects only log).

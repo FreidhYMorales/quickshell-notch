@@ -73,6 +73,6 @@ Vocabulary (design wins; mode is derived by `viewFor`): spec `powerMenu`=`power`
 
 ## Phase 6: Store and centre (PR 6)
 
-- [ ] 6.1 `shell/notches/center/CenterStore.qml`: singleton wiring screens, `Session.locked` and effects
-- [ ] 6.2 `CenterSurface.qml` and `CenterIdle.qml` (`#000`, strings token); `NotchZone` hover is debounced
-- [ ] 6.3 Run `make check`; manual: ears, click-through, hot-plug on 2 monitors
+- [x] 6.1 `shell/notches/center/CenterStore.qml`: singleton wiring screens, `Session.locked` and effects
+- [x] 6.2 `CenterSurface.qml` and `CenterIdle.qml` (`#000`, strings token); `NotchZone` hover is debounced
+- [x] 6.3 Run `make check`; manual: ears, click-through, hot-plug on 2 monitors
