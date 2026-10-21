@@ -39,3 +39,5 @@ Decisions and deviations:
 - `cornerShape` = content + 2*pad + ear wide, content + ear high, capped to the slot; revisit in PR 3 if the ear geometry needs other padding.
 - `notchesOf` truncates: touchpad deltas under 120 do not step.
 - Size: about 660 changed lines against the 400 budget (tests are about 490). Commits are independent units, so PR 2 can split at a commit boundary.
+
+- PR 2 split for the 400-line budget: 2a = reveal + corner/surface layout (commits 77adfaf, 2143f9f), 2b = slider + osd + these docs. Coordinator fix in 2b: `accumulateWheel(carry, delta)` keeps the sub-notch remainder so touchpad deltas (e.g. 15) add up to whole notches instead of being dropped by `notchesOf` (RED: missing export; GREEN: 2 new tests).
