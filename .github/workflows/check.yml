@@ -1,0 +1,17 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed git qt6-declarative nodejs deno make findutils diffutils
+      - uses: actions/checkout@v4
+      - name: Quality gate (CI subset)
+        run: make ci
