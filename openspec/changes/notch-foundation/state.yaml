@@ -10,7 +10,11 @@ phases:
   spec: done
   design: done
   tasks: done
+<<<<<<< HEAD
   apply: in-progress (PR 4b of 8 done; chain splits 2 -> 2a/2b, 4 -> 4a logic/4b config+services)
+=======
+  apply: in-progress (PR 4a of 8 done; chain splits 2 -> 2a/2b, 4 -> 4a logic/4b config+services)
+>>>>>>> main
   verify: pending
   archive: pending
 artifacts:

@@ -18,9 +18,13 @@ PR 2 was split to fit the 400-line budget: 2a = mid-flow rules, 2b = `centerView
 
 PR 4 was split to fit the 400-line budget: 4a = pure logic, 4b = `config/` tokens + `Session`/`Hypr` services (tasks 4.5-4.6). The chain is now 8 PRs.
 
+<<<<<<< HEAD
 - [x] 4.5-4.6 `config/` tokens, `Session` + `Hypr` services (PR 4b, branch `feat/notch-foundation-4b-config-services`)
 
 Remaining: Phases 5-6.
+=======
+Remaining: 4.5-4.6 (PR 4b), Phases 5-6.
+>>>>>>> main
 
 ## TDD Cycle Evidence
 
@@ -96,6 +100,7 @@ PR 4a decisions:
 - `dspExpr(name, args[])`: args are string, finite number, boolean or plain-object tables (keys `^[A-Za-z_][A-Za-z0-9_]*$`, depth <= 3). Control chars escape as 3-digit decimal `\ddd`.
 - Qt's V4 engine rejects optional catch binding (`catch {`): `.mjs` imported by QML must use `catch (_e)`. PR 5/6 must keep this in mind for any logic imported from QML.
 Work Unit Evidence (unit 4a): focused `node --test tests/palette.test.mjs tests/hyprDsp.test.mjs` pass 19, fail 0. Runtime harness: N/A (pure logic; QML consumers land in PR 4b). Rollback: `shell/logic/{palette,hyprDsp}.mjs` + tests.
+<<<<<<< HEAD
 
 ## PR 4b evidence
 
@@ -110,3 +115,5 @@ PR 4b decisions:
 - `Session.locked` is read-only; `setLocked(bool)` and `requestLock()` are the only mutators.
 - `Layout.tokens` bundles the `layoutFor` token shape (`osdWidth` 220); `earRadius`/`cornerRadius` added for `earGeometry`. Flags: `reserveSpace` true (ADR 0004), `showPlaceholders` false.
 - Makefile `lint-qml` now passes `-i <qmldir>` for every `qmldir` (stricter, removes false "not declared as singleton" warnings). qmllint also confuses `palette.mjs` with the QML `palette` type; fixed by aliasing the import as `PaletteLogic`.
+=======
+>>>>>>> main
