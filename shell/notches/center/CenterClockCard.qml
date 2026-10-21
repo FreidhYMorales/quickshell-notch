@@ -8,7 +8,7 @@ import "../../logic/format.mjs" as Format
 
 // Clock card: large 24-hour clock above a week strip centred on today. The
 // strip depends on Time's date fields, so it rolls over at midnight; days
-// fade towards both edges and today is highlighted.
+// fade towards both edges and today is marked by its text colour (no pill).
 Rectangle {
     id: root
 
@@ -42,7 +42,7 @@ Rectangle {
             Repeater {
                 model: root.week
 
-                Rectangle {
+                Item {
                     id: cell
 
                     required property var modelData
@@ -50,8 +50,6 @@ Rectangle {
 
                     width: (root.width - 2 * Layout.weekCardPad) / root.week.length
                     height: dayColumn.implicitHeight + Layout.weekCardPad
-                    radius: Layout.weekRadius
-                    color: modelData.today ? root.scheme.primary : "transparent"
                     opacity: 1 - Math.abs(index - Limits.weekRadius) / (Limits.weekRadius + 1)
 
                     Column {
@@ -62,17 +60,19 @@ Rectangle {
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: Strings.weekdays[cell.modelData.weekday]
-                            color: cell.modelData.today ? Colours.background : root.scheme.muted
+                            color: cell.modelData.today ? root.scheme.primary : root.scheme.muted
                             font.family: Fonts.family
                             font.pixelSize: Fonts.small
+                            font.bold: cell.modelData.today
                         }
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: cell.modelData.day
-                            color: cell.modelData.today ? Colours.background : root.scheme.onSurface
+                            color: cell.modelData.today ? root.scheme.primary : root.scheme.onSurface
                             font.family: Fonts.family
                             font.pixelSize: Fonts.body
+                            font.bold: cell.modelData.today
                         }
                     }
                 }
