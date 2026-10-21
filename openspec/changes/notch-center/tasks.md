@@ -69,12 +69,12 @@ Naming (design wins over spec wording; note for archive): spec `idleLayout({base
 
 ## PR 5: Expanded views
 
-- [ ] 5.0 Create `shell/components/ArtThumb.qml` (`ClippingRectangle` from `Quickshell.Widgets` + `Image`, music-glyph fallback when no art; sizes/radius/glyph from tokens); register in `shell/components/qmldir`. Shared by `CenterMedia` and the PR 7 idle media layer.
-- [ ] 5.1 Create `CenterMedia.qml` (uses `ArtThumb`, track text, prev/play/next) and `CenterClockCard.qml` (clock, week strip, midnight rollover).
-- [ ] 5.2 Create `CenterExpanded.qml`; register the three in `shell/notches/center/qmldir`.
-- [ ] 5.3 Wire `CenterSurface.qml` expanded mode; no-player layout shows clock card only; width capped by `centerMaxWidth`.
-- [ ] 5.4 Manual: player appears/quits, no art, no player, narrow monitor, midnight; run literal scan (no colours/timings/text outside `shell/config/`).
-- [ ] 5.5 `make check` green; record archive notes (spec "line-power device" reworded to `onBattery`; Recorder port deferred to notch-control-center; spec names `idleLayout`/`selectIdleLayer`/`parseCavaFrame` vs design `idleWidth`/`sideLayer`/`parseFrame`).
+- [x] 5.0 Create `shell/components/ArtThumb.qml` (`ClippingRectangle` from `Quickshell.Widgets` + `Image`, music-glyph fallback when no art; sizes/radius/glyph from tokens); register in `shell/components/qmldir`. Shared by `CenterMedia` and the PR 7 idle media layer.
+- [x] 5.1 Create `CenterMedia.qml` (uses `ArtThumb`, track text, prev/play/next) and `CenterClockCard.qml` (clock, week strip, midnight rollover).
+- [x] 5.2 Create `CenterExpanded.qml`; register the three in `shell/notches/center/qmldir`.
+- [x] 5.3 Wire `CenterSurface.qml` expanded mode; no-player layout shows clock card only; width capped by `centerMaxWidth`.
+- [x] 5.4 Manual: player appears/quits, no art, no player, narrow monitor, midnight; run literal scan (no colours/timings/text outside `shell/config/`).
+- [x] 5.5 `make check` green; record archive notes (spec "line-power device" reworded to `onBattery`; Recorder port deferred to notch-control-center; spec names `idleLayout`/`selectIdleLayer`/`parseCavaFrame` vs design `idleWidth`/`sideLayer`/`parseFrame`).
 
 ## PR 6: Side-layer and visualizer rules (pure logic, test-first)
 
