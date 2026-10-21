@@ -28,6 +28,17 @@ export function notchesOf(angleDeltaY) {
   return Math.trunc(angleDeltaY / 120) + 0; // + 0 turns -0 into 0
 }
 
+/**
+ * Touchpad-friendly notches: keeps the sub-notch remainder (`carry`) between
+ * events so small deltas add up; a direction change drops the old remainder.
+ */
+export function accumulateWheel(carry, angleDeltaY) {
+  const kept = carry * angleDeltaY < 0 ? 0 : carry;
+  const sum = kept + angleDeltaY;
+  const notches = notchesOf(sum);
+  return { notches, carry: sum - notches * 120 };
+}
+
 /** Apply `notches` steps (up = +) and clamp to the range. */
 export function wheel(value, notches, opts) {
   return round3(clamp(value + notches * opts.step, opts.min, opts.max));

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  accumulateWheel,
   clamp,
   displayPercent,
   levelGlyph,
@@ -128,4 +129,26 @@ for (const [v, geo, want] of pctRows) {
 test("above 100%: bar is full while the label keeps the real percent", () => {
   assert.equal(positionOf(1.3, vol), vol.track);
   assert.equal(displayPercent(1.3, vol), 130);
+});
+
+// Touchpads send many small angle deltas (e.g. 15); keep the remainder so
+// they add up to whole notches instead of being dropped.
+test("accumulateWheel: small touchpad deltas add up to whole notches", () => {
+  let carry = 0;
+  let total = 0;
+  for (let i = 0; i < 16; i++) {
+    const r = accumulateWheel(carry, 15);
+    carry = r.carry;
+    total += r.notches;
+  }
+  assert.equal(total, 2); // 16 * 15 = 240 = two notches
+  assert.equal(carry, 0);
+});
+
+test("accumulateWheel: a mouse notch steps at once; direction changes reset the remainder", () => {
+  assert.deepEqual(accumulateWheel(0, 120), { notches: 1, carry: 0 });
+  assert.deepEqual(accumulateWheel(0, -240), { notches: -2, carry: 0 });
+  assert.deepEqual(accumulateWheel(90, 45), { notches: 1, carry: 15 });
+  assert.deepEqual(accumulateWheel(90, -30), { notches: 0, carry: -30 });
+  assert.equal(Object.is(accumulateWheel(0, -60).notches, 0), true);
 });
