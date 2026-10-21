@@ -58,10 +58,10 @@ Vocabulary (design wins; mode is derived by `viewFor`): spec `powerMenu`=`power`
 
 ## Phase 4: Palette, dispatch, tokens, services (PR 4)
 
-- [ ] 4.1 RED `tests/palette.test.mjs`: valid JSON, missing or invalid input returns null
-- [ ] 4.2 GREEN `shell/logic/palette.mjs`
-- [ ] 4.3 RED `tests/hyprDsp.test.mjs`: valid name; invalid name returns null; injection `"); hl.dsp.exit() --` is escaped or rejected
-- [ ] 4.4 GREEN `shell/logic/hyprDsp.mjs`
+- [x] 4.1 RED `tests/palette.test.mjs`: valid JSON, missing or invalid input returns null
+- [x] 4.2 GREEN `shell/logic/palette.mjs`
+- [x] 4.3 RED `tests/hyprDsp.test.mjs`: valid name; invalid name returns null; injection `"); hl.dsp.exit() --` is escaped or rejected
+- [x] 4.4 GREEN `shell/logic/hyprDsp.mjs`
 - [ ] 4.5 `shell/config/{Fonts,Timings,Layout,Colours,Strings,Flags}.qml` + `qmldir`; `Colours.paletteFor` falls back to a defined palette
 - [ ] 4.6 `shell/services/{Session,Hypr}.qml` + `qmldir`; `Hypr.dispatch` returns a boolean and is inert under smoke; `make check`
 
