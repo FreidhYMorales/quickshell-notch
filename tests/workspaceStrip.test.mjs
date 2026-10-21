@@ -5,9 +5,12 @@ import {
   diffSnapshots,
   isNormalWindow,
   lastFocusedClass,
+  parseActiveSpecial,
+  refreshesSnapshot,
   slotRange,
   specialName,
   stripFor,
+  windowFrom,
 } from "../shell/logic/workspaceStrip.mjs";
 
 const rules = { minFloatWidth: 300, minFloatHeight: 200 };
@@ -232,3 +235,94 @@ test("diffSnapshots: events come out in order", () => {
     { kind: "open", workspaceId: 3, cls: "foot" },
   ]);
 });
+
+// Hyprland IPC adapters.
+const ipc = {
+  address: "0x1",
+  class: "kitty",
+  workspace: { id: 3, name: "3" },
+  floating: true,
+  mapped: true,
+  hidden: false,
+  size: [640, 480],
+  focusHistoryID: 2,
+};
+
+test("windowFrom: maps a client object to a Win", () => {
+  assert.deepEqual(windowFrom(ipc, { monitor: "A", hasParent: true }), {
+    address: "0x1",
+    cls: "kitty",
+    workspaceId: 3,
+    monitor: "A",
+    focus: 2,
+    mapped: true,
+    hidden: false,
+    floating: true,
+    hasParent: true,
+    width: 640,
+    height: 480,
+  });
+});
+
+test("windowFrom: missing or garbage fields never throw", () => {
+  assert.equal(windowFrom(null, { monitor: "A", hasParent: false }), null);
+  assert.equal(windowFrom({}, { monitor: "A", hasParent: false }), null);
+  const w = windowFrom({ address: "0x2" }, { monitor: "A", hasParent: false });
+  assert.equal(w.cls, "");
+  assert.equal(w.mapped, false);
+  assert.equal(w.workspaceId, 0);
+  assert.equal(w.width, 0);
+  assert.equal(w.focus > 1000, true); // unknown focus sorts last
+  const odd = windowFrom(
+    { address: "0x3", class: 7, size: "big", workspace: { id: "x" } },
+    { monitor: "A", hasParent: false },
+  );
+  assert.equal(odd.cls, "");
+  assert.equal(odd.width, 0);
+  assert.equal(odd.workspaceId, 0);
+});
+
+test("windowFrom: a special workspace id stays negative", () => {
+  const w = windowFrom(
+    Object.assign({}, ipc, { workspace: { id: -98, name: "special:m" } }),
+    { monitor: "A", hasParent: false },
+  );
+  assert.equal(w.workspaceId, -98);
+});
+
+for (
+  const [data, expected] of [
+    ["special:magic,eDP-1", { name: "special:magic", monitor: "eDP-1" }],
+    [",eDP-1", { name: "", monitor: "eDP-1" }],
+    ["special:a,b,DP-2", { name: "special:a,b", monitor: "DP-2" }],
+    ["nocomma", null],
+    ["special:x,", null],
+    ["", null],
+    [undefined, null],
+  ]
+) {
+  test(`parseActiveSpecial: ${JSON.stringify(data)}`, () => {
+    assert.deepEqual(parseActiveSpecial(data), expected);
+  });
+}
+
+for (
+  const [name, expected] of [
+    ["workspace", true],
+    ["workspacev2", true],
+    ["focusedmon", true],
+    ["openwindow", true],
+    ["closewindow", true],
+    ["movewindowv2", true],
+    ["moveworkspacev2", true],
+    ["activespecial", false],
+    ["activewindow", false],
+    ["urgent", false],
+    ["", false],
+    [undefined, false],
+  ]
+) {
+  test(`refreshesSnapshot: ${name}`, () => {
+    assert.equal(refreshesSnapshot(name), expected);
+  });
+}
