@@ -2,11 +2,13 @@ import QtQuick
 import "../../components"
 import "../../config"
 import "../../services"
+import "../../logic/centerLayout.mjs" as CenterLayout
 import "../../logic/format.mjs" as Format
 
 // Idle centre notch content: `(cpu) date . time (ram)` centred, so the clock
-// never moves. Battery layers use the fixed side slots (Layout.batterySide)
-// just inside each ear; the surface grows the shape to make room for them.
+// never moves. The width is content-driven: `baseWidth` fits the row, and a
+// side layer places its two items adjacent to the row; `sideNeed` is what the
+// surface adds on EACH side (the wider item plus the row gap).
 // Reading Battery and SysInfo here also starts those lazy singletons.
 Item {
     id: root
@@ -15,12 +17,22 @@ Item {
     property var view: null
     // none, charging, plugged, full or low (Battery.layer).
     property string batteryLayer: Battery.layer
+    readonly property int baseWidth: CenterLayout.idleBase({
+        row: row.implicitWidth,
+        pad: Layout.idlePad,
+        ear: Layout.earRadius
+    })
+    readonly property int sideNeed: CenterLayout.sideExtent({
+        left: layerGlyph.implicitWidth,
+        right: layerPercent.implicitWidth,
+        gap: Layout.rowGap
+    })
 
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property bool layerShown: batteryLayer !== "none"
     readonly property color layerColor: batteryLayer === "low" ? Colours.critical : scheme.primary
 
-    function layerGlyph(): string {
+    function glyphFor(): string {
         switch (batteryLayer) {
         case "charging":
             return Strings.glyphBolt;
@@ -68,7 +80,7 @@ Item {
 
     // Recording dot, left of the row; it never changes the width.
     Rectangle {
-        anchors.right: row.left
+        anchors.right: root.layerShown ? layerGlyph.left : row.left
         anchors.rightMargin: Layout.rowGap
         anchors.verticalCenter: parent.verticalCenter
         width: Layout.dotSize
@@ -82,7 +94,7 @@ Item {
     Rectangle {
         id: unread
 
-        anchors.left: row.right
+        anchors.left: root.layerShown ? layerPercent.right : row.right
         anchors.leftMargin: Layout.rowGap
         anchors.verticalCenter: parent.verticalCenter
         width: Layout.dotSize
@@ -106,37 +118,29 @@ Item {
         }
     }
 
-    Item {
-        anchors.left: parent.left
-        anchors.leftMargin: Layout.earRadius
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: Layout.batterySide
-        visible: root.layerShown
+    Text {
+        id: layerGlyph
 
-        Text {
-            anchors.centerIn: parent
-            text: root.layerGlyph()
-            color: root.layerColor
-            font.family: Fonts.family
-            font.pixelSize: Fonts.body
-        }
+        anchors.right: row.left
+        anchors.rightMargin: Layout.rowGap
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.layerShown
+        text: root.glyphFor()
+        color: root.layerColor
+        font.family: Fonts.family
+        font.pixelSize: Fonts.body
     }
 
-    Item {
-        anchors.right: parent.right
-        anchors.rightMargin: Layout.earRadius
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: Layout.batterySide
-        visible: root.layerShown
+    Text {
+        id: layerPercent
 
-        Text {
-            anchors.centerIn: parent
-            text: Format.formatPercent(Battery.percentage)
-            color: root.layerColor
-            font.family: Fonts.family
-            font.pixelSize: Fonts.small
-        }
+        anchors.left: row.right
+        anchors.leftMargin: Layout.rowGap
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.layerShown
+        text: Format.formatPercent(Battery.percentage)
+        color: root.layerColor
+        font.family: Fonts.family
+        font.pixelSize: Fonts.small
     }
 }

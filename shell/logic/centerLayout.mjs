@@ -16,3 +16,15 @@ export function shapeFor(mode, widths, heights) {
   const key = mode === "expanded" ? "expanded" : "idle";
   return { width: widths[key], height: heights[key] };
 }
+
+// Idle notch width with no side layer: the row, symmetric padding and the
+// flare of both ears.
+export function idleBase({ row, pad, ear }) {
+  return row + 2 * pad + 2 * ear;
+}
+
+// What one side layer adds on EACH side: the wider of the two items plus the
+// gap that keeps it adjacent to the row. A zero width means "absent".
+export function sideExtent({ left, right, gap }) {
+  return Math.max(left, right) + gap;
+}

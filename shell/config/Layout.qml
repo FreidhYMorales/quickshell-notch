@@ -11,15 +11,13 @@ Singleton {
     readonly property int earRadius: 12
     readonly property int cornerRadius: 18
 
-    // Idle centre notch width, including the 2 * earRadius flare of its ears.
-    readonly property int idleWidth: 260
+    // Idle notch padding either side of the row, inside the ears. The width
+    // itself follows the content (logic/centerLayout.mjs).
+    readonly property int idlePad: 16
 
     // Centre width cap; layoutFor shrinks it further on narrow screens.
     readonly property int centerMaxWidth: 600
     readonly property var centerMaxWidthByMonitor: ({})
-
-    // Idle battery layers reserve this much on each side of the clock.
-    readonly property int batterySide: 36
 
     // Idle row: arc meters, overlay dots and the gap between row items.
     readonly property int arcSize: 20
