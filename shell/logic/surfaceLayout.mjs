@@ -4,7 +4,7 @@
 
 /**
  * tokens: { idleHeight, cornerWidth, osdWidth, gap, centerMaxWidth,
- *           centerMaxWidthByMonitor? }
+ *           centerMaxWidthByMonitor?, expandedHeight? }
  */
 export function layoutFor(screenWidth, monitorName, tokens) {
   const { gap } = tokens;
@@ -21,7 +21,7 @@ export function layoutFor(screenWidth, monitorName, tokens) {
   return {
     tl: { x: 0, width: corner, height },
     bl: { x: blx, width: osd, height },
-    c: { x: cx, width, height },
+    c: { x: cx, width, height: tokens.expandedHeight ?? height },
     vr: { x: screenWidth - blx - osd, width: osd, height },
     tr: { x: screenWidth - corner, width: corner, height },
   };

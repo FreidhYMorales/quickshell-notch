@@ -42,7 +42,8 @@ docs/                  architecture, development, ADRs, plans
 - V4 also lacks `Object.fromEntries`, `Array.flatMap` and object spread (`{ ...a }`): use plain loops and `Object.assign` in `shell/logic/` (`tests/v4Compat.test.mjs` guards spread).
 - Hyprland dispatch: use the `hl.dsp.*` Lua bridge; plain `Hyprland.dispatch` does not work on this build.
 - Special workspace active state comes from the raw event `activespecial`.
-- Mpris: use `players.values` and `playbackStatus`.
+- Mpris (Quickshell 0.3.2): use `players.values` and `playbackState` / `isPlaying`; `playbackStatus` does not exist.
+- UPower initialises lazily on first access: touch `UPower.displayDevice` at startup and react to `ready` and property signals, never only a timer. `percentage` is 0-1.
 - Avoid permanent forking polls; prefer event watchers and `FileView`.
 - Services degrade gracefully: missing data -> hide the element + `console.warn`.
 - Reuse from `~/Mio/Configuraciones/dotfiles/quickshell/.config/quickshell` per the plan's "Reuse map".

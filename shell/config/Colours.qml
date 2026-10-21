@@ -12,6 +12,11 @@ Singleton {
     readonly property color background: "#000000"
     readonly property real cardMix: 0.08
 
+    // Low and critical battery.
+    readonly property color critical: "#ff5449"
+    // Opacity of the unfilled part of an arc meter.
+    readonly property real trackAlpha: 0.2
+
     // Used until (or unless) matugen output is available.
     readonly property var fallback: ({
             primary: "#adc6ff",
