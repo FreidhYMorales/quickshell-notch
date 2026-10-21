@@ -42,6 +42,7 @@ docs/                  architecture, development, ADRs, plans
 - V4 also lacks `Object.fromEntries`, `Array.flatMap` and object spread (`{ ...a }`): use plain loops and `Object.assign` in `shell/logic/` (`tests/v4Compat.test.mjs` guards spread).
 - Hyprland dispatch: use the `hl.dsp.*` Lua bridge; plain `Hyprland.dispatch` does not work on this build.
 - Special workspace active state comes from the raw event `activespecial`.
+- Hyprland toplevels: `lastIpcObject` (class, size, floating, mapped, `focusHistoryID`) is empty until `Hyprland.refreshToplevels()` returns; the monitor's `lastIpcObject` is JSON from `hyprctl`. Window data is read from a debounced snapshot (`services/Workspaces.qml`), never from the raw event payloads.
 - Mpris (Quickshell 0.3.2): use `players.values` and `playbackState` / `isPlaying`; `playbackStatus` does not exist.
 - UPower initialises lazily on first access: touch `UPower.displayDevice` at startup and react to `ready` and property signals, never only a timer. `percentage` is 0-1.
 - The visualizer (`cava`) never runs under `Flags.smoke`; `make smoke` must not spawn it. It runs only while the idle media layer shows and is optional at runtime.

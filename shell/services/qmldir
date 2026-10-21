@@ -6,3 +6,4 @@ singleton Cava Cava.qml
 singleton Mpris Mpris.qml
 singleton SysInfo SysInfo.qml
 singleton Recorder Recorder.qml
+singleton Workspaces Workspaces.qml
