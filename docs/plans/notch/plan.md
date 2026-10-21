@@ -1,6 +1,6 @@
 # Plan: Quickshell notch shell
 
-- Status: reviewed (plan-review-1 and plan-review-2 resolved)
+- Status: approved (plan-review-1 and plan-review-2 resolved; handed off to SDD in phases, see "Implementation phases")
 - Deadline: none (personal project). Priority = "what is needed to replace the bar for daily use"
 - Mode: solo
 - Supersedes: the old bar-based config (terminal-like design) and its paused `modules/notch` attempt
@@ -378,6 +378,23 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 3. Charging plug-in animation and low-battery state (SHOULD polish).
 4. Notification toast -> unread dot -> control center list.
 5. Launcher apps + commands; power menu hold-confirm.
+
+## Implementation phases
+
+One SDD change per phase, in order. Each phase ends with `make check` green and something visible with `qs -c notch`. The old bar stays the daily shell until phase 7 (cutover).
+
+| # | SDD change | Scope (MUST rows) | Est. dev-days |
+|---|---|---|---|
+| 1 | `notch-foundation` | Shell skeleton (surfaces per monitor, spacer zone, masks, ears, tokens, `NOTCH_SMOKE`), `Session`, `Hypr` wrapper, centre state machine reducer (pure logic, per-monitor + global inputs, mid-flow rules) | 6.5 |
+| 2 | `notch-center` | Battery (UPower), Mpris, SysInfo/Time reuse; idle notch + low-battery layer + 10% toast hook + recording dot; expanded hover (media + week) | 5.5 |
+| 3 | `notch-workspaces-osd` | Workspaces notch; Audio (Pipewire); volume/brightness OSDs | 5.5 |
+| 4 | `notch-notifications` | Notifs rewrite (tracked, id-keyed, cap 50, DND, critical `!`); toast + unread dot | 3.5 |
+| 5 | `notch-control-center` | Control center root, tiles (rfkill/BT checks first), tray row, notifications subpage | 4.5 |
+| 6 | `notch-launcher-power` | Launcher apps + commands; wallpaper/theme/keybinds views; power menu; polkit | 6.5 |
+| 7 | `notch-cutover` | Background surface + IdleInhibitor + hyprpaper fallback; lock integration; state import; Hyprland cutover (exec, env, IPC, keybinds, sleep hook, rollback) | 3.5 |
+| 8+ | `notch-polish-*` | SHOULD items in the Scope order | 7 |
+
+Superseded: the old bar config and its paused `modules/notch` attempt (reuse only per the reuse map). No earlier proposal/specs exist.
 
 ## Collaboration
 
