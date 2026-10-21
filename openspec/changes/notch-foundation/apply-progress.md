@@ -12,7 +12,9 @@ PR 2 was split to fit the 400-line budget: 2a = mid-flow rules, 2b = `centerView
 
 - [x] 2.6-2.7 `centerView` (PR 2b, branch `feat/notch-foundation-2b-view`)
 
-Remaining: Phases 3-6.
+- [x] 3.1-3.4 `earGeometry` + `surfaceLayout` (PR 3, branch `feat/notch-foundation-3-geometry`)
+
+Remaining: Phases 4-6.
 
 ## TDD Cycle Evidence
 
@@ -59,3 +61,17 @@ Remaining: Phases 3-6.
 ## PR 2b decisions
 
 - `viewFor` mode name is `power` (design vocabulary); `toast.paused = hovered || toastHovered`, `toast.expanded = hovered`.
+
+## PR 3 evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | Triangulate | Refactor |
+|---|---|---|---|---|---|---|---|
+| 3.1/3.2 | `tests/earGeometry.test.mjs` | Unit | N/A (new) | Written; module not found | 10/10 | `earCubic` both extend sides and k=0; `notchPath` full and clamped at h=4; `cornerPath` all 4 anchors with hand-derived strings; unknown anchor | Clean (one generic `buildPath` for notch and corner) |
+| 3.3/3.4 | `tests/surfaceLayout.test.mjs` | Unit | N/A (new) | Written; module not found | 7/7 | wide/narrow/tiny screens, per-monitor override, override over-cap, overlap sweep over 8 widths, edge strips | Clean |
+
+Work Unit Evidence (unit 3): focused `node --test tests/earGeometry.test.mjs tests/surfaceLayout.test.mjs` pass 17, fail 0. Runtime harness N/A (pure logic). Rollback: `shell/logic/{earGeometry,surfaceLayout}.mjs` + their tests.
+
+PR 3 decisions:
+- `earGeometry` generalizes the old static slots: one `buildPath` takes per-corner types (square, ear, round). An ear extends its entering endpoint when the previous clockwise corner is round, otherwise its leaving endpoint; `k` is clamped by the free edge length minus both adjacent radii. This reproduces the old NotchEarShape and CornerEarShape(topLeft) layouts.
+- `cornerPath` returns `null` for an unknown anchor.
+- `layoutFor` tokens (to be defined in `Layout.qml`, PR 4): `idleHeight, cornerWidth, osdWidth, gap, centerMaxWidth, centerMaxWidthByMonitor`. Corners shrink to half the screen on tiny screens; centre width = `min(per-monitor or default max, screen - 2*(corner+gap))`. `bl`/`vr` are edge strips, outside the top-row no-overlap guarantee.

@@ -51,10 +51,10 @@ Vocabulary (design wins; mode is derived by `viewFor`): spec `powerMenu`=`power`
 
 ## Phase 3: Geometry and layout (PR 3)
 
-- [ ] 3.1 RED `tests/earGeometry.test.mjs`: `earCubic` port, `notchPath`, `cornerPath` for all four anchors
-- [ ] 3.2 GREEN `shell/logic/earGeometry.mjs`
-- [ ] 3.3 RED `tests/surfaceLayout.test.mjs`: slots never overlap; narrow screen caps centre width
-- [ ] 3.4 GREEN `shell/logic/surfaceLayout.mjs`
+- [x] 3.1 RED `tests/earGeometry.test.mjs`: `earCubic` port, `notchPath`, `cornerPath` for all four anchors
+- [x] 3.2 GREEN `shell/logic/earGeometry.mjs`
+- [x] 3.3 RED `tests/surfaceLayout.test.mjs`: slots never overlap; narrow screen caps centre width
+- [x] 3.4 GREEN `shell/logic/surfaceLayout.mjs`
 
 ## Phase 4: Palette, dispatch, tokens, services (PR 4)
 

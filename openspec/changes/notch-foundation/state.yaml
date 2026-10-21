@@ -10,7 +10,7 @@ phases:
   spec: done
   design: done
   tasks: done
-  apply: in-progress (PR 2b of 7 done; chain split 2 -> 2a rules + 2b view)
+  apply: in-progress (PR 3 of 7 done; chain split 2 -> 2a rules + 2b view)
   verify: pending
   archive: pending
 artifacts:
