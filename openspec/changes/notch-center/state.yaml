@@ -2,16 +2,16 @@ change: notch-center
 project: quickshell-notch
 artifact_store: openspec
 pace: interactive
-delivery_strategy: ask-on-risk
+delivery_strategy: chained-prs
 review_budget_lines: 400
 plan_row: "docs/plans/notch/plan.md Implementation phases #2"
 phases:
   explore: skipped
   propose: done
-  spec: done
-  design: done
-  tasks: done
-  apply: in-progress (PR 3 of 5)
+  spec: done (scope addition 2026-10-21: audio-visualizer, media layer)
+  design: done (scope addition "idle media layer + visualizer" appended 2026-10-21; PRs 6-7)
+  tasks: done (updated 2026-10-21: PRs 6-7 added, ArtThumb in PR 5, plugged layer in PR 4)
+  apply: in-progress (PR 3 of 7 merged)
   verify: pending
   archive: pending
 artifacts:

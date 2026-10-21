@@ -72,6 +72,10 @@ Additive except the centre notch; old bar untouched. Revert the slice commits or
 - [ ] Hover shows media + week strip; no player shows the clock card only
 - [ ] `make check` green; logic tests cover every listed rule
 
+## Scope addition (2026-10-21)
+
+Approved by the user. Idle media layer: while a player is playing and the notch is idle, it grows symmetrically (like the battery layers) with mini album art left and a real `cava`-driven mirrored-bar visualizer right (new runtime dependency `cava`; process only while playing; none under `Flags.smoke`; colour via `ColorQuantizer`, fallback matugen `primary`). Idle side-layer priority: low battery > media playing > charging / plugged / full > none. New capability `audio-visualizer`; `center-idle-view` gains the media layer and priority. Pure logic test-first: layer selection, cava frame parsing, mirrored bar geometry.
+
 ## Proposal question round
 
 Skipped by orchestrator: decisions come from the approved plan and its review resolutions.
