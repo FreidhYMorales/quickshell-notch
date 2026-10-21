@@ -37,6 +37,7 @@ docs/                  architecture, development, ADRs, plans
 ## Gotchas (from the old config)
 
 - Add every new QML file to its folder's `qmldir`.
+- `.mjs` files imported by QML run on Qt's V4 engine, not Node: no optional catch binding (`catch {`); write `catch (_e)`. Node tests pass either way, so this only fails when Quickshell loads the file.
 - Every `PanelWindow` sets `mask: Region { item: ... }`; fixed size, animate inside.
 - Hyprland dispatch: use the `hl.dsp.*` Lua bridge; plain `Hyprland.dispatch` does not work on this build.
 - Special workspace active state comes from the raw event `activespecial`.
