@@ -41,19 +41,47 @@ const setGlobal = (state, patch) => ({
 // Opens or replaces the keyboard slot. Only the current owner (or anyone, when
 // the slot is empty) may change it; unknown monitors are ignored.
 const openKeyboard = (state, monitor, kind, sub) => {
-  const { keyboard } = state.global;
-  if (!state.monitors[monitor]) return unchanged(state);
+  const { keyboard, locked } = state.global;
+  if (locked || !state.monitors[monitor]) return unchanged(state);
   if (keyboard && keyboard.owner !== monitor) return unchanged(state);
   return setGlobal(state, {
     keyboard: { owner: monitor, kind, sub, hold: null },
   });
 };
 
+const cancelPolkit = (polkit) =>
+  polkit ? [{ type: "polkit.cancel", flowId: polkit.flowId }] : [];
+
+// Any open keyboard state or polkit flow mutes toasts on every monitor.
+const suppressed = ({ dnd, keyboard, polkit }, critical) =>
+  keyboard !== null || polkit !== null || (dnd && !critical);
+
+const withHold = (state, hold) =>
+  state.global.keyboard
+    ? setGlobal(state, { keyboard: { ...state.global.keyboard, hold } })
+    : unchanged(state);
+
 const handlers = {
   ScreensChanged(state, { names }) {
-    const monitors = { ...state.monitors };
-    for (const name of names) monitors[name] ??= freshMonitor();
-    return { state: { ...state, monitors }, effects: [] };
+    const monitors = {};
+    for (const name of names) {
+      monitors[name] = state.monitors[name] ?? freshMonitor();
+    }
+    const { keyboard, polkit } = state.global;
+    const lostKeyboard = keyboard && !monitors[keyboard.owner];
+    const lostPolkit = polkit && !monitors[polkit.owner];
+    return {
+      state: {
+        ...state,
+        monitors,
+        global: {
+          ...state.global,
+          keyboard: lostKeyboard ? null : keyboard,
+          polkit: lostPolkit ? null : polkit,
+        },
+      },
+      effects: lostPolkit ? cancelPolkit(polkit) : [],
+    };
   },
   Hover(state, { monitor, on }) {
     if (!state.monitors[monitor]) return unchanged(state);
@@ -88,7 +116,80 @@ const handlers = {
       ? setGlobal(state, { keyboard: null })
       : unchanged(state);
   },
+  ToastHover(state, { monitor, on }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    return {
+      state: withMonitor(state, monitor, { toastHovered: on }),
+      effects: [],
+    };
+  },
+  Dnd(state, { on }) {
+    return setGlobal(state, { dnd: on });
+  },
+  HoldStart(state, { action }) {
+    return state.global.keyboard?.kind === "power" && !state.global.polkit
+      ? withHold(state, { action })
+      : unchanged(state);
+  },
+  HoldCancel(state) {
+    return withHold(state, null);
+  },
+  HoldComplete(state) {
+    const hold = state.global.keyboard?.hold;
+    if (!hold) return unchanged(state);
+    return {
+      state: withHold(state, null).state,
+      effects: [{ type: "power.run", action: hold.action }],
+    };
+  },
+  PolkitRequest(state, { flowId, monitor }) {
+    if (state.global.locked || !state.monitors[monitor]) {
+      return unchanged(state);
+    }
+    const cleared = withHold(state, null).state;
+    return setGlobal(cleared, { polkit: { flowId, owner: monitor } });
+  },
+  PolkitEnded(state, { flowId }) {
+    return state.global.polkit?.flowId === flowId
+      ? setGlobal(state, { polkit: null })
+      : unchanged(state);
+  },
+  PolkitCancel(state) {
+    const { polkit } = state.global;
+    if (!polkit) return unchanged(state);
+    return {
+      state: setGlobal(state, { polkit: null }).state,
+      effects: cancelPolkit(polkit),
+    };
+  },
+  Locked(state, { on }) {
+    if (!on) return setGlobal(state, { locked: false });
+    const monitors = {};
+    for (const name of Object.keys(state.monitors)) {
+      monitors[name] = freshMonitor();
+    }
+    return {
+      state: {
+        ...state,
+        monitors,
+        global: {
+          ...state.global,
+          locked: true,
+          keyboard: null,
+          polkit: null,
+        },
+      },
+      effects: cancelPolkit(state.global.polkit),
+    };
+  },
   ToastShown(state, { id, critical }) {
+    if (suppressed(state.global, critical)) {
+      // A muted critical toast must not be lost: it waits as the `!` indicator.
+      return setGlobal(state, {
+        blinkDot: true,
+        ...(critical && { toast: { id, critical, phase: "indicator" } }),
+      });
+    }
     return setGlobal(state, { toast: { id, critical, phase: "shown" } });
   },
   ToastTimeout(state, { id }) {
