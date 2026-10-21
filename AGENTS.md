@@ -39,7 +39,7 @@ docs/                  architecture, development, ADRs, plans
 - Add every new QML file to its folder's `qmldir`.
 - `.mjs` files imported by QML run on Qt's V4 engine, not Node: no optional catch binding (`catch {`); write `catch (_e)`. Node tests pass either way, so this only fails when Quickshell loads the file.
 - Every `PanelWindow` sets `mask: Region { item: ... }`; fixed size, animate inside.
-- V4 also lacks `Object.fromEntries` and `Array.flatMap`: use plain loops in `shell/logic/`.
+- V4 also lacks `Object.fromEntries`, `Array.flatMap` and object spread (`{ ...a }`): use plain loops and `Object.assign` in `shell/logic/` (`tests/v4Compat.test.mjs` guards spread).
 - Hyprland dispatch: use the `hl.dsp.*` Lua bridge; plain `Hyprland.dispatch` does not work on this build.
 - Special workspace active state comes from the raw event `activespecial`.
 - Mpris: use `players.values` and `playbackStatus`.
