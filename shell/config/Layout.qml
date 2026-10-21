@@ -29,20 +29,20 @@ Singleton {
     readonly property int rowGap: 8
 
     // Expanded centre notch: full width with a player, narrower clock card alone.
-    readonly property int expandedHeight: 120
-    readonly property int expandedWidth: 440
-    readonly property int expandedClockWidth: 220
+    readonly property int expandedHeight: 112
+    readonly property int expandedWidth: 500
+    readonly property int expandedClockWidth: 250
 
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
     readonly property int expandedPad: 10
-    readonly property int expandedGap: 10
-    readonly property int clockCardWidth: 170
+    readonly property int expandedGap: 12
+    readonly property int clockCardWidth: 200
     readonly property int cardRadius: 14
-    readonly property int artSize: 64
+    readonly property int artSize: 80
     readonly property int artRadius: 10
-    readonly property int artGlyph: 22
-    readonly property int controlGap: 10
+    readonly property int artGlyph: 28
+    readonly property int controlGap: 12
     readonly property int weekCardPad: 4
 
     // Bundle in the shape expected by logic/surfaceLayout.mjs.
