@@ -30,13 +30,13 @@ Each PR tick also updates this file's progress. Every slice ends with `make chec
 
 ## Phase 1 (PR 1): workspaceStrip
 
-- [ ] 1.1 RED `tests/workspaceStrip.test.mjs`: isNormalWindow table (parent, small float, big float, unmapped, no class); lastFocusedClass tie by address (spec: Window filtering)
-- [ ] 1.2 GREEN `shell/logic/workspaceStrip.mjs`: isNormalWindow, lastFocusedClass
-- [ ] 1.3 RED slotRange: `1..max(minSlots 5, activeId, highest occupied id on this monitor)`; ids 2 and 4 -> 1-5; active 7 -> 1-7 (spec: Strip model)
-- [ ] 1.4 RED stripFor: kinds active/app/empty, per-monitor isolation, flash, special pin (spec: Strip model, Special pin)
-- [ ] 1.5 GREEN slotRange + stripFor, `specialName`, `appInitial`
-- [ ] 1.6 RED diffSnapshots: null prev -> [], workspace/open/move, dialog open ignored, move to special (spec: Reveal triggers)
-- [ ] 1.7 GREEN diffSnapshots; REFACTOR; `make check`
+- [x] 1.1 RED `tests/workspaceStrip.test.mjs`: isNormalWindow table (parent, small float, big float, unmapped, no class); lastFocusedClass tie by address (spec: Window filtering)
+- [x] 1.2 GREEN `shell/logic/workspaceStrip.mjs`: isNormalWindow, lastFocusedClass
+- [x] 1.3 RED slotRange: `1..max(minSlots 5, activeId, highest occupied id on this monitor)`; ids 2 and 4 -> 1-5; active 7 -> 1-7 (spec: Strip model)
+- [x] 1.4 RED stripFor: kinds active/app/empty, per-monitor isolation, flash, special pin (spec: Strip model, Special pin)
+- [x] 1.5 GREEN slotRange + stripFor, `specialName`, `appInitial`
+- [x] 1.6 RED diffSnapshots: null prev -> [], workspace/open/move, dialog open ignored, move to special (spec: Reveal triggers)
+- [x] 1.7 GREEN diffSnapshots; REFACTOR; `make check`
 
 ## Phase 2 (PR 2): shared reveal and slider logic
 
