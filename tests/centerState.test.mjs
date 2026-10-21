@@ -192,3 +192,80 @@ test("keyboard: opens on an unknown monitor are ignored", () => {
   const s = run(two(), { type: "LauncherToggle", monitor: "Z", sub: "x" });
   assert.equal(s.global.keyboard, null);
 });
+
+test("ToastShown: stores a normal toast in the shown phase", () => {
+  const { state, effects } = reduce(two(), {
+    type: "ToastShown",
+    id: 1,
+    critical: false,
+  });
+  assert.deepEqual(state.global.toast, {
+    id: 1,
+    critical: false,
+    phase: "shown",
+  });
+  assert.deepEqual(effects, []);
+});
+
+test("ToastShown: a newer toast replaces the current one", () => {
+  const s = run(
+    two(),
+    { type: "ToastShown", id: 1, critical: false },
+    { type: "ToastShown", id: 2, critical: true },
+  );
+  assert.deepEqual(s.global.toast, { id: 2, critical: true, phase: "shown" });
+});
+
+test("ToastTimeout: a normal toast is cleared", () => {
+  const s = run(
+    two(),
+    { type: "ToastShown", id: 1, critical: false },
+    { type: "ToastTimeout", id: 1 },
+  );
+  assert.equal(s.global.toast, null);
+});
+
+test("ToastTimeout: a critical toast collapses to the indicator phase", () => {
+  const s = run(
+    two(),
+    { type: "ToastShown", id: 1, critical: true },
+    { type: "ToastTimeout", id: 1 },
+  );
+  assert.deepEqual(s.global.toast, {
+    id: 1,
+    critical: true,
+    phase: "indicator",
+  });
+});
+
+test("ToastTimeout: a stale id or an already collapsed toast is ignored", () => {
+  const shown = run(two(), { type: "ToastShown", id: 2, critical: false });
+  assert.deepEqual(run(shown, { type: "ToastTimeout", id: 1 }), shown);
+  const collapsed = run(
+    two(),
+    { type: "ToastShown", id: 1, critical: true },
+    { type: "ToastTimeout", id: 1 },
+  );
+  assert.deepEqual(run(collapsed, { type: "ToastTimeout", id: 1 }), collapsed);
+});
+
+test("ToastDismissed: clears a shown or collapsed toast with that id", () => {
+  const shown = run(
+    two(),
+    { type: "ToastShown", id: 1, critical: false },
+    { type: "ToastDismissed", id: 1 },
+  );
+  assert.equal(shown.global.toast, null);
+  const indicator = run(
+    two(),
+    { type: "ToastShown", id: 1, critical: true },
+    { type: "ToastTimeout", id: 1 },
+    { type: "ToastDismissed", id: 1 },
+  );
+  assert.equal(indicator.global.toast, null);
+});
+
+test("ToastDismissed: a different id leaves the toast alone", () => {
+  const shown = run(two(), { type: "ToastShown", id: 1, critical: false });
+  assert.deepEqual(run(shown, { type: "ToastDismissed", id: 9 }), shown);
+});

@@ -33,8 +33,8 @@ const withMonitor = (state, name, patch) => ({
 
 const unchanged = (state) => ({ state, effects: [] });
 
-const setKeyboard = (state, keyboard) => ({
-  state: { ...state, global: { ...state.global, keyboard } },
+const setGlobal = (state, patch) => ({
+  state: { ...state, global: { ...state.global, ...patch } },
   effects: [],
 });
 
@@ -44,7 +44,9 @@ const openKeyboard = (state, monitor, kind, sub) => {
   const { keyboard } = state.global;
   if (!state.monitors[monitor]) return unchanged(state);
   if (keyboard && keyboard.owner !== monitor) return unchanged(state);
-  return setKeyboard(state, { owner: monitor, kind, sub, hold: null });
+  return setGlobal(state, {
+    keyboard: { owner: monitor, kind, sub, hold: null },
+  });
 };
 
 const handlers = {
@@ -54,14 +56,14 @@ const handlers = {
     return { state: { ...state, monitors }, effects: [] };
   },
   Hover(state, { monitor, on }) {
-    if (!state.monitors[monitor]) return { state, effects: [] };
+    if (!state.monitors[monitor]) return unchanged(state);
     return {
       state: withMonitor(state, monitor, { hovered: on }),
       effects: [],
     };
   },
   ExpandedToggle(state, { monitor }) {
-    if (!state.monitors[monitor]) return { state, effects: [] };
+    if (!state.monitors[monitor]) return unchanged(state);
     return {
       state: withMonitor(state, monitor, {
         pinned: !state.monitors[monitor].pinned,
@@ -73,7 +75,7 @@ const handlers = {
     const { keyboard } = state.global;
     if (keyboard?.owner === monitor) {
       return keyboard.kind === "launcher"
-        ? setKeyboard(state, null)
+        ? setGlobal(state, { keyboard: null })
         : unchanged(state);
     }
     return openKeyboard(state, monitor, "launcher", sub);
@@ -83,12 +85,27 @@ const handlers = {
   },
   Close(state, { monitor }) {
     return state.global.keyboard?.owner === monitor
-      ? setKeyboard(state, null)
+      ? setGlobal(state, { keyboard: null })
+      : unchanged(state);
+  },
+  ToastShown(state, { id, critical }) {
+    return setGlobal(state, { toast: { id, critical, phase: "shown" } });
+  },
+  ToastTimeout(state, { id }) {
+    const { toast } = state.global;
+    if (toast?.id !== id || toast.phase !== "shown") return unchanged(state);
+    return setGlobal(state, {
+      toast: toast.critical ? { ...toast, phase: "indicator" } : null,
+    });
+  },
+  ToastDismissed(state, { id }) {
+    return state.global.toast?.id === id
+      ? setGlobal(state, { toast: null })
       : unchanged(state);
   },
 };
 
 export function reduce(state, event) {
   const handler = handlers[event.type];
-  return handler ? handler(state, event) : { state, effects: [] };
+  return handler ? handler(state, event) : unchanged(state);
 }
