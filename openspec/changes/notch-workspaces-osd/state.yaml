@@ -1,0 +1,25 @@
+change: notch-workspaces-osd
+project: quickshell-notch
+artifact_store: openspec
+pace: interactive
+delivery_strategy: ask-on-risk
+review_budget_lines: 400
+plan_row: "docs/plans/notch/plan.md Implementation phases #3"
+phases:
+  explore: skipped
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: pending
+  verify: pending
+  archive: pending
+artifacts:
+  proposal: openspec/changes/notch-workspaces-osd/proposal.md
+  design: openspec/changes/notch-workspaces-osd/design.md
+new_capabilities: [workspaces-notch, audio-service, brightness-service, osd-notch]
+modified_capabilities: [shell-surfaces, visual-tokens]
+chain_strategy: stacked-to-main
+artifacts_tasks: openspec/changes/notch-workspaces-osd/tasks.md
+next: [apply]
+updated: 2026-10-21
