@@ -22,7 +22,9 @@ PanelWindow {
         left: true
     }
     margins.left: slot.x
-    implicitWidth: slot.width
+    // wlr-layer-shell rejects a zero width unless both left and right are
+    // anchored, which would kill the shell on screens too narrow for an OSD.
+    implicitWidth: Math.max(1, slot.width)
     implicitHeight: slot.height
     visible: shown
     color: "transparent"
