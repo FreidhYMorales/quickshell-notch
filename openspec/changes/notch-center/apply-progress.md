@@ -30,3 +30,30 @@ Total: 18 new tests, full suite 126/126.
 ## Coordinator fix (PR 1)
 
 - `classify` returns `plugged` (not `none`) when on AC but neither charging nor full, e.g. the user's laptop held at an 80% charge limit (UPower `pending-charge`). User chose a "plugged" variant of the charging layer: same symmetric layout, plug icon instead of the bolt, no animation. RED: spec-table test failed (2 new rows); GREEN after the change. PR 3/4 must add the plug glyph to `Strings` and render the `plugged` layer.
+
+## PR 2 of 5: calendar, media, layout, format rules (tasks 2.1-2.7, done)
+
+### TDD Cycle Evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 2.1/2.2 | `tests/calendar.test.mjs` | Unit | N/A (new) | `ERR_MODULE_NOT_FOUND` before `calendar.mjs` | 10/10 | 5 spec-table rows, radius, weekday, midnight | None needed |
+| 2.3/2.4 | `tests/media.test.mjs` | Unit | N/A (new) | `ERR_MODULE_NOT_FOUND` | 8/8 | 4 table rows, empty, switch, fallbacks | None needed |
+| 2.5/2.6 | `tests/centerLayout.test.mjs` | Unit | N/A (new) | `ERR_MODULE_NOT_FOUND` | 12/12 | 5 layers incl. `plugged`, cap, 4 expanded rows, shapeFor | None needed |
+| 2.7 | `tests/format.test.mjs` | Unit | N/A (new) | `ERR_MODULE_NOT_FOUND` | 6/6 (one test typo fixed, not the code) | 4 clock rows, 2 date cases | None needed |
+
+Total: 36 new tests, full suite 162/162. `make check` green.
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test | `node --test tests/calendar.test.mjs tests/media.test.mjs tests/centerLayout.test.mjs tests/format.test.mjs`: 36 pass, 0 fail |
+| Runtime harness | N/A: pure logic, no runtime boundary |
+| Rollback | Delete `shell/logic/{calendar,media,centerLayout,format}.mjs` and their four tests |
+
+### Notes
+
+- `idleWidth({base, side, layer, max})` grows for every layer other than `none` (charging, plugged, full, low).
+- `weekStrip` adds `weekday` (0 = Monday) per the design contract.
+- `shortDate` and `clock` take names and numbers only; no locale use.
