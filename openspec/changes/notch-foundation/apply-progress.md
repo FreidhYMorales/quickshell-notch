@@ -110,3 +110,19 @@ PR 4b decisions:
 - `Session.locked` is read-only; `setLocked(bool)` and `requestLock()` are the only mutators.
 - `Layout.tokens` bundles the `layoutFor` token shape (`osdWidth` 220); `earRadius`/`cornerRadius` added for `earGeometry`. Flags: `reserveSpace` true (ADR 0004), `showPlaceholders` false.
 - Makefile `lint-qml` now passes `-i <qmldir>` for every `qmldir` (stricter, removes false "not declared as singleton" warnings). qmllint also confuses `palette.mjs` with the QML `palette` type; fixed by aliasing the import as `PaletteLogic`.
+
+## PR 5 evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | Triangulate | Refactor |
+|---|---|---|---|---|---|---|---|
+| 5.1-5.3 | none (QML) | Runtime | `tests/` 101/101 | n/a | `make check` green (101 pass); scratch `qs -p` with `showPlaceholders` true loads with no warnings | hidden default (smoke), placeholders shown | n/a |
+| fix | `tests/earGeometry.test.mjs` | Unit | 101/101 | runtime-only failure under V4 (not reproducible in Node) | 101/101 | existing path-string tests | `flatMap` and `Object.fromEntries` replaced by loops |
+
+Work Unit Evidence (unit 5): focused `make check` (fmt-check, lint, 101 tests pass, smoke "config loaded"). Runtime harness: `NOTCH_SMOKE=1 qs -p` on a scratch copy with `showPlaceholders: true`: "Configuration Loaded", no warnings. Rollback: `shell/components/`, `shell/notches/{workspaces,osd,controlcenter}`, `shell/shell.qml`, `earGeometry.mjs` loops.
+
+PR 5 decisions:
+- `NotchSurface` computes its slot from `layoutFor(screen.width, screen.name, Layout.tokens)[slotName]`; `visible` is bound to `shown` only (binding on `slot.width` caused a binding loop because `screen` is assigned on show). Mask item `body` is 0x0 when hidden, so hidden placeholders pass clicks through.
+- `SpacerSurface` is the only surface with `ExclusionMode.Auto` + `exclusiveZone`; inert (Ignore, zone 0) under smoke or `reserveSpace=false`.
+- V4 lacks `Object.fromEntries` and `Array.flatMap`: found only at runtime, fixed in `earGeometry.mjs`, recorded in AGENTS.md.
+- qmllint cannot resolve `PanelWindow` (uncreatable) so `NotchSurface`/`SpacerSurface` carry tool-only warnings; `make lint` exits 0.
+- `shell.qml` root is `Scope`; the centre slot has no surface until PR 6.

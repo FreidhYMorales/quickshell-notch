@@ -67,9 +67,9 @@ Vocabulary (design wins; mode is derived by `viewFor`): spec `powerMenu`=`power`
 
 ## Phase 5: Surfaces and shell (PR 5)
 
-- [ ] 5.1 `shell/components/{NotchSurface,SpacerSurface,NotchEarShape,CornerEarShape,NotchZone,Anim}.qml` + `qmldir`
-- [ ] 5.2 `shell/notches/{workspaces,osd,controlcenter}` placeholders + `qmldir`
-- [ ] 5.3 Rewrite `shell/shell.qml` as a `Scope`; delete `.gitkeep` files; grep finds no `Visibilities` and no `hl.dsp` outside `Hypr`; `make check`
+- [x] 5.1 `shell/components/{NotchSurface,SpacerSurface,NotchEarShape,CornerEarShape,NotchZone,Anim}.qml` + `qmldir`
+- [x] 5.2 `shell/notches/{workspaces,osd,controlcenter}` placeholders + `qmldir`
+- [x] 5.3 Rewrite `shell/shell.qml` as a `Scope`; delete `.gitkeep` files; grep finds no `Visibilities` and no `hl.dsp` outside `Hypr`; `make check`
 
 ## Phase 6: Store and centre (PR 6)
 
