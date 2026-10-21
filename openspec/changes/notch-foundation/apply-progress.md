@@ -10,7 +10,9 @@ Mode: Strict TDD (`node --test tests/`). Delivery: chained PRs, stacked-to-main.
 
 PR 2 was split to fit the 400-line budget: 2a = mid-flow rules, 2b = `centerView` (tasks 2.6-2.7). The chain is now 7 PRs.
 
-Remaining: 2.6-2.7 (PR 2b), Phases 3-6.
+- [x] 2.6-2.7 `centerView` (PR 2b, branch `feat/notch-foundation-2b-view`)
+
+Remaining: Phases 3-6.
 
 ## TDD Cycle Evidence
 
@@ -22,6 +24,7 @@ Remaining: 2.6-2.7 (PR 2b), Phases 3-6.
 | 1.5 | `tests/centerState.test.mjs` | Unit | 26/26 | n/a | 26/26 | n/a | `unchanged` and `setGlobal` helpers shared |
 | 2.1-2.4 | `tests/centerState.test.mjs` | Unit | 26/26 | Written; 15 failing | 48/48 | polkit match/other flow, hold with/without power menu, lock with/without polkit, owner vs other removal, DND normal vs critical, keyboard vs polkit mute | Clean |
 | 2.5 | `tests/centerState.test.mjs` | Unit | 26/26 | covered by 2.1-2.4 | 48/48 | n/a | `cancelPolkit`, `suppressed`, `withHold` helpers |
+| 2.6/2.7 | `tests/centerView.test.mjs` | Unit | N/A (new) | Written; module not found | 12/12 | every priority pair, owner vs other monitor, hover vs toastHover, unknown monitor | Clean |
 | 2.4 fix | `tests/centerState.test.mjs` | Unit | 48/48 | Written; 2 failing | 50/50 | launcher vs polkit muting a critical toast | Clean |
 
 ## Work Unit Evidence (unit 1)
@@ -52,3 +55,7 @@ Remaining: 2.6-2.7 (PR 2b), Phases 3-6.
 - Suppressed toasts (DND non-critical, or keyboard/polkit open) are dropped and set `blinkDot`. A critical toast muted by an open keyboard state or polkit is NOT dropped: it goes straight to the `indicator` phase (`!`), per the plan's "critical stays until dismissed" (coordinator fix).
 - `HoldStart` is ignored unless a power menu is open and no polkit is active; `HoldComplete` emits `power.run` and clears the hold but leaves the menu open.
 - `PolkitRequest` is ignored while locked or for unknown monitors.
+
+## PR 2b decisions
+
+- `viewFor` mode name is `power` (design vocabulary); `toast.paused = hovered || toastHovered`, `toast.expanded = hovered`.
