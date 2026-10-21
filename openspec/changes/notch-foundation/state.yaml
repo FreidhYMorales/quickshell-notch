@@ -1,0 +1,22 @@
+change: notch-foundation
+project: quickshell-notch
+artifact_store: openspec
+pace: interactive
+delivery_strategy: ask-on-risk
+review_budget_lines: 400
+phases:
+  explore: skipped
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: pending
+  verify: pending
+  archive: pending
+artifacts:
+  proposal: openspec/changes/notch-foundation/proposal.md
+  design: openspec/changes/notch-foundation/design.md
+  tasks: openspec/changes/notch-foundation/tasks.md
+next: [apply]
+chain_strategy: stacked-to-main
+updated: 2026-10-21

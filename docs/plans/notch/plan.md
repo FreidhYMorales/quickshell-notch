@@ -369,6 +369,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 - Notification history across restarts — session-only by decision.
 - UI following the system locale — far future.
 - Weather tab (old wttr.in panel) — deferred to v2.
+- Full-shell parity after the notch is done: a lockscreen redesigned in the notch style (v1 only reuses the old lock as is), the screensaver, and other remaining pieces of the old config, so the new config fully replaces it. Each gets its own plan/mini-plan.
 - Expanded recording indicator (elapsed time, stop control, ...) — the user will expand the v1 red dot later; own mini-plan.
 
 ## Demo priorities
