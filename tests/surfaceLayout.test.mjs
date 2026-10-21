@@ -78,3 +78,14 @@ test("OSD collapses to zero when there is no room beside the centre", () => {
   assert.equal(l.bl.width, 0);
   assert.equal(l.vr.width, 0);
 });
+
+test("expandedHeight sets the centre slot height only", () => {
+  const l = layoutFor(1920, "DP-1", { ...tokens, expandedHeight: 180 });
+  assert.equal(l.c.height, 180);
+  assert.equal(l.tl.height, 32);
+  assert.equal(l.vr.height, 32);
+});
+
+test("without expandedHeight the centre keeps the idle height", () => {
+  assert.equal(layoutFor(1920, "DP-1", tokens).c.height, 32);
+});
