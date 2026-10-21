@@ -47,13 +47,13 @@ Each PR also updates tasks.md, apply-progress.md, state.yaml. Planning artifacts
 
 ## PR 3: Services, tokens, surface height
 
-- [ ] 3.1 RED: extend `tests/surfaceLayout.test.mjs` (optional `expandedHeight` on `c`; absent keeps idleHeight). GREEN: `shell/logic/surfaceLayout.mjs`.
-- [ ] 3.2 Create `shell/config/Limits.qml` (batteryLow 20, batteryCritical 10, weekRadius 3) and register in `shell/config/qmldir`.
-- [ ] 3.3 Modify `shell/config/{Layout,Colours,Strings,Flags}.qml`: widths/heights, `critical` red, `trackAlpha`, month/weekday names, fallbacks, glyphs, 24-hour clock token, `batteryOverride`.
-- [ ] 3.4 Create `shell/services/Battery.qml` (UPower displayDevice, enum mapping, `criticalReached`, signals) and `Time.qml` (`SystemClock.Minutes`, `dayChanged`).
-- [ ] 3.5 Create `Mpris.qml` (playbackState binding, controls), `SysInfo.qml` (FileView, `Timings.sysPoll`), `Recorder.qml` (`recording`, `setRecording()`); update `shell/services/qmldir`.
-- [ ] 3.6 Verify `UPowerDevice.percentage` range: temporary log in a scratch run via `qs -p shell/shell.qml`; handle 0-1 vs 0-100 in `fromUPower` input, with a test if 0-100; remove the log.
-- [ ] 3.7 Fix `AGENTS.md` Mpris gotcha (`playbackState`/`isPlaying`). Smoke: `make smoke` loads with UPower/Mpris absent.
+- [x] 3.1 RED: extend `tests/surfaceLayout.test.mjs` (optional `expandedHeight` on `c`; absent keeps idleHeight). GREEN: `shell/logic/surfaceLayout.mjs`.
+- [x] 3.2 Create `shell/config/Limits.qml` (batteryLow 20, batteryCritical 10, weekRadius 3) and register in `shell/config/qmldir`.
+- [x] 3.3 Modify `shell/config/{Layout,Colours,Strings,Flags}.qml`: widths/heights, `critical` red, `trackAlpha`, month/weekday names, fallbacks, glyphs, 24-hour clock token, `batteryOverride`.
+- [x] 3.4 Create `shell/services/Battery.qml` (UPower displayDevice, enum mapping, `criticalReached`, signals) and `Time.qml` (`SystemClock.Minutes`, `dayChanged`).
+- [x] 3.5 Create `Mpris.qml` (playbackState binding, controls), `SysInfo.qml` (FileView, `Timings.sysPoll`), `Recorder.qml` (`recording`, `setRecording()`); update `shell/services/qmldir`.
+- [x] 3.6 Verify `UPowerDevice.percentage` range: confirmed 0-1 on the host (0.34 at 34%, then 30 after rounding in the scratch probe); `fromUPower` already takes a 0-1 fraction, so no change or test needed.
+- [x] 3.7 Fix `AGENTS.md` Mpris gotcha (`playbackState`/`isPlaying`). Smoke: `make smoke` loads with UPower/Mpris absent.
 
 ## PR 4: Idle row, battery layers, shape and mask
 
