@@ -12,14 +12,18 @@ NotchSurface {
 
     slotName: "c"
     wantsKeyboard: view.keyboardFocus === "exclusive"
+    // Only the visible idle shape takes input; clicks beside it pass through.
+    maskItem: idle
 
     CenterIdle {
-        anchors.fill: parent
+        id: idle
+
         screen: root.screen
+        shown: root.shown
     }
 
     NotchZone {
-        anchors.fill: parent
+        anchors.fill: idle
         onHoverChanged: on => CenterStore.dispatch({
                 type: "Hover",
                 monitor: root.screen.name,

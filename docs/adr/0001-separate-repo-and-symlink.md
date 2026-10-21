@@ -23,3 +23,7 @@ This folder is its own git repo, pushed to GitHub. The runtime config lives in `
 - Positive: old bar and notch coexist (`qs` vs `qs -c notch`); edits in the repo are live after a restart.
 - Negative: the symlink is a manual setup step; tests and docs must live outside `shell/` so they are not loaded as config.
 - Follow-ups: `/flow:bootstrap` creates the repo; later, add it to the dotfiles repo.
+
+## Update 2026-10-21
+
+`~/.config/quickshell` is itself a stow symlink into the dotfiles repo (the old config). Creating `~/.config/quickshell/notch` would place the link inside the dotfiles working tree and the old config folder. Until cutover, the notch runs straight from the repo with `qs -p shell/shell.qml` (no symlink). The final integration (own stow package, submodule, or unfolding the stow link) is decided in the `notch-cutover` phase, together with the `qs -c notch` IPC target names.

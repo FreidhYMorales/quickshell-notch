@@ -9,7 +9,10 @@ Singleton {
     readonly property int osdWidth: 220
     readonly property int gap: 8
     readonly property int earRadius: 12
-    readonly property int cornerRadius: 12
+    readonly property int cornerRadius: 18
+
+    // Idle centre notch width, including the 2 * earRadius flare of its ears.
+    readonly property int idleWidth: 260
 
     // Centre width cap; layoutFor shrinks it further on narrow screens.
     readonly property int centerMaxWidth: 600
