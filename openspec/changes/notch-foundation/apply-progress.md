@@ -144,3 +144,22 @@ PR 6 decisions:
 - `CenterSurface` reads `CenterStore.viewFor(screen.name)`; hover (debounced by `NotchZone`) dispatches `Hover`. `Expanded` has no content yet, so every mode paints `CenterIdle`.
 - Deviation: Qt V4 rejects object spread, which broke the reducer at load (Node accepts it). `centerState.mjs` now uses a `merge` helper; `tests/v4Compat.test.mjs` guards it. Recorded in AGENTS.md.
 - Under smoke the centre loads and registers nothing global (the reducer is pure; effects only log).
+
+## Post-apply fixes (branch `fix/notch-ears`)
+
+Found in the user's visual check after merge (70cb4de).
+
+| Fix | Test file | Layer | Safety net | RED | GREEN | Triangulate | Refactor |
+|---|---|---|---|---|---|---|---|
+| Bug 1: concave ears were inverted | `tests/earGeometry.test.mjs` | Unit | 102/102 before | Expectations rewritten to the correct shape: 12 of 13 failing | 13/13 in file; 108/108 overall | two `notchPath` sizes, all four `cornerPath` anchors, tangent and on-circle concavity checks, clamping at small h and narrow w | One `serialise` plus `mirror` (topLeft built once, other anchors mirrored; single-axis flip reverses arc sweep) replaced the per-corner `buildPath` |
+| Bug 2: idle notch used the full 600 px | none (QML) | Runtime | 108/108 | n/a | `make check` green (fmt, lint, 108 tests, smoke) | n/a | n/a |
+
+Note: the old tests pinned the INVERTED shape (convex corners cutting the box). They were replaced, not weakened. `earCubic` (the port of the old EarCurve.js) was removed with them; nothing else used it.
+
+Decisions:
+- `notchPath`: top edge spans the full width, body sides at x = er and x = w - er, ears are quarter circles (KAPPA 0.5523) centred on the top edge; bottom corners convex with radius cr. Clamps: er <= min(h, w/2), cr <= min(h - er, w/2 - er); a zero radius emits no arc.
+- `cornerPath`: built for topLeft (edges flare to the far corners, body sides inset by er, opposite corner round) and mirrored for the other anchors. Clamps: er <= min(h, w)/2, cr <= min(h, w) - 2*er.
+- Deviation from the brief: the right-ear second control point is (w - er, er - KAPPA*er), the exact mirror of the left ear (a true quarter circle), not (w - er, KAPPA*er). The brief's concavity check "x < er/2" is also wrong for a quarter circle centred at (0, er): the midpoint is (0.707er, 0.293er). Tests assert y < er/2 and distance to the circle centre = er.
+- `Layout.idleWidth` = 260 (includes the 2 * earRadius flare). `NotchSurface` gains `maskItem` (default `body`); `CenterSurface` sets it to the idle item, so clicks beside the notch pass through. `CenterIdle` is `min(idleWidth, surface width)` wide, centred, 0 wide when hidden. `NotchZone` is anchored to the idle item. The surface stays fixed-size.
+
+Work Unit Evidence (post-apply): focused `node --test tests/earGeometry.test.mjs` 13 pass, 0 fail. `make check` exit 0 (fmt-check, lint with the same 7 pre-existing qmllint warnings, 108 tests, smoke "config loaded"). Rollback: `shell/logic/earGeometry.mjs` + test (commit 1); `Layout.qml`, `NotchSurface.qml`, `CenterIdle.qml`, `CenterSurface.qml` (commit 2).
