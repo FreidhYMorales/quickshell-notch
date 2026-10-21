@@ -1,0 +1,6 @@
+singleton Fonts Fonts.qml
+singleton Timings Timings.qml
+singleton Layout Layout.qml
+singleton Flags Flags.qml
+singleton Strings Strings.qml
+singleton Colours Colours.qml

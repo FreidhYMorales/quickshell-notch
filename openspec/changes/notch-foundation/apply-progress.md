@@ -18,7 +18,9 @@ PR 2 was split to fit the 400-line budget: 2a = mid-flow rules, 2b = `centerView
 
 PR 4 was split to fit the 400-line budget: 4a = pure logic, 4b = `config/` tokens + `Session`/`Hypr` services (tasks 4.5-4.6). The chain is now 8 PRs.
 
-Remaining: 4.5-4.6 (PR 4b), Phases 5-6.
+- [x] 4.5-4.6 `config/` tokens, `Session` + `Hypr` services (PR 4b, branch `feat/notch-foundation-4b-config-services`)
+
+Remaining: Phases 5-6.
 
 ## TDD Cycle Evidence
 
@@ -94,3 +96,17 @@ PR 4a decisions:
 - `dspExpr(name, args[])`: args are string, finite number, boolean or plain-object tables (keys `^[A-Za-z_][A-Za-z0-9_]*$`, depth <= 3). Control chars escape as 3-digit decimal `\ddd`.
 - Qt's V4 engine rejects optional catch binding (`catch {`): `.mjs` imported by QML must use `catch (_e)`. PR 5/6 must keep this in mind for any logic imported from QML.
 Work Unit Evidence (unit 4a): focused `node --test tests/palette.test.mjs tests/hyprDsp.test.mjs` pass 19, fail 0. Runtime harness: N/A (pure logic; QML consumers land in PR 4b). Rollback: `shell/logic/{palette,hyprDsp}.mjs` + tests.
+
+## PR 4b evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | Triangulate | Refactor |
+|---|---|---|---|---|---|---|---|
+| 4.5/4.6 | none (QML) | Runtime | `tests/` 101/101 | n/a | `make check` green; scratch `qs` run exercised every singleton | fallback vs matugen file palette, smoke vs non-smoke dispatch, invalid name | n/a |
+
+Work Unit Evidence (unit 4b): runtime harness `make smoke` ("config loaded") plus a scratch `qs -p` script (not committed) that read `Fonts/Flags/Timings/Layout.tokens/Colours/Session/Hypr`: palette fell back without matugen file and switched to the file's `primary` when present; `Session.requestLock` fired once and left `locked` false; `Hypr.dispatch` returned false for a bad name and made no hyprctl call under `NOTCH_SMOKE=1`. Rollback: `shell/config/`, `shell/services/`, Makefile `QMLDIRS`.
+
+PR 4b decisions:
+- `Hypr.dispatch` returns false under smoke (nothing dispatched) and for rejected names (warns); true means handed to `hyprctl` via an argv list.
+- `Session.locked` is read-only; `setLocked(bool)` and `requestLock()` are the only mutators.
+- `Layout.tokens` bundles the `layoutFor` token shape (`osdWidth` 220); `earRadius`/`cornerRadius` added for `earGeometry`. Flags: `reserveSpace` true (ADR 0004), `showPlaceholders` false.
+- Makefile `lint-qml` now passes `-i <qmldir>` for every `qmldir` (stricter, removes false "not declared as singleton" warnings). qmllint also confuses `palette.mjs` with the QML `palette` type; fixed by aliasing the import as `PaletteLogic`.

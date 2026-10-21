@@ -1,0 +1,2 @@
+singleton Session Session.qml
+singleton Hypr Hypr.qml

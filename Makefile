@@ -3,6 +3,7 @@ QMLFORMAT := $(QT_BIN)/qmlformat
 QMLLINT   := $(QT_BIN)/qmllint
 QML_DIR   := /usr/lib/qt6/qml
 QML_FILES := $(shell find shell -name '*.qml')
+QMLDIRS   := $(addprefix -i ,$(shell find shell -name qmldir))
 JS_PATHS  := shell/logic tests
 
 .PHONY: check ci fmt fmt-check lint lint-qml lint-js test smoke
@@ -26,7 +27,7 @@ fmt-check:
 lint: lint-qml lint-js
 
 lint-qml:
-	$(QMLLINT) -I $(QML_DIR) $(QML_FILES)
+	$(QMLLINT) -I $(QML_DIR) $(QMLDIRS) $(QML_FILES)
 
 lint-js:
 	deno lint $(JS_PATHS)
