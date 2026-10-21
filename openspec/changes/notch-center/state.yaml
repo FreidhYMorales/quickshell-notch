@@ -1,0 +1,24 @@
+change: notch-center
+project: quickshell-notch
+artifact_store: openspec
+pace: interactive
+delivery_strategy: ask-on-risk
+review_budget_lines: 400
+plan_row: "docs/plans/notch/plan.md Implementation phases #2"
+phases:
+  explore: skipped
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: pending
+  verify: pending
+  archive: pending
+artifacts:
+  proposal: openspec/changes/notch-center/proposal.md
+  spec: openspec/changes/notch-center/specs/
+  design: openspec/changes/notch-center/design.md
+  tasks: openspec/changes/notch-center/tasks.md
+chain_strategy: stacked-to-main
+next: [apply]
+updated: 2026-10-21
