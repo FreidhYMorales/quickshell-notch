@@ -30,10 +30,10 @@ Each PR also updates tasks.md, apply-progress.md, state.yaml. Planning artifacts
 
 ## PR 1: Battery and system stats rules
 
-- [ ] 1.1 RED: `tests/battery.test.mjs` covering fromUPower (plugged = !onBattery or charging/full/pending-charge; percentage rounding and clamp; no battery), classify (19 vs 20, plug replaces low, full, none), applyOverride, criticalStep (fires once at <=10, re-arm on plugged, plugged never fires), edges.
-- [ ] 1.2 GREEN: `shell/logic/battery.mjs` (no spread; `v4Compat`).
-- [ ] 1.3 RED: `tests/sysStats.test.mjs` (parseCpu, cpuPercent, parseRam, malformed input gives null).
-- [ ] 1.4 GREEN: `shell/logic/sysStats.mjs`.
+- [x] 1.1 RED: `tests/battery.test.mjs` covering fromUPower (plugged = !onBattery or charging/full/pending-charge; percentage rounding and clamp; no battery), classify (19 vs 20, plug replaces low, full, none), applyOverride, criticalStep (fires once at <=10, re-arm on plugged, plugged never fires), edges.
+- [x] 1.2 GREEN: `shell/logic/battery.mjs` (no spread; `v4Compat`).
+- [x] 1.3 RED: `tests/sysStats.test.mjs` (parseCpu, cpuPercent, parseRam, malformed input gives null).
+- [x] 1.4 GREEN: `shell/logic/sysStats.mjs`.
 
 ## PR 2: Calendar, media, layout, format rules
 
