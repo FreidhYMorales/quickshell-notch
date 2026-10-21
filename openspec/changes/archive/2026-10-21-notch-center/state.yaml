@@ -13,12 +13,15 @@ phases:
   tasks: done (updated 2026-10-21: PRs 6-7 added, ArtThumb in PR 5, plugged layer in PR 4)
   apply: done (PRs 1-7; 7.8 confirmed by the user with a real player)
   verify: done (pass-with-warnings; 0 critical, 4 warnings, 3 suggestions)
-  archive: pending
+  archive: done (2026-10-21; main specs reconciled, see archive-report.md)
 artifacts:
-  proposal: openspec/changes/notch-center/proposal.md
-  spec: openspec/changes/notch-center/specs/
-  design: openspec/changes/notch-center/design.md
-  tasks: openspec/changes/notch-center/tasks.md
+  proposal: openspec/changes/archive/2026-10-21-notch-center/proposal.md
+  spec: openspec/changes/archive/2026-10-21-notch-center/specs/
+  design: openspec/changes/archive/2026-10-21-notch-center/design.md
+  tasks: openspec/changes/archive/2026-10-21-notch-center/tasks.md
+  verify_report: openspec/changes/archive/2026-10-21-notch-center/verify-report.md
+  archive_report: openspec/changes/archive/2026-10-21-notch-center/archive-report.md
+main_specs: [battery-service, media-service, system-status-services, center-idle-view, center-expanded-view, audio-visualizer, shell-surfaces, visual-tokens]
 chain_strategy: stacked-to-main
-next: [archive]
+next: [none]
 updated: 2026-10-21

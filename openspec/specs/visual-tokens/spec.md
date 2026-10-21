@@ -31,7 +31,7 @@ The family "IosevkaTerm Nerd Font" MUST be defined once, in Fonts.
 
 ### Requirement: Timings and layout
 
-Timings MUST include hover open (200 ms), reveal timeout (about 1.5 s) and hold-confirm (about 1 s). Layout MUST hold the idle-height token (logical units, same on all monitors), a per-monitor max centre width and the `reserveSpace`, `showPlaceholders` and smoke flags. `Layout.idleWidth` (260) and `Layout.cornerRadius` (18) define the idle notch geometry.
+Timings MUST include hover open (200 ms), reveal timeout (about 1.5 s) and hold-confirm (about 1 s). Layout MUST hold the idle-height token (logical units, same on all monitors), a per-monitor max centre width and the `reserveSpace`, `showPlaceholders` and smoke flags. `Layout.cornerRadius` defines the notch corner geometry. The idle notch width is content-driven (see `center-idle-view`); there is no `Layout.idleWidth` or `Layout.batterySide` token.
 
 #### Scenario: Max width
 - GIVEN a narrow monitor
@@ -56,3 +56,22 @@ Timings MUST include hover open (200 ms), reveal timeout (about 1.5 s) and hold-
 - GIVEN matugen output is missing
 - WHEN paletteFor is called
 - THEN a defined fallback palette is returned without errors
+
+### Requirement: Centre content tokens
+
+`shell/config/` MUST provide the centre-content tokens: battery thresholds (`Limits.batteryLow` 20, `Limits.batteryCritical` 10); the critical red colour in `Colours`; the week-strip radius (`Limits.weekRadius`); the media art and visualizer sizes in `Layout`; the expanded widths (`Layout.expandedWidth` for the full width, `Layout.expandedClockWidth` for the clock-only width); the cava and accent limits in `Limits`; and every new UI string in `Strings`, including the 24-hour clock format and the month and weekday names. Side-layer widths are derived from content, so no battery extra-width token exists. Literals for these MUST NOT appear outside `shell/config/`.
+
+#### Scenario: Threshold tokens
+- GIVEN the config module
+- WHEN `classify` receives the tokens
+- THEN 19% unplugged is `low` and 20% is `none`
+
+#### Scenario: Literal scan
+- GIVEN the new idle and expanded QML files
+- WHEN scanned for colour, duration, font or text literals
+- THEN none are found
+
+#### Scenario: Expanded within max
+- GIVEN the expanded width tokens
+- WHEN compared with `Layout.centerMaxWidth`
+- THEN the clamped result never exceeds it
