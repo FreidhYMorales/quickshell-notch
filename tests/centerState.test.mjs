@@ -269,3 +269,232 @@ test("ToastDismissed: a different id leaves the toast alone", () => {
   const shown = run(two(), { type: "ToastShown", id: 1, critical: false });
   assert.deepEqual(run(shown, { type: "ToastDismissed", id: 9 }), shown);
 });
+
+// --- Mid-flow rules (PR 2) ---
+
+const play = (events, start = two()) => {
+  let state = start;
+  const effects = [];
+  for (const ev of events) {
+    const r = reduce(state, ev);
+    state = r.state;
+    effects.push(...r.effects);
+  }
+  return { state, effects };
+};
+
+test("PolkitRequest: stores the flow on the requesting monitor", () => {
+  const { state } = play([{
+    type: "PolkitRequest",
+    flowId: "f1",
+    monitor: "A",
+  }]);
+  assert.deepEqual(state.global.polkit, { flowId: "f1", owner: "A" });
+});
+
+test("PolkitRequest: clears an in-progress power hold", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A", action: "poweroff" },
+    { type: "HoldStart", action: "poweroff" },
+    { type: "PolkitRequest", flowId: "f1", monitor: "A" },
+  ]);
+  assert.equal(state.global.keyboard.hold, null);
+  assert.equal(state.global.polkit.flowId, "f1");
+});
+
+test("PolkitRequest: unknown monitor is ignored", () => {
+  const { state } = play([{
+    type: "PolkitRequest",
+    flowId: "f1",
+    monitor: "Z",
+  }]);
+  assert.equal(state.global.polkit, null);
+});
+
+test("PolkitEnded: matching flow clears, other flow does not", () => {
+  const open = [{ type: "PolkitRequest", flowId: "f1", monitor: "A" }];
+  assert.equal(
+    play([...open, { type: "PolkitEnded", flowId: "f1" }]).state.global.polkit,
+    null,
+  );
+  assert.equal(
+    play([...open, { type: "PolkitEnded", flowId: "other" }]).state.global
+      .polkit.flowId,
+    "f1",
+  );
+});
+
+test("PolkitCancel: clears the flow and emits polkit.cancel", () => {
+  const { state, effects } = play([
+    { type: "PolkitRequest", flowId: "f1", monitor: "A" },
+    { type: "PolkitCancel" },
+  ]);
+  assert.equal(state.global.polkit, null);
+  assert.deepEqual(effects, [{ type: "polkit.cancel", flowId: "f1" }]);
+});
+
+test("PolkitCancel: without a flow does nothing", () => {
+  const { state, effects } = play([{ type: "PolkitCancel" }]);
+  assert.deepEqual(state, two());
+  assert.deepEqual(effects, []);
+});
+
+test("Hold: start sets the hold, cancel clears it", () => {
+  const open = { type: "PowerOpen", monitor: "A", action: "poweroff" };
+  const held = play([open, { type: "HoldStart", action: "poweroff" }]);
+  assert.deepEqual(held.state.global.keyboard.hold, { action: "poweroff" });
+  const cancelled = play([open, { type: "HoldStart", action: "poweroff" }, {
+    type: "HoldCancel",
+  }]);
+  assert.equal(cancelled.state.global.keyboard.hold, null);
+  assert.deepEqual(cancelled.effects, []);
+});
+
+test("Hold: start without a power menu is ignored", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "HoldStart", action: "poweroff" },
+  ]);
+  assert.equal(state.global.keyboard.hold, null);
+});
+
+test("HoldComplete: emits power.run and clears the hold", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "HoldStart", action: "reboot" },
+    { type: "HoldComplete" },
+  ]);
+  assert.deepEqual(effects, [{ type: "power.run", action: "reboot" }]);
+  assert.equal(state.global.keyboard.hold, null);
+});
+
+test("HoldComplete: without a hold emits nothing", () => {
+  const { effects } = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "HoldComplete" },
+  ]);
+  assert.deepEqual(effects, []);
+});
+
+const busy = [
+  { type: "Hover", monitor: "A", on: true },
+  { type: "ExpandedToggle", monitor: "B" },
+  { type: "PowerOpen", monitor: "A", action: "poweroff" },
+  { type: "PolkitRequest", flowId: "f1", monitor: "A" },
+];
+
+test("Locked on: closes everything and emits polkit.cancel", () => {
+  const { state, effects } = play([...busy, { type: "Locked", on: true }]);
+  assert.equal(state.global.locked, true);
+  assert.equal(state.global.keyboard, null);
+  assert.equal(state.global.polkit, null);
+  assert.deepEqual(state.monitors.A, {
+    hovered: false,
+    pinned: false,
+    toastHovered: false,
+  });
+  assert.equal(state.monitors.B.pinned, false);
+  assert.deepEqual(effects, [{ type: "polkit.cancel", flowId: "f1" }]);
+});
+
+test("Locked on: no polkit means no effect", () => {
+  const { effects } = play([{ type: "Locked", on: true }]);
+  assert.deepEqual(effects, []);
+});
+
+test("Locked: keyboard and polkit opens are ignored until unlock", () => {
+  const locked = { type: "Locked", on: true };
+  const opens = [
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "PowerOpen", monitor: "A" },
+    { type: "PolkitRequest", flowId: "f2", monitor: "A" },
+  ];
+  const during = play([locked, ...opens]).state.global;
+  assert.equal(during.keyboard, null);
+  assert.equal(during.polkit, null);
+  const after = play([locked, { type: "Locked", on: false }, opens[0]]).state
+    .global;
+  assert.equal(after.locked, false);
+  assert.equal(after.keyboard.kind, "launcher");
+});
+
+test("ScreensChanged: removing the keyboard owner closes the keyboard", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "ScreensChanged", names: ["B"] },
+  ]);
+  assert.deepEqual(Object.keys(state.monitors), ["B"]);
+  assert.equal(state.global.keyboard, null);
+  assert.deepEqual(effects, []);
+});
+
+test("ScreensChanged: removing the polkit owner cancels the flow", () => {
+  const { state, effects } = play([
+    { type: "PolkitRequest", flowId: "f1", monitor: "A" },
+    { type: "ScreensChanged", names: ["B"] },
+  ]);
+  assert.equal(state.global.polkit, null);
+  assert.deepEqual(effects, [{ type: "polkit.cancel", flowId: "f1" }]);
+});
+
+test("ScreensChanged: removing another monitor is harmless", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "ScreensChanged", names: ["A"] },
+  ]);
+  assert.deepEqual(Object.keys(state.monitors), ["A"]);
+  assert.equal(state.global.keyboard.owner, "A");
+  assert.deepEqual(effects, []);
+});
+
+test("Dnd and ToastHover: set their flags", () => {
+  const { state } = play([
+    { type: "Dnd", on: true },
+    { type: "ToastHover", monitor: "B", on: true },
+  ]);
+  assert.equal(state.global.dnd, true);
+  assert.equal(state.monitors.B.toastHovered, true);
+  assert.equal(state.monitors.A.toastHovered, false);
+});
+
+test("Suppression: DND blocks a normal toast and sets blinkDot", () => {
+  const { state } = play([
+    { type: "Dnd", on: true },
+    { type: "ToastShown", id: 1, critical: false },
+  ]);
+  assert.equal(state.global.toast, null);
+  assert.equal(state.global.blinkDot, true);
+});
+
+test("Suppression: critical bypasses DND", () => {
+  const { state } = play([
+    { type: "Dnd", on: true },
+    { type: "ToastShown", id: 1, critical: true },
+  ]);
+  assert.equal(state.global.toast.id, 1);
+  assert.equal(state.global.blinkDot, false);
+});
+
+test("Suppression: an open keyboard state mutes toasts on every monitor", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "ToastShown", id: 1, critical: false },
+  ]);
+  assert.equal(state.global.toast, null);
+  assert.equal(state.global.blinkDot, true);
+});
+
+test("Suppression: an open polkit mutes toasts", () => {
+  const { state } = play([
+    { type: "PolkitRequest", flowId: "f1", monitor: "B" },
+    { type: "ToastShown", id: 1, critical: true },
+  ]);
+  assert.equal(state.global.toast, null);
+  assert.equal(state.global.blinkDot, true);
+});
+
+test("Suppression: no DND and nothing open lets the toast through", () => {
+  const { state } = play([{ type: "ToastShown", id: 1, critical: false }]);
+  assert.equal(state.global.toast.id, 1);
+  assert.equal(state.global.blinkDot, false);
+});
