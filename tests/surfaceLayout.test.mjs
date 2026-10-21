@@ -89,3 +89,40 @@ test("expandedHeight sets the centre slot height only", () => {
 test("without expandedHeight the centre keeps the idle height", () => {
   assert.equal(layoutFor(1920, "DP-1", tokens).c.height, 32);
 });
+
+test("cornerHeight sets the TL slot height only", () => {
+  const l = layoutFor(1920, "DP-1", { ...tokens, cornerHeight: 44 });
+  assert.equal(l.tl.height, 44);
+  assert.equal(l.tr.height, 32);
+  assert.equal(l.bl.height, 32);
+  assert.equal(l.c.height, 32);
+});
+
+test("osdHeight sets the BL and VR slot heights only", () => {
+  const l = layoutFor(1920, "DP-1", { ...tokens, osdHeight: 36 });
+  assert.equal(l.bl.height, 36);
+  assert.equal(l.vr.height, 36);
+  assert.equal(l.tl.height, 32);
+  assert.equal(l.tr.height, 32);
+});
+
+test("without cornerHeight/osdHeight every slot keeps the idle height", () => {
+  const l = layoutFor(1920, "DP-1", tokens);
+  assert.deepEqual(
+    [l.tl.height, l.bl.height, l.vr.height, l.tr.height],
+    [32, 32, 32, 32],
+  );
+});
+
+test("heights never change x or width of any slot", () => {
+  const a = layoutFor(1366, "DP-1", tokens);
+  const b = layoutFor(1366, "DP-1", {
+    ...tokens,
+    cornerHeight: 44,
+    osdHeight: 36,
+  });
+  for (const k of ["tl", "bl", "c", "vr", "tr"]) {
+    assert.equal(b[k].x, a[k].x, k);
+    assert.equal(b[k].width, a[k].width, k);
+  }
+});

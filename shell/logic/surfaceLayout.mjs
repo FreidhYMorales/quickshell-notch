@@ -4,7 +4,9 @@
 
 /**
  * tokens: { idleHeight, cornerWidth, osdWidth, gap, centerMaxWidth,
- *           centerMaxWidthByMonitor?, expandedHeight? }
+ *           centerMaxWidthByMonitor?, expandedHeight?, cornerHeight?,
+ *           osdHeight? }
+ * cornerHeight sizes TL, osdHeight sizes BL and VR; both default to idleHeight.
  */
 export function layoutFor(screenWidth, monitorName, tokens) {
   const { gap } = tokens;
@@ -17,12 +19,13 @@ export function layoutFor(screenWidth, monitorName, tokens) {
   const cx = (screenWidth - width) / 2;
   const osd = Math.min(tokens.osdWidth, Math.max(0, cx - corner - 2 * gap));
   // Centre each OSD in the free space between its corner and the centre.
+  const osdHeight = tokens.osdHeight ?? height;
   const blx = (corner + cx) / 2 - osd / 2;
   return {
-    tl: { x: 0, width: corner, height },
-    bl: { x: blx, width: osd, height },
+    tl: { x: 0, width: corner, height: tokens.cornerHeight ?? height },
+    bl: { x: blx, width: osd, height: osdHeight },
     c: { x: cx, width, height: tokens.expandedHeight ?? height },
-    vr: { x: screenWidth - blx - osd, width: osd, height },
+    vr: { x: screenWidth - blx - osd, width: osd, height: osdHeight },
     tr: { x: screenWidth - corner, width: corner, height },
   };
 }
