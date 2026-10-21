@@ -151,3 +151,30 @@ No new logic was needed, so no new tests: full suite stays 168/168.
 - Spec "line-power device" reworded to `onBattery`.
 - Recorder port deferred to notch-control-center.
 - Spec names `idleLayout` / `selectIdleLayer` / `parseCavaFrame` vs design `idleWidth` / `sideLayer` / `parseFrame`.
+
+## PR 6 of 7: side-layer and visualizer rules (tasks 6.1-6.5, done)
+
+### TDD Cycle Evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 6.1/6.2 | `tests/sideLayer.test.mjs` | Unit | N/A (new) | `ERR_MODULE_NOT_FOUND` before `sideLayer.mjs` | 18/18 | 10-row priority table, pause release, 6 widths, composition with `idleWidth` (clock offset 0, cap) | `deno fmt` only |
+| 6.3/6.4 | `tests/visualizer.test.mjs` | Unit | N/A (new) | `ERR_MODULE_NOT_FOUND` before `visualizer.mjs` | 25/25 (one test regex typo fixed, not the code: `/rm/` matched "format") | Clamp rows incl. NaN, negative, fractional; injection string; 10 frame cases + real cava frame; flat line, mirror, spacing; accent pick, greys, darks, empty | `pickAccent` threshold condition simplified |
+| 6.5 | N/A | Gate | N/A | N/A | `make check` green (211 tests) | N/A | N/A |
+
+Total: 43 new tests, full suite 211/211.
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test | `node --test tests/sideLayer.test.mjs tests/visualizer.test.mjs`: 43 pass, 0 fail |
+| Runtime harness | cava 1.0.0 run for 2 s with a generated config in the scratchpad (`timeout 2 cava -p ...`): frames are `0;0;0;0;0;0;` + LF (silence), stored in `tests/fixtures/cava-frame.txt`. QML integration is PR 7 |
+| Rollback | Delete `shell/logic/{sideLayer,visualizer}.mjs`, their two tests and `tests/fixtures/cava-frame.txt` |
+
+### Notes
+
+- cava option names verified for the generated config: `[general] bars, framerate, autosens`; `[output] method=raw, raw_target=/dev/stdout, data_format=ascii, ascii_max_range, bar_delimiter=59, frame_delimiter=10, channels=mono`. All accepted by cava 1.0.0; output is one line per frame with a trailing `;`.
+- `parseFrame(line, bars, maxRange)` requires exactly `bars` tokens of digits only; values above max clamp to 1.
+- `pickAccent` rejects colours with HSV saturation below 0.15 (internal constant) or luma below `minLuma`; ties keep the first.
+- Only silence was captured (no audio playing); non-zero frames use the same format.

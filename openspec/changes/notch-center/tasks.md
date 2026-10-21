@@ -80,15 +80,15 @@ Naming (design wins over spec wording; note for archive): spec `idleLayout({base
 
 Spec: center-idle-view (Side-layer priority, Symmetric widths), audio-visualizer (Frame parsing, Mirrored bar geometry, Bar colour).
 
-- [ ] 6.1 RED: `tests/sideLayer.test.mjs`: full 10-row priority table (low > media > charging/plugged/full > none; charging+playing = media; low+playing = low; pause releases to charging); `sideWidth(layer, {battery, media})` returns 0 for none, `battery` for charging/plugged/low/full, `media` for media; widths composed with merged `idleWidth` keep clock offset 0 and cap at max.
-- [ ] 6.2 GREEN: `shell/logic/sideLayer.mjs` (`sideLayer`, `sideWidth`; no spread; `v4Compat`).
-- [ ] 6.3 RED: `tests/visualizer.test.mjs`:
+- [x] 6.1 RED: `tests/sideLayer.test.mjs`: full 10-row priority table (low > media > charging/plugged/full > none; charging+playing = media; low+playing = low; pause releases to charging); `sideWidth(layer, {battery, media})` returns 0 for none, `battery` for charging/plugged/low/full, `media` for media; widths composed with merged `idleWidth` keep clock offset 0 and cap at max.
+- [x] 6.2 GREEN: `shell/logic/sideLayer.mjs` (`sideLayer`, `sideWidth`; no spread; `v4Compat`).
+- [x] 6.3 RED: `tests/visualizer.test.mjs`:
   - `cavaConfig({bars, framerate, maxRange})`: expected text; clamping to [1,64], [1,60], [1,1000]; injection input (`"6\n[output]"`), NaN, negative and fractional values emit clamped integers only.
   - `parseFrame(line, bars, maxRange)`: trailing delimiter, no trailing delimiter, clamp above max, short and long frame, empty, non-numeric (`1;x;3;`), negative token -> `null`.
   - `barGeometry(levels, {height, barWidth, gap, minHeight})`: all-zero flat line (`minHeight` thick), mirror symmetry (`y = (height - h)/2`), x spacing.
   - `pickAccent(colours, {minLuma})`: most saturated pick, greys and darks rejected -> -1, empty -> -1.
-- [ ] 6.4 GREEN: `shell/logic/visualizer.mjs` (`cavaConfig`, `parseFrame`, `barGeometry`, `pickAccent`).
-- [ ] 6.5 Acceptance: `node --test tests/` green; `make check` green. Runtime: N/A (pure logic, not yet imported by QML).
+- [x] 6.4 GREEN: `shell/logic/visualizer.mjs` (`cavaConfig`, `parseFrame`, `barGeometry`, `pickAccent`).
+- [x] 6.5 Acceptance: `node --test tests/` green; `make check` green. Runtime: N/A (pure logic, not yet imported by QML).
 
 ## PR 7: Cava service, visualizer, media layer wiring
 
