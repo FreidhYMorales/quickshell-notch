@@ -78,7 +78,9 @@ test("classify follows the spec table", () => {
     [{ percentage: 20 }, "none"],
     [{ percentage: 80 }, "none"],
     [{ plugged: true, charging: true, percentage: 5 }, "charging"],
-    [{ plugged: true, percentage: 10 }, "none"],
+    // Plugged but not charging (e.g. an 80% charge limit): show "plugged".
+    [{ plugged: true, percentage: 80 }, "plugged"],
+    [{ plugged: true, percentage: 10 }, "plugged"],
   ];
   assert.deepEqual(
     rows.map(([x]) => classify(bat(x), L)),

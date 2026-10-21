@@ -21,12 +21,13 @@ export function fromUPower({ present, onBattery, state, fraction }) {
   };
 }
 
-// One layer for the idle notch: none, charging, full or low.
+// One layer for the idle notch: none, charging, plugged, full or low.
+// "plugged" = on AC but not charging, e.g. held at a charge limit (80%).
 export function classify(input, limits) {
   if (!input.present) return "none";
   if (input.plugged) {
     if (input.full) return "full";
-    return input.charging ? "charging" : "none";
+    return input.charging ? "charging" : "plugged";
   }
   return input.percentage < limits.low ? "low" : "none";
 }
