@@ -46,8 +46,8 @@ Vocabulary (design wins; mode is derived by `viewFor`): spec `powerMenu`=`power`
 - [x] 2.3 RED: ScreensChanged removal of the owner monitor closes keyboard or cancels polkit; other monitor removal is harmless
 - [x] 2.4 RED: suppression (Dnd non-critical sets `blinkDot`; critical bypasses; open keyboard or polkit mutes all monitors)
 - [x] 2.5 GREEN: add the rules in `shell/logic/centerState.mjs`
-- [ ] 2.6 RED `tests/centerView.test.mjs`: priority Polkit > Power > Launcher > Toast > Expanded > Idle; return to previous mode; toast returns to expanded while hovered; critical indicator; `keyboardFocus`
-- [ ] 2.7 GREEN `shell/logic/centerView.mjs` `viewFor`
+- [x] 2.6 RED `tests/centerView.test.mjs`: priority Polkit > Power > Launcher > Toast > Expanded > Idle; return to previous mode; toast returns to expanded while hovered; critical indicator; `keyboardFocus`
+- [x] 2.7 GREEN `shell/logic/centerView.mjs` `viewFor`
 
 ## Phase 3: Geometry and layout (PR 3)
 
