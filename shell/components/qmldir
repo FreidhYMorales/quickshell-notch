@@ -6,3 +6,4 @@ NotchEarShape NotchEarShape.qml
 NotchSurface NotchSurface.qml
 NotchZone NotchZone.qml
 SpacerSurface SpacerSurface.qml
+Visualizer Visualizer.qml

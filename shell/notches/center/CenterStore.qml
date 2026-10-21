@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import QtQuick
 import "../../services"
+import "../../logic/sideLayer.mjs" as SideLayer
 import "../../logic/centerState.mjs" as CenterState
 import "../../logic/centerView.mjs" as CenterView
 
@@ -13,6 +14,9 @@ Singleton {
     id: root
 
     property var state: CenterState.initialState(screenNames())
+
+    // What the idle notch shows in its side slots: low > media > battery.
+    readonly property string sideLayer: SideLayer.sideLayer(Battery.layer, Mpris.playing)
 
     function screenNames(): var {
         const names = [];
@@ -35,6 +39,13 @@ Singleton {
     // Effects whose services do not exist yet are logged only.
     function run(effect) {
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));
+    }
+
+    // cava runs only while the media layer shows.
+    Binding {
+        target: Cava
+        property: "wanted"
+        value: root.sideLayer === "media"
     }
 
     Connections {

@@ -13,9 +13,9 @@ NotchSurface {
 
     readonly property var view: CenterStore.viewFor(screen.name)
     readonly property int idleW: CenterLayout.idleWidth({
-        base: Layout.idleWidth,
-        side: Layout.batterySide,
-        layer: Battery.layer,
+        base: idle.baseWidth,
+        side: idle.sideNeed,
+        layer: idle.batteryLayer,
         max: slot.width
     })
     readonly property var size: CenterLayout.shapeFor(view.mode, {
@@ -55,6 +55,8 @@ NotchSurface {
         }
 
         CenterIdle {
+            id: idle
+
             anchors.fill: parent
             visible: !root.expanded
             screen: root.screen

@@ -15,6 +15,9 @@ Singleton {
     // Polling (milliseconds)
     readonly property int sysPoll: 2000
 
+    // Wait before restarting a cava that exited while a player is playing.
+    readonly property int cavaRestart: 2000
+
     // Animation durations (milliseconds)
     readonly property int animFast: 120
     readonly property int animNormal: 220

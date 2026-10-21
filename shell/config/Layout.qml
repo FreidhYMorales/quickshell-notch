@@ -11,15 +11,13 @@ Singleton {
     readonly property int earRadius: 12
     readonly property int cornerRadius: 18
 
-    // Idle centre notch width, including the 2 * earRadius flare of its ears.
-    readonly property int idleWidth: 260
+    // Idle notch padding either side of the row, inside the ears. The width
+    // itself follows the content (logic/centerLayout.mjs).
+    readonly property int idlePad: 16
 
     // Centre width cap; layoutFor shrinks it further on narrow screens.
     readonly property int centerMaxWidth: 600
     readonly property var centerMaxWidthByMonitor: ({})
-
-    // Idle battery layers reserve this much on each side of the clock.
-    readonly property int batterySide: 36
 
     // Idle row: arc meters, overlay dots and the gap between row items.
     readonly property int arcSize: 20
@@ -27,6 +25,15 @@ Singleton {
     readonly property int arcIcon: 9
     readonly property int dotSize: 6
     readonly property int rowGap: 8
+
+    // Idle media layer: mini album art on the left, mirrored bars on the right.
+    readonly property int mediaArt: 22
+    readonly property int mediaArtRadius: 6
+    readonly property int mediaArtGlyph: 11
+    readonly property int vizBarWidth: 3
+    readonly property int vizGap: 2
+    readonly property int vizMinHeight: 2
+    readonly property int vizHeight: 18
 
     // Expanded centre notch: full width with a player, narrower clock card alone.
     readonly property int expandedHeight: 112

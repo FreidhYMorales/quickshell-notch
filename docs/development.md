@@ -24,13 +24,14 @@ Line endings: `.gitattributes` forces LF (`* text=auto eol=lf`). A clone made be
 | matugen | 4.x | Colour scheme generation |
 | ttf-iosevkaterm-nerd | any | UI font (IosevkaTerm Nerd Font) |
 | make | any | `make check` quality gate |
+| cava | 1.0 | Audio visualizer in the idle media layer (optional at runtime: without it only the visualizer hides) |
 
 ## Install prerequisites
 
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed qt6-declarative nodejs deno matugen ttf-iosevkaterm-nerd make
+sudo pacman -S --needed qt6-declarative nodejs deno matugen ttf-iosevkaterm-nerd make cava
 yay -S quickshell-git
 ```
 

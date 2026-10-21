@@ -8,6 +8,14 @@ Singleton {
     readonly property int batteryLow: 20
     // At or below this (unplugged) the one-shot critical event fires.
     readonly property int batteryCritical: 10
+    // cava visualizer: bars, frames per second and the ascii range of a bar.
+    readonly property int cavaBars: 6
+    readonly property int cavaFps: 30
+    readonly property int cavaMaxRange: 100
+    // Restarts of a dead cava per play session before the visualizer gives up.
+    readonly property int cavaRetries: 3
+    // Art colours darker than this (luma 0-1) are not used as the accent.
+    readonly property real accentMinLuma: 0.25
     // Days shown on each side of today in the week strip.
     readonly property int weekRadius: 3
 }

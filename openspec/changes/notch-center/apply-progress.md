@@ -178,3 +178,33 @@ Total: 43 new tests, full suite 211/211.
 - `parseFrame(line, bars, maxRange)` requires exactly `bars` tokens of digits only; values above max clamp to 1.
 - `pickAccent` rejects colours with HSV saturation below 0.15 (internal constant) or luma below `minLuma`; ties keep the first.
 - Only silence was captured (no audio playing); non-zero frames use the same format.
+
+## PR 7 of 7: Cava, visualizer, media layer (tasks 7.1-7.7, 7.9 done; 7.8 partial)
+
+Also fixed (user request): the idle width is content-driven (`idleBase`, `sideExtent`, both tested); side items sit beside the row and both sides grow equally, so the clock stays centred. `Layout.idleWidth` and `Layout.batterySide` removed; `Layout.idlePad` added.
+
+### TDD Cycle Evidence
+
+| Task | Test file | RED | GREEN | REFACTOR |
+|------|-----------|-----|-------|----------|
+| width fix | `tests/centerLayout.test.mjs` (+4) | `idleBase is not defined` | 215/215 | none |
+| 7.1-7.5 | N/A (QML) | N/A: logic from PR 6 | `make check` green (215 tests) | `Cava` retry handler on `onRunningChanged` (covers a missing binary, which emits no `exited`) |
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test | `node --test tests/centerLayout.test.mjs`; `make check`: 215 pass, qmlformat, qmllint (pre-existing warnings only), deno, smoke |
+| Runtime harness | Scratch copies of `shell/` with a probe, `timeout qs -p`, fake MPRIS player + 220 Hz tone. Notch widths: none 217, charging 265, media 289 (media without cava 277), low+media 265 (low wins, cava stopped). Clock offset 0 in all. Cava frames arrive and move (`[0,91,0,0,0,0]`), stop with the player. Stub cava that exits: 3 restarts then `available=false`, art kept. No `cava` on PATH: same path, no errors beyond Quickshell's own warning. Cover colour `#e0402a` picked as accent |
+| Rollback | Revert both commits: Cava, Visualizer, Mpris accent, CenterIdle/CenterStore/CenterSurface, tokens, docs |
+
+### Notes
+
+- Pending (7.8, needs the user): real player incl. https art (Spotify), art visual check, cava CPU. `pkill cava` was not run (denied); the stub covers the same path.
+- Quickshell hot-reloads: the user's running shell picks up the working tree.
+- `FileView` skips `saved` when the file is unchanged, so `onLoaded` marks the config as written when the text matches.
+- Archive notes: name mapping (spec `parseCavaFrame` vs `parseFrame`), https art fallback, `plugged` layer.
+
+## Task 7.8 (user, 2026-10-21)
+
+Confirmed live with real players (browser, ncmpcpp via mpd-mpris): art left, mirrored bars right, clock centred, pause flattens the bars, low battery (< 20%) wins over media. Follow-up tuning on this branch: battery glyph and percent use `Fonts.idleSide` (15 px, matching the idle clock). Not exercised by the user: `pkill cava` restart path and a missing cava binary (covered by the agent's stub runs).
