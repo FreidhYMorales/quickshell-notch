@@ -8,5 +8,5 @@ Singleton {
     readonly property string brightness: "Brightness"
     readonly property string volume: "Volume"
     readonly property string controlCenter: "Control center"
-    readonly property string center: "Notifications"
+    readonly property string center: "Notch"
 }
