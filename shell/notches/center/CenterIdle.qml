@@ -55,7 +55,7 @@ Item {
             text: Format.shortDate(Time.month, Time.dayOfMonth, Strings.months) + Strings.dateTimeSeparator + Format.clock(Time.hours, Time.minutes)
             color: root.scheme.onSurface
             font.family: Fonts.family
-            font.pixelSize: Fonts.body
+            font.pixelSize: Fonts.idleClock
         }
 
         ArcMeter {

@@ -116,3 +116,38 @@ Total: 4 new tests, full suite 168/168. `make check` green (qmlformat, qmllint, 
 - New tokens: `Layout.{arcSize,arcRing,arcIcon,dotSize,rowGap}`, `Colours.recording`, `Timings.blink`, `Fonts.{body,small}`, `Strings.{glyphCpu,glyphRam,glyphBatteryFull,glyphBatteryLow,dateTimeSeparator}`.
 - Startup caveat: the critical log is lost if the battery is already at or below 10% when the shell starts (the store's `Connections` attach after the first `Battery.refresh()`); later transitions log normally.
 - Rec dot sits left of the row, unread dot right of it (both outside the clock layout). The unread source is not wired in this change.
+
+## PR 5 of 7: expanded views and ArtThumb (tasks 5.0-5.5, done)
+
+### TDD Cycle Evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 5.0-5.3 | N/A (QML) | Component / surface | `make check` before (168 tests) | N/A: no new logic; `weekStrip`, `expandedWidth`, `shapeFor`, `trackText`, `clock` already tested in PRs 1-2 | `make check` green (168/168, qmlformat, qmllint, deno, smoke) | Scratch `qs -p` with and without a fake MPRIS player | Inline `Control` component in `CenterMedia`; `pragma ComponentBehavior: Bound` for the week delegates |
+| 5.4 | N/A | Manual / scratch | N/A | N/A | Probe log and screenshot, see below | N/A | N/A |
+| 5.5 | N/A | Gate | N/A | N/A | `make check` green | N/A | N/A |
+
+No new logic was needed, so no new tests: full suite stays 168/168.
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test | `make check`: 168 pass, 0 fail; qmlformat, qmllint (only pre-existing warnings in `CenterSurface`/`Mpris`), deno, smoke green |
+| Runtime harness | Scratch copy of `shell/` with a probe (forced `Hover` dispatch, log after 1.5 s), `timeout 6 qs -p`, never left running. No player: `mode=expanded shape=300x180 hasPlayer=false`. Fake MPRIS player (python Gio, own bus name, killed after 9 s): `shape=560x180 hasPlayer=true`, title shown. Screenshot (grim) confirmed: art glyph fallback, title/album/artist, prev/pause/next, clock card with week strip, today highlighted, edges faded |
+| Rollback | Revert the two commits: `ArtThumb` + token additions; `CenterMedia/CenterClockCard/CenterExpanded`, `CenterSurface` wiring, `qmldir` |
+
+### Notes
+
+- Hover opens through the existing `Hover` event; the single shape animates width and height (`Behavior` with `Anim`) and stays the mask.
+- Expanded replaces the idle row (`CenterIdle.visible = !expanded`), so rings are hidden. No player: the clock card fills the 300 px shape.
+- Week strip binds to `Time.year/month/dayOfMonth`, so midnight rolls over without extra wiring. Edge fade is `1 - |index - radius| / (radius + 1)`; no literal.
+- New tokens: `Layout.{expandedPad,expandedGap,clockCardWidth,cardRadius,artSize,artRadius,artGlyph,controlGap,weekRadius,weekCardPad}`, `Fonts.{title,control,display}`, `Strings.{glyphMusic,glyphPrev,glyphNext,glyphPlay,glyphPause}`, `Colours.dimAlpha`.
+- Literal scan: no colour, timing or text literals outside `shell/config/` in the new files (`"transparent"` and layout margins only).
+- Not exercised here: real cover art (the fake player has none), midnight rollover live, narrow monitor (covered by the tested `expandedWidth`).
+
+### Archive notes (5.5)
+
+- Spec "line-power device" reworded to `onBattery`.
+- Recorder port deferred to notch-control-center.
+- Spec names `idleLayout` / `selectIdleLayer` / `parseCavaFrame` vs design `idleWidth` / `sideLayer` / `parseFrame`.

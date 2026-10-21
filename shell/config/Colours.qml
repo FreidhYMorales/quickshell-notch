@@ -18,6 +18,8 @@ Singleton {
     readonly property color recording: "#ff3b30"
     // Opacity of the unfilled part of an arc meter.
     readonly property real trackAlpha: 0.2
+    // Opacity of secondary text and of disabled controls.
+    readonly property real dimAlpha: 0.6
 
     // Used until (or unless) matugen output is available.
     readonly property var fallback: ({

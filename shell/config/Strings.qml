@@ -28,4 +28,11 @@ Singleton {
     readonly property string glyphBatteryLow: "\uf243"
     readonly property string glyphBolt: "\uf0e7"
     readonly property string glyphPlug: "\uf1e6"
+
+    // Media glyphs: placeholder art and transport controls.
+    readonly property string glyphMusic: "\udb81\udf5a"
+    readonly property string glyphPrev: "\uf048"
+    readonly property string glyphNext: "\uf051"
+    readonly property string glyphPlay: "\uf04b"
+    readonly property string glyphPause: "\uf04c"
 }

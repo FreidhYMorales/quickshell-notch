@@ -6,9 +6,8 @@ import "../../services"
 
 // Centre notch (slot c), one per monitor. The view comes from the shared
 // CenterStore. One shape item is both the input mask and the hover zone; its
-// width follows the battery layer (symmetric, so the clock stays put). The
-// expanded shape has no content yet, so both modes use the idle size until
-// the expanded views arrive.
+// width follows the battery layer (symmetric, so the clock stays put) when
+// idle, and the player presence when expanded; it animates between the two.
 NotchSurface {
     id: root
 
@@ -21,11 +20,17 @@ NotchSurface {
     })
     readonly property var size: CenterLayout.shapeFor(view.mode, {
         idle: idleW,
-        expanded: idleW
+        expanded: CenterLayout.expandedWidth({
+            hasPlayer: Mpris.hasPlayer,
+            full: Layout.expandedWidth,
+            clockOnly: Layout.expandedClockWidth,
+            max: slot.width
+        })
     }, {
         idle: Layout.idleHeight,
-        expanded: Layout.idleHeight
+        expanded: Layout.expandedHeight
     })
+    readonly property bool expanded: view.mode === "expanded"
 
     slotName: "c"
     wantsKeyboard: view.keyboardFocus === "exclusive"
@@ -45,10 +50,21 @@ NotchSurface {
             Anim {}
         }
 
+        Behavior on height {
+            Anim {}
+        }
+
         CenterIdle {
             anchors.fill: parent
+            visible: !root.expanded
             screen: root.screen
             view: root.view
+        }
+
+        CenterExpanded {
+            anchors.fill: parent
+            visible: root.expanded
+            screen: root.screen
         }
     }
 
