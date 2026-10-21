@@ -385,14 +385,16 @@ One SDD change per phase, in order. Each phase ends with `make check` green and 
 
 | # | SDD change | Scope (MUST rows) | Est. dev-days |
 |---|---|---|---|
-| 1 | `notch-foundation` | Shell skeleton (surfaces per monitor, spacer zone, masks, ears, tokens, `NOTCH_SMOKE`), `Session`, `Hypr` wrapper, centre state machine reducer (pure logic, per-monitor + global inputs, mid-flow rules) | 6.5 |
-| 2 | `notch-center` | Battery (UPower), Mpris, SysInfo/Time reuse; idle notch + low-battery layer + 10% toast hook + recording dot; expanded hover (media + week) | 5.5 |
-| 3 | `notch-workspaces-osd` | Workspaces notch; Audio (Pipewire); volume/brightness OSDs | 5.5 |
+| 1 | `notch-foundation` | Shell skeleton (surfaces per monitor, spacer zone, masks, ears, tokens, `NOTCH_SMOKE`), `Session`, `Hypr` wrapper, centre state machine reducer (pure logic, per-monitor + global inputs, mid-flow rules) | 6.25 |
+| 2 | `notch-center` | Battery (UPower), Mpris, SysInfo/Time reuse; idle notch + low-battery layer + 10% toast hook + recording dot; expanded hover (media + week) | 4.25 |
+| 3 | `notch-workspaces-osd` | Workspaces notch; Audio (Pipewire); volume/brightness OSDs | 5.25 |
 | 4 | `notch-notifications` | Notifs rewrite (tracked, id-keyed, cap 50, DND, critical `!`); toast + unread dot | 3.5 |
 | 5 | `notch-control-center` | Control center root, tiles (rfkill/BT checks first), tray row, notifications subpage | 4.5 |
 | 6 | `notch-launcher-power` | Launcher apps + commands; wallpaper/theme/keybinds views; power menu; polkit | 6.5 |
 | 7 | `notch-cutover` | Background surface + IdleInhibitor + hyprpaper fallback; lock integration; state import; Hyprland cutover (exec, env, IPC, keybinds, sleep hook, rollback) | 3.5 |
-| 8+ | `notch-polish-*` | SHOULD items in the Scope order | 7 |
+| 8+ | `notch-polish-*` | SHOULD items in the Scope order | 5.75 |
+
+Phases 1-7 = 33.75 dev-days (the MUST total).
 
 Superseded: the old bar config and its paused `modules/notch` attempt (reuse only per the reuse map). No earlier proposal/specs exist.
 
