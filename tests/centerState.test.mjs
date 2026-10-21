@@ -487,10 +487,31 @@ test("Suppression: an open keyboard state mutes toasts on every monitor", () => 
 test("Suppression: an open polkit mutes toasts", () => {
   const { state } = play([
     { type: "PolkitRequest", flowId: "f1", monitor: "B" },
-    { type: "ToastShown", id: 1, critical: true },
+    { type: "ToastShown", id: 1, critical: false },
   ]);
   assert.equal(state.global.toast, null);
   assert.equal(state.global.blinkDot, true);
+});
+
+test("Suppression: a muted critical toast goes straight to the indicator", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "ToastShown", id: 1, critical: true },
+  ]);
+  assert.deepEqual(state.global.toast, {
+    id: 1,
+    critical: true,
+    phase: "indicator",
+  });
+  assert.equal(state.global.blinkDot, true);
+});
+
+test("Suppression: polkit also sends a critical toast to the indicator", () => {
+  const { state } = play([
+    { type: "PolkitRequest", flowId: "f1", monitor: "B" },
+    { type: "ToastShown", id: 1, critical: true },
+  ]);
+  assert.equal(state.global.toast.phase, "indicator");
 });
 
 test("Suppression: no DND and nothing open lets the toast through", () => {

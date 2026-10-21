@@ -184,7 +184,11 @@ const handlers = {
   },
   ToastShown(state, { id, critical }) {
     if (suppressed(state.global, critical)) {
-      return setGlobal(state, { blinkDot: true });
+      // A muted critical toast must not be lost: it waits as the `!` indicator.
+      return setGlobal(state, {
+        blinkDot: true,
+        ...(critical && { toast: { id, critical, phase: "indicator" } }),
+      });
     }
     return setGlobal(state, { toast: { id, critical, phase: "shown" } });
   },
