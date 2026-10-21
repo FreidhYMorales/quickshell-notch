@@ -10,14 +10,14 @@ phases:
   spec: done
   design: done
   tasks: done
-  apply: in-progress (PR 5 of 8 done; chain splits 2 -> 2a/2b, 4 -> 4a logic/4b config+services)
+  apply: done (8 PRs: chain splits 2 -> 2a/2b, 4 -> 4a logic/4b config+services; PR 6 is the last)
   verify: pending
   archive: pending
 artifacts:
   proposal: openspec/changes/notch-foundation/proposal.md
   design: openspec/changes/notch-foundation/design.md
   tasks: openspec/changes/notch-foundation/tasks.md
-next: [apply]
+next: [verify]
 chain_strategy: stacked-to-main
 updated: 2026-10-21
 apply_progress: openspec/changes/notch-foundation/apply-progress.md

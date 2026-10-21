@@ -23,18 +23,20 @@ export function initialState(monitorNames) {
   };
 }
 
-const withMonitor = (state, name, patch) => ({
-  ...state,
-  monitors: {
-    ...state.monitors,
-    [name]: { ...state.monitors[name], ...patch },
-  },
-});
+// Qt's V4 engine has no object spread: shallow-merge with Object.assign.
+const merge = (...parts) => Object.assign({}, ...parts);
+
+const withMonitor = (state, name, patch) =>
+  merge(state, {
+    monitors: merge(state.monitors, {
+      [name]: merge(state.monitors[name], patch),
+    }),
+  });
 
 const unchanged = (state) => ({ state, effects: [] });
 
 const setGlobal = (state, patch) => ({
-  state: { ...state, global: { ...state.global, ...patch } },
+  state: merge(state, { global: merge(state.global, patch) }),
   effects: [],
 });
 
@@ -58,7 +60,7 @@ const suppressed = ({ dnd, keyboard, polkit }, critical) =>
 
 const withHold = (state, hold) =>
   state.global.keyboard
-    ? setGlobal(state, { keyboard: { ...state.global.keyboard, hold } })
+    ? setGlobal(state, { keyboard: merge(state.global.keyboard, { hold }) })
     : unchanged(state);
 
 const handlers = {
@@ -71,15 +73,13 @@ const handlers = {
     const lostKeyboard = keyboard && !monitors[keyboard.owner];
     const lostPolkit = polkit && !monitors[polkit.owner];
     return {
-      state: {
-        ...state,
+      state: merge(state, {
         monitors,
-        global: {
-          ...state.global,
+        global: merge(state.global, {
           keyboard: lostKeyboard ? null : keyboard,
           polkit: lostPolkit ? null : polkit,
-        },
-      },
+        }),
+      }),
       effects: lostPolkit ? cancelPolkit(polkit) : [],
     };
   },
@@ -169,26 +169,27 @@ const handlers = {
       monitors[name] = freshMonitor();
     }
     return {
-      state: {
-        ...state,
+      state: merge(state, {
         monitors,
-        global: {
-          ...state.global,
+        global: merge(state.global, {
           locked: true,
           keyboard: null,
           polkit: null,
-        },
-      },
+        }),
+      }),
       effects: cancelPolkit(state.global.polkit),
     };
   },
   ToastShown(state, { id, critical }) {
     if (suppressed(state.global, critical)) {
       // A muted critical toast must not be lost: it waits as the `!` indicator.
-      return setGlobal(state, {
-        blinkDot: true,
-        ...(critical && { toast: { id, critical, phase: "indicator" } }),
-      });
+      return setGlobal(
+        state,
+        merge(
+          { blinkDot: true },
+          critical ? { toast: { id, critical, phase: "indicator" } } : {},
+        ),
+      );
     }
     return setGlobal(state, { toast: { id, critical, phase: "shown" } });
   },
@@ -196,7 +197,7 @@ const handlers = {
     const { toast } = state.global;
     if (toast?.id !== id || toast.phase !== "shown") return unchanged(state);
     return setGlobal(state, {
-      toast: toast.critical ? { ...toast, phase: "indicator" } : null,
+      toast: toast.critical ? merge(toast, { phase: "indicator" }) : null,
     });
   },
   ToastDismissed(state, { id }) {

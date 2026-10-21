@@ -1,5 +1,6 @@
 import Quickshell
 import "components"
+import "notches/center"
 import "notches/controlcenter"
 import "notches/osd"
 import "notches/workspaces"
@@ -17,6 +18,10 @@ Scope {
             required property var modelData
 
             SpacerSurface {
+                screen: perScreen.modelData
+            }
+
+            CenterSurface {
                 screen: perScreen.modelData
             }
 
