@@ -163,7 +163,7 @@ Item {
         text: root.glyphFor()
         color: root.layerColor
         font.family: Fonts.family
-        font.pixelSize: Fonts.body
+        font.pixelSize: Fonts.idleSide
     }
 
     Text {
@@ -176,6 +176,6 @@ Item {
         text: Format.formatPercent(Battery.percentage)
         color: root.layerColor
         font.family: Fonts.family
-        font.pixelSize: Fonts.small
+        font.pixelSize: Fonts.idleSide
     }
 }
