@@ -80,7 +80,7 @@ Key events
 
 Done. See [architecture](../../architecture.md), [development setup](../../development.md), [AGENTS.md](../../../AGENTS.md) and ADRs [0001 repo + symlink](../../adr/0001-separate-repo-and-symlink.md), [0002 layout](../../adr/0002-hybrid-layout-pure-logic.md), [0003 testing](../../adr/0003-testing-strategy.md), [0004 surfaces + input](../../adr/0004-layer-surfaces-and-input.md), [0005 visual tokens](../../adr/0005-visual-tokens.md).
 
-- Own GitHub repo; `shell/` symlinked to `~/.config/quickshell/notch`, run with `qs -c notch`; the old bar stays as fallback.
+- Own GitHub repo; run with `qs -p shell/shell.qml` until cutover (`~/.config/quickshell` is a stow link into the dotfiles, so no `notch` symlink yet; ADR 0001 update); the old bar stays as fallback.
 - Layout: `config/` tokens, `services/` data singletons, `logic/` pure `.mjs`, `components/`, `notches/{center,workspaces,osd,controlcenter}/`; `qmldir` per folder.
 - Strict TDD with `node --test` on `logic/`; smoke run with `qs -p`; UI verified manually. `make check` = format, lint, tests, smoke.
 - Per-monitor fixed-size `PanelWindow`s with mandatory input masks; exclusive zone = idle height (`reserveSpace` toggle).
@@ -382,7 +382,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 
 ## Implementation phases
 
-One SDD change per phase, in order. Each phase ends with `make check` green and something visible with `qs -c notch`. The old bar stays the daily shell until phase 7 (cutover).
+One SDD change per phase, in order. Each phase ends with `make check` green and something visible with `qs -p shell/shell.qml`. The old bar stays the daily shell until phase 7 (cutover).
 
 | # | SDD change | Scope (MUST rows) | Est. dev-days |
 |---|---|---|---|

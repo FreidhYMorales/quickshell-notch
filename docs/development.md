@@ -55,17 +55,17 @@ git clone <repo-url> quickshell-notch
 cd quickshell-notch
 # no .env: this project has no secrets
 make check                                   # must pass before you change anything
-mkdir -p ~/.config/quickshell
-ln -s "$PWD/shell" ~/.config/quickshell/notch
-qs -c notch                                  # the old bar (~/.config/quickshell) stays as fallback: `qs`
+qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C to stop
+# No symlink until cutover: ~/.config/quickshell is a stow link into the dotfiles
+# repo, so a `notch` link there would land in that repo (ADR 0001 update).
 ```
 
 ## Daily commands
 
 | Task | Command |
 |---|---|
-| Run the app | `qs -c notch` (stop the old bar first) |
-| Run from the repo without the symlink | `qs -p shell/shell.qml` |
+| Run the app (until cutover) | `qs -p shell/shell.qml` |
+| See every slot | set `showPlaceholders: true` in `shell/config/Flags.qml` (do not commit) |
 | Tests | `make test` (`node --test tests/`) |
 | Lint | `make lint` |
 | Smoke | `make smoke` |
@@ -80,4 +80,4 @@ qs -c notch                                  # the old bar (~/.config/quickshell
 | New component "is not a type" | Arch | Add it to the folder's `qmldir` |
 | Clicks across the top strip are swallowed | Arch | The surface lacks `mask: Region { item: ... }` |
 | Dispatch has no effect | Arch | Use the `hl.dsp.*` Lua bridge, not `Hyprland.dispatch` |
-| `qs -c notch` says config not found | Arch | Create the symlink from First run |
+| `qs -c notch` says config not found | Arch | Expected before cutover: use `qs -p shell/shell.qml` |
