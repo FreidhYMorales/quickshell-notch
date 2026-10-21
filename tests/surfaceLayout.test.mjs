@@ -5,13 +5,13 @@ import { layoutFor } from "../shell/logic/surfaceLayout.mjs";
 const tokens = {
   idleHeight: 32,
   cornerWidth: 200,
-  osdWidth: 48,
+  osdWidth: 220,
   gap: 8,
   centerMaxWidth: 600,
   centerMaxWidthByMonitor: { "DP-2": 500 },
 };
 
-const topRow = (l) => [l.tl, l.c, l.tr];
+const topRow = (l) => [l.tl, l.bl, l.c, l.vr, l.tr];
 
 test("wide screen: centre gets its token width, centred between the corners", () => {
   const l = layoutFor(1920, "DP-1", tokens);
@@ -46,7 +46,7 @@ test("slots never overlap on any screen width", () => {
         `overlap at ${w}: ${JSON.stringify(row)}`,
       );
     }
-    assert.ok(row[2].x + row[2].width <= w, `tr leaves the screen at ${w}`);
+    assert.ok(row[4].x + row[4].width <= w, `tr leaves the screen at ${w}`);
   }
 });
 
@@ -57,8 +57,24 @@ test("tiny screen: corners shrink to half and the centre collapses to zero", () 
   assert.equal(l.c.width, 0);
 });
 
-test("edge strips: bl on the left edge, vr (OSD) on the right edge", () => {
+test("OSD slots sit on the top row between each corner and the centre", () => {
   const l = layoutFor(1920, "DP-1", tokens);
-  assert.deepEqual(l.bl, { x: 0, width: 200, height: 32 });
-  assert.deepEqual(l.vr, { x: 1872, width: 48, height: 32 });
+  // free space left of the centre: 200..660 -> OSD centred in it
+  assert.deepEqual(l.bl, { x: 320, width: 220, height: 32 });
+  assert.deepEqual(l.vr, { x: 1380, width: 220, height: 32 });
+});
+
+test("OSD shrinks before the centre does, keeping a gap on both sides", () => {
+  const l = layoutFor(1366, "DP-1", tokens);
+  assert.equal(l.c.width, 600);
+  assert.equal(l.bl.width, 167);
+  assert.equal(l.bl.x - (l.tl.x + l.tl.width), 8);
+  assert.equal(l.c.x - (l.bl.x + l.bl.width), 8);
+  assert.equal(l.vr.width, 167);
+});
+
+test("OSD collapses to zero when there is no room beside the centre", () => {
+  const l = layoutFor(800, "DP-1", tokens);
+  assert.equal(l.bl.width, 0);
+  assert.equal(l.vr.width, 0);
 });
