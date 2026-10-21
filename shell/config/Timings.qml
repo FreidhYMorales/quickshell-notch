@@ -9,6 +9,9 @@ Singleton {
     readonly property int reveal: 1500
     readonly property int holdConfirm: 1000
 
+    // Unread dot blink half-period (milliseconds).
+    readonly property int blink: 700
+
     // Polling (milliseconds)
     readonly property int sysPoll: 2000
 

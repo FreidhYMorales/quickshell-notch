@@ -14,6 +14,8 @@ Singleton {
 
     // Low and critical battery.
     readonly property color critical: "#ff5449"
+    // Red dot shown while screen recording is active.
+    readonly property color recording: "#ff3b30"
     // Opacity of the unfilled part of an arc meter.
     readonly property real trackAlpha: 0.2
 
