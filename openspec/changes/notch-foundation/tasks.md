@@ -9,11 +9,11 @@
 | Chained PRs recommended | Yes |
 | Suggested split | PR 1 -> PR 2 -> PR 3 -> PR 4 -> PR 5 -> PR 6 |
 | Delivery strategy | ask-on-risk |
-| Chain strategy | pending |
+| Chain strategy | stacked-to-main |
 
 Decision needed before apply: Yes
 Chained PRs recommended: Yes
-Chain strategy: pending
+Chain strategy: stacked-to-main
 400-line budget risk: High
 
 Chain choice (stacked-to-main vs feature-branch-chain off `feat/notch-foundation`) must be made before apply. Design assumes the feature-branch chain.
@@ -33,11 +33,11 @@ Vocabulary (design wins; mode is derived by `viewFor`): spec `powerMenu`=`power`
 
 ## Phase 1: Reducer core (PR 1)
 
-- [ ] 1.1 RED `tests/centerState.test.mjs`: purity (no input mutation, deep-equal), `initialState`, Hover on A only, leave, ExpandedToggle (spec: Purity, Initial, Hover)
-- [ ] 1.2 GREEN `shell/logic/centerState.mjs`: `initialState`, `reduce`, Hover, ExpandedToggle, ScreensChanged add
-- [ ] 1.3 RED+GREEN keyboard slot: LauncherToggle, PowerOpen replaces launcher, Close, non-owner open ignored, owner stays
-- [ ] 1.4 RED+GREEN toast lifecycle: ToastShown, ToastTimeout, ToastDismissed, normal toast timeout, critical goes to `indicator`
-- [ ] 1.5 REFACTOR; run `node --test tests/`
+- [x] 1.1 RED `tests/centerState.test.mjs`: purity (no input mutation, deep-equal), `initialState`, Hover on A only, leave, ExpandedToggle (spec: Purity, Initial, Hover)
+- [x] 1.2 GREEN `shell/logic/centerState.mjs`: `initialState`, `reduce`, Hover, ExpandedToggle, ScreensChanged add
+- [x] 1.3 RED+GREEN keyboard slot: LauncherToggle, PowerOpen replaces launcher, Close, non-owner open ignored, owner stays
+- [x] 1.4 RED+GREEN toast lifecycle: ToastShown, ToastTimeout, ToastDismissed, normal toast timeout, critical goes to `indicator`
+- [x] 1.5 REFACTOR; run `node --test tests/`
 
 ## Phase 2: Mid-flow rules and view (PR 2)
 

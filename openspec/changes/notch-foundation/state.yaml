@@ -10,7 +10,7 @@ phases:
   spec: done
   design: done
   tasks: done
-  apply: pending
+  apply: in-progress (PR 1 of 6 done)
   verify: pending
   archive: pending
 artifacts:
@@ -20,3 +20,4 @@ artifacts:
 next: [apply]
 chain_strategy: stacked-to-main
 updated: 2026-10-21
+apply_progress: openspec/changes/notch-foundation/apply-progress.md
