@@ -61,11 +61,11 @@ Naming (design wins over spec wording; note for archive): spec `idleLayout({base
 
 ## PR 4: Idle row, battery layers, shape and mask
 
-- [ ] 4.1 Create `shell/components/ArcMeter.qml` (colours as properties, `Fonts.family`, `Anim`) and register in `qmldir`.
-- [ ] 4.2 Modify `shell/components/NotchZone.qml`: `openDelay` (`Timings.hoverOpen`) separate from close debounce.
-- [ ] 4.3 Modify `CenterIdle.qml`: live row `[bat] (cpu) date time (ram) [percent]`, rec/unread dots, battery layers (`charging`, `plugged` with plug glyph, `full`, `low`; `plugged` renders like `charging`), fixed `Layout.batterySide`.
-- [ ] 4.4 Modify `CenterSurface.qml`: single shape item = mask + NotchZone, sized by `centerLayout`; `CenterStore.qml` logs `criticalReached`.
-- [ ] 4.5 Manual: plug/unplug, `Flags.batteryOverride` (19/20, charging, plugged, full, none), clock stays centred, rec dot via `setRecording(true)`, hover delay.
+- [x] 4.1 Create `shell/components/ArcMeter.qml` (colours as properties, `Fonts.family`, `Anim`) and register in `qmldir`.
+- [x] 4.2 Modify `shell/components/NotchZone.qml`: `openDelay` (`Timings.hoverOpen`) separate from close debounce.
+- [x] 4.3 Modify `CenterIdle.qml`: live row `[bat] (cpu) date time (ram) [percent]`, rec/unread dots, battery layers (`charging`, `plugged` with plug glyph, `full`, `low`; `plugged` renders like `charging`), fixed `Layout.batterySide`.
+- [x] 4.4 Modify `CenterSurface.qml`: single shape item = mask + NotchZone, sized by `centerLayout`; `CenterStore.qml` logs `criticalReached`.
+- [x] 4.5 Manual: plug/unplug, `Flags.batteryOverride` (19/20, charging, plugged, full, none), clock stays centred, rec dot via `setRecording(true)`, hover delay.
 
 ## PR 5: Expanded views
 

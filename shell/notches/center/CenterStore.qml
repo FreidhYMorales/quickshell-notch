@@ -58,4 +58,13 @@ Singleton {
 
         target: Session
     }
+
+    // The critical-battery toast arrives with notch-notifications; log until then.
+    Connections {
+        function onCriticalReached() {
+            console.log("CenterStore: battery critical (" + Battery.percentage + "%)");
+        }
+
+        target: Battery
+    }
 }

@@ -19,7 +19,13 @@ Singleton {
     readonly property string unknownAlbum: "Unknown album"
     readonly property string unknownArtist: "Unknown artist"
 
-    // Nerd Font glyphs for the battery layers.
+    readonly property string dateTimeSeparator: " \u00b7 "
+
+    // Nerd Font glyphs for the idle row and battery layers.
+    readonly property string glyphCpu: "\uf2db"
+    readonly property string glyphRam: "\uf538"
+    readonly property string glyphBatteryFull: "\uf240"
+    readonly property string glyphBatteryLow: "\uf243"
     readonly property string glyphBolt: "\uf0e7"
     readonly property string glyphPlug: "\uf1e6"
 }

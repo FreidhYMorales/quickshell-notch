@@ -21,6 +21,13 @@ Singleton {
     // Idle battery layers reserve this much on each side of the clock.
     readonly property int batterySide: 36
 
+    // Idle row: arc meters, overlay dots and the gap between row items.
+    readonly property int arcSize: 20
+    readonly property real arcRing: 2.5
+    readonly property int arcIcon: 9
+    readonly property int dotSize: 6
+    readonly property int rowGap: 8
+
     // Expanded centre notch: full width with a player, narrower clock card alone.
     readonly property int expandedHeight: 180
     readonly property int expandedWidth: 560
