@@ -102,7 +102,9 @@ function buildPath(w, h, er, cr, types) {
     };
   });
   const [tl, ...rest] = [parts[0], parts[1], parts[2], parts[3]];
-  const segs = [...rest, tl].flatMap((p) => [`L ${p.start}`, p.curve]);
+  // No flatMap: Qt's V4 engine lacks it.
+  const segs = [];
+  for (const p of [...rest, tl]) segs.push(`L ${p.start}`, p.curve);
   return ["M " + tl.end, ...segs.filter(Boolean), "Z"].join(" ");
 }
 
@@ -119,11 +121,14 @@ export function notchPath(w, h, er, cr) {
 /** Anchor square, its two neighbours ears, the opposite corner round. */
 export function cornerPath(w, h, anchor, er, cr) {
   if (!ADJACENT[anchor]) return null;
-  const types = Object.fromEntries(
-    ORDER.map((n) => [
-      n,
-      n === anchor ? "square" : ADJACENT[anchor].includes(n) ? "ear" : "round",
-    ]),
-  );
+  // No Object.fromEntries: Qt's V4 engine lacks it.
+  const types = {};
+  for (const n of ORDER) {
+    types[n] = n === anchor
+      ? "square"
+      : ADJACENT[anchor].includes(n)
+      ? "ear"
+      : "round";
+  }
   return buildPath(w, h, er, cr, types);
 }
