@@ -11,7 +11,7 @@ phases:
   spec: done (scope addition 2026-10-21: audio-visualizer, media layer)
   design: done (scope addition "idle media layer + visualizer" appended 2026-10-21; PRs 6-7)
   tasks: done (updated 2026-10-21: PRs 6-7 added, ArtThumb in PR 5, plugged layer in PR 4)
-  apply: in-progress (PR 3 of 7 merged)
+  apply: in-progress (PR 4 of 7 implemented; PR 3 merged)
   verify: pending
   archive: pending
 artifacts:

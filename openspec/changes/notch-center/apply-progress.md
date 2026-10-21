@@ -85,3 +85,34 @@ Total: 2 new tests, full suite 164/164. `make check` green.
 - Deviation: `Time.day` is named `dayOfMonth`, because a `day` property would collide with the designed `dayChanged` signal (QML rejects the duplicate change signal).
 - Singletons are lazy: `SysInfo` only polls once something reads it. PR 4's idle row (its consumer) triggers that. Under `Flags.smoke` its timer never runs.
 - Added `Layout.batterySide`, `expandedWidth`, `expandedClockWidth`, `expandedHeight` (also in `tokens`); `Strings.glyphBolt` and `glyphPlug`; `Flags.batteryOverride`; `Timings.sysPoll`.
+
+## PR 4 of 7: idle row, battery layers, shape and mask (tasks 4.1-4.5, done)
+
+### TDD Cycle Evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | TRIANGULATE | REFACTOR |
+|------|-----------|-------|------------|-----|-------|-------------|----------|
+| 4.3 (`formatPercent`, the one new rule) | `tests/format.test.mjs` | Unit | 162 pass before | 4 new cases; `SyntaxError: no export named 'formatPercent'` | 10/10 in file, 168/168 suite | 72.4, 71.6, 100, 0 | None needed |
+| 4.1, 4.2, 4.4 | N/A (QML) | Component / surface | `make check` before | N/A: no logic; widths, layers and shape come from tested `.mjs` | `make check` green; scratch `qs -p` probes | Seven battery scenarios (see below) | None needed |
+| 4.3 (idle row) | N/A (QML) | Component | as above | N/A | as above | clock offset 0 in every layer | None needed |
+| 4.5 | N/A | Manual / scratch | N/A | N/A | Scratch probe log, see below | N/A | N/A |
+
+Total: 4 new tests, full suite 168/168. `make check` green (qmlformat, qmllint, deno, node tests, smoke).
+
+### Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test | `node --test tests/format.test.mjs`: 10 pass, 0 fail |
+| Runtime harness | Scratch copy of `shell/` in the session scratchpad run with `timeout 6 qs -p`, with `Flags.batteryOverride` set per scenario and a probe timer in `CenterIdle` (never left running). `layer / glyph / pct / notch width / clock offset`: none 260 offset 0; charging bolt U+f0e7 72% 332; plugged plug U+f1e6 80% 332; full battery U+f240 100% 332; low 19% battery-low U+f243 332; 20% gives none 260; 9% unplugged plus `Recorder.recording=true`: low, rec true. Re-arming the one-shot in the scratch store logged `CenterStore: battery critical (9%)`. Real battery read 29% (layer none); `ram=16`; `cpu=null` at 1.5 s (first sample, ring at 0) |
+| Rollback | Revert the `feat(center)` commit: `components/{ArcMeter,NotchZone}.qml`, `qmldir`, `notches/center/*`, token additions; the `formatPercent` commit is independent |
+
+### Notes
+
+- Deviation: `CenterIdle` property named `batteryLayer` (not `layer`): `layer` is a final `Item` property and the shell failed to load.
+- `CenterIdle` reads `Battery` and `SysInfo`, so both lazy singletons start at load.
+- The shape item (width follows `idleWidth`, clipped, `Behavior` with `Anim`) is the mask and the `NotchZone` area. Expanded shape reuses the idle size until PR 5.
+- `NotchZone.openDelay` (default `Timings.hoverOpen`) applies to hover on; hover off keeps `Timings.hoverDebounce`.
+- New tokens: `Layout.{arcSize,arcRing,arcIcon,dotSize,rowGap}`, `Colours.recording`, `Timings.blink`, `Fonts.{body,small}`, `Strings.{glyphCpu,glyphRam,glyphBatteryFull,glyphBatteryLow,dateTimeSeparator}`.
+- Startup caveat: the critical log is lost if the battery is already at or below 10% when the shell starts (the store's `Connections` attach after the first `Battery.refresh()`); later transitions log normally.
+- Rec dot sits left of the row, unread dot right of it (both outside the clock layout). The unread source is not wired in this change.
