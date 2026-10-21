@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { clock, shortDate } from "../shell/logic/format.mjs";
+import { clock, formatPercent, shortDate } from "../shell/logic/format.mjs";
 
 const MONTHS = [
   "Jan",
@@ -38,3 +38,14 @@ test("shortDate uses caller-provided month names, no padding", () => {
 test("shortDate follows the names it is given", () => {
   assert.equal(shortDate(3, 20, ["", "", "Mar."]), "Mar. 20");
 });
+
+for (
+  const [value, text] of [[72.4, "72%"], [71.6, "72%"], [100, "100%"], [
+    0,
+    "0%",
+  ]]
+) {
+  test(`formatPercent ${value} -> ${text}`, () => {
+    assert.equal(formatPercent(value), text);
+  });
+}

@@ -14,3 +14,8 @@ export function clock(hours, minutes) {
 export function shortDate(month, day, months) {
   return months[month - 1] + " " + day;
 }
+
+// Whole-number percent, e.g. 71.6 -> "72%".
+export function formatPercent(value) {
+  return Math.round(value) + "%";
+}
