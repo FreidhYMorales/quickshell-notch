@@ -16,7 +16,7 @@ export function parsePalette(jsonText) {
   let data;
   try {
     data = JSON.parse(jsonText);
-  } catch {
+  } catch (_error) {
     return null;
   }
   const colors = data?.colors;
