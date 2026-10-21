@@ -11,7 +11,7 @@ phases:
   spec: done
   design: done
   tasks: done
-  apply: in-progress (PR 1 of 5)
+  apply: in-progress (PR 2 of 5)
   verify: pending
   archive: pending
 artifacts:

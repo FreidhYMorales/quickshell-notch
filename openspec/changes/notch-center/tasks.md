@@ -37,13 +37,13 @@ Each PR also updates tasks.md, apply-progress.md, state.yaml. Planning artifacts
 
 ## PR 2: Calendar, media, layout, format rules
 
-- [ ] 2.1 RED: `tests/calendar.test.mjs` (weekStrip radius 3, today flag, month/year/leap edges, dayKey, midnight change).
-- [ ] 2.2 GREEN: `shell/logic/calendar.mjs` (Date.UTC math).
-- [ ] 2.3 RED: `tests/media.test.mjs` (prefers playing, else first, empty gives null, switch on state change, trackText fallbacks).
-- [ ] 2.4 GREEN: `shell/logic/media.mjs`.
-- [ ] 2.5 RED: `tests/centerLayout.test.mjs` (idleWidth symmetric, cap at max; expandedWidth with/without player, narrow monitor; shapeFor).
-- [ ] 2.6 GREEN: `shell/logic/centerLayout.mjs`.
-- [ ] 2.7 RED then GREEN: `tests/format.test.mjs` and `shell/logic/format.mjs` (24-hour clock, shortDate with names from caller).
+- [x] 2.1 RED: `tests/calendar.test.mjs` (weekStrip radius 3, today flag, month/year/leap edges, dayKey, midnight change).
+- [x] 2.2 GREEN: `shell/logic/calendar.mjs` (Date.UTC math).
+- [x] 2.3 RED: `tests/media.test.mjs` (prefers playing, else first, empty gives null, switch on state change, trackText fallbacks).
+- [x] 2.4 GREEN: `shell/logic/media.mjs`.
+- [x] 2.5 RED: `tests/centerLayout.test.mjs` (idleWidth symmetric, cap at max; expandedWidth with/without player, narrow monitor; shapeFor).
+- [x] 2.6 GREEN: `shell/logic/centerLayout.mjs`.
+- [x] 2.7 RED then GREEN: `tests/format.test.mjs` and `shell/logic/format.mjs` (24-hour clock, shortDate with names from caller).
 
 ## PR 3: Services, tokens, surface height
 
