@@ -11,7 +11,7 @@ phases:
   spec: done (scope addition 2026-10-21: audio-visualizer, media layer)
   design: done (scope addition "idle media layer + visualizer" appended 2026-10-21; PRs 6-7)
   tasks: done (updated 2026-10-21: PRs 6-7 added, ArtThumb in PR 5, plugged layer in PR 4)
-  apply: in-progress (PR 7 of 7 implemented; PRs 1-6 merged; 7.8 real-player manual check pending)
+  apply: done (PRs 1-7; 7.8 confirmed by the user with a real player)
   verify: pending
   archive: pending
 artifacts:
@@ -20,5 +20,5 @@ artifacts:
   design: openspec/changes/notch-center/design.md
   tasks: openspec/changes/notch-center/tasks.md
 chain_strategy: stacked-to-main
-next: [apply]
+next: [verify]
 updated: 2026-10-21

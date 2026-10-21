@@ -204,3 +204,7 @@ Also fixed (user request): the idle width is content-driven (`idleBase`, `sideEx
 - Quickshell hot-reloads: the user's running shell picks up the working tree.
 - `FileView` skips `saved` when the file is unchanged, so `onLoaded` marks the config as written when the text matches.
 - Archive notes: name mapping (spec `parseCavaFrame` vs `parseFrame`), https art fallback, `plugged` layer.
+
+## Task 7.8 (user, 2026-10-21)
+
+Confirmed live with real players (browser, ncmpcpp via mpd-mpris): art left, mirrored bars right, clock centred, pause flattens the bars, low battery (< 20%) wins over media. Follow-up tuning on this branch: battery glyph and percent use `Fonts.idleSide` (15 px, matching the idle clock). Not exercised by the user: `pkill cava` restart path and a missing cava binary (covered by the agent's stub runs).
