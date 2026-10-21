@@ -91,3 +91,104 @@ test("unknown event returns the state unchanged with no effects", () => {
   assert.deepEqual(state, s);
   assert.deepEqual(effects, []);
 });
+
+const run = (state, ...events) =>
+  events.reduce((s, ev) => reduce(s, ev).state, state);
+
+test("LauncherToggle: opens the launcher on the requesting monitor", () => {
+  const { state, effects } = reduce(two(), {
+    type: "LauncherToggle",
+    monitor: "A",
+    sub: "apps",
+  });
+  assert.deepEqual(state.global.keyboard, {
+    owner: "A",
+    kind: "launcher",
+    sub: "apps",
+    hold: null,
+  });
+  assert.deepEqual(effects, []);
+});
+
+test("LauncherToggle: a second toggle on the owner closes it", () => {
+  const s = run(
+    two(),
+    { type: "LauncherToggle", monitor: "A", sub: "apps" },
+    { type: "LauncherToggle", monitor: "A", sub: "apps" },
+  );
+  assert.equal(s.global.keyboard, null);
+});
+
+test("LauncherToggle: sub defaults to null", () => {
+  const s = run(two(), { type: "LauncherToggle", monitor: "B" });
+  assert.equal(s.global.keyboard.sub, null);
+  assert.equal(s.global.keyboard.owner, "B");
+});
+
+test("PowerOpen: opens the power menu with an optional action", () => {
+  const plain = run(two(), { type: "PowerOpen", monitor: "A" });
+  assert.deepEqual(plain.global.keyboard, {
+    owner: "A",
+    kind: "power",
+    sub: null,
+    hold: null,
+  });
+  const withAction = run(two(), {
+    type: "PowerOpen",
+    monitor: "A",
+    action: "reboot",
+  });
+  assert.equal(withAction.global.keyboard.sub, "reboot");
+});
+
+test("PowerOpen: replaces the launcher on the owner and keeps the owner", () => {
+  const s = run(
+    two(),
+    { type: "LauncherToggle", monitor: "A", sub: "apps" },
+    { type: "PowerOpen", monitor: "A" },
+  );
+  assert.equal(s.global.keyboard.kind, "power");
+  assert.equal(s.global.keyboard.owner, "A");
+});
+
+test("LauncherToggle: ignored while the power menu is open", () => {
+  const s = run(
+    two(),
+    { type: "PowerOpen", monitor: "A" },
+    { type: "LauncherToggle", monitor: "A", sub: "apps" },
+  );
+  assert.equal(s.global.keyboard.kind, "power");
+});
+
+test("Close: owner closes the keyboard slot", () => {
+  const s = run(
+    two(),
+    { type: "LauncherToggle", monitor: "A", sub: "apps" },
+    { type: "Close", monitor: "A" },
+  );
+  assert.equal(s.global.keyboard, null);
+});
+
+test("Close: non-owner and closed slot are no-ops", () => {
+  const open = run(two(), { type: "PowerOpen", monitor: "A" });
+  assert.deepEqual(run(open, { type: "Close", monitor: "B" }), open);
+  const closed = two();
+  assert.deepEqual(run(closed, { type: "Close", monitor: "A" }), closed);
+});
+
+test("keyboard owner: an open on another monitor leaves the owner unchanged", () => {
+  const open = run(two(), { type: "LauncherToggle", monitor: "A", sub: "x" });
+  const afterLauncher = run(open, {
+    type: "LauncherToggle",
+    monitor: "B",
+    sub: "y",
+  });
+  assert.deepEqual(afterLauncher.global.keyboard, open.global.keyboard);
+  const afterPower = run(open, { type: "PowerOpen", monitor: "B" });
+  assert.deepEqual(afterPower.global.keyboard, open.global.keyboard);
+});
+
+test("keyboard: opens on an unknown monitor are ignored", () => {
+  const s = run(two(), { type: "LauncherToggle", monitor: "Z", sub: "x" });
+  assert.equal(s.global.keyboard, null);
+});

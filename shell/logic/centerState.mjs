@@ -31,6 +31,22 @@ const withMonitor = (state, name, patch) => ({
   },
 });
 
+const unchanged = (state) => ({ state, effects: [] });
+
+const setKeyboard = (state, keyboard) => ({
+  state: { ...state, global: { ...state.global, keyboard } },
+  effects: [],
+});
+
+// Opens or replaces the keyboard slot. Only the current owner (or anyone, when
+// the slot is empty) may change it; unknown monitors are ignored.
+const openKeyboard = (state, monitor, kind, sub) => {
+  const { keyboard } = state.global;
+  if (!state.monitors[monitor]) return unchanged(state);
+  if (keyboard && keyboard.owner !== monitor) return unchanged(state);
+  return setKeyboard(state, { owner: monitor, kind, sub, hold: null });
+};
+
 const handlers = {
   ScreensChanged(state, { names }) {
     const monitors = { ...state.monitors };
@@ -52,6 +68,23 @@ const handlers = {
       }),
       effects: [],
     };
+  },
+  LauncherToggle(state, { monitor, sub = null }) {
+    const { keyboard } = state.global;
+    if (keyboard?.owner === monitor) {
+      return keyboard.kind === "launcher"
+        ? setKeyboard(state, null)
+        : unchanged(state);
+    }
+    return openKeyboard(state, monitor, "launcher", sub);
+  },
+  PowerOpen(state, { monitor, action = null }) {
+    return openKeyboard(state, monitor, "power", action);
+  },
+  Close(state, { monitor }) {
+    return state.global.keyboard?.owner === monitor
+      ? setKeyboard(state, null)
+      : unchanged(state);
   },
 };
 

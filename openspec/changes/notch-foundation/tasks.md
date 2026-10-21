@@ -35,7 +35,7 @@ Vocabulary (design wins; mode is derived by `viewFor`): spec `powerMenu`=`power`
 
 - [x] 1.1 RED `tests/centerState.test.mjs`: purity (no input mutation, deep-equal), `initialState`, Hover on A only, leave, ExpandedToggle (spec: Purity, Initial, Hover)
 - [x] 1.2 GREEN `shell/logic/centerState.mjs`: `initialState`, `reduce`, Hover, ExpandedToggle, ScreensChanged add
-- [ ] 1.3 RED+GREEN keyboard slot: LauncherToggle, PowerOpen replaces launcher, Close, non-owner open ignored, owner stays
+- [x] 1.3 RED+GREEN keyboard slot: LauncherToggle, PowerOpen replaces launcher, Close, non-owner open ignored, owner stays
 - [ ] 1.4 RED+GREEN toast lifecycle: ToastShown, ToastTimeout, ToastDismissed, normal toast timeout, critical goes to `indicator`
 - [ ] 1.5 REFACTOR; run `node --test tests/`
 
