@@ -13,6 +13,8 @@ Notches sit on the top edge of every monitor. The old paused notch attempt swall
 - Fixed-size surfaces; animate inside them. Anchor left+right for a true (0,0) origin.
 - Every surface MUST set `mask: Region { item: ... }`.
 - Exclusive zone = idle notch height, reserved by default; expanded states overlay temporarily; `reserveSpace` toggle in config.
+- Exactly ONE surface per monitor reserves it: an invisible spacer with `exclusiveZone = idleHeight`. Every other top-anchored surface sets `exclusionMode: ExclusionMode.Ignore`; otherwise Hyprland stacks their zones vertically and the default `Normal` mode reserves each surface's full (largest-state) height. With `reserveSpace` off, the spacer also uses `Ignore`.
+- `NOTCH_SMOKE=1` (set by `make smoke`) skips the spacer zone, NotificationServer, PolkitAgent, IdleMonitors, IpcHandlers, the BG surface and any state import/writes, so the smoke run does not disturb the live session.
 - Keyboard focus: `None` for passive notches/OSDs; `Exclusive` only while launcher, power menu or polkit is open.
 - Passive notches on every monitor; keyboard states only on the focused monitor.
 - Hover uses a hitbox strip and debounced close; ~200ms open delay on corners.

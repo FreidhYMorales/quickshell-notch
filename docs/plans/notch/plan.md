@@ -1,6 +1,6 @@
 # Plan: Quickshell notch shell
 
-- Status: draft
+- Status: reviewed (plan-review-1 and plan-review-2 resolved)
 - Deadline: none (personal project). Priority = "what is needed to replace the bar for daily use"
 - Mode: solo
 - Supersedes: the old bar-based config (terminal-like design) and its paused `modules/notch` attempt
@@ -21,14 +21,16 @@
 
 ## Product vision
 
-- **v1:** A minimalist top-edge shell made of notches that look like part of the screen bezel. It replaces the bar entirely. It shows only what matters at rest (date, time, CPU/RAM, charging) and expands on demand: hover for media/calendar, keyboard for the launcher and power menu, the corner for the control center. It reacts to events (workspace changes, app opens, notifications, volume/brightness) with short-lived reveals.
+- **v1:** A minimalist top-edge shell made of notches that look like part of the screen bezel. It replaces the bar entirely. It also takes over what the old shell did besides the bar: wallpaper rendering (incl. video), the caffeine inhibitor, the system tray and the lock screen. It shows only what matters at rest (date, time, CPU/RAM, charging or low battery) and expands on demand: hover for media/calendar, keyboard for the launcher and power menu, the corner for the control center. It reacts to events (workspace changes, app opens, notifications, volume/brightness) with short-lived reveals.
 - **v2:** Native WiFi/Bluetooth pages, calendar events (khal + vdirsyncer), brightness right-click action, fixing the laptop power button so it opens the power menu.
 
 ## Core model
 
 ```
-Surfaces (one set per monitor, all on the top edge, each with its own input mask;
-          an exclusive zone = idle notch height is reserved, toggle `reserveSpace`)
+Surfaces (one set per monitor, each with its own input mask)
+  BG  background     wallpaper (image/video) + caffeine IdleInhibitor (always mapped, Background layer)
+  SP  spacer         invisible; the ONLY surface with exclusiveZone = idle height (when `reserveSpace`)
+                     every other top surface uses ExclusionMode.Ignore (zones stack otherwise)
   TL  workspaces     hidden | revealed (timeout) | pinned while a special workspace is active
   BL  brightness OSD hidden | revealed on change (timeout, hover keeps open)
   C   main notch     state machine (below)
@@ -37,21 +39,40 @@ Surfaces (one set per monitor, all on the top edge, each with its own input mask
 
 Main notch state priority (highest wins)
   Polkit > PowerMenu > Launcher(apps | commands | commandView) > Toast > Expanded(hover) > Idle
-  Overlays (not states): charging layer (while plugged), unread dot, event glow
+  Overlays (not states): charging layer (while plugged), low-battery layer (< 20%, unplugged),
+                         unread dot, event glow
+  Instances: ONE reducer per monitor, fed by global inputs (notification queue, DND,
+  lock state, keyboardOwner = monitor name). Global: toast queue, suppression, dismiss/seen
+  state (dismiss on one monitor dismisses everywhere; launcher open on A mutes toasts on all).
+  Per monitor: hover, Expanded, which surface shows a keyboard state.
+  Mid-flow rules: preemption cancels an in-progress power hold; a polkit flow cancelled
+  externally (null flow) returns to the previous state; hovering a visible toast always
+  expands the toast; a critical toast collapses after its first timeout into a persistent
+  `!` indicator (unread-dot style) so Expanded is reachable again, and stays in the control
+  center list until dismissed; on session lock every state closes and polkit is cancelled;
+  keyboard states stay on the monitor where they opened; when that screen is removed the
+  keyboard state closes and polkit is cancelled.
+  Overlay: recording dot (red) on the idle notch while recording.
 
 Key events
   workspace, activespecial, openwindow, movewindowv2, closewindow (Hyprland)
   pluggedIn / unplugged / full (Battery)
   volumeChanged / muteChanged (Pipewire), brightnessChanged (udev)
   notificationReceived / dismissed / seen (Notifs)
-  polkitRequest (PolkitAgent), IPC: launcher, power, lock
+  polkitRequest (PolkitAgent), lockRequested (Session)
+  IPC (`qs -c notch ipc call <target> <fn>`): launcher, power, lock, caffeine,
+       controlcenter (open root | notifications subpage), expanded (toggle)
+  Keybinds after cutover: Super+D -> controlcenter root, Super+N -> notifications subpage,
+       Super+Alt+C -> expanded toggle (focused monitor)
 ```
 
 **Reuse map** (from the old config)
 
 | Keep as is or nearly | Rewrite |
 |---|---|
-| Time, SysInfo, Brightness, BatteryProfile, Recorder, IdleManager, Polkit, Keybinds, PowerActions, Colours/ColoursEngine/Wallpapers, Lock module | Notifs/NotifData (no `tracked`, no actions, no real dismiss) |
+| Time, SysInfo, Brightness, BatteryProfile, Recorder, Polkit, Keybinds, Colours/ColoursEngine/Wallpapers, Background/BackgroundSurface (wallpaper + IdleInhibitor) | Notifs/NotifData (no `tracked`, no actions, no real dismiss) |
+| **Keep with adapter** (they call `Visibilities`): IdleManager, PowerActions, Lock module -> new `Session` singleton (`lockRequested` signal, `locked` flag) | Battery -> `Quickshell.Services.UPower` (no udevadm/bash forks) |
+| Lock transitive deps: LockConfig, LockLayouts, LockLanguages, Security, OsInfo, Paths (token for the hardcoded `quickshell/deadlock` path), vkeyboard assets + `QML_IMPORT_PATH` env. `Style.*` inside the lock is exempt from the tokens rule until it is restyled | SystemTray host (old BgAppsWidget/TrayMenuOsd as reference) |
 | EarCurve.js, NotchEarShape, NotchDropdown, NotchZone, ArcMeter, Anim/CAnim, StateLayer, MoveGuard | Audio (move to `Quickshell.Services.Pipewire`) |
 | Special-workspace raw-event tracking, workspace probing, launcher command list + prefix parser, CalendarCard grid, MediaSection ticker | Battery (separate plugged/charging/full), Mpris (drop the 1s poll), Visibilities (replaced by state machine), list-apps.py (use DesktopEntries), CornerEarShape (generalize beyond topLeft), Bluetooth/Network (v2) |
 
@@ -78,17 +99,24 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
   ╭──────────────────────────────────────────╮
   │ ⚡▮▮▮▯  (◔)  Mar 20 · 14:32  (◑)   72%  │
   ╰──────────────────────────────────────────╯
+ low battery (< 20%, unplugged; same symmetric layout, red)
+  ╭──────────────────────────────────────────╮
+  │ ▮▯▯▯▯   (◔)  Mar 20 · 14:32  (◑)   18%  │   + slow red glow pulse every ~30s
+  ╰──────────────────────────────────────────╯
 ```
 
-- Chosen: A (symmetric) with C's date, date before time; charging = symmetric growth, battery icon left, percentage right.
-- Rules: `(◔)`/`(◑)` = CPU/RAM ring with the icon inside. The unread dot sits in the right padding and does not change the width. Plug-in triggers the charge animation + a glow pulse.
-- States: no battery -> no charging layer | plugged & full -> full icon + 100%, no animation.
+- Chosen: A (symmetric) with C's date, date before time; charging = symmetric growth, battery icon left, percentage right. Low battery mirrors the charging layer in red.
+- Rules: `(◔)`/`(◑)` = CPU/RAM ring with the icon inside. The unread dot sits in the right padding and does not change the width. Plug-in triggers the charge animation + a glow pulse. Below 20% unplugged: low-battery layer + a slow red "breathing" glow pulse every ~30s (intermittent, not permanent: OLED burn-in). At 10%: one critical toast (stays until dismissed). Plugging in replaces the low-battery layer with the charging one.
+- States: no battery -> no battery layers | plugged & full -> full icon + 100%, no animation | 20-100% unplugged -> no battery layer.
+- OLED: the idle content shifts 1 px every few minutes (invisible pixel shift; SHOULD).
+- Recording: a small red dot overlay on the idle notch while recording (v1). The user plans to expand this indicator later (richer recording UI: elapsed time, stop control, etc.; design TBD in its own mini-plan).
 
 | UI element | Backend demand |
 |---|---|
 | date · time | `Time` |
 | rings | `SysInfo.cpu/ram` |
-| charging layer | `Battery.present/plugged/charging/full`, `pluggedIn` edge event |
+| charging layer | `Battery.present/plugged/charging/full`, `pluggedIn` edge event (UPower) |
+| low-battery layer | `Battery.percentage`, thresholds 20/10 as config tokens, one-shot critical toast |
 | unread dot | `Notifs.unreadCount` |
 
 ### Main notch: expanded (hover)
@@ -104,7 +132,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 ```
 
 - Chosen: layout from the saneAspect screenshot.
-- Rules: replaces the idle row (rings hidden while expanded). Open delay ~200ms, close delay debounced. Click the calendar card -> full month replaces the media column (back returns). Scroll navigates weeks/months; click the clock -> today.
+- Rules: the week strip is centred on today, ±3 days (config token). Replaces the idle row (rings hidden while expanded). Open delay ~200ms, close delay debounced. Click the calendar card -> full month replaces the media column (back returns). Scroll navigates weeks/months; click the clock -> today.
 - States: no player -> only the clock+week card, narrower notch | no art -> generic icon | several players -> the one playing.
 
 | UI element | Backend demand |
@@ -118,12 +146,15 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 ╭──────────────────────────────╮    hover    ╭────────────────────────────────────╮
 │ [ico] Discord: Juan: ¿jugam… │   ───────►  │ [ico] Discord · now             ✕  │
 ╰──────────────────────────────╯             │       Juan: ¿jugamos hoy?          │
-                                             │   [ Reply ]  [ Mark read ]         │
+                                             │   [ Open ]  [ Later ]              │
                                              ╰────────────────────────────────────╯
 ```
 
 - Chosen: C (compact, expands on hover).
 - Rules: one at a time, newest first, `+N` if queued. Timeout paused on hover. Critical urgency stays until dismissed. Click body = default action. Preempts Expanded and returns to it if still hovered. A primary-colour glow pulse on arrival. After it hides, the unread dot stays.
+- Buttons are the notification's own DBus actions; no inline reply in v1 (`inlineReplySupported: false`). The queue is keyed by notification id; an update to a tracked notification (`replaces-id`) refreshes the toast. History is session-only, capped at 50 (oldest dropped).
+- Buttons in the mockup are example DBus actions; the only local control is ✕ (dismiss).
+- Critical urgency and the shell's 10% battery toast bypass DND (covered by queue tests).
 - Suppression: DND -> no toast, the dot still appears. Launcher/power/polkit open -> no toast, blinking dot in the launcher corner.
 
 | UI element | Backend demand |
@@ -143,6 +174,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 
 - Chosen: A (dots) mixed with C (app icons).
 - Rules: ● = active, – = empty, app icon = occupied but inactive (the last-focused app there, fallback ○). Triggers: workspace change, window open (the active slot shows the new app icon for a few seconds), window moved (the icon flies from source to destination slot; SHOULD). Only normal toplevel windows count (dialogs, popups and transient floats are ignored), with a short debounce. Moving to a special -> the icon fades out. Concave ears to the top and left screen edges.
+- Per monitor: each monitor's notch shows the workspaces bound to that monitor; the slot count is a config token (default = the old widget's `maxVisible`).
 - States: special active -> pinned, showing only Arch + special icon.
 
 | UI element | Backend demand |
@@ -180,6 +212,8 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 │ [󰖩 WiFi] [󰂯 BT] [󰂛 DND]          │
 │ [󰾆 Profile] [󰅶 Caffeine] [󰑊 Rec] │
 │ ────────────────────────────── │
+│ Tray:  󰙯  󰓓  󰍡                   │
+│ ────────────────────────────── │
 │ Notifications (5)        Clear │
 │ [ico] Discord: Juan: ¿jug…     │
 │ [ico] Steam: Update ready      │
@@ -189,14 +223,16 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 ```
 
 - Chosen: profile header from the old config + tile grid (A) + inline notifications (C).
-- Rules: opens on hover with a ~200ms activation delay and a small hot zone. Tiles: left click toggles, right click opens the subpage. WiFi/BT right click opens impala/bluetui in a terminal (v1). DND right click and "See all" open the notifications subpage. At most 3 inline notifications. Power row: lock/suspend run directly; logout/reboot/shutdown open the power menu with that action preselected. Inside a subpage the panel does not collapse on a brief mouse leave (Esc, click outside or a longer delay closes it). Opening the notification list marks notifications as seen (clears the dot).
+- Rules: opens on hover with a ~200ms activation delay and a small hot zone. Tiles: left click toggles, right click opens the subpage. WiFi/BT right click opens impala/bluetui in a terminal (v1). DND right click and "See all" open the notifications subpage. At most 3 inline notifications. Power row: lock/suspend run directly; logout/reboot/shutdown open the power menu with that action preselected. Inside a subpage the panel does not collapse on a brief mouse leave (Esc, click outside or a longer delay closes it). Only opening the notifications subpage marks notifications as seen (clears the dot); hovering the root does not.
+- Tray row: compact icon row of StatusNotifierItems; left click = activate (restore the app), right click = the item's menu. Hidden when empty.
 - Subpage "Notifications": back button + the full history list (same item style as inline), per-item dismiss, Clear all, DND toggle. Derived; no variants shown.
 - States: no notifications -> "No notifications" line, no list.
 
 | UI element | Backend demand |
 |---|---|
 | profile | user name/avatar, `OsInfo.uptime` |
-| tiles | WiFi toggle (iwd), BT power, `Notifs.dnd`, `BatteryProfile`, `IdleManager.caffeineMode`, `Recorder` |
+| tiles | WiFi radio via `rfkill` (state read without root), BT power via `Quickshell.Bluetooth`, `Notifs.dnd`, `BatteryProfile`, `IdleManager.caffeineMode` (inhibitor lives on the BG surface), `Recorder` |
+| tray | `Quickshell.Services.SystemTray` items + menus |
 | navigation | control center stack (root -> subpage) |
 
 ### Power menu (main notch state)
@@ -209,7 +245,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 ```
 
 - Chosen: C (hold to confirm).
-- Rules: opens with Ctrl+Alt+Del (IPC) or from the control center (with the action preselected). Arrows/hjkl move, Esc closes. Lock/suspend fire immediately; logout/reboot/shutdown need ~1s hold (Enter or mouse press) with a progress bar, and releasing early cancels. Exclusive keyboard focus only while open.
+- Rules: opens with Ctrl+Alt+Del (IPC) or from the control center (with the action preselected). Arrows/hjkl move, Esc closes. Lock/suspend fire immediately; logout/reboot/shutdown need ~1s hold (Enter or mouse press) with a progress bar, and releasing early cancels. Key auto-repeat events are ignored; progress is driven by a timer started on the first press. Exclusive keyboard focus only while open.
 
 | UI element | Backend demand |
 |---|---|
@@ -229,7 +265,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 ```
 
 - Chosen: A for apps, C for commands with a description pane instead of previews.
-- Rules: Enter on a command switches the notch to that command's view (wallpaper, theme, screensaver, security, keybinds, webapp; ports the old functionality with the new style). Esc goes back one level. The blinking dot appears when a notification arrives.
+- Rules: Enter on a command switches the notch to that command's view (ports the old functionality with the new style). v1 MUST: wallpaper, theme, keybinds. SHOULD: screensaver, security, webapp. Wallpaper changes are rendered by the BG surface and also applied to hyprpaper as a fallback. Apps launch through `DesktopEntry.execute()` / the single `Hypr` dispatch wrapper. Esc goes back one level. The blinking dot appears when a notification arrives.
 - States: no results -> "No matches" line.
 
 | UI element | Backend demand |
@@ -245,9 +281,10 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 
 - Notch background: pure `#000`, opaque (bezel illusion on OLED).
 - Inner cards: black mixed with 6-10% of matugen `primary`.
-- Accents (rings, slider, active tile, ● workspace, unread dot): matugen **dark-scheme** `primary`, always.
+- Accents (rings, slider, active tile, ● workspace, unread dot): matugen **dark-scheme** `primary`, always, **per monitor** (each monitor's notches use the palette of that monitor's wallpaper; `Colours.paletteFor(screen)`).
 - Text: dark-scheme `on_surface` + a muted variant.
-- No permanent glow/shadow (it would break the illusion, risk OLED burn-in and reintroduce MultiEffect artifacts). Glow only as event feedback: plug-in (~1s) and notification arrival.
+- No permanent glow/shadow (it would break the illusion, risk OLED burn-in and reintroduce MultiEffect artifacts). Glow only as event feedback: plug-in (~1s, accent), notification arrival (primary), low battery (red, slow pulse every ~30s while < 20%).
+- Max centre-notch width is a token per monitor so expanded states never overlap the OSD/corner surfaces on narrow monitors.
 - Concave ears (EarCurve.js) wherever a notch meets a screen edge.
 - Font: IosevkaTerm Nerd Font, defined once in the config tokens.
 
@@ -255,12 +292,13 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 
 | Screen | Data shown | Actions (events) | Source |
 |---|---|---|---|
-| Idle | date, time, CPU %, RAM %, battery %, unread | hover | Time, SysInfo, Battery, Notifs |
+| Idle | date, time, CPU %, RAM %, battery % (only while charging or < 20%), unread | hover | Time, SysInfo, Battery, Notifs |
+| Background | wallpaper image/video | (none; set by the wallpaper command) | Wallpapers |
 | Expanded | track, art, week/month | play/pause/next/prev, open month, scroll, today | Mpris, Time |
 | Toast | app, summary, body, actions | action, dismiss, default action | Notifs |
 | Workspaces | occupancy, active, app icons, special | (display only) | Hyprland, DesktopEntries |
 | OSD | volume/brightness % | drag, scroll, mute | Audio, Brightness |
-| Control center | profile, uptime, tile states, notifications | toggles, subpages, power, clear | OsInfo, services, Notifs |
+| Control center | profile, uptime, tile states, tray items, notifications | toggles, subpages, power, tray activate/menu, clear | OsInfo, services, SystemTray, Notifs |
 | Power menu | actions | select, hold-confirm | PowerActions |
 | Launcher | apps, commands, descriptions | search, launch, open command | DesktopEntries, commands |
 | Polkit | message, password | authenticate, cancel | Polkit |
@@ -269,24 +307,30 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 
 | Item | Priority | Est. dev-days | Demo value |
 |---|---|---|---|
-| Shell skeleton: per-monitor surfaces, input masks, ears, theming tokens | MUST | 2 | foundation |
-| Service rewrites: Battery, Audio (Pipewire), Notifs, Mpris | MUST | 3 | foundation |
-| Main notch idle (rings, date/time, unread dot) | MUST | 1 | high |
-| Main notch state machine (priorities, preemption) | MUST | 1.5 | foundation |
-| Workspaces notch (dots, icons, triggers, special pin) | MUST | 2 | high |
-| Volume/brightness OSDs | MUST | 1 | high |
-| Notification toast + DND + unread | MUST | 1.5 | high |
-| Launcher apps + commands + description pane | MUST | 2 | high |
-| Port command views (wallpaper, theme, screensaver, security, keybinds, webapp) | MUST | 2 | medium |
+| Shell skeleton: per-monitor surfaces, single spacer exclusive zone, input masks, ears (incl. CornerEarShape generalisation), tokens, `NOTCH_SMOKE` mode | MUST | 3 | foundation |
+| Service rewrites: Battery (UPower), Audio (Pipewire), Notifs (tracked, id-keyed, cap 50), Mpris (reactive), `Session` adapter, `Hypr` dispatch wrapper, one-time state import | MUST | 4.25 | foundation |
+| Background surface (image/video wallpaper) + caffeine IdleInhibitor (reuse) + hyprpaper fallback | MUST | 1 | high |
+| Hyprland cutover: exec `qs -c notch` + env, IPC names, keybind remap, root-owned sleep hook (`lock-before-sleep`), rollback script, suspend-locks checklist | MUST | 0.75 | foundation |
+| Main notch idle (rings, date/time, unread dot) + low-battery layer + 10% critical toast + recording dot | MUST | 1.75 | high |
+| Main notch state machine (per-monitor instances, global inputs, priorities, preemption, mid-flow, critical `!` rule, screen removal) | MUST | 2.5 | foundation |
+| Workspaces notch (dots, icons, triggers, special pin) | MUST | 3 | high |
+| Volume/brightness OSDs | MUST | 1.5 | high |
+| Notification toast + DND + unread | MUST | 2 | high |
+| Launcher apps + commands + description pane | MUST | 2.5 | high |
+| Command views: wallpaper, theme, keybinds | MUST | 2.5 | medium |
 | Power menu with hold-confirm + Ctrl+Alt+Del | MUST | 1 | medium |
 | Polkit state | MUST | 0.5 | medium |
-| Control center root + tiles + notifications subpage | MUST | 2.5 | high |
-| Lock module integration (reuse) | MUST | 0.5 | medium |
-| Expanded hover: media + week strip | SHOULD | 1.5 | high |
-| Calendar month view, scroll, back to today | SHOULD | 1 | medium |
+| Control center root + tiles + notifications subpage | MUST | 3 | high |
+| System tray row in the control center | MUST | 1.5 | high |
+| Lock module integration (with deps + `Session` adapter) | MUST | 1.5 | medium |
+| Expanded hover: media + week strip | MUST | 1.5 | high |
 | Charging layer + animation + glow pulse | SHOULD | 1 | high |
-| Notification glow pulse | SHOULD | 0.25 | low |
+| Low-battery red breathing glow | SHOULD | 0.25 | medium |
+| Command views: screensaver, security, webapp | SHOULD | 2 | medium |
 | Workspace fly animation on window move | SHOULD | 1 | medium |
+| Calendar month view, scroll, back to today | SHOULD | 1 | medium |
+| Notification glow pulse | SHOULD | 0.25 | low |
+| OLED pixel shift of the idle content | SHOULD | 0.25 | low |
 | Native WiFi/BT pages | LATER | 3 | medium |
 | Calendar events (khal + vdirsyncer) | LATER | 2 | medium |
 | Laptop power button -> power menu | LATER | 0.5 | low |
@@ -294,6 +338,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 ## Demo data
 
 - `test-notif.sh`-style script with `notify-send` covering normal, critical, with actions, replacing (same id) and burst (5 in a row).
+- Low battery: a `Battery` override token (dev only) to force a percentage, since draining to 20% is slow.
 - Manual: plug/unplug the charger, `wpctl`/`brightnessctl` keybinds, open/move windows across workspaces, toggle a special workspace, `pkexec true` for polkit.
 
 ## Data gaps & assumptions
@@ -308,19 +353,29 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 | Icon resolution for odd window classes | Fallback = first letter of the app name (like the old config) | user | yes |
 | Reserved space vs overlay | Reserve the idle notch height (exclusive zone) by default; expanded states overlay windows temporarily; `reserveSpace` toggle in config. The strip beside the notches shows the wallpaper (not painted black) | user | yes |
 | saneAspect video details beyond the screenshot | Not retrievable; only the screenshot is used | — | yes |
+| State files | Own state dir `~/.local/state/quickshell-notch/`; on first run import the old config's values (idle, wallpaper, theme, security); never write to the old dir | Claude | yes |
+| Running both configs | Never run the old and new shells at once (notification DBus name, polkit agent, idle locking). The cutover/rollback script stops one before starting the other | Claude | yes |
+| Smoke test on the live session | `make smoke` sets `NOTCH_SMOKE=1`: no NotificationServer, PolkitAgent, IdleMonitors, IpcHandlers, exclusive zone, BG surface, or state import/writes | Claude | yes |
+| WiFi toggle without root | `rfkill` state is readable via `/dev/rfkill` (uaccess); check `rfkill block wlan` as the user in phase 1; fallback = iwd DBus `Powered` | Claude | no |
+| Sleep hook | `/usr/lib/systemd/system-sleep/lock-before-sleep` is root-owned and calls the default config. Cutover edits it (sudo, user-approved) to call `qs -c notch ipc call lock lock`, falling back to the default config so rollback keeps locking. Verified with one `systemctl suspend` | Claude | yes |
+| Video while locked | BG video pauses while `Session.locked` (the lock surface may play its own video) | Claude | yes |
 
 ## Deferred to v2
 
 - Native WiFi/BT subpages (scan, connect, password) — high cost; v1 opens impala/bluetui.
 - Calendar events — needs a data source (khal + vdirsyncer).
 - Brightness right-click action — no clear use yet.
-- Laptop power button binding — a separate diagnosis (logind `HandlePowerKey` / `libinput debug-events`).
+- Laptop power button binding — a separate diagnosis (logind `HandlePowerKey` / `libinput debug-events`). Note: `keybinds.lua` already binds `XF86PowerOff` to the lock IPC, so check whether the key event reaches Hyprland at all.
+- Notification history across restarts — session-only by decision.
+- UI following the system locale — far future.
+- Weather tab (old wttr.in panel) — deferred to v2.
+- Expanded recording indicator (elapsed time, stop control, ...) — the user will expand the v1 red dot later; own mini-plan.
 
 ## Demo priorities
 
-1. Idle notch at rest + charging plug-in animation.
-2. Workspace notch reacting to switching, opening and moving apps.
-3. Hover expand with media + week.
+1. Idle notch at rest + hover expand with media + week (replaces the old bar's clock/calendar/media).
+2. Workspace notch reacting to switching and opening apps (fly animation when SHOULD lands).
+3. Charging plug-in animation and low-battery state (SHOULD polish).
 4. Notification toast -> unread dot -> control center list.
 5. Launcher apps + commands; power menu hold-confirm.
 
@@ -335,3 +390,40 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 
 | # | Finding | Resolution | Decided by |
 |---|---|---|---|
+| R1-1 | IdleManager/PowerActions/Lock depend on `Visibilities` | Keep with adapter: new `Session` singleton (`lockRequested`, `locked`); reuse map updated | planner |
+| R1-2 | No background surface (video wallpaper, caffeine inhibitor) | BG surface reuses old Background/BackgroundSurface + IdleInhibitor; wallpaper changes also set hyprpaper as fallback. MUST, 1d | user |
+| R1-3 | Exclusive zones stack between top surfaces | One invisible spacer per monitor owns the zone; all other top surfaces use `ExclusionMode.Ignore`; ADR 0004 updated | planner |
+| R1-4 | No Hyprland cutover | MUST item: exec `qs -c notch` + `QML_IMPORT_PATH`, `qs -c notch ipc call`, IPC targets launcher/power/lock/caffeine/controlcenter, rollback script. 0.5d | planner |
+| R1-5 | No system tray | MUST: compact tray row in the control center (activate + menu). 1.5d | user |
+| R1-6 | No battery while discharging / low-battery warning | Low-battery layer below 20% (mirror of charging, red), slow red breathing glow every ~30s, critical toast at 10% | user |
+| R1-7 | Lock integration underestimated | Re-estimated 1.5d; transitive deps listed in the reuse map; `Style.*` inside the lock exempt until restyled | planner |
+| R1-8 | Command views underestimated | Wallpaper/theme/keybinds MUST (2.5d); screensaver/security/webapp SHOULD (2d) | user |
+| R1-9 | Demo priorities vs scope | Expanded hover (media + week) moved to MUST; demo priorities reordered | planner |
+| R1-10 | Inline reply vs focus None | Buttons = DBus actions; `inlineReplySupported: false` in v1 | planner |
+| R1-11 | Notification history persistence/cap | Session-only, capped at 50 | user |
+| R1-12 | Mid-flow cases undefined | Rules added to the core model (preemption cancels hold, null polkit flow returns, critical toast allows Expanded, lock closes all, keyboard states stay on their monitor) | planner |
+| R1-13 | Enter auto-repeat breaks hold-to-confirm | Ignore `isAutoRepeat`; timer-driven progress | planner |
+| R1-14 | v1 tile state sources | BT via `Quickshell.Bluetooth`; WiFi via `rfkill` (root-less toggle to verify) | planner |
+| R1-15 | `replaces-id` updates the tracked object | Queue keyed by id, refresh on property change, covered by logic tests | planner |
+| R1-16 | Week strip start day | Centred on today, ±3 days, config token | planner |
+| R1-risk | Smoke test on live session; both shells running; shared state; narrow monitors; Lua bridge; OLED burn-in | `NOTCH_SMOKE=1`; never run both (cutover script); own state dir with one-time import; max centre width token; single `Hypr` dispatch wrapper; 1 px pixel shift (SHOULD) | planner |
+
+Source: [plan-review-1.md](plan-review-1.md).
+
+| # | Finding | Resolution | Decided by |
+|---|---|---|---|
+| R2-1 | Sleep hook still targets the default config (suspend without lock) | Cutover edits the root-owned hook (sudo) to call the notch config with fallback to the default; suspend-locks checklist step | planner |
+| R2-2 | Toast hover vs critical toast contradiction | Hover on a visible toast always expands it; critical collapses to a persistent `!` after first timeout, Expanded reachable; stays in the list until dismissed | user + planner |
+| R2-3 | Global vs per-monitor state machine | One reducer per monitor with global inputs; queue, suppression and dismiss/seen global; hover/Expanded per monitor | user |
+| R2-4 | Workspaces per monitor / slot count | Workspaces bound to each monitor; slot-count token (default old `maxVisible`) | planner |
+| R2-5 | "Mark read" vs DBus-only actions | Mockup buttons are example DBus actions; ✕ is the only local control | planner |
+| R2-6 | Per-monitor palettes vs single accent | Accents per monitor via `Colours.paletteFor(screen)`; ADR 0005 updated | user |
+| R2-7 | Keybinds lose targets | Super+D -> control center, Super+N -> notifications subpage, Super+Alt+C -> new `expanded` toggle IPC | user |
+| R2-8 | Weather and recording indicator dropped silently | Weather deferred to v2; red recording dot on the idle notch (MUST), to be expanded later in its own mini-plan | user |
+| R2-9 | Seen-marking on accidental hover | Only opening the notifications subpage marks seen | planner |
+| R2-10 | DND vs critical / battery toast | Critical and the 10% battery toast bypass DND | user |
+| R2-11 | MUST total misadded | Totals recomputed (see below) | planner |
+| R2-12 | Smoke mode still maps BG and imports state | `NOTCH_SMOKE` also skips BG surface, state import/writes and IpcHandlers; ADR 0004 updated | planner |
+| R2-risk | Hot-plug with keyboard state; smoke receiving IPC; rfkill root; two videos while locked | Screen removal closes keyboard states and cancels polkit; no IpcHandlers in smoke; rfkill checked in phase 1 with iwd fallback; BG video paused while locked | planner |
+
+Source: [plan-review-2.md](plan-review-2.md). MUST total after resolutions: 33.75 dev-days (no deadline; ~7 weeks to daily use).

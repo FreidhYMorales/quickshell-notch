@@ -11,7 +11,7 @@ The notch must look like part of the bezel on an OLED laptop panel. The old conf
 
 - Notch background: pure `#000`, opaque.
 - Inner cards: black mixed 6-10% with matugen `primary`.
-- Accents: matugen DARK-scheme `primary`, always (independent of light/dark mode).
+- Accents: matugen DARK-scheme `primary`, always (independent of light/dark mode), per monitor: each monitor's notches use the palette generated from that monitor's wallpaper (`Colours.paletteFor(screen)`).
 - Text: dark-scheme `on_surface` + a muted variant.
 - No permanent glow/shadow; glow only as brief event feedback (plug-in, notification arrival).
 - Concave ears (EarCurve.js) wherever a notch meets a screen edge.
