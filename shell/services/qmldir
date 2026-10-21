@@ -2,6 +2,7 @@ singleton Session Session.qml
 singleton Hypr Hypr.qml
 singleton Battery Battery.qml
 singleton Time Time.qml
+singleton Cava Cava.qml
 singleton Mpris Mpris.qml
 singleton SysInfo SysInfo.qml
 singleton Recorder Recorder.qml

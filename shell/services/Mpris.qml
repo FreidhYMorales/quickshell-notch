@@ -1,8 +1,10 @@
 pragma Singleton
 
 import Quickshell
+import QtQuick
 import Quickshell.Services.Mpris
 import "../config"
+import "../logic/visualizer.mjs" as Visualizer
 import "../logic/media.mjs" as MediaLogic
 
 // The active media player. Selection is a binding over each player's
@@ -29,6 +31,21 @@ Singleton {
     readonly property bool canPrev: player ? player.canGoPrevious : false
     readonly property bool canNext: player ? player.canGoNext : false
     readonly property string artUrl: player ? (player.trackArtUrl ?? "") : ""
+
+    // Accent from the cover art; matugen primary when there is no usable art.
+    readonly property int accentIndex: Visualizer.pickAccent(quantizer.colors, {
+        minLuma: Limits.accentMinLuma
+    })
+    readonly property bool hasArtAccent: accentIndex >= 0
+    readonly property color artAccent: hasArtAccent ? quantizer.colors[accentIndex] : Colours.global.primary
+
+    ColorQuantizer {
+        id: quantizer
+
+        source: root.artUrl
+        depth: 2
+        rescaleSize: 64
+    }
 
     readonly property var text: MediaLogic.trackText({
         title: player ? player.trackTitle : "",

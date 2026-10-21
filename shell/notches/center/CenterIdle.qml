@@ -4,6 +4,7 @@ import "../../config"
 import "../../services"
 import "../../logic/centerLayout.mjs" as CenterLayout
 import "../../logic/format.mjs" as Format
+import "../../logic/sideLayer.mjs" as SideLayer
 
 // Idle centre notch content: `(cpu) date . time (ram)` centred, so the clock
 // never moves. The width is content-driven: `baseWidth` fits the row, and a
@@ -15,21 +16,32 @@ Item {
 
     property var screen: null
     property var view: null
-    // none, charging, plugged, full or low (Battery.layer).
-    property string batteryLayer: Battery.layer
+    // none, charging, plugged, full, low or media (CenterStore.sideLayer).
+    property string batteryLayer: CenterStore.sideLayer
     readonly property int baseWidth: CenterLayout.idleBase({
         row: row.implicitWidth,
         pad: Layout.idlePad,
         ear: Layout.earRadius
     })
-    readonly property int sideNeed: CenterLayout.sideExtent({
-        left: layerGlyph.implicitWidth,
-        right: layerPercent.implicitWidth,
-        gap: Layout.rowGap
+    readonly property int sideNeed: SideLayer.sideWidth(batteryLayer, {
+        battery: CenterLayout.sideExtent({
+            left: layerGlyph.implicitWidth,
+            right: layerPercent.implicitWidth,
+            gap: Layout.rowGap
+        }),
+        media: CenterLayout.sideExtent({
+            left: art.implicitWidth,
+            right: viz.implicitWidth,
+            gap: Layout.rowGap
+        })
     })
+    readonly property bool mediaShown: batteryLayer === "media"
+    // Outermost item of each side: the dots sit beyond it.
+    readonly property Item leftEdge: mediaShown ? art : (layerShown ? layerGlyph : row)
+    readonly property Item rightEdge: mediaShown ? viz : (layerShown ? layerPercent : row)
 
     readonly property var scheme: Colours.paletteFor(screen)
-    readonly property bool layerShown: batteryLayer !== "none"
+    readonly property bool layerShown: batteryLayer !== "none" && !mediaShown
     readonly property color layerColor: batteryLayer === "low" ? Colours.critical : scheme.primary
 
     function glyphFor(): string {
@@ -80,7 +92,7 @@ Item {
 
     // Recording dot, left of the row; it never changes the width.
     Rectangle {
-        anchors.right: root.layerShown ? layerGlyph.left : row.left
+        anchors.right: root.leftEdge.left
         anchors.rightMargin: Layout.rowGap
         anchors.verticalCenter: parent.verticalCenter
         width: Layout.dotSize
@@ -94,7 +106,7 @@ Item {
     Rectangle {
         id: unread
 
-        anchors.left: root.layerShown ? layerPercent.right : row.right
+        anchors.left: root.rightEdge.right
         anchors.leftMargin: Layout.rowGap
         anchors.verticalCenter: parent.verticalCenter
         width: Layout.dotSize
@@ -116,6 +128,29 @@ Item {
                 duration: Timings.blink
             }
         }
+    }
+
+    ArtThumb {
+        id: art
+
+        anchors.right: row.left
+        anchors.rightMargin: Layout.rowGap
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.mediaShown
+        source: Mpris.artUrl
+        size: Layout.mediaArt
+        glyphSize: Layout.mediaArtGlyph
+        radius: Layout.mediaArtRadius
+    }
+
+    Visualizer {
+        id: viz
+
+        anchors.left: row.right
+        anchors.leftMargin: Layout.rowGap
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.mediaShown && Cava.available
+        barColor: Mpris.artAccent
     }
 
     Text {

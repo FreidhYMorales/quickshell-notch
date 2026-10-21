@@ -44,6 +44,7 @@ docs/                  architecture, development, ADRs, plans
 - Special workspace active state comes from the raw event `activespecial`.
 - Mpris (Quickshell 0.3.2): use `players.values` and `playbackState` / `isPlaying`; `playbackStatus` does not exist.
 - UPower initialises lazily on first access: touch `UPower.displayDevice` at startup and react to `ready` and property signals, never only a timer. `percentage` is 0-1.
+- The visualizer (`cava`) never runs under `Flags.smoke`; `make smoke` must not spawn it. It runs only while the idle media layer shows and is optional at runtime.
 - Avoid permanent forking polls; prefer event watchers and `FileView`.
 - Services degrade gracefully: missing data -> hide the element + `console.warn`.
 - Reuse from `~/Mio/Configuraciones/dotfiles/quickshell/.config/quickshell` per the plan's "Reuse map".
