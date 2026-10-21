@@ -14,7 +14,11 @@ PR 2 was split to fit the 400-line budget: 2a = mid-flow rules, 2b = `centerView
 
 - [x] 3.1-3.4 `earGeometry` + `surfaceLayout` (PR 3, branch `feat/notch-foundation-3-geometry`)
 
-Remaining: Phases 4-6.
+- [x] 4.1-4.4 `palette` + `hyprDsp` logic (PR 4a, branch `feat/notch-foundation-4a-logic`)
+
+PR 4 was split to fit the 400-line budget: 4a = pure logic, 4b = `config/` tokens + `Session`/`Hypr` services (tasks 4.5-4.6). The chain is now 8 PRs.
+
+Remaining: 4.5-4.6 (PR 4b), Phases 5-6.
 
 ## TDD Cycle Evidence
 
@@ -76,3 +80,17 @@ PR 3 decisions:
 - `earGeometry` generalizes the old static slots: one `buildPath` takes per-corner types (square, ear, round). An ear extends its entering endpoint when the previous clockwise corner is round, otherwise its leaving endpoint; `k` is clamped by the free edge length minus both adjacent radii. This reproduces the old NotchEarShape and CornerEarShape(topLeft) layouts.
 - `cornerPath` returns `null` for an unknown anchor.
 - `layoutFor` tokens (to be defined in `Layout.qml`, PR 4): `idleHeight, cornerWidth, osdWidth, gap, centerMaxWidth, centerMaxWidthByMonitor`. Corners shrink to half the screen on tiny screens; centre width = `min(per-monitor or default max, screen - 2*(corner+gap))`. `bl`/`vr` (brightness/volume OSDs) sit on the top row between each corner and the centre, centred in the free space; the centre is sized first and each OSD shrinks (down to 0) to keep a `gap` on both sides. All five slots are covered by the no-overlap sweep (coordinator fix: the first version put them on the screen edges, overlapping the corners).
+
+## PR 4a evidence
+
+| Task | Test file | Layer | Safety net | RED | GREEN | Triangulate | Refactor |
+|---|---|---|---|---|---|---|---|
+| 4.1/4.2 | `tests/palette.test.mjs` | Unit | N/A (new) | Written; module not found | 7/7 | valid, other wallpaper, uppercase hex, missing/non-string input, malformed JSON, missing colour, invalid hex | Clean |
+| 4.3/4.4 | `tests/hyprDsp.test.mjs` | Unit | N/A (new) | Written; module not found | 12/12 | no args, dotted name, literals, tables, 12 invalid names, injection in name/string/table key, escapes, digit after control char, nesting depth | Control chars escaped with a char loop (deno `no-control-regex`) |
+
+
+PR 4a decisions:
+- `parsePalette` reads `colors.{primary,on_surface,on_surface_variant}.hex` (only 6-digit hex) and returns `{primary,onSurface,muted}`; matugen's light-mode question stays open (phase 7).
+- `dspExpr(name, args[])`: args are string, finite number, boolean or plain-object tables (keys `^[A-Za-z_][A-Za-z0-9_]*$`, depth <= 3). Control chars escape as 3-digit decimal `\ddd`.
+- Qt's V4 engine rejects optional catch binding (`catch {`): `.mjs` imported by QML must use `catch (_e)`. PR 5/6 must keep this in mind for any logic imported from QML.
+Work Unit Evidence (unit 4a): focused `node --test tests/palette.test.mjs tests/hyprDsp.test.mjs` pass 19, fail 0. Runtime harness: N/A (pure logic; QML consumers land in PR 4b). Rollback: `shell/logic/{palette,hyprDsp}.mjs` + tests.
