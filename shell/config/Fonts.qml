@@ -7,4 +7,7 @@ Singleton {
     // Pixel sizes.
     readonly property int body: 12
     readonly property int small: 11
+    readonly property int title: 14
+    readonly property int control: 18
+    readonly property int display: 40
 }
