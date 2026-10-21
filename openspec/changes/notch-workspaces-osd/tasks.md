@@ -40,13 +40,13 @@ Each PR tick also updates this file's progress. Every slice ends with `make chec
 
 ## Phase 2 (PR 2): shared reveal and slider logic
 
-- [ ] 2.1 RED `tests/reveal.test.mjs`: Ready gate, Trigger before Ready unchanged, hover/hold, pin/unpin timer (spec: Reveal state machine, Startup gate)
-- [ ] 2.2 GREEN `shell/logic/reveal.mjs`
-- [ ] 2.3 RED `tests/slider.test.mjs`: valueAt/positionOf tables, wheel steps 0.05 and 5, rounding, levelGlyph thresholds, mute (spec: Slider maths, Mute display)
-- [ ] 2.4 GREEN `shell/logic/slider.mjs`
-- [ ] 2.5 RED `tests/osd.test.mjs`: shouldReveal (unavailable, source change, mute toggle, sink switch no reveal); GREEN `osd.mjs`
-- [ ] 2.6 RED/GREEN `cornerLayout.mjs` (`cornerShape`) and `surfaceLayout.mjs` optional `cornerHeight`/`osdHeight` (+ existing test)
-- [ ] 2.7 `make check`
+- [x] 2.1 RED `tests/reveal.test.mjs`: Ready gate, Trigger before Ready unchanged, hover/hold, pin/unpin timer (spec: Reveal state machine, Startup gate)
+- [x] 2.2 GREEN `shell/logic/reveal.mjs`
+- [x] 2.3 RED `tests/slider.test.mjs`: valueAt/positionOf tables, wheel steps 0.05 and 5, rounding, levelGlyph thresholds, mute (spec: Slider maths, Mute display)
+- [x] 2.4 GREEN `shell/logic/slider.mjs`
+- [x] 2.5 RED `tests/osd.test.mjs`: shouldReveal (unavailable, source change, mute toggle, sink switch no reveal); GREEN `osd.mjs`
+- [x] 2.6 RED/GREEN `cornerLayout.mjs` (`cornerShape`) and `surfaceLayout.mjs` optional `cornerHeight`/`osdHeight` (+ existing test)
+- [x] 2.7 `make check`
 
 ## Phase 3 (PR 3): workspaces notch
 
