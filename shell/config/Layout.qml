@@ -18,6 +18,14 @@ Singleton {
     readonly property int centerMaxWidth: 600
     readonly property var centerMaxWidthByMonitor: ({})
 
+    // Idle battery layers reserve this much on each side of the clock.
+    readonly property int batterySide: 36
+
+    // Expanded centre notch: full width with a player, narrower clock card alone.
+    readonly property int expandedHeight: 180
+    readonly property int expandedWidth: 560
+    readonly property int expandedClockWidth: 300
+
     // Bundle in the shape expected by logic/surfaceLayout.mjs.
     readonly property var tokens: ({
             idleHeight: idleHeight,
@@ -25,6 +33,7 @@ Singleton {
             osdWidth: osdWidth,
             gap: gap,
             centerMaxWidth: centerMaxWidth,
-            centerMaxWidthByMonitor: centerMaxWidthByMonitor
+            centerMaxWidthByMonitor: centerMaxWidthByMonitor,
+            expandedHeight: expandedHeight
         })
 }

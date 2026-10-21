@@ -8,5 +8,8 @@ Singleton {
     // Draw placeholder surfaces for notches that are not built yet.
     readonly property bool showPlaceholders: false
     // Smoke runs load the config without touching the live session.
+    // Dev only: forces battery fields, e.g. ({ percentage: 19, plugged: false }).
+    // Null keeps the real values.
+    readonly property var batteryOverride: null
     readonly property bool smoke: Quickshell.env("NOTCH_SMOKE") === "1"
 }

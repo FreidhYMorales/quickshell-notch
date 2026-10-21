@@ -9,6 +9,9 @@ Singleton {
     readonly property int reveal: 1500
     readonly property int holdConfirm: 1000
 
+    // Polling (milliseconds)
+    readonly property int sysPoll: 2000
+
     // Animation durations (milliseconds)
     readonly property int animFast: 120
     readonly property int animNormal: 220

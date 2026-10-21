@@ -4,3 +4,4 @@ singleton Layout Layout.qml
 singleton Flags Flags.qml
 singleton Strings Strings.qml
 singleton Colours Colours.qml
+singleton Limits Limits.qml
