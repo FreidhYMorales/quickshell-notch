@@ -1,0 +1,58 @@
+schema: spec-driven
+
+context: |
+  Stack: QML + Quickshell 0.3.2 (Qt 6.12); pure JS ES modules (.mjs) in shell/logic; zero npm deps.
+  Target: Arch Linux + Hyprland (Wayland), all monitors; solo project.
+  Architecture: services give data, logic/ decides, QML paints (docs/architecture.md, docs/adr/0001-0005).
+  Testing: node --test tests/ (Node 26); only shell/logic is unit-tested, UI verified manually with qs -c notch.
+  Style: qmlformat/qmllint (/usr/lib/qt6/bin), deno fmt/lint; full gate `make check` (includes `make smoke`).
+  Conventions: AGENTS.md, docs/architecture.md, docs/development.md, docs/adr/*.md, docs/plans/notch/plan.md.
+  Planned changes: plan.md "Implementation phases" (notch-foundation .. notch-cutover, then notch-polish-*).
+
+strict_tdd: true
+
+testing:
+  strict_tdd: true
+  scope: shell/logic
+  test_command: "node --test tests/"
+  runner: node:test
+  layers:
+    unit: true
+    integration: false
+    e2e: false
+  smoke: "make smoke"
+  coverage:
+    available: false
+  quality:
+    linter: "make lint (qmllint + deno lint)"
+    formatter: "make fmt-check (qmlformat + deno fmt)"
+    type_checker: null
+  full_gate: "make check"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Reference the matching row of plan.md "Implementation phases"
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Respect separation: services give data, logic decides, QML paints
+    - No literals for colours, timings, fonts or UI text outside shell/config/
+    - No Quickshell/Qt imports in shell/logic
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Forecast against the 400-line review budget
+  apply:
+    guidelines:
+      - Follow existing code patterns and AGENTS.md gotchas
+      - Add every new QML file to its folder's qmldir
+    tdd: true
+    test_command: "node --test tests/"
+  verify:
+    test_command: "node --test tests/"
+    build_command: "make check"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
