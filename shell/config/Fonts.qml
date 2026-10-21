@@ -9,5 +9,5 @@ Singleton {
     readonly property int small: 11
     readonly property int title: 14
     readonly property int control: 18
-    readonly property int display: 40
+    readonly property int display: 28
 }
