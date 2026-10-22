@@ -25,13 +25,16 @@ Line endings: `.gitattributes` forces LF (`* text=auto eol=lf`). A clone made be
 | ttf-iosevkaterm-nerd | any | UI font (IosevkaTerm Nerd Font) |
 | make | any | `make check` quality gate |
 | cava | 1.0 | Audio visualizer in the idle media layer (optional at runtime: without it only the visualizer hides) |
+| brightnessctl | any | Backlight read and set for the brightness OSD (optional at runtime: without it or a backlight device only that OSD hides) |
+| udevadm (systemd) | any | Backlight change watcher (`udevadm monitor --subsystem-match=backlight`); ships with systemd |
+| pipewire | any | Volume and mute for the volume OSD through `Quickshell.Services.Pipewire` (no `wpctl` needed by the shell) |
 
 ## Install prerequisites
 
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed qt6-declarative nodejs deno matugen ttf-iosevkaterm-nerd make cava
+sudo pacman -S --needed qt6-declarative nodejs deno matugen ttf-iosevkaterm-nerd make cava brightnessctl
 yay -S quickshell-git
 ```
 
@@ -81,4 +84,5 @@ qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C 
 | New component "is not a type" | Arch | Add it to the folder's `qmldir` |
 | Clicks across the top strip are swallowed | Arch | The surface lacks `mask: Region { item: ... }` |
 | Dispatch has no effect | Arch | Use the `hl.dsp.*` Lua bridge, not `Hyprland.dispatch` |
+| Brightness OSD never appears | Arch | Needs a device in `/sys/class/backlight` and `brightnessctl` on PATH; the log shows `Brightness: no usable backlight` |
 | `qs -c notch` says config not found | Arch | Expected before cutover: use `qs -p shell/shell.qml` |
