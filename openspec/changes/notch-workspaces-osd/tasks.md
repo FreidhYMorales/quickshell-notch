@@ -58,11 +58,11 @@ Each PR tick also updates this file's progress. Every slice ends with `make chec
 
 ## Phase 4 (PR 4): services
 
-- [ ] 4.1 RED `tests/brightness.test.mjs`: parseLevel rejects garbage/negatives, percentOf, setArgs (`"50; rm"`, NaN, -5, 500) (spec: Brightness Set table)
-- [ ] 4.2 GREEN `shell/logic/brightness.mjs`
-- [ ] 4.3 `shell/services/Audio.qml`: sink + PwObjectTracker, `volume` 0..1 clamped, raw value exposed, `setVolume`, `toggleMute`, smoke no-op
-- [ ] 4.4 `shell/services/Brightness.qml`: udevadm monitor, brightnessctl get/max, coalesced set, no Process under smoke
-- [ ] 4.5 qmldir, `docs/development.md` (brightnessctl, udevadm); `make check`
+- [x] 4.1 RED `tests/brightness.test.mjs`: parseLevel rejects garbage/negatives, percentOf, setArgs (`"50; rm"`, NaN, -5, 500) (spec: Brightness Set table)
+- [x] 4.2 GREEN `shell/logic/brightness.mjs`
+- [x] 4.3 `shell/services/Audio.qml`: sink + PwObjectTracker, `volume` 0..1 clamped, raw value exposed, `setVolume`, `toggleMute`, smoke no-op
+- [x] 4.4 `shell/services/Brightness.qml`: udevadm monitor, brightnessctl get/max, coalesced set, no Process under smoke
+- [x] 4.5 qmldir, `docs/development.md` (brightnessctl, udevadm); `make check`
 
 ## Phase 5 (PR 5): OSD surfaces
 
