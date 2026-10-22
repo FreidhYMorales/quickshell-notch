@@ -41,3 +41,19 @@ Decisions and deviations:
 - Size: about 660 changed lines against the 400 budget (tests are about 490). Commits are independent units, so PR 2 can split at a commit boundary.
 
 - PR 2 split for the 400-line budget: 2a = reveal + corner/surface layout (commits 77adfaf, 2143f9f), 2b = slider + osd + these docs. Coordinator fix in 2b: `accumulateWheel(carry, delta)` keeps the sub-notch remainder so touchpad deltas (e.g. 15) add up to whole notches instead of being dropped by `notchesOf` (RED: missing export; GREEN: 2 new tests).
+
+## PR 3 of 6: live workspaces notch (tasks 3.1-3.5) - done
+
+| Task | RED (observed) | GREEN | Triangulation |
+|------|----------------|-------|---------------|
+| IPC adapters (new, `workspaceStrip.mjs`) | missing export `parseActiveSpecial` | 363/363 pass | garbage client fields, negative special ids, comma in names, non-snapshot events |
+| 3.1-3.4 | QML: `make check` (fmt, lint, smoke) | scratch `qs -p` runs | startup, workspace switch, special toggle |
+
+Evidence: `node --test tests/` 363 pass (24 new); `make check` green. Runtime (scratch copy of `shell/` with a debug logger, `timeout 9 qs -p`): idle strip `1..5` with ws 1 active (kitty), hidden, mask 0; `hl.dsp.focus({workspace=2})` -> Trigger, strip `kitty, active, -, -, -`, mask 44, Timeout after `Timings.reveal`; `toggle_special("messaging")` -> Pin, `{pinned, special: messaging}`, 74x44, unpin -> Timeout/Trigger. No errors beyond the portal warning. Rollback: revert the surface, `WorkspaceSlot`, `Workspaces.qml`, tokens and the adapters.
+
+Decisions and deviations:
+
+- Added pure `windowFrom`, `parseActiveSpecial`, `refreshesSnapshot` (not in design) so the Hyprland IPC mapping is tested; the service stays glue.
+- The service seeds `specialByMonitor` from the monitor `lastIpcObject` once; later changes come from `activespecial`. It also keeps `normalWindows`.
+- Slots beyond ~6 overflow the 200 px TL slot (content is clipped); `Layout.cornerWidth` is unchanged.
+- Icon rendering and click focus are not verified visually (manual checks).

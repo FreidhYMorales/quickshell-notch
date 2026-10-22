@@ -50,11 +50,11 @@ Each PR tick also updates this file's progress. Every slice ends with `make chec
 
 ## Phase 3 (PR 3): workspaces notch
 
-- [ ] 3.1 Tokens in `shell/config/{Layout,Timings,Limits,Strings}.qml` (spec: Workspaces and OSD tokens); literal scan clean
-- [ ] 3.2 `shell/services/Workspaces.qml` + qmldir: refreshToplevels, `wsDebounce`, snapshot, `triggered`, `activespecial`
-- [ ] 3.3 `shell/notches/workspaces/WorkspaceSlot.qml` + qmldir (dot/icon/initial)
-- [ ] 3.4 Modify `WorkspacesSurface.qml`: strip, reveal Timer, hover keeps open, mask follows shape, click focus / toggle_special
-- [ ] 3.5 AGENTS.md `lastIpcObject` gotcha; `make check`; manual checks listed in unit 3
+- [x] 3.1 Tokens in `shell/config/{Layout,Timings,Limits,Strings}.qml` (spec: Workspaces and OSD tokens); literal scan clean
+- [x] 3.2 `shell/services/Workspaces.qml` + qmldir: refreshToplevels, `wsDebounce`, snapshot, `triggered`, `activespecial`
+- [x] 3.3 `shell/notches/workspaces/WorkspaceSlot.qml` + qmldir (dot/icon/initial)
+- [x] 3.4 Modify `WorkspacesSurface.qml`: strip, reveal Timer, hover keeps open, mask follows shape, click focus / toggle_special
+- [x] 3.5 AGENTS.md `lastIpcObject` gotcha; `make check`; manual checks listed in unit 3
 
 ## Phase 4 (PR 4): services
 
