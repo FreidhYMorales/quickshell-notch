@@ -29,6 +29,19 @@ Singleton {
     readonly property string glyphBolt: "\uf0e7"
     readonly property string glyphPlug: "\uf1e6"
 
+    // Workspaces notch: Arch logo, slot symbols and special workspace glyphs.
+    readonly property string glyphArch: "\uf303"
+    readonly property string symbolActive: "\u25cf"
+    readonly property string symbolEmpty: "\u2013"
+    readonly property string unknownInitial: "?"
+    readonly property string glyphSpecial: "\uf005"
+    readonly property var specialGlyphs: ({
+            messaging: "\uf075",
+            music: glyphMusic,
+            magic: "\uf0d0",
+            terminal: "\uf120"
+        })
+
     // Media glyphs: placeholder art and transport controls.
     readonly property string glyphMusic: "\udb81\udf5a"
     readonly property string glyphPrev: "\uf048"

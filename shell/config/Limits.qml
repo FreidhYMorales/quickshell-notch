@@ -16,6 +16,11 @@ Singleton {
     readonly property int cavaRetries: 3
     // Art colours darker than this (luma 0-1) are not used as the accent.
     readonly property real accentMinLuma: 0.25
+    // Workspace slots shown at least (more when the active or an occupied id is higher).
+    readonly property int workspaceSlots: 5
+    // A floating window smaller than this is a popup, not an app.
+    readonly property int floatMinWidth: 300
+    readonly property int floatMinHeight: 200
     // Days shown on each side of today in the week strip.
     readonly property int weekRadius: 3
 }

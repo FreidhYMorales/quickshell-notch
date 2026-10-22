@@ -123,3 +123,59 @@ export function diffSnapshots(prev, next, monitor, rules) {
   }
   return events;
 }
+
+// Unknown focus order sorts after every real one.
+const UNKNOWN_FOCUS = 1e9;
+const str = (v) => (typeof v === "string" ? v : "");
+const int = (v, fallback) => (Number.isFinite(v) ? v : fallback);
+
+/**
+ * windowFrom(client, { monitor, hasParent }) -> Win | null
+ * Maps one `hyprctl clients -j` object (untrusted shape) to a Win; null when
+ * it carries no address.
+ */
+export function windowFrom(client, extra) {
+  if (!client || typeof client.address !== "string" || !client.address) {
+    return null;
+  }
+  const size = Array.isArray(client.size) ? client.size : [];
+  return {
+    address: client.address,
+    cls: str(client.class),
+    workspaceId: int(client.workspace && client.workspace.id, 0),
+    monitor: extra.monitor,
+    focus: int(client.focusHistoryID, UNKNOWN_FOCUS),
+    mapped: client.mapped === true,
+    hidden: client.hidden === true,
+    floating: client.floating === true,
+    hasParent: extra.hasParent === true,
+    width: int(size[0], 0),
+    height: int(size[1], 0),
+  };
+}
+
+/** parseActiveSpecial("special:magic,eDP-1") -> { name, monitor } | null */
+export function parseActiveSpecial(data) {
+  if (typeof data !== "string") return null;
+  const at = data.lastIndexOf(",");
+  if (at < 0 || at === data.length - 1) return null;
+  return { name: data.slice(0, at), monitor: data.slice(at + 1) };
+}
+
+const SNAPSHOT_EVENTS = [
+  "workspace",
+  "workspacev2",
+  "focusedmon",
+  "focusedmonv2",
+  "openwindow",
+  "closewindow",
+  "movewindow",
+  "movewindowv2",
+  "moveworkspace",
+  "moveworkspacev2",
+];
+
+/** refreshesSnapshot(rawEventName) -> true when it should schedule a snapshot */
+export function refreshesSnapshot(name) {
+  return SNAPSHOT_EVENTS.indexOf(name) >= 0;
+}

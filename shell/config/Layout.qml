@@ -52,9 +52,18 @@ Singleton {
     readonly property int controlGap: 12
     readonly property int weekCardPad: 4
 
+    // Workspaces notch (TL): the corner body is the idle row plus the ear.
+    readonly property int cornerHeight: 44
+    readonly property int wsSlot: 22
+    readonly property int wsSlotActive: 28
+    readonly property int wsIcon: 16
+    readonly property int wsPad: 10
+    readonly property int wsGap: 4
+
     // Bundle in the shape expected by logic/surfaceLayout.mjs.
     readonly property var tokens: ({
             idleHeight: idleHeight,
+            cornerHeight: cornerHeight,
             cornerWidth: cornerWidth,
             osdWidth: osdWidth,
             gap: gap,
