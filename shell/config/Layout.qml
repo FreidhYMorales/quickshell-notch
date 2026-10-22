@@ -6,6 +6,9 @@ Singleton {
     // Logical units, identical on every monitor.
     readonly property int idleHeight: 32
     readonly property int cornerWidth: 200
+    // The workspaces window may grow past its slot so long strips are not
+    // clipped; its shape stays content-sized.
+    readonly property int cornerMaxWidth: 340
     readonly property int osdWidth: 220
     readonly property int gap: 8
     readonly property int earRadius: 12

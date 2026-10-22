@@ -16,6 +16,9 @@ PanelWindow {
     property string slotName: "c"
     property bool shown: true
     property bool wantsKeyboard: false
+    // Lets a surface outgrow its layout slot (windows are transparent and
+    // masked, so only the visible shape matters).
+    property int minWidth: 0
     // Item whose area receives input; defaults to the whole surface.
     property Item maskItem: body
 
@@ -26,7 +29,7 @@ PanelWindow {
     margins.left: slot.x
     // wlr-layer-shell rejects a zero width unless both left and right are
     // anchored, which would kill the shell on screens too narrow for an OSD.
-    implicitWidth: Math.max(1, slot.width)
+    implicitWidth: Math.max(1, slot.width, minWidth)
     implicitHeight: slot.height
     visible: shown
     color: "transparent"

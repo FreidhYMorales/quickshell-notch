@@ -31,7 +31,7 @@ NotchSurface {
         contentHeight: Layout.idleHeight,
         pad: Layout.wsPad,
         ear: Layout.earRadius,
-        maxWidth: slot.width,
+        maxWidth: root.implicitWidth,
         maxHeight: slot.height
     })
 
@@ -56,6 +56,7 @@ NotchSurface {
     }
 
     slotName: "tl"
+    minWidth: Layout.cornerMaxWidth
     // Hidden: empty mask, clicks pass through.
     maskItem: maskBox
     onSpecialChanged: {
