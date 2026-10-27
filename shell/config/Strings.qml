@@ -42,6 +42,19 @@ Singleton {
             terminal: "\uf120"
         })
 
+    // OSD icons (shown inside the slider thumb).
+    readonly property var volumeGlyphs: ({
+            muted: "\udb81\udd81",
+            low: "\uf026",
+            mid: "\uf027",
+            high: "\uf028"
+        })
+    readonly property var brightnessGlyphs: ({
+            low: "\udb80\udcde",
+            mid: "\udb80\udcdf",
+            high: "\udb80\udce0"
+        })
+
     // Media glyphs: placeholder art and transport controls.
     readonly property string glyphMusic: "\udb81\udf5a"
     readonly property string glyphPrev: "\uf048"
