@@ -57,3 +57,20 @@ Decisions and deviations:
 - The service seeds `specialByMonitor` from the monitor `lastIpcObject` once; later changes come from `activespecial`. It also keeps `normalWindows`.
 - Slots beyond ~6 overflow the 200 px TL slot (content is clipped); `Layout.cornerWidth` is unchanged.
 - Icon rendering and click focus are not verified visually (manual checks).
+
+## PR 4 of 7: Audio and Brightness services (tasks 4.1-4.5) - done
+
+| Task | RED (observed) | GREEN | Triangulation |
+|------|----------------|-------|---------------|
+| 4.1/4.2 | `brightness.mjs` not found (ERR_MODULE_NOT_FOUND) | 8/8 pass, 371/371 whole suite | garbage rows (`"50; rm"`, NaN, Infinity, negatives, `1e3`, `0x10`, huge ints), spec tables, integer-only argv regex |
+| 4.3-4.5 | QML: `make check` (fmt, lint, smoke) | scratch `qs -p` probe | host read of both services |
+
+Evidence: `node --test tests/brightness.test.mjs` 8 pass; `node --test tests/` 371 pass (8 new); `make check` green. Runtime (scratch copy of `shell/` with a probe Timer, `timeout 7 qs -p`, read only): `Audio` avail=true, sink id 55, raw=0.25002, volume=0.25002, muted=true; `Brightness` avail=true, max=496, percent=24 (matches `brightnessctl -m`: 118/496). No errors beyond the portal warning; no `udevadm` left running. Host: `/sys/class/backlight/intel_backlight`, `/usr/bin/brightnessctl`, `/usr/bin/udevadm` present. Nothing was set; external-change tracking and `set` stay manual checks. Rollback: delete `Audio.qml`, `Brightness.qml`, `brightness.mjs`, its test, the two qmldir lines and the development.md rows.
+
+Decisions and deviations:
+
+- `Audio` also exposes `rawVolume` (may exceed 1; the OSD shows the real percent via `displayPercent`) next to the clamped `volume`; `sinkId` is -1 without a sink. `setVolume`/`toggleMute` are no-ops under `Flags.smoke` and without a sink.
+- `Brightness` has `available`, `percent`, `set(p)`. `set` updates `percent` optimistically (slider feedback) and the udev event confirms it. `set` ignores NaN or non-numbers via `setArgs`.
+- `parseLevel` parses the plain integer from `brightnessctl get`/`max` (not the `-m` CSV).
+- A binary that cannot start leaves `available=false` without a warning (no exit signal exists then); a bad `max` warns. A watcher exit warns.
+- Udev event delivery for this backlight on external `brightnessctl s` is not verified (would change the real brightness).
