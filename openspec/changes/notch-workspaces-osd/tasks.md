@@ -66,6 +66,6 @@ Each PR tick also updates this file's progress. Every slice ends with `make chec
 
 ## Phase 5 (PR 5): OSD surfaces
 
-- [ ] 5.1 OSD tokens in config files; `shell/components/Slider.qml` + qmldir (drag, tap, wheel, right-click mute)
-- [ ] 5.2 Modify `OsdSurface.qml`: `kind`, `mirrored` (number outer side, fill left-to-right), real percent above 100 with full bar, hidden under `osdMinWidth`
-- [ ] 5.3 Modify `shell/shell.qml`: both OSDs on every monitor; placeholders per spec; `make check`; manual checks listed in unit 5
+- [x] 5.1 OSD tokens in config files; `shell/components/Slider.qml` + qmldir (drag, tap, wheel, right-click mute)
+- [x] 5.2 Modify `OsdSurface.qml`: `kind`, `mirrored` (number outer side, fill left-to-right), real percent above 100 with full bar, hidden under `osdMinWidth`
+- [x] 5.3 Modify `shell/shell.qml`: both OSDs on every monitor; placeholders per spec; `make check`; manual checks listed in unit 5

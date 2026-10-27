@@ -74,3 +74,19 @@ Decisions and deviations:
 - `parseLevel` parses the plain integer from `brightnessctl get`/`max` (not the `-m` CSV).
 - A binary that cannot start leaves `available=false` without a warning (no exit signal exists then); a bad `max` warns. A watcher exit warns.
 - Udev event delivery for this backlight on external `brightnessctl s` is not verified (would change the real brightness).
+
+## PR 5 of 5: OSD surfaces (tasks 5.1-5.3) - done
+
+| Task | RED (observed) | GREEN | Triangulation |
+|------|----------------|-------|---------------|
+| 5.1-5.3 | N/A: QML only, no new pure logic (all maths already in `slider.mjs`, `osd.mjs`, `reveal.mjs`); `make check` is the gate | `make check` green (371 tests, fmt, lint, smoke) | `timeout 6 qs -p shell/shell.qml` (real run, not smoke): loads, no warnings or errors beyond the portal one |
+
+Decisions and deviations:
+
+- OSD tokens added: Layout `osdHeight 36` (also in `tokens`), `sliderHeight`, `osdPad`, `osdValueWidth`, `osdMinWidth`; Limits `volumeStep`, `brightnessStep`, `levelHigh`, `levelMid`; Strings `volumeGlyphs`, `brightnessGlyphs`. `Strings.brightness`/`volume` are now unused (kept).
+- `Slider.qml`: fill always left to right; `mirrored` only moves the number to the outer (left) side (BL mirrored, VR not). Right-click emits `muteToggled`; only the volume OSD connects it, so brightness right-click does nothing. `held` (button down) drives the `Hold` reveal event.
+- `OsdSurface` hides by `shown: ready`; the `osdMinWidth` check lives in `open` (not `shown`) because `shown: ready && slot.width >= ...` produced a binding loop warning at runtime. Under the minimum width the shape never opens and the mask is empty.
+- OSDs are live on every monitor; no placeholder remains for BL/VR (only TR keeps `showPlaceholders`).
+- Volume above 100% shows its real percent (`displayPercent`) with a full bar.
+
+Manual checks for the user (`qs -p shell/shell.qml`), NOT done: drag the slider (both OSDs), tap on the bar, wheel up/down (step 5% / 5), right-click mute on VR (dimmed track, muted icon) and no-op on BL, change volume/brightness externally (keys) and see the reveal on every monitor, hover keeps it open and leaving restarts the timeout, no reveal on shell reload (startup gate), narrow-monitor slot hides the OSD, icon in the thumb and the number on the outer side.
