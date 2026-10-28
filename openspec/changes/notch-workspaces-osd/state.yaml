@@ -12,7 +12,7 @@ phases:
   design: done
   tasks: done
   apply: "PR 5 of 5 done"
-  verify: pending
+  verify: "done (PASS WITH WARNINGS)"
   archive: pending
 artifacts:
   proposal: openspec/changes/notch-workspaces-osd/proposal.md
@@ -21,5 +21,6 @@ new_capabilities: [workspaces-notch, audio-service, brightness-service, osd-notc
 modified_capabilities: [shell-surfaces, visual-tokens]
 chain_strategy: stacked-to-main
 artifacts_tasks: openspec/changes/notch-workspaces-osd/tasks.md
-next: [verify]   # all tasks done (PR 5); manual checks of unit 5 pending
-updated: 2026-10-21
+verify_report: openspec/changes/notch-workspaces-osd/verify-report.md
+next: [archive]
+updated: 2026-10-27
