@@ -1,0 +1,29 @@
+change: notch-workspaces-osd
+project: quickshell-notch
+artifact_store: openspec
+pace: interactive
+delivery_strategy: ask-on-risk
+review_budget_lines: 400
+plan_row: "docs/plans/notch/plan.md Implementation phases #3"
+phases:
+  explore: skipped
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: "PR 5 of 5 done"
+  verify: "done (PASS WITH WARNINGS)"
+  archive: done (2026-10-27; main specs reconciled, see archive-report.md)
+artifacts:
+  proposal: openspec/changes/archive/2026-10-27-notch-workspaces-osd/proposal.md
+  design: openspec/changes/archive/2026-10-27-notch-workspaces-osd/design.md
+  spec: openspec/changes/archive/2026-10-27-notch-workspaces-osd/specs/
+  tasks: openspec/changes/archive/2026-10-27-notch-workspaces-osd/tasks.md
+  verify_report: openspec/changes/archive/2026-10-27-notch-workspaces-osd/verify-report.md
+  archive_report: openspec/changes/archive/2026-10-27-notch-workspaces-osd/archive-report.md
+new_capabilities: [workspaces-notch, audio-service, brightness-service, osd-notch]
+modified_capabilities: [shell-surfaces, visual-tokens]
+main_specs: [workspaces-notch, audio-service, brightness-service, osd-notch, shell-surfaces, visual-tokens]
+chain_strategy: stacked-to-main
+next: [none]
+updated: 2026-10-27

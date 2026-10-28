@@ -50,12 +50,17 @@ Every surface MUST set a mask covering only its visible shape. Clicks outside ma
 
 ### Requirement: Placeholder visibility
 
-TL, BL, VR and TR placeholders MUST be invisible unless the `showPlaceholders` token is true.
+Only the TR placeholder MUST be invisible unless the `showPlaceholders` token is true. TL, BL and VR are live surfaces (see `workspaces-notch`, `osd-notch`).
 
 #### Scenario: Debug
 - GIVEN `showPlaceholders = true`
 - WHEN the shell starts
-- THEN the four placeholders are visible with their masks and ears
+- THEN the TR placeholder is visible with its mask and ear AND TL, BL, VR show only their live content
+
+#### Scenario: Default
+- GIVEN `showPlaceholders = false`
+- WHEN the shell starts
+- THEN TR is invisible AND TL, BL, VR are hidden until their triggers fire
 
 ### Requirement: Concave ears
 
@@ -82,14 +87,15 @@ The idle centre notch MUST be pure `#000` and show live content as defined in `c
 
 ### Requirement: Smoke mode
 
-With `NOTCH_SMOKE=1` the shell MUST skip the spacer zone, NotificationServer, PolkitAgent, IdleMonitors, IpcHandlers, the BG surface and all state import/writes. The variable MUST be read once, in the `Flags.smoke` config token. Only the spacer zone is gated in this change; NotificationServer, PolkitAgent, IdleMonitors, IpcHandlers and the BG surface are not yet present and MUST honour the same gate when introduced.
+With `NOTCH_SMOKE=1` the shell MUST skip the spacer zone, NotificationServer, PolkitAgent, IdleMonitors, IpcHandlers, the BG surface, all state import/writes, and MUST NOT start processes or udev watchers (including `brightnessctl`). The variable MUST be read once, in the `Flags.smoke` config token. NotificationServer, PolkitAgent, IdleMonitors, IpcHandlers and the BG surface are not yet present and MUST honour the same gate when introduced.
 
 #### Scenario: Smoke run
 - GIVEN `NOTCH_SMOKE=1`
 - WHEN `make smoke` runs
-- THEN the shell loads without errors AND no zone, DBus name, agent, IPC target or state file is created
+- THEN the shell loads without errors AND no zone, DBus name, agent, IPC target, state file, process or udev watcher is created
 
 #### Scenario: Normal run
 - GIVEN `NOTCH_SMOKE` unset
 - WHEN the shell starts
-- THEN the spacer zone applies per `reserveSpace`
+- THEN the spacer zone applies per `reserveSpace` AND the brightness watcher runs
+

@@ -75,3 +75,17 @@ Timings MUST include hover open (200 ms), reveal timeout (about 1.5 s) and hold-
 - GIVEN the expanded width tokens
 - WHEN compared with `Layout.centerMaxWidth`
 - THEN the clamped result never exceeds it
+
+### Requirement: Workspaces and OSD tokens
+
+`shell/config/` MUST provide: the workspace minimum slot count (`Limits.workspaceSlots`, 5; the strip grows past it with the active or highest occupied workspace id, see `workspaces-notch`) and the workspace event debounce in `Limits`/`Timings`; the startup-gate timing in `Timings`; the OSD wheel step in `Limits`; the slider fill mix (`Colours.fillMix`) and muted fill opacity (`Colours.mutedAlpha`) in `Colours`; the volume, muted-volume and brightness OSD icons and the active/empty symbols (`●`, `–`) in `Strings`; and every new user-visible string. `Timings.reveal` (existing) MUST drive both strips and OSDs. Literals for these MUST NOT appear outside `shell/config/`.
+
+#### Scenario: Tokens resolve
+- GIVEN the config module
+- WHEN QML or logic tests read the new tokens
+- THEN minimum slot count, debounce, startup gate, wheel step, fill mix, muted opacity, icons and symbols are defined
+
+#### Scenario: Literal scan
+- GIVEN the new workspaces and OSD QML files
+- WHEN scanned for colour, duration, font or text literals
+- THEN none are found
