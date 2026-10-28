@@ -20,6 +20,12 @@ Singleton {
     readonly property real trackAlpha: 0.2
     // Opacity of secondary text and of disabled controls.
     readonly property real dimAlpha: 0.6
+    // Opacity of a muted slider fill: higher than dimAlpha so it still reads
+    // on the black notch.
+    readonly property real mutedAlpha: 0.8
+    // Share of primary mixed into the black notch for a slider fill, so the
+    // full-primary thumb stands out against it.
+    readonly property real fillMix: 0.55
 
     // Used until (or unless) matugen output is available.
     readonly property var fallback: ({

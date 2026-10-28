@@ -32,13 +32,14 @@ Scope {
             OsdSurface {
                 screen: perScreen.modelData
                 slotName: "bl"
-                label: Strings.brightness
+                kind: "brightness"
+                mirrored: true
             }
 
             OsdSurface {
                 screen: perScreen.modelData
                 slotName: "vr"
-                label: Strings.volume
+                kind: "volume"
             }
 
             ControlCenterSurface {

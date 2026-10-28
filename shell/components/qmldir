@@ -5,5 +5,6 @@ CornerEarShape CornerEarShape.qml
 NotchEarShape NotchEarShape.qml
 NotchSurface NotchSurface.qml
 NotchZone NotchZone.qml
+Slider Slider.qml
 SpacerSurface SpacerSurface.qml
 Visualizer Visualizer.qml

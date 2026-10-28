@@ -11,7 +11,7 @@ phases:
   spec: done
   design: done
   tasks: done
-  apply: "PR 4 of 7"
+  apply: "PR 5 of 5 done"
   verify: pending
   archive: pending
 artifacts:
@@ -21,5 +21,5 @@ new_capabilities: [workspaces-notch, audio-service, brightness-service, osd-notc
 modified_capabilities: [shell-surfaces, visual-tokens]
 chain_strategy: stacked-to-main
 artifacts_tasks: openspec/changes/notch-workspaces-osd/tasks.md
-next: [apply]   # PR 4 of 7 done (tasks 4.1-4.5); PR 5 next
+next: [verify]   # all tasks done (PR 5); manual checks of unit 5 pending
 updated: 2026-10-21

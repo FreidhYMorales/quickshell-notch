@@ -74,3 +74,30 @@ Decisions and deviations:
 - `parseLevel` parses the plain integer from `brightnessctl get`/`max` (not the `-m` CSV).
 - A binary that cannot start leaves `available=false` without a warning (no exit signal exists then); a bad `max` warns. A watcher exit warns.
 - Udev event delivery for this backlight on external `brightnessctl s` is not verified (would change the real brightness).
+
+## PR 5 of 5: OSD surfaces (tasks 5.1-5.3) - done
+
+| Task | RED (observed) | GREEN | Triangulation |
+|------|----------------|-------|---------------|
+| 5.1-5.3 | N/A: QML only, no new pure logic (all maths already in `slider.mjs`, `osd.mjs`, `reveal.mjs`); `make check` is the gate | `make check` green (371 tests, fmt, lint, smoke) | `timeout 6 qs -p shell/shell.qml` (real run, not smoke): loads, no warnings or errors beyond the portal one |
+
+Decisions and deviations:
+
+- OSD tokens added: Layout `osdHeight 36` (also in `tokens`), `sliderHeight`, `osdPad`, `osdValueWidth`, `osdMinWidth`; Limits `volumeStep`, `brightnessStep`, `levelHigh`, `levelMid`; Strings `volumeGlyphs`, `brightnessGlyphs`. `Strings.brightness`/`volume` are now unused (kept).
+- `Slider.qml`: fill always left to right; `mirrored` only moves the number to the outer (left) side (BL mirrored, VR not). Right-click emits `muteToggled`; only the volume OSD connects it, so brightness right-click does nothing. `held` (button down) drives the `Hold` reveal event.
+- `OsdSurface` hides by `shown: ready`; the `osdMinWidth` check lives in `open` (not `shown`) because `shown: ready && slot.width >= ...` produced a binding loop warning at runtime. Under the minimum width the shape never opens and the mask is empty.
+- OSDs are live on every monitor; no placeholder remains for BL/VR (only TR keeps `showPlaceholders`).
+- Volume above 100% shows its real percent (`displayPercent`) with a full bar.
+
+Manual checks for the user (`qs -p shell/shell.qml`), NOT done: drag the slider (both OSDs), tap on the bar, wheel up/down (step 5% / 5), right-click mute on VR (dimmed track, muted icon) and no-op on BL, change volume/brightness externally (keys) and see the reveal on every monitor, hover keeps it open and leaving restarts the timeout, no reveal on shell reload (startup gate), narrow-monitor slot hides the OSD, icon in the thumb and the number on the outer side.
+
+### PR 5 visual review (user, live session on a white wallpaper)
+
+The user ran the OSDs live and reported them fine in general; the review changed the slider look only (QML, no logic; `make check` green):
+
+- Slider centred vertically in the notch body (the `earRadius / 2` offset pushed it down).
+- Track and fill are as tall as the thumb (`sliderHeight`), not a third of it.
+- The fill ends at the thumb's outer edge, so it keeps round ends at 0 and the thumb lines up with it.
+- Thumb in solid primary; fill is primary mixed into the black notch (new Colours `fillMix 0.55`) so the thumb stands out. No border.
+- Muted: only the fill dims, to new Colours `mutedAlpha 0.8` (the whole bar at `dimAlpha 0.6` was hard to see on black and showed the fill through the thumb).
+- The number is sized to its text and the bar takes the rest; deviation from design: `osdValueWidth` removed (the bar shortens a few pixels from 99 to 100).
