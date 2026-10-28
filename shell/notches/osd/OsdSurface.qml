@@ -98,7 +98,6 @@ NotchSurface {
 
         Slider {
             anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: Layout.earRadius / 2
             x: Layout.earRadius + Layout.osdPad
             width: parent.width - 2 * (Layout.earRadius + Layout.osdPad)
             from: 0

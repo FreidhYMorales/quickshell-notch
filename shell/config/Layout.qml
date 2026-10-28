@@ -63,12 +63,11 @@ Singleton {
     readonly property int wsPad: 10
     readonly property int wsGap: 4
 
-    // OSDs (BL, VR): window height, slider thumb, inner padding, number width,
-    // and the slot width under which an OSD is not drawn at all.
+    // OSDs (BL, VR): window height, slider thumb (also the track height),
+    // inner padding, and the slot width under which an OSD is not drawn at all.
     readonly property int osdHeight: 36
     readonly property int sliderHeight: 24
     readonly property int osdPad: 12
-    readonly property int osdValueWidth: 28
     readonly property int osdMinWidth: 120
 
     // Bundle in the shape expected by logic/surfaceLayout.mjs.

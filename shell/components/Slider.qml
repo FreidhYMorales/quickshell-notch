@@ -41,9 +41,8 @@ Item {
         id: number
 
         anchors.verticalCenter: parent.verticalCenter
+        // Sized to its text; the bar takes the rest, so no empty space.
         x: root.mirrored ? 0 : root.width - width
-        width: Layout.osdValueWidth
-        horizontalAlignment: root.mirrored ? Text.AlignLeft : Text.AlignRight
         text: root.text
         color: root.scheme.onSurface
         font.family: Fonts.family
@@ -53,26 +52,29 @@ Item {
     Item {
         id: bar
 
-        x: root.mirrored ? Layout.osdValueWidth + Layout.gap : 0
-        width: root.width - Layout.osdValueWidth - Layout.gap
+        x: root.mirrored ? number.width + Layout.gap : 0
+        width: root.width - number.width - Layout.gap
         height: parent.height
-        opacity: root.muted ? Colours.dimAlpha : 1
 
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
-            height: Layout.sliderHeight / 3
+            height: Layout.sliderHeight
             radius: height / 2
             color: root.scheme.muted
             opacity: Colours.trackAlpha
         }
 
+        // Ends at the thumb's outer edge, so it is never narrower than the
+        // thumb and keeps its round ends at 0. A darker primary than the thumb,
+        // so the thumb stands out. Only the fill dims when muted.
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
-            width: thumb.x + thumb.width / 2
-            height: Layout.sliderHeight / 3
+            width: thumb.x + thumb.width
+            height: Layout.sliderHeight
             radius: height / 2
-            color: root.scheme.primary
+            color: Qt.tint(Colours.background, Qt.alpha(root.scheme.primary, Colours.fillMix))
+            opacity: root.muted ? Colours.mutedAlpha : 1
         }
 
         Rectangle {
