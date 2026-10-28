@@ -90,3 +90,14 @@ Decisions and deviations:
 - Volume above 100% shows its real percent (`displayPercent`) with a full bar.
 
 Manual checks for the user (`qs -p shell/shell.qml`), NOT done: drag the slider (both OSDs), tap on the bar, wheel up/down (step 5% / 5), right-click mute on VR (dimmed track, muted icon) and no-op on BL, change volume/brightness externally (keys) and see the reveal on every monitor, hover keeps it open and leaving restarts the timeout, no reveal on shell reload (startup gate), narrow-monitor slot hides the OSD, icon in the thumb and the number on the outer side.
+
+### PR 5 visual review (user, live session on a white wallpaper)
+
+The user ran the OSDs live and reported them fine in general; the review changed the slider look only (QML, no logic; `make check` green):
+
+- Slider centred vertically in the notch body (the `earRadius / 2` offset pushed it down).
+- Track and fill are as tall as the thumb (`sliderHeight`), not a third of it.
+- The fill ends at the thumb's outer edge, so it keeps round ends at 0 and the thumb lines up with it.
+- Thumb in solid primary; fill is primary mixed into the black notch (new Colours `fillMix 0.55`) so the thumb stands out. No border.
+- Muted: only the fill dims, to new Colours `mutedAlpha 0.8` (the whole bar at `dimAlpha 0.6` was hard to see on black and showed the fill through the thumb).
+- The number is sized to its text and the bar takes the rest; deviation from design: `osdValueWidth` removed (the bar shortens a few pixels from 99 to 100).
