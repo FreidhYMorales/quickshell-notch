@@ -72,6 +72,13 @@ NotchSurface {
         y: CornerLayout.slideOffset(height, root.progress)
         anchor: "topRight"
 
+        // Ancestor of every button: stays hovered while one of them takes
+        // the hover from the zone below (input stops at the mask, so the
+        // transparent ears never count).
+        HoverHandler {
+            id: panelHover
+        }
+
         Column {
             id: panel
 
@@ -155,8 +162,12 @@ NotchSurface {
         height: root.open ? root.body.height : Layout.ccHotZone
     }
 
+    // Below the content, so the buttons get their own hover; while one has
+    // it, the panel's ancestor hover keeps the zone hovered.
     NotchZone {
+        z: -1
         anchors.fill: maskBox
+        alsoHovered: panelHover.hovered
         onHoverChanged: on => root.open = on
     }
 }

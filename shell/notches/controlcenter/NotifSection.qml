@@ -69,15 +69,16 @@ Rectangle {
                     font.pixelSize: Fonts.body
                 }
 
-                // HoverHandler, like NotchZone: MouseArea hover does not
-                // reach it on this surface.
+                // The cursor lives on the HoverHandler: a MouseArea with
+                // cursorShape takes the hover and the panel would collapse.
                 HoverHandler {
                     id: clearHover
+
+                    cursorShape: Qt.PointingHandCursor
                 }
 
                 MouseArea {
                     anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: Notifs.clearAll()
                 }
             }
