@@ -1,9 +1,10 @@
 // Pure widths for the centre notch shape. Any battery layer that shows
 // (charging, plugged, full, low) grows the idle notch by `side` on both
-// sides, so the clock keeps its position.
+// sides, and a visible dot by `dot` (its gap plus size), so the clock keeps
+// its position.
 
-export function idleWidth({ base, side, layer, max }) {
-  const extra = layer !== "none" ? 2 * side : 0;
+export function idleWidth({ base, side, layer, dot = 0, max }) {
+  const extra = (layer !== "none" ? 2 * side : 0) + 2 * dot;
   return Math.min(base + extra, max);
 }
 
