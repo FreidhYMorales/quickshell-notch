@@ -147,3 +147,19 @@ test("unreadDot: hidden with nothing unread, steady once something arrived", () 
   assert.deepEqual(unreadDot(play([{ type: "Dnd", on: true }]), true), steady);
   assert.deepEqual(unreadDot(play([{ type: "Dnd", on: true }]), false), hidden);
 });
+
+test("unreadDot: blinks while a keyboard state or polkit is open, steady after", () => {
+  const blinking = { visible: true, blinking: true };
+  const launcher = play([{ type: "LauncherToggle", monitor: "A" }]);
+  assert.deepEqual(unreadDot(launcher, true), blinking);
+  const power = play([{ type: "PowerOpen", monitor: "B" }]);
+  assert.deepEqual(unreadDot(power, true), blinking);
+  const polkit = play([{ type: "PolkitRequest", flowId: "f1", monitor: "A" }]);
+  assert.deepEqual(unreadDot(polkit, true), blinking);
+  assert.deepEqual(unreadDot(launcher, false), {
+    visible: false,
+    blinking: false,
+  });
+  const closed = reduce(launcher, { type: "Close", monitor: "A" }).state;
+  assert.deepEqual(unreadDot(closed, true), { visible: true, blinking: false });
+});
