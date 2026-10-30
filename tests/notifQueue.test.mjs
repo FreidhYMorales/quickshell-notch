@@ -31,3 +31,21 @@ test("advance: ending the last one leaves the queue empty", () => {
   const q = receive(emptyQueue(), notif(1));
   assert.deepEqual(advance(q), { current: null, waiting: [] });
 });
+
+test("receive: the same id as the shown one refreshes it in place", () => {
+  let q = receive(emptyQueue(), notif(1));
+  q = receive(q, notif(2));
+  assert.deepEqual(receive(q, notif(1, "updated")), {
+    current: notif(1, "updated"),
+    waiting: [notif(2)],
+  });
+});
+
+test("receive: the same id as a waiting one updates it where it waits", () => {
+  let q = receive(emptyQueue(), notif(1));
+  for (const id of [2, 3, 4]) q = receive(q, notif(id));
+  assert.deepEqual(receive(q, notif(3, "updated")), {
+    current: notif(1),
+    waiting: [notif(4), notif(3, "updated"), notif(2)],
+  });
+});
