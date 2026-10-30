@@ -36,3 +36,5 @@ Risk: item 4 (global history kept in step with the toast queue and `!` pins acro
 
 - L1 request: /flow:story 05
 - L2 split: 05 needed a new history store plus inline list plus subpage navigation; user approved split into #20 (history + inline list + clear all) and #21 (subpage, per-item dismiss, DND, seen, stay-open rule).
+- L3 build so far: addToHistory, removeFromHistory, latest (test → feat each); Notifs history + clearAll (544215c); NotifIcon refactor (1faf337); inline section (9757724) and look changes (732ff36); fixes 1742d00 (slideOffset, test-first) and 553a526 (hover via ancestor HoverHandler). `make check` → 439 pass. Manual criteria confirmed by the user. Click-to-expand deferred to #21.
+- L4 paused: verifier stopped by the user before a verdict (usage limit); story stays open until a verifier PASS.
