@@ -60,8 +60,8 @@ Singleton {
     // The hovered card must stay within expandedHeight (the centre window).
     readonly property int toastWidth: 380
     readonly property int toastExpandedWidth: 480
-    readonly property int toastExpandedHeight: 104
-    readonly property int toastIcon: 18
+    readonly property int toastExpandedHeight: 112
+    readonly property int toastIcon: 20
     // Inner padding past the ears, bottom padding of the card, gap between items.
     readonly property int toastPad: 18
     readonly property int toastPadBottom: 14

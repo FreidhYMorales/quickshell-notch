@@ -32,7 +32,7 @@ Item {
         maximumLineCount: 1
         textFormat: Text.PlainText
         font.family: Fonts.family
-        font.pixelSize: Fonts.body
+        font.pixelSize: Fonts.toast
     }
 
     NotchEarShape {
@@ -87,7 +87,7 @@ Item {
                     text: Strings.glyphBell
                     color: root.scheme.primary
                     font.family: Fonts.family
-                    font.pixelSize: Fonts.body
+                    font.pixelSize: Fonts.toast
                 }
             }
 
