@@ -16,6 +16,7 @@ NotchSurface {
         base: idle.baseWidth,
         side: idle.sideNeed,
         layer: idle.batteryLayer,
+        dot: CenterStore.unreadDot.visible ? Layout.rowGap + Layout.dotSize : 0,
         max: slot.width
     })
     readonly property bool toast: view.mode === "toast"

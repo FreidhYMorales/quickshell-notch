@@ -102,7 +102,7 @@ Item {
         visible: Recorder.recording
     }
 
-    // Unread dot, right of the row. The source is wired by a later change.
+    // Unread dot, right of the row; it blinks only while a keyboard state mutes toasts.
     Rectangle {
         id: unread
 
@@ -113,11 +113,13 @@ Item {
         height: Layout.dotSize
         radius: Layout.dotSize / 2
         color: root.scheme.primary
-        visible: !!root.view && root.view.blinkDot
+        visible: CenterStore.unreadDot.visible
 
         SequentialAnimation on opacity {
             loops: Animation.Infinite
-            running: unread.visible
+            running: unread.visible && CenterStore.unreadDot.blinking
+            // A blink cut mid-cycle must not leave the dot dimmed.
+            onStopped: unread.opacity = 1
 
             NumberAnimation {
                 to: 0.2

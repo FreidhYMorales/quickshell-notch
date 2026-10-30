@@ -519,3 +519,39 @@ test("Suppression: no DND and nothing open lets the toast through", () => {
   assert.equal(state.global.toast.id, 1);
   assert.equal(state.global.blinkDot, false);
 });
+
+test("Suppression: a muted normal toast is skipped, never shown later", () => {
+  const skip = [{ type: "toast.skip", id: 1 }];
+  const dnd = play([
+    { type: "Dnd", on: true },
+    { type: "ToastShown", id: 1, critical: false },
+  ]);
+  assert.deepEqual(dnd.effects, skip);
+  const launcher = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "ToastShown", id: 1, critical: false },
+  ]);
+  assert.deepEqual(launcher.effects, skip);
+  const open = play([{ type: "ToastShown", id: 1, critical: false }]);
+  assert.deepEqual(open.effects, []);
+  const critical = play([
+    { type: "Dnd", on: true },
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "ToastShown", id: 1, critical: true },
+  ]);
+  assert.deepEqual(critical.effects, []);
+});
+
+test("Suppression: once DND is off again, a normal toast shows", () => {
+  const { state, effects } = play([
+    { type: "Dnd", on: true },
+    { type: "Dnd", on: false },
+    { type: "ToastShown", id: 1, critical: false },
+  ]);
+  assert.deepEqual(state.global.toast, {
+    id: 1,
+    critical: false,
+    phase: "shown",
+  });
+  assert.deepEqual(effects, []);
+});

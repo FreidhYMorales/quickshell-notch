@@ -31,6 +31,21 @@ test("idleWidth is capped at max", () => {
   );
 });
 
+test("idleWidth: a visible dot grows both sides by its extent, clock centred", () => {
+  assert.equal(
+    idleWidth({ base: 260, side: 60, layer: "none", dot: 14, max: 600 }),
+    288,
+  );
+  assert.equal(
+    idleWidth({ base: 260, side: 60, layer: "charging", dot: 14, max: 600 }),
+    408,
+  );
+  assert.equal(
+    idleWidth({ base: 260, side: 60, layer: "none", dot: 0, max: 600 }),
+    260,
+  );
+});
+
 // Spec table for expandedWidth.
 for (
   const [hasPlayer, max, expected] of [
