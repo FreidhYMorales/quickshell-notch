@@ -28,6 +28,16 @@ Singleton {
             current.dismiss();
     }
 
+    // An action button or the body click (`null`: no default action). The
+    // toast closes; a resident notification stays open for the app.
+    function activate(action) {
+        const shown = current;
+        if (action)
+            action.invoke();
+        if (current === shown)
+            advance();
+    }
+
     function receive(notification) {
         const id = notification.id;
         notification.tracked = true;

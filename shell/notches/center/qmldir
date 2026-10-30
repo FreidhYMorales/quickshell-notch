@@ -4,3 +4,4 @@ CenterExpanded CenterExpanded.qml
 CenterIdle CenterIdle.qml
 CenterMedia CenterMedia.qml
 CenterSurface CenterSurface.qml
+CenterToast CenterToast.qml

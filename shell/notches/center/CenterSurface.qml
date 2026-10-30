@@ -18,7 +18,19 @@ NotchSurface {
         layer: idle.batteryLayer,
         max: slot.width
     })
-    readonly property var size: CenterLayout.shapeFor(view.mode, {
+    readonly property bool toast: view.mode === "toast"
+    readonly property var size: toast ? CenterLayout.toastShape({
+        expanded: view.toast.expanded,
+        widths: {
+            compact: Layout.toastWidth,
+            expanded: Layout.toastExpandedWidth
+        },
+        heights: {
+            compact: Layout.idleHeight,
+            expanded: Layout.toastExpandedHeight
+        },
+        max: slot.width
+    }) : CenterLayout.shapeFor(view.mode, {
         idle: idleW,
         expanded: CenterLayout.expandedWidth({
             hasPlayer: Mpris.hasPlayer,
@@ -58,9 +70,16 @@ NotchSurface {
             id: idle
 
             anchors.fill: parent
-            visible: !root.expanded
+            visible: !root.expanded && !root.toast
             screen: root.screen
             view: root.view
+        }
+
+        CenterToast {
+            anchors.fill: parent
+            visible: root.toast
+            screen: root.screen
+            expanded: root.toast && root.view.toast.expanded
         }
 
         CenterExpanded {

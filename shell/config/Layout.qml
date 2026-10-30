@@ -55,6 +55,16 @@ Singleton {
     readonly property int controlGap: 12
     readonly property int weekCardPad: 4
 
+    // Notification toast in the centre notch: compact row (idle height), and
+    // the hovered card with body and action buttons.
+    readonly property int toastWidth: 360
+    readonly property int toastExpandedWidth: 440
+    readonly property int toastExpandedHeight: 104
+    readonly property int toastIcon: 18
+    readonly property int toastButtonPad: 8
+    readonly property int toastButtonHeight: 22
+    readonly property int toastLineGap: 4
+
     // Workspaces notch (TL): the corner body is the idle row plus the ear.
     readonly property int cornerHeight: 44
     readonly property int wsSlot: 22
