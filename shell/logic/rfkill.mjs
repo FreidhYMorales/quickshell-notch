@@ -32,6 +32,27 @@ export function parseRfkillEvent(line) {
   };
 }
 
-export function applyRfkillEvent(_devices, _event) {}
+// devices: { [idx]: { type, soft, hard } }. Returns a new object; add and
+// change record the device, del forgets it, anything else changes nothing.
+export function applyRfkillEvent(devices, event) {
+  const next = Object.assign({}, devices);
+  if (event.op === "add" || event.op === "change") {
+    next[event.idx] = { type: event.type, soft: event.soft, hard: event.hard };
+  } else if (event.op === "del") {
+    delete next[event.idx];
+  }
+  return next;
+}
 
-export function wifiOn(_devices) {}
+// true if any wlan radio is unblocked, false if all are blocked, null if
+// there is no wlan radio at all (the tile hides).
+export function wifiOn(devices) {
+  let found = false;
+  for (const idx in devices) {
+    const d = devices[idx];
+    if (d.type !== "wlan") continue;
+    if (!d.soft && !d.hard) return true;
+    found = true;
+  }
+  return found ? false : null;
+}
