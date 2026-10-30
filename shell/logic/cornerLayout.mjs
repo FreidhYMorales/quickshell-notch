@@ -29,4 +29,9 @@ export function cornerBody(size, ear, anchor) {
   };
 }
 
-export function slideOffset(_height, _progress) {}
+// Vertical offset of a shape sliding down from the top edge. Animate
+// `progress` (0 hidden, 1 shown), not y: then a height change while hidden
+// stays hidden instead of animating into view.
+export function slideOffset(height, progress) {
+  return (progress - 1) * height;
+}

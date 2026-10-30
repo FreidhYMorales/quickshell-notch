@@ -17,6 +17,8 @@ NotchSurface {
 
     readonly property var scheme: Colours.paletteFor(screen)
     property bool open: false
+    // 0 hidden .. 1 shown; animated instead of y (see slideOffset).
+    property real progress: open ? 1 : 0
     readonly property var size: CornerLayout.cornerShape({
         contentWidth: panel.implicitWidth,
         contentHeight: panel.implicitHeight + 2 * Layout.ccPad,
@@ -52,6 +54,9 @@ NotchSurface {
     readonly property var body: CornerLayout.cornerBody(size, Layout.earRadius, "topRight")
 
     slotName: "tr"
+    Behavior on progress {
+        Anim {}
+    }
     anchors.left: false
     anchors.right: true
     implicitWidth: Layout.ccWidth
@@ -64,12 +69,8 @@ NotchSurface {
         x: root.width - width
         width: root.size.width
         height: root.size.height
-        y: root.open ? 0 : -height
+        y: CornerLayout.slideOffset(height, root.progress)
         anchor: "topRight"
-
-        Behavior on y {
-            Anim {}
-        }
 
         Column {
             id: panel
