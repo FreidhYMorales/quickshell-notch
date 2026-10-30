@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given DND is on (or off), when an app sends a critical-urgency notification, then it shows as a toast on every monitor, and after its timeout it collapses into a `!` on the idle notch instead of disappearing; if the launcher, power menu or a polkit prompt is open, it goes straight to the `!`.
-- [ ] Given a `!` is showing, when I click it, then that critical toast reopens expanded (body, actions, ✕); ✕ or an action dismisses it and the `!` goes away; meanwhile normal notifications keep toasting and hovering the notch still opens the usual expanded view.
-- [ ] Given the laptop is unplugged at or below 10%, including when the shell starts already there, when the battery check runs, then one critical battery toast appears with the same rules (bypasses DND, collapses to `!`); it does not repeat until the charger has been plugged in again.
+- [x] Given DND is on (or off), when an app sends a critical-urgency notification, then it shows as a toast on every monitor, and after its timeout it collapses into a `!` on the idle notch instead of disappearing; if the launcher, power menu or a polkit prompt is open, it goes straight to the `!`.
+- [x] Given a `!` is showing, when I click it, then that critical toast reopens expanded (body, actions, ✕); ✕ or an action dismisses it and the `!` goes away; meanwhile normal notifications keep toasting and hovering the notch still opens the usual expanded view.
+- [x] Given the laptop is unplugged at or below 10%, including when the shell starts already there, when the battery check runs, then one critical battery toast appears with the same rules (bypasses DND, collapses to `!`); it does not repeat until the charger has been plugged in again.
 
 ## Plan
 
@@ -40,3 +40,7 @@ Risk: item 4 (critical waiting state shared with the toast queue across monitors
 - L3 approved by the user (2026-10-30).
 - L4 in-run decisions (user, 2026-10-30): hovering the idle notch opens Expanded before the idle `!` can be clicked, so the `!` also shows in Expanded and is clicked there (user: "si, asi esta bien"); the Expanded notch widens just enough on both sides for the `!` column (user: "aplica lo mismo que la vez pasada que se expanda el notch"); the Expanded `!` is a round button (user: "podrias ponerlo dentro de un boton redondo?"). The idle `!` takes the unread dot's slot and width rule from story 02.
 - L5 approved test list: collapse, reopen, unpin (unit); criterion 3 logic (one-shot at <= 10%, armed at start, re-arm on plug-in) relies on the existing `criticalStep` tests, the battery toast wiring is manual. Bug found in manual check: the first shell-made notification id -1 collided with the "no toast" sentinel; fixed red→green with `headChanged`.
+- L6 evidence: test→feat pairs d475ba1→091473a, 1f9c6a5→8f2bd66, 0e96542→a4690d7, 04c99a6→fb3447f, dcb5fa3→1c5cf1f (fix); QML-only feats 31e8e56 (battery toast), 638524d (round button); manual script 20a68c3. `make check`: 401 pass, 0 fail, smoke: config loaded.
+- L7 manual: the user checked critical with DND on/off, `!` in idle and Expanded, click reopen, ✕/action dismiss, normal toasts flowing, battery override at 9% at start (one toast, then `!`), the round button.
+- L8 verifier (flow:verifier): PASS. Notes: stubs make test commits replay as import errors; `syncToast` re-entrancy can call `Notifs.collapse()` twice (harmless in every traced path, untested); a theoretical double battery post if the event fires between Connections setup and onCompleted.
+- Risk: item 4 (critical waiting state shared with the toast queue across monitors), item 6 (`!` click, battery at start and DBus urgency verified only manually)
