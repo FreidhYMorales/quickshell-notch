@@ -4,6 +4,8 @@ export function emptyQueue() {
   return { current: null, waiting: [] };
 }
 
+// A new notification never interrupts the one showing; it waits, newest first.
 export function receive(queue, notif) {
-  return { current: notif, waiting: queue.waiting };
+  if (!queue.current) return { current: notif, waiting: queue.waiting };
+  return { current: queue.current, waiting: [notif].concat(queue.waiting) };
 }
