@@ -13,3 +13,5 @@ export function addToHistory(history, notif, cap) {
 export function removeFromHistory(history, id) {
   return history.filter((n) => n.id !== id);
 }
+
+export function latest(_history, _count) {}
