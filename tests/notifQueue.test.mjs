@@ -6,6 +6,7 @@ import {
   collapse,
   emptyQueue,
   receive,
+  reopen,
 } from "../shell/logic/notifQueue.mjs";
 
 const notif = (id, summary = `n${id}`) => ({ id, summary });
@@ -81,4 +82,17 @@ test("collapse: a critical waits as a pin, newest first; a normal one is dropped
     queue: { current: notif(4), waiting: [] },
     pinned: [notif(1)],
   });
+});
+
+test("reopen: the newest pin shows again; a showing toast waits at the front", () => {
+  const q = { current: notif(5), waiting: [notif(4)] };
+  assert.deepEqual(reopen(q, [notif(3), notif(1)]), {
+    queue: { current: notif(3), waiting: [notif(5), notif(4)] },
+    pinned: [notif(1)],
+  });
+  assert.deepEqual(reopen(emptyQueue(), [notif(2)]), {
+    queue: { current: notif(2), waiting: [] },
+    pinned: [],
+  });
+  assert.deepEqual(reopen(q, []), { queue: q, pinned: [] });
 });
