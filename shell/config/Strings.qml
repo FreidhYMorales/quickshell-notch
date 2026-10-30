@@ -9,6 +9,8 @@ Singleton {
     readonly property string volume: "Volume"
     readonly property string controlCenter: "Control center"
     readonly property string center: "Notch"
+    // Control center profile: "up 3h 12m".
+    readonly property string uptimePrefix: "up "
 
     // Calendar names (index 0 = January, 0 = Monday).
     readonly property var months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]

@@ -79,6 +79,15 @@ Singleton {
     readonly property int wsPad: 10
     readonly property int wsGap: 4
 
+    // Control center (TR): its own fixed window anchored right, the corner
+    // hot zone that opens it, and the profile header.
+    readonly property int ccWidth: 320
+    readonly property int ccHeight: 160
+    readonly property int ccHotZone: 24
+    readonly property int ccPad: 14
+    readonly property int ccGap: 12
+    readonly property int ccAvatar: 40
+
     // OSDs (BL, VR): window height, slider thumb (also the track height),
     // inner padding, and the slot width under which an OSD is not drawn at all.
     readonly property int osdHeight: 36

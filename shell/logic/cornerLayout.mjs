@@ -15,3 +15,16 @@ export function cornerShape(p) {
     height: Math.min(height, atLeast0(p.maxHeight)),
   };
 }
+
+// The drawn body inside a top corner shape: one ear less in width (on the
+// side away from the screen corner) and in height.
+/** ({ width, height }, ear, "topLeft" | "topRight") -> { x, y, width, height } */
+export function cornerBody(size, ear, anchor) {
+  const e = atLeast0(ear);
+  return {
+    x: anchor === "topRight" ? e : 0,
+    y: 0,
+    width: atLeast0(size.width - e),
+    height: atLeast0(size.height - e),
+  };
+}

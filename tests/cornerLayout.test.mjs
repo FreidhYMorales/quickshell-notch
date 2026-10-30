@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cornerShape } from "../shell/logic/cornerLayout.mjs";
+import { cornerBody, cornerShape } from "../shell/logic/cornerLayout.mjs";
 
 const base = {
   contentWidth: 100,
@@ -49,5 +49,18 @@ const rows = [
 for (const [name, over, want] of rows) {
   test(`cornerShape: ${name}`, () => {
     assert.deepEqual(cornerShape(Object.assign({}, base, over)), want);
+  });
+}
+
+// The body is the shape minus its ears: input stops at the drawn edge.
+const size = { width: 300, height: 100 };
+for (
+  const [anchor, want] of [
+    ["topRight", { x: 12, y: 0, width: 288, height: 88 }],
+    ["topLeft", { x: 0, y: 0, width: 288, height: 88 }],
+  ]
+) {
+  test(`cornerBody: ${anchor} drops the ears`, () => {
+    assert.deepEqual(cornerBody(size, 12, anchor), want);
   });
 }
