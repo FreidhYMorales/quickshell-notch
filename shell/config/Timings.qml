@@ -20,6 +20,8 @@ Singleton {
 
     // Polling (milliseconds)
     readonly property int sysPoll: 2000
+    // Uptime refresh; the control center shows whole minutes.
+    readonly property int uptimePoll: 30000
 
     // Wait before restarting a cava that exited while a player is playing.
     readonly property int cavaRestart: 2000
