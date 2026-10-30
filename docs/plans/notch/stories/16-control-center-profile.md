@@ -38,3 +38,6 @@ Risk: item 6 (hover open/close, hot zone and mask verified only manually)
 
 - L1 request: /flow:story 04
 - L2 split: 04 had more than 3 criteria and depended on #10 (power menu) and #12 (caffeine inhibitor); user approved split into #16 (panel + profile), #17 (WiFi/BT/DND tiles), #18 (power row), #19 (power profile + caffeine tiles). #05, #06, #07 now require #16.
+- L3 build: a593c09 test → 94ad1e3 feat (parseUptime); a59e194 test → 8af7311 feat (formatUptime; test commit amended with user approval to fix a missing import only); 02ab726 feat (OsInfo service); 5029ee3 feat (hover panel + profile); 27832f6 test → f3fb555 fix (cornerBody: collapse at the drawn edge, user-reported). `initial` test dropped: reuses existing `appInitial`.
+- L4 evidence: `make check` → 414 pass, 0 fail, "smoke: config loaded". Manual criteria walked and confirmed by the user. Verifier: PASS (note: the committed red states fail at ESM link time without the uncommitted stub).
+- Risk: item 6 (hover open/close, hot zone and mask verified only manually)
