@@ -5,6 +5,7 @@ import {
   close,
   collapse,
   emptyQueue,
+  headChanged,
   receive,
   reopen,
   unpin,
@@ -103,4 +104,11 @@ test("unpin: a dismissed or closed critical leaves the pins, the rest stay", () 
   assert.deepEqual(unpin(pinned, 2), [notif(3), notif(1)]);
   assert.deepEqual(unpin(pinned, 9), pinned);
   assert.deepEqual(unpin([notif(1)], 1), []);
+});
+
+test("headChanged: any id, negative ones included, differs from no toast", () => {
+  assert.equal(headChanged(null, notif(-1)), true);
+  assert.equal(headChanged(-1, notif(-1)), false);
+  assert.equal(headChanged(3, null), true);
+  assert.equal(headChanged(null, null), false);
 });
