@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import "../../components"
 import "../../config"
@@ -21,10 +22,13 @@ Item {
     readonly property var notif: Notifs.current
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property var actions: NotifToast.toastActions(notif?.actions ?? [])
-    readonly property string iconSource: notif ? NotifToast.toastIcon({
+    readonly property var iconInfo: notif ? NotifToast.toastIconInfo({
         image: notif.image,
         appIcon: notif.appIcon
-    }, name => Quickshell.iconPath(name, true)) : ""
+    }, name => Quickshell.iconPath(name, true)) : {
+        source: "",
+        themed: false
+    }
 
     component ToastText: Text {
         color: root.scheme.onSurface
@@ -77,8 +81,15 @@ Item {
                     asynchronous: true
                     smooth: true
                     mipmap: true
-                    source: root.iconSource
-                    visible: root.iconSource !== "" && status !== Image.Error
+                    source: root.iconInfo.source
+                    visible: root.iconInfo.source !== "" && status !== Image.Error
+                    // Theme icons take the accent, like the fallback bell;
+                    // pictures (screenshots, avatars) keep their colours.
+                    layer.enabled: root.iconInfo.themed
+                    layer.effect: MultiEffect {
+                        colorization: 1
+                        colorizationColor: root.scheme.primary
+                    }
                 }
 
                 Text {
