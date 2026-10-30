@@ -26,3 +26,12 @@ export function advance(queue) {
     waiting: queue.waiting.slice(1),
   };
 }
+
+// The app closed a notification: drop it wherever it is.
+export function close(queue, id) {
+  if (queue.current?.id === id) return advance(queue);
+  return {
+    current: queue.current,
+    waiting: queue.waiting.filter((n) => n.id !== id),
+  };
+}
