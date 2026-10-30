@@ -11,6 +11,10 @@ Singleton {
     readonly property string center: "Notch"
     // Control center profile: "up 3h 12m".
     readonly property string uptimePrefix: "up "
+    // Control center toggle tiles.
+    readonly property string glyphWifi: "\udb81\udda9"
+    readonly property string glyphBluetooth: "\udb80\udcaf"
+    readonly property string glyphDnd: "\udb80\udc9b"
 
     // Calendar names (index 0 = January, 0 = Monday).
     readonly property var months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
