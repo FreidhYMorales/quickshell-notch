@@ -38,3 +38,10 @@ export function viewFor(state, name) {
     keyboardFocus: keyboardMode || mode === "polkit" ? "exclusive" : "none",
   };
 }
+
+// The toast timer is global: a hover on any monitor pauses it everywhere.
+export function toastPaused(state) {
+  return Object.values(state.monitors).some(
+    (m) => m.hovered || m.toastHovered,
+  );
+}
