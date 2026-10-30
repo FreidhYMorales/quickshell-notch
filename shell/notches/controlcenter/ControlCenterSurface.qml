@@ -137,6 +137,10 @@ NotchSurface {
                     }
                 }
             }
+
+            NotifSection {
+                scheme: root.scheme
+            }
         }
     }
 

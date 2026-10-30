@@ -1,2 +1,3 @@
 ControlCenterSurface ControlCenterSurface.qml
 ControlTile ControlTile.qml
+NotifSection NotifSection.qml

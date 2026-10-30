@@ -11,6 +11,10 @@ Singleton {
     readonly property string center: "Notch"
     // Control center profile: "up 3h 12m".
     readonly property string uptimePrefix: "up "
+    // Control center notifications section; %1 = how many.
+    readonly property string notificationsTitle: "Notifications (%1)"
+    readonly property string clearAll: "Clear"
+    readonly property string noNotifications: "No notifications"
     // Control center toggle tiles.
     readonly property string glyphWifi: "\udb81\udda9"
     readonly property string glyphBluetooth: "\udb80\udcaf"
