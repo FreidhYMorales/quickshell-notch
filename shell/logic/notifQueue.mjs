@@ -5,8 +5,17 @@ export function emptyQueue() {
 }
 
 // A new notification never interrupts the one showing; it waits, newest first.
+// An update to a known id (`replaces-id`) refreshes it where it already is.
 export function receive(queue, notif) {
-  if (!queue.current) return { current: notif, waiting: queue.waiting };
+  if (!queue.current || queue.current.id === notif.id) {
+    return { current: notif, waiting: queue.waiting };
+  }
+  if (queue.waiting.some((n) => n.id === notif.id)) {
+    return {
+      current: queue.current,
+      waiting: queue.waiting.map((n) => (n.id === notif.id ? notif : n)),
+    };
+  }
   return { current: queue.current, waiting: [notif].concat(queue.waiting) };
 }
 
