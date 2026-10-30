@@ -30,14 +30,26 @@ Singleton {
             adapter.enabled = !adapter.enabled;
     }
 
-    // Detail views are the TUIs in kitty; the classes match the old config's
-    // window rules.
     function openWifiTui() {
-        Quickshell.execDetached(["kitty", "--class", "qs-wifi", "-e", "impala"]);
+        Quickshell.execDetached(Commands.wifiTui);
     }
 
     function openBtTui() {
-        Quickshell.execDetached(["kitty", "--class", "qs-bluetooth", "-e", "bluetui"]);
+        Quickshell.execDetached(Commands.bluetoothTui);
+    }
+
+    function warnIfNoAdapter() {
+        if (!adapter && !Flags.smoke)
+            console.warn("Radios: no Bluetooth adapter; Bluetooth tile hidden");
+    }
+
+    onAdapterChanged: warnIfNoAdapter()
+
+    // BlueZ fills the adapter asynchronously: check once after startup too.
+    Timer {
+        interval: Timings.startupGate
+        running: true
+        onTriggered: root.warnIfNoAdapter()
     }
 
     Process {
