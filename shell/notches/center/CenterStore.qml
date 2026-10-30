@@ -7,6 +7,7 @@ import "../../services"
 import "../../logic/sideLayer.mjs" as SideLayer
 import "../../logic/centerState.mjs" as CenterState
 import "../../logic/centerView.mjs" as CenterView
+import "../../logic/notifQueue.mjs" as NotifQueue
 
 // The one global holder of the centre reducer state. Surfaces send events with
 // `dispatch` and read `viewFor(screenName)`; effects are executed here.
@@ -15,8 +16,8 @@ Singleton {
     id: root
 
     property var state: CenterState.initialState(screenNames())
-    // Id of the notification the reducer currently shows as a toast (-1: none).
-    property int toastId: -1
+    // Id of the notification the reducer currently shows as a toast (null: none).
+    property var toastId: null
 
     // What the idle notch shows in its side slots: low > media > battery.
     readonly property string sideLayer: SideLayer.sideLayer(Battery.layer, Mpris.playing)
@@ -55,9 +56,9 @@ Singleton {
     // one muted on arrival (indicator phase) goes straight to the pins.
     function syncToast() {
         const current = Notifs.current;
-        const id = current ? current.id : -1;
-        if (id === toastId)
+        if (!NotifQueue.headChanged(toastId, current))
             return;
+        const id = current ? current.id : null;
         const previous = toastId;
         toastId = id;
         if (current) {

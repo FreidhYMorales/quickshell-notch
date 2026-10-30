@@ -59,3 +59,9 @@ export function reopen(queue, pinned) {
 export function unpin(pinned, id) {
   return pinned.filter((n) => n.id !== id);
 }
+
+// Whether the queue head differs from the toast the reducer shows. `null`
+// means no toast: shell-made notifications use negative ids, so -1 is taken.
+export function headChanged(shownId, current) {
+  return (current ? current.id : null) !== shownId;
+}
