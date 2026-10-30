@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   advance,
   close,
+  collapse,
   emptyQueue,
   receive,
 } from "../shell/logic/notifQueue.mjs";
@@ -67,5 +68,17 @@ test("close: the app closing a waiting one removes it", () => {
   assert.deepEqual(close(q, 3), {
     current: notif(1),
     waiting: [notif(4), notif(2)],
+  });
+});
+
+test("collapse: a critical waits as a pin, newest first; a normal one is dropped", () => {
+  const q = { current: notif(3), waiting: [notif(4)] };
+  assert.deepEqual(collapse(q, [notif(1)], true), {
+    queue: { current: notif(4), waiting: [] },
+    pinned: [notif(3), notif(1)],
+  });
+  assert.deepEqual(collapse(q, [notif(1)], false), {
+    queue: { current: notif(4), waiting: [] },
+    pinned: [notif(1)],
   });
 });
