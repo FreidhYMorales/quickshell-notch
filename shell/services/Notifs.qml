@@ -17,6 +17,9 @@ Singleton {
     property var queue: NotifQueue.emptyQueue()
     readonly property var current: queue.current
     readonly property int waiting: queue.waiting.length
+    // Critical notifications that timed out, newest first: the `!` indicator.
+    property var pinned: []
+    readonly property bool currentCritical: current?.urgency === NotificationUrgency.Critical
     // Do-not-disturb: normal toasts are muted (session only, starts off).
     property bool dnd: false
 
@@ -34,6 +37,13 @@ Singleton {
     // The shown toast ended without closing the notification (timeout).
     function advance() {
         queue = NotifQueue.advance(queue);
+    }
+
+    // The shown toast timed out or was muted: a critical one waits as a pin.
+    function collapse() {
+        const result = NotifQueue.collapse(queue, pinned, currentCritical);
+        pinned = result.pinned;
+        queue = result.queue;
     }
 
     // ✕ on the toast: closes the notification for the app too; `closed` drops it.

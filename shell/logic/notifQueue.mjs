@@ -35,3 +35,12 @@ export function close(queue, id) {
     waiting: queue.waiting.filter((n) => n.id !== id),
   };
 }
+
+// The shown one timed out: a critical waits as a pin (the `!`), newest first,
+// until it is dismissed; a normal one is simply dropped.
+export function collapse(queue, pinned, critical) {
+  return {
+    queue: advance(queue),
+    pinned: critical && queue.current ? [queue.current].concat(pinned) : pinned,
+  };
+}

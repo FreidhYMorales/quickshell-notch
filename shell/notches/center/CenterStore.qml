@@ -51,8 +51,8 @@ Singleton {
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));
     }
 
-    // Mirrors the head of the notification queue into the reducer.
-    // Critical urgency is handled with the `!` indicator in a later story.
+    // Mirrors the head of the notification queue into the reducer. A critical
+    // one muted on arrival (indicator phase) goes straight to the pins.
     function syncToast() {
         const current = Notifs.current;
         const id = current ? current.id : -1;
@@ -64,8 +64,12 @@ Singleton {
             dispatch({
                 type: "ToastShown",
                 id: id,
-                critical: false
+                critical: Notifs.currentCritical
             });
+            if (state.global.toast?.phase === "indicator") {
+                Notifs.collapse();
+                return;
+            }
             if (toastTimer.running)
                 toastTimer.restart();
         } else {
@@ -87,7 +91,7 @@ Singleton {
                 type: "ToastTimeout",
                 id: root.toastId
             });
-            Notifs.advance();
+            Notifs.collapse();
         }
     }
 
