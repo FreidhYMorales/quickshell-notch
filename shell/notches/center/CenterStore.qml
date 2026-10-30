@@ -28,6 +28,9 @@ Singleton {
         return names;
     }
 
+    // The unread dot is the same on every monitor.
+    readonly property var unreadDot: CenterView.unreadDot(state, Notifs.unread)
+
     function viewFor(name: string): var {
         return CenterView.viewFor(state, name);
     }

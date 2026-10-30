@@ -47,3 +47,9 @@ export function toastPaused(state) {
     return m.hovered || m.toastHovered;
   });
 }
+
+// The unread dot is global: it shows while something arrived since the last
+// mark-seen.
+export function unreadDot(_state, unread) {
+  return { visible: unread, blinking: false };
+}

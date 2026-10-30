@@ -20,8 +20,15 @@ Singleton {
     // Do-not-disturb: normal toasts are muted (session only, starts off).
     property bool dnd: false
 
+    // Something arrived since the last markSeen (drives the unread dot).
+    property bool unread: false
+
     function toggleDnd() {
         dnd = !dnd;
+    }
+
+    function markSeen() {
+        unread = false;
     }
 
     // The shown toast ended without closing the notification (timeout).
@@ -50,6 +57,7 @@ Singleton {
         notification.tracked = true;
         notification.closed.connect(() => root.queue = NotifQueue.close(root.queue, id));
         queue = NotifQueue.receive(queue, notification);
+        unread = true;
     }
 
     // `qs -c notch ipc call notifs <fn>`; keybinds and the control center reuse these.
@@ -58,6 +66,10 @@ Singleton {
 
         function toggleDnd(): void {
             root.toggleDnd();
+        }
+
+        function markSeen(): void {
+            root.markSeen();
         }
     }
 
