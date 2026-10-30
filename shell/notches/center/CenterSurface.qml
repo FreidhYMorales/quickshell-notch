@@ -37,6 +37,7 @@ NotchSurface {
             hasPlayer: Mpris.hasPlayer,
             full: Layout.expandedWidth,
             clockOnly: Layout.expandedClockWidth,
+            mark: expandedView.markExtent,
             max: slot.width
         })
     }, {
@@ -84,6 +85,8 @@ NotchSurface {
         }
 
         CenterExpanded {
+            id: expandedView
+
             anchors.fill: parent
             visible: root.expanded
             screen: root.screen

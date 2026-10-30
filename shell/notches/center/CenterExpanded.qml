@@ -11,15 +11,19 @@ Item {
     property var screen: null
 
     readonly property var scheme: Colours.paletteFor(screen)
+    // What a visible `!` adds on each side (CenterLayout.expandedWidth).
+    readonly property int markExtent: mark.visible ? Layout.expandedGap + mark.implicitWidth : 0
 
     NotchEarShape {
         anchors.fill: parent
     }
 
     Item {
+        id: content
+
         anchors.fill: parent
-        anchors.leftMargin: Layout.earRadius + Layout.expandedPad
-        anchors.rightMargin: Layout.earRadius + Layout.expandedPad
+        anchors.leftMargin: Layout.earRadius + Layout.expandedPad + root.markExtent
+        anchors.rightMargin: Layout.earRadius + Layout.expandedPad + root.markExtent
         anchors.topMargin: Layout.expandedPad
         anchors.bottomMargin: Layout.expandedPad
 
@@ -44,10 +48,13 @@ Item {
         }
     }
 
-    // Waiting criticals: the `!` sits in the right gutter, above the card.
+    // Waiting criticals: the `!` gets its own column right of the card.
     CriticalMark {
-        x: parent.width - Layout.earRadius - Layout.expandedPad / 2 - width / 2
-        y: Layout.expandedPad
+        id: mark
+
+        anchors.left: content.right
+        anchors.leftMargin: Layout.expandedGap
+        anchors.top: content.top
         visible: Notifs.pinned.length > 0
         onClicked: Notifs.reopen()
     }
