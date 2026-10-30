@@ -25,3 +25,15 @@ export function parseUptime(text) {
   const seconds = Math.floor(parseFloat(text));
   return seconds >= 0 ? seconds : null;
 }
+
+// Two largest units, zero parts dropped: "3h 12m", "2d 4h", "2d", "0m".
+export function formatUptime(seconds) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const parts = days > 0
+    ? [[days, "d"], [hours, "h"]]
+    : [[hours, "h"], [minutes, "m"]];
+  const text = parts.filter((p) => p[0] > 0).map((p) => p[0] + p[1]).join(" ");
+  return text || "0m";
+}
