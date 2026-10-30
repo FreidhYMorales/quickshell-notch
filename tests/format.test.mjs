@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { clock, formatPercent, shortDate } from "../shell/logic/format.mjs";
+import {
+  clock,
+  formatPercent,
+  parseUptime,
+  shortDate,
+} from "../shell/logic/format.mjs";
 
 const MONTHS = [
   "Jan",
@@ -47,5 +52,16 @@ for (
 ) {
   test(`formatPercent ${value} -> ${text}`, () => {
     assert.equal(formatPercent(value), text);
+  });
+}
+
+test("parseUptime reads whole seconds from /proc/uptime", () => {
+  assert.equal(parseUptime("11520.37 45678.90\n"), 11520);
+  assert.equal(parseUptime("187500.99 1.00"), 187500);
+});
+
+for (const text of ["", "garbage", "-5 1"]) {
+  test(`parseUptime ${JSON.stringify(text)} -> null`, () => {
+    assert.equal(parseUptime(text), null);
   });
 }
