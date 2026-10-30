@@ -31,3 +31,7 @@ export function parseRfkillEvent(line) {
     hard: m[5] !== "0",
   };
 }
+
+export function applyRfkillEvent(_devices, _event) {}
+
+export function wifiOn(_devices) {}
