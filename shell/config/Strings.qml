@@ -13,7 +13,6 @@ Singleton {
     readonly property string uptimePrefix: "up "
     // Control center notifications section; %1 = how many.
     readonly property string notificationsTitle: "Notifications (%1)"
-    readonly property string clearAll: "Clear"
     readonly property string noNotifications: "No notifications"
     // Control center toggle tiles.
     readonly property string glyphWifi: "\udb81\udda9"
