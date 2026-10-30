@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { toastActions, toastIcon } from "../shell/logic/notifToast.mjs";
+import {
+  toastActions,
+  toastIcon,
+  toastIconInfo,
+} from "../shell/logic/notifToast.mjs";
 
 const action = (identifier, text) => ({ identifier, text });
 
@@ -53,5 +57,27 @@ test("toastIcon: an unknown image falls back to a known app icon", () => {
   assert.equal(
     toastIcon({ image: "nope", appIcon: "firefox" }, lookup),
     "/icons/firefox.svg",
+  );
+});
+
+test("toastIconInfo: theme icons are marked for tinting", () => {
+  assert.deepEqual(
+    toastIconInfo({ image: "", appIcon: "firefox" }, lookup),
+    { source: "/icons/firefox.svg", themed: true },
+  );
+  assert.deepEqual(
+    toastIconInfo({ image: "image://icon/firefox", appIcon: "" }, lookup),
+    { source: "/icons/firefox.svg", themed: true },
+  );
+});
+
+test("toastIconInfo: real pictures and the fallback are never tinted", () => {
+  assert.deepEqual(
+    toastIconInfo({ image: "/tmp/shot.png", appIcon: "firefox" }, lookup),
+    { source: "/tmp/shot.png", themed: false },
+  );
+  assert.deepEqual(
+    toastIconInfo({ image: "", appIcon: "discord" }, lookup),
+    { source: "", themed: false },
   );
 });
