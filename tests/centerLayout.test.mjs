@@ -63,6 +63,24 @@ for (
   });
 }
 
+test("expandedWidth: a visible ! grows both sides by its extent, capped", () => {
+  const base = { full: 560, clockOnly: 300 };
+  assert.equal(
+    expandedWidth(Object.assign({ hasPlayer: true, mark: 20, max: 800 }, base)),
+    600,
+  );
+  assert.equal(
+    expandedWidth(
+      Object.assign({ hasPlayer: false, mark: 20, max: 800 }, base),
+    ),
+    340,
+  );
+  assert.equal(
+    expandedWidth(Object.assign({ hasPlayer: true, mark: 20, max: 580 }, base)),
+    580,
+  );
+});
+
 const W = { idle: 380, expanded: 560 };
 const H = { idle: 32, expanded: 180 };
 
