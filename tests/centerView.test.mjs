@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initialState, reduce } from "../shell/logic/centerState.mjs";
-import { viewFor } from "../shell/logic/centerView.mjs";
+import { toastPaused, viewFor } from "../shell/logic/centerView.mjs";
 
 const play = (events) =>
   events.reduce((s, ev) => reduce(s, ev).state, initialState(["A", "B"]));
@@ -126,4 +126,15 @@ test("blinkDot: surfaces the global unread flag on every monitor", () => {
 
 test("unknown monitor: reads as idle without throwing", () => {
   assert.equal(viewFor(play([]), "Z").mode, "idle");
+});
+
+test("toastPaused: the single toast timer runs while nobody hovers", () => {
+  assert.equal(toastPaused(play([toast(1)])), false);
+});
+
+test("toastPaused: hovering the toast on any monitor pauses it", () => {
+  const onB = { type: "ToastHover", monitor: "B", on: true };
+  assert.equal(toastPaused(play([toast(1), onB])), true);
+  const notchB = { type: "Hover", monitor: "B", on: true };
+  assert.equal(toastPaused(play([toast(1), notchB])), true);
 });

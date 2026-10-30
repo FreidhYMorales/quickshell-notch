@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import QtQuick
+import "../../config"
 import "../../services"
 import "../../logic/sideLayer.mjs" as SideLayer
 import "../../logic/centerState.mjs" as CenterState
@@ -9,11 +10,13 @@ import "../../logic/centerView.mjs" as CenterView
 
 // The one global holder of the centre reducer state. Surfaces send events with
 // `dispatch` and read `viewFor(screenName)`; effects are executed here.
-// Other event sources (notifications, launcher, polkit) arrive in later phases.
+// Other event sources (launcher, polkit) arrive in later phases.
 Singleton {
     id: root
 
     property var state: CenterState.initialState(screenNames())
+    // Id of the notification the reducer currently shows as a toast (-1: none).
+    property int toastId: -1
 
     // What the idle notch shows in its side slots: low > media > battery.
     readonly property string sideLayer: SideLayer.sideLayer(Battery.layer, Mpris.playing)
@@ -39,6 +42,54 @@ Singleton {
     // Effects whose services do not exist yet are logged only.
     function run(effect) {
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));
+    }
+
+    // Mirrors the head of the notification queue into the reducer.
+    // Critical urgency is handled with the `!` indicator in a later story.
+    function syncToast() {
+        const current = Notifs.current;
+        const id = current ? current.id : -1;
+        if (id === toastId)
+            return;
+        const previous = toastId;
+        toastId = id;
+        if (current) {
+            dispatch({
+                type: "ToastShown",
+                id: id,
+                critical: false
+            });
+            if (toastTimer.running)
+                toastTimer.restart();
+        } else {
+            dispatch({
+                type: "ToastDismissed",
+                id: previous
+            });
+        }
+    }
+
+    // One global toast timer; a hover on any monitor pauses it.
+    Timer {
+        id: toastTimer
+
+        interval: Timings.toast
+        running: root.state.global.toast?.phase === "shown" && !CenterView.toastPaused(root.state)
+        onTriggered: {
+            root.dispatch({
+                type: "ToastTimeout",
+                id: root.toastId
+            });
+            Notifs.advance();
+        }
+    }
+
+    Connections {
+        function onCurrentChanged() {
+            root.syncToast();
+        }
+
+        target: Notifs
     }
 
     // cava runs only while the media layer shows.

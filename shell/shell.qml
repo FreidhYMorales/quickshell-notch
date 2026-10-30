@@ -1,3 +1,4 @@
+//@ pragma IconTheme yamis-mono
 import Quickshell
 import "components"
 import "notches/center"

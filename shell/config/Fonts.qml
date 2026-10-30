@@ -12,6 +12,8 @@ Singleton {
     readonly property int display: 34
     // Date and time in the idle centre notch.
     readonly property int idleClock: 15
+    // Notification toast text, matched to the idle clock.
+    readonly property int toast: 15
     // Battery glyph and percentage beside the idle row.
     readonly property int idleSide: 15
 }

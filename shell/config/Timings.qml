@@ -8,6 +8,8 @@ Singleton {
     readonly property int hoverDebounce: 50
     readonly property int reveal: 1500
     readonly property int holdConfirm: 1000
+    // How long a notification toast shows (paused while hovered).
+    readonly property int toast: 5000
     // Workspace events within this window become one snapshot.
     readonly property int wsDebounce: 150
     // Triggers are ignored this long after startup (initial reads are not news).

@@ -9,3 +9,4 @@ singleton Recorder Recorder.qml
 singleton Workspaces Workspaces.qml
 singleton Audio Audio.qml
 singleton Brightness Brightness.qml
+singleton Notifs Notifs.qml

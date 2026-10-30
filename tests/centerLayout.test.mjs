@@ -6,6 +6,7 @@ import {
   idleWidth,
   shapeFor,
   sideExtent,
+  toastShape,
 } from "../shell/logic/centerLayout.mjs";
 
 // Spec table: base 260, side 60.
@@ -80,4 +81,21 @@ test("content-driven idle width: both sides grow by the same amount", () => {
   const side = sideExtent({ left: 14, right: 30, gap: 8 });
   assert.equal(idleWidth({ base, side, layer: "none", max: 600 }), 236);
   assert.equal(idleWidth({ base, side, layer: "charging", max: 600 }), 312);
+});
+
+const TOAST = {
+  widths: { compact: 360, expanded: 420 },
+  heights: { compact: 32, expanded: 96 },
+};
+
+test("toastShape: compact while not hovered, larger when hovered", () => {
+  const compact = Object.assign({ expanded: false, max: 600 }, TOAST);
+  assert.deepEqual(toastShape(compact), { width: 360, height: 32 });
+  const open = Object.assign({ expanded: true, max: 600 }, TOAST);
+  assert.deepEqual(toastShape(open), { width: 420, height: 96 });
+});
+
+test("toastShape: the width never passes the slot", () => {
+  const narrow = Object.assign({ expanded: true, max: 300 }, TOAST);
+  assert.deepEqual(toastShape(narrow), { width: 300, height: 96 });
 });

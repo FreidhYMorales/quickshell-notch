@@ -28,3 +28,10 @@ export function idleBase({ row, pad, ear }) {
 export function sideExtent({ left, right, gap }) {
   return Math.max(left, right) + gap;
 }
+
+// Toast shape: compact, or larger with body and actions while hovered.
+// widths / heights: { compact, expanded }.
+export function toastShape({ expanded, widths, heights, max }) {
+  const key = expanded ? "expanded" : "compact";
+  return { width: Math.min(widths[key], max), height: heights[key] };
+}
