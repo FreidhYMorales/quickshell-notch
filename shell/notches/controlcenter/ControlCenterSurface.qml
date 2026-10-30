@@ -22,6 +22,7 @@ NotchSurface {
         maxWidth: root.implicitWidth,
         maxHeight: root.implicitHeight
     })
+    readonly property var body: CornerLayout.cornerBody(size, Layout.earRadius, "topRight")
 
     slotName: "tr"
     anchors.left: false
@@ -88,13 +89,14 @@ NotchSurface {
         }
     }
 
-    // Input area: the hot zone while collapsed, the whole shape while open.
+    // Input area: the hot zone while collapsed, the drawn body (no ears)
+    // while open, so leaving the visible edge collapses the panel.
     Item {
         id: maskBox
 
-        x: root.open ? shape.x : root.width - Layout.ccHotZone
-        width: root.open ? shape.width : Layout.ccHotZone
-        height: root.open ? shape.height : Layout.ccHotZone
+        x: root.open ? shape.x + root.body.x : root.width - Layout.ccHotZone
+        width: root.open ? root.body.width : Layout.ccHotZone
+        height: root.open ? root.body.height : Layout.ccHotZone
     }
 
     NotchZone {
