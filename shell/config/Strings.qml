@@ -12,9 +12,6 @@ Singleton {
     // Control center profile: "up 3h 12m".
     readonly property string uptimePrefix: "up "
     // Control center toggle tiles.
-    readonly property string tileWifi: "WiFi"
-    readonly property string tileBluetooth: "Bluetooth"
-    readonly property string tileDnd: "DND"
     readonly property string glyphWifi: "\udb81\udda9"
     readonly property string glyphBluetooth: "\udb80\udcaf"
     readonly property string glyphDnd: "\udb80\udc9b"

@@ -30,23 +30,20 @@ NotchSurface {
         bt: Radios.bt,
         dnd: Notifs.dnd
     })
-    // Per tile id: glyph, label, left click and right click.
+    // Per tile id: glyph, left click and right click.
     readonly property var tileInfo: ({
             wifi: {
                 glyph: Strings.glyphWifi,
-                label: Strings.tileWifi,
                 toggle: Radios.toggleWifi,
                 detail: Radios.openWifiTui
             },
             bt: {
                 glyph: Strings.glyphBluetooth,
-                label: Strings.tileBluetooth,
                 toggle: Radios.toggleBt,
                 detail: Radios.openBtTui
             },
             dnd: {
                 glyph: Strings.glyphDnd,
-                label: Strings.tileDnd,
                 toggle: Notifs.toggleDnd,
                 // The notifications subpage arrives with #05.
                 detail: () => {}
@@ -133,10 +130,8 @@ NotchSurface {
                         required property var modelData
 
                         scheme: root.scheme
-                        card: Colours.cardFor(root.screen)
                         on: modelData.on
                         glyph: root.tileInfo[modelData.id].glyph
-                        label: root.tileInfo[modelData.id].label
                         onToggled: root.tileInfo[modelData.id].toggle()
                         onDetailRequested: root.tileInfo[modelData.id].detail()
                     }

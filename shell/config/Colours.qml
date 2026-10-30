@@ -11,6 +11,8 @@ Singleton {
     // Notches are pure black; cards are black mixed with a little of the accent.
     readonly property color background: "#000000"
     readonly property real cardMix: 0.08
+    // Control center toggle button fill while off (primary at this alpha).
+    readonly property real tileOffAlpha: 0.18
 
     // Low and critical battery.
     readonly property color critical: "#ff5449"
