@@ -14,4 +14,7 @@ export function removeFromHistory(history, id) {
   return history.filter((n) => n.id !== id);
 }
 
-export function latest(_history, _count) {}
+// The newest `count` entries (the control center's inline list).
+export function latest(history, count) {
+  return history.slice(0, count);
+}
