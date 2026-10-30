@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Manual check for the centre notch notification toast (stories 01, 02).
+# Manual check for the centre notch notification toast (stories 01-03).
 # Run the notch shell first (`qs -p shell/shell.qml`, old shell stopped).
 # Usage: tests/manual/test-notif.sh <case>
 #   normal   one toast that hides after its timeout
@@ -9,6 +9,9 @@
 #   burst    5 in a row: the first stays, then newest first, with +N
 #   dnd      toggles do-not-disturb (run burst while on: no toast, steady dot)
 #   seen     marks notifications seen: the unread dot clears
+#   critical a critical toast: bypasses DND, then waits as `!` until dismissed
+# Battery at start (story 03): set Flags.batteryOverride to
+#   ({ percentage: 9, plugged: false }), restart the shell, then set it back to null.
 set -euo pipefail
 
 shell="$(dirname "$0")/../../shell/shell.qml"
@@ -44,8 +47,12 @@ dnd)
 seen)
 	qs -p "$shell" ipc call notifs markSeen
 	;;
+critical)
+	notify-send -u critical -a "Backup" -i drive-harddisk -A retry=Retry \
+		"Backup failed" "The disk is not mounted."
+	;;
 *)
-	echo "usage: $0 normal|actions|replace|close|burst|dnd|seen" >&2
+	echo "usage: $0 normal|actions|replace|close|burst|dnd|seen|critical" >&2
 	exit 1
 	;;
 esac

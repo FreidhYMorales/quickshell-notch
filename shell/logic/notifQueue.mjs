@@ -35,3 +35,33 @@ export function close(queue, id) {
     waiting: queue.waiting.filter((n) => n.id !== id),
   };
 }
+
+// The shown one timed out: a critical waits as a pin (the `!`), newest first,
+// until it is dismissed; a normal one is simply dropped.
+export function collapse(queue, pinned, critical) {
+  return {
+    queue: advance(queue),
+    pinned: critical && queue.current ? [queue.current].concat(pinned) : pinned,
+  };
+}
+
+// A click on the `!`: the newest pin shows again; a toast that was showing
+// waits at the front so it is not lost.
+export function reopen(queue, pinned) {
+  if (pinned.length === 0) return { queue, pinned };
+  const waiting = queue.current
+    ? [queue.current].concat(queue.waiting)
+    : queue.waiting;
+  return { queue: { current: pinned[0], waiting }, pinned: pinned.slice(1) };
+}
+
+// A waiting critical was dismissed (✕, an action) or closed by its app.
+export function unpin(pinned, id) {
+  return pinned.filter((n) => n.id !== id);
+}
+
+// Whether the queue head differs from the toast the reducer shows. `null`
+// means no toast: shell-made notifications use negative ids, so -1 is taken.
+export function headChanged(shownId, current) {
+  return (current ? current.id : null) !== shownId;
+}

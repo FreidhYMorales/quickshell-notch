@@ -16,7 +16,7 @@ NotchSurface {
         base: idle.baseWidth,
         side: idle.sideNeed,
         layer: idle.batteryLayer,
-        dot: CenterStore.unreadDot.visible ? Layout.rowGap + Layout.dotSize : 0,
+        dot: idle.dotExtent,
         max: slot.width
     })
     readonly property bool toast: view.mode === "toast"
@@ -37,6 +37,7 @@ NotchSurface {
             hasPlayer: Mpris.hasPlayer,
             full: Layout.expandedWidth,
             clockOnly: Layout.expandedClockWidth,
+            mark: expandedView.markExtent,
             max: slot.width
         })
     }, {
@@ -84,6 +85,8 @@ NotchSurface {
         }
 
         CenterExpanded {
+            id: expandedView
+
             anchors.fill: parent
             visible: root.expanded
             screen: root.screen

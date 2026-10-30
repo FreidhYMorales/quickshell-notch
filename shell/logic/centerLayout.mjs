@@ -8,8 +8,9 @@ export function idleWidth({ base, side, layer, dot = 0, max }) {
   return Math.min(base + extra, max);
 }
 
-export function expandedWidth({ hasPlayer, full, clockOnly, max }) {
-  return Math.min(hasPlayer ? full : clockOnly, max);
+// A visible `!` adds `mark` (its gap plus width) on both sides.
+export function expandedWidth({ hasPlayer, full, clockOnly, mark = 0, max }) {
+  return Math.min((hasPlayer ? full : clockOnly) + 2 * mark, max);
 }
 
 // widths / heights: { idle, expanded }.

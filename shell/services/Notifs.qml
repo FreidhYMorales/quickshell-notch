@@ -17,6 +17,11 @@ Singleton {
     property var queue: NotifQueue.emptyQueue()
     readonly property var current: queue.current
     readonly property int waiting: queue.waiting.length
+    // Critical notifications that timed out, newest first: the `!` indicator.
+    property var pinned: []
+    // Ids for shell-made notifications; negative so they never meet DBus ids.
+    property int nextLocalId: -1
+    readonly property bool currentCritical: current?.urgency === NotificationUrgency.Critical
     // Do-not-disturb: normal toasts are muted (session only, starts off).
     property bool dnd: false
 
@@ -36,6 +41,20 @@ Singleton {
         queue = NotifQueue.advance(queue);
     }
 
+    // The shown toast timed out or was muted: a critical one waits as a pin.
+    function collapse() {
+        const result = NotifQueue.collapse(queue, pinned, currentCritical);
+        pinned = result.pinned;
+        queue = result.queue;
+    }
+
+    // A click on the `!`: the newest waiting critical shows again.
+    function reopen() {
+        const result = NotifQueue.reopen(queue, pinned);
+        pinned = result.pinned;
+        queue = result.queue;
+    }
+
     // ✕ on the toast: closes the notification for the app too; `closed` drops it.
     function dismiss(id: int) {
         if (current?.id === id)
@@ -52,10 +71,34 @@ Singleton {
             advance();
     }
 
+    // A shell-made critical notification (the battery warning). It behaves like
+    // a DBus one in the toast, with no actions; dismiss only closes it here.
+    function post(appName: string, summary: string, body: string, appIcon: string) {
+        const id = nextLocalId--;
+        queue = NotifQueue.receive(queue, {
+            id: id,
+            appName: appName,
+            summary: summary,
+            body: body,
+            appIcon: appIcon,
+            image: "",
+            actions: [],
+            urgency: NotificationUrgency.Critical,
+            dismiss: () => root.closed(id)
+        });
+        unread = true;
+    }
+
+    // A notification closed (by its app, or ✕ on a shell-made one).
+    function closed(id: int) {
+        queue = NotifQueue.close(queue, id);
+        pinned = NotifQueue.unpin(pinned, id);
+    }
+
     function receive(notification) {
         const id = notification.id;
         notification.tracked = true;
-        notification.closed.connect(() => root.queue = NotifQueue.close(root.queue, id));
+        notification.closed.connect(() => root.closed(id));
         queue = NotifQueue.receive(queue, notification);
         unread = true;
     }
