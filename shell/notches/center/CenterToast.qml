@@ -8,9 +8,10 @@ import "../../services"
 import "../../logic/notifToast.mjs" as NotifToast
 
 // Notification toast in the centre notch: one compact row (icon, "App:
-// summary", +N queued); while hovered, a card with the body, the
-// notification's own action buttons and ✕. A body click runs the default
-// action. Every click closes the toast (Notifs.activate / Notifs.dismiss).
+// summary", +N queued); while hovered, a card of three lines: app and ✕,
+// summary and body, the notification's own action buttons. A body click runs
+// the default action. Every click closes the toast (Notifs.activate /
+// Notifs.dismiss).
 Item {
     id: root
 
@@ -20,17 +21,16 @@ Item {
     readonly property var notif: Notifs.current
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property var actions: NotifToast.toastActions(notif?.actions ?? [])
-    readonly property string iconSource: {
-        if (!notif)
-            return "";
-        if (notif.image !== "")
-            return notif.image;
-        return notif.appIcon !== "" ? Quickshell.iconPath(notif.appIcon, true) : "";
-    }
+    readonly property string iconSource: notif ? NotifToast.toastIcon({
+        image: notif.image,
+        appIcon: notif.appIcon
+    }, name => Quickshell.iconPath(name, true)) : ""
 
     component ToastText: Text {
         color: root.scheme.onSurface
         elide: Text.ElideRight
+        maximumLineCount: 1
+        textFormat: Text.PlainText
         font.family: Fonts.family
         font.pixelSize: Fonts.body
     }
@@ -47,8 +47,9 @@ Item {
 
     Item {
         anchors.fill: parent
-        anchors.leftMargin: Layout.earRadius + Layout.expandedPad
-        anchors.rightMargin: Layout.earRadius + Layout.expandedPad
+        anchors.leftMargin: Layout.earRadius + Layout.toastPad
+        anchors.rightMargin: Layout.earRadius + Layout.toastPad
+        anchors.bottomMargin: Layout.toastPadBottom
 
         Item {
             id: header
@@ -58,34 +59,46 @@ Item {
             anchors.top: parent.top
             height: Layout.idleHeight
 
-            Image {
-                id: icon
+            // Fixed box: every icon, theme or picture, fits it the same way.
+            Item {
+                id: iconBox
 
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: Layout.toastIcon
                 height: Layout.toastIcon
-                sourceSize: Qt.size(Layout.toastIcon, Layout.toastIcon)
-                source: root.iconSource
-                visible: root.iconSource !== ""
-            }
 
-            Text {
-                anchors.centerIn: icon
-                visible: !icon.visible
-                text: Strings.glyphBell
-                color: root.scheme.primary
-                font.family: Fonts.family
-                font.pixelSize: Fonts.body
+                Image {
+                    id: icon
+
+                    anchors.fill: parent
+                    sourceSize: Qt.size(Layout.toastIcon * 2, Layout.toastIcon * 2)
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    smooth: true
+                    mipmap: true
+                    source: root.iconSource
+                    visible: root.iconSource !== "" && status !== Image.Error
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    visible: !icon.visible
+                    text: Strings.glyphBell
+                    color: root.scheme.primary
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.body
+                }
             }
 
             ToastText {
-                anchors.left: icon.right
-                anchors.leftMargin: Layout.rowGap
+                anchors.left: iconBox.right
+                anchors.leftMargin: Layout.toastGap
                 anchors.right: trailing.left
-                anchors.rightMargin: Layout.rowGap
+                anchors.rightMargin: Layout.toastGap
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.notif ? (root.expanded ? root.notif.appName : root.notif.appName + Strings.toastAppSeparator + root.notif.summary) : ""
+                color: root.expanded ? root.scheme.muted : root.scheme.onSurface
             }
 
             Row {
@@ -93,7 +106,7 @@ Item {
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Layout.rowGap
+                spacing: Layout.toastGap
 
                 ToastText {
                     visible: Notifs.waiting > 0
@@ -108,64 +121,69 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
-                        anchors.margins: -Layout.rowGap / 2
+                        anchors.margins: -Layout.toastGap / 2
                         onClicked: Notifs.dismiss(root.notif.id)
                     }
                 }
             }
         }
 
-        Column {
-            anchors.left: parent.left
-            anchors.right: parent.right
+        // Summary and body share one line, as in the plan's mockup.
+        Row {
+            id: message
+
+            anchors.left: header.left
+            anchors.leftMargin: Layout.toastIcon + Layout.toastGap
+            anchors.right: header.right
             anchors.top: header.bottom
-            anchors.leftMargin: Layout.toastIcon + Layout.rowGap
-            spacing: Layout.toastLineGap
+            spacing: Layout.toastGap
             visible: root.expanded
 
             ToastText {
-                width: parent.width
+                id: summary
+
+                width: Math.min(implicitWidth, message.width / 2)
                 text: root.notif?.summary ?? ""
                 font.bold: true
             }
 
             ToastText {
-                width: parent.width
+                width: message.width - summary.width - message.spacing
                 text: root.notif?.body ?? ""
-                visible: text !== ""
                 color: root.scheme.muted
-                textFormat: Text.PlainText
             }
+        }
 
-            Row {
-                spacing: Layout.rowGap
-                visible: root.actions.buttons.length > 0
+        Row {
+            anchors.left: message.left
+            anchors.bottom: parent.bottom
+            spacing: Layout.toastGap
+            visible: root.expanded && root.actions.buttons.length > 0
 
-                Repeater {
-                    model: root.actions.buttons
+            Repeater {
+                model: root.actions.buttons
 
-                    Rectangle {
-                        id: button
+                Rectangle {
+                    id: button
 
-                        required property var modelData
+                    required property var modelData
 
-                        width: label.implicitWidth + 2 * Layout.toastButtonPad
-                        height: Layout.toastButtonHeight
-                        radius: height / 2
-                        color: Colours.cardFor(root.screen)
+                    width: label.implicitWidth + 2 * Layout.toastButtonPad
+                    height: Layout.toastButtonHeight
+                    radius: height / 2
+                    color: Colours.cardFor(root.screen)
 
-                        ToastText {
-                            id: label
+                    ToastText {
+                        id: label
 
-                            anchors.centerIn: parent
-                            text: button.modelData.text
-                            color: root.scheme.primary
-                        }
+                        anchors.centerIn: parent
+                        text: button.modelData.text
+                        color: root.scheme.primary
+                    }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: Notifs.activate(button.modelData)
-                        }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: Notifs.activate(button.modelData)
                     }
                 }
             }

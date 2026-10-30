@@ -57,13 +57,17 @@ Singleton {
 
     // Notification toast in the centre notch: compact row (idle height), and
     // the hovered card with body and action buttons.
-    readonly property int toastWidth: 360
-    readonly property int toastExpandedWidth: 440
+    // The hovered card must stay within expandedHeight (the centre window).
+    readonly property int toastWidth: 380
+    readonly property int toastExpandedWidth: 480
     readonly property int toastExpandedHeight: 104
     readonly property int toastIcon: 18
-    readonly property int toastButtonPad: 8
-    readonly property int toastButtonHeight: 22
-    readonly property int toastLineGap: 4
+    // Inner padding past the ears, bottom padding of the card, gap between items.
+    readonly property int toastPad: 18
+    readonly property int toastPadBottom: 14
+    readonly property int toastGap: 10
+    readonly property int toastButtonPad: 12
+    readonly property int toastButtonHeight: 24
 
     // Workspaces notch (TL): the corner body is the idle row plus the ear.
     readonly property int cornerHeight: 44
