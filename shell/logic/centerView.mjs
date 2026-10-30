@@ -41,7 +41,9 @@ export function viewFor(state, name) {
 
 // The toast timer is global: a hover on any monitor pauses it everywhere.
 export function toastPaused(state) {
-  return Object.values(state.monitors).some(
-    (m) => m.hovered || m.toastHovered,
-  );
+  // Object.keys, not Object.values: stick to what the reducer already runs on V4.
+  return Object.keys(state.monitors).some((name) => {
+    const m = state.monitors[name];
+    return m.hovered || m.toastHovered;
+  });
 }
