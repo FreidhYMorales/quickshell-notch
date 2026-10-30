@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addToHistory } from "../shell/logic/notifHistory.mjs";
+import {
+  addToHistory,
+  removeFromHistory,
+} from "../shell/logic/notifHistory.mjs";
 
 const n = (id, summary) => ({ id, summary });
 
@@ -22,4 +25,14 @@ test("addToHistory drops the oldest past the cap", () => {
     n(3, "c"),
     n(2, "b"),
   ]);
+});
+
+test("removeFromHistory drops the closed id", () => {
+  const start = [n(3, "c"), n(2, "b"), n(1, "a")];
+  assert.deepEqual(removeFromHistory(start, 2), [n(3, "c"), n(1, "a")]);
+});
+
+test("removeFromHistory leaves the list alone for an unknown id", () => {
+  const start = [n(3, "c"), n(1, "a")];
+  assert.deepEqual(removeFromHistory(start, 9), [n(3, "c"), n(1, "a")]);
 });

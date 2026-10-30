@@ -8,3 +8,5 @@ export function addToHistory(history, notif, cap) {
   }
   return [notif].concat(history).slice(0, cap);
 }
+
+export function removeFromHistory(_history, _id) {}
