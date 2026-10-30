@@ -7,6 +7,7 @@ import {
   emptyQueue,
   receive,
   reopen,
+  unpin,
 } from "../shell/logic/notifQueue.mjs";
 
 const notif = (id, summary = `n${id}`) => ({ id, summary });
@@ -95,4 +96,11 @@ test("reopen: the newest pin shows again; a showing toast waits at the front", (
     pinned: [],
   });
   assert.deepEqual(reopen(q, []), { queue: q, pinned: [] });
+});
+
+test("unpin: a dismissed or closed critical leaves the pins, the rest stay", () => {
+  const pinned = [notif(3), notif(2), notif(1)];
+  assert.deepEqual(unpin(pinned, 2), [notif(3), notif(1)]);
+  assert.deepEqual(unpin(pinned, 9), pinned);
+  assert.deepEqual(unpin([notif(1)], 1), []);
 });
