@@ -7,7 +7,7 @@
 ## Acceptance criteria
 
 - [ ] Given the notch shell is running, when I run `qs -c notch ipc call notifs toggleDnd`, then DND turns on (or off); while it is on, normal notifications show no toast on any monitor, and once it is off again new notifications toast as before.
-- [ ] Given a notification arrived (toasted and hidden, or muted by DND), when the notch is idle, then a steady unread dot shows in the right padding on every monitor without changing the notch width; `qs -c notch ipc call notifs markSeen` clears it and the next arrival brings it back.
+- [ ] Given a notification arrived (toasted and hidden, or muted by DND), when the notch is idle, then a steady unread dot shows right of the row on every monitor, and the idle notch widens just enough on both sides (dot gap plus size) so the dot keeps the normal padding and the clock stays centred; `qs -c notch ipc call notifs markSeen` clears it and the next arrival brings it back.
 - [ ] Given a keyboard state or polkit flow is open (launcher, power), when a notification arrives, then no toast shows and the dot blinks; when that state closes, the dot stays steady until seen.
 
 ## Plan
@@ -41,3 +41,4 @@ Risk: item 3 (new IPC target `notifs` that keybinds and the control center will 
 - L1 request: /flow:story 02
 - L2 assumptions: DND and mark-seen come through IPC until #04/#05 exist (user: "si, hazlo así con IPC"); notifications muted on arrival do not toast later; the launcher blink is visible only once #08 lands.
 - L3 approved by the user (2026-10-30).
+- L4 in-run change (user, 2026-10-30): the dot sat cramped against the ear curve; user: "hazlo que se expanda lo justo y necesario". Criterion 2 amended: the idle notch widens by rowGap + dotSize on both sides while the dot shows (overrides the plan rule "does not change the width").
