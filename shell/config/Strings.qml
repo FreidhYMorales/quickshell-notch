@@ -26,6 +26,11 @@ Singleton {
     readonly property string toastWaitingPrefix: "+"
     readonly property string glyphClose: "\uf00d"
     readonly property string glyphBell: "\uf0f3"
+    // Shell-made critical toast at the battery critical limit; %1 = percentage.
+    readonly property string batteryCriticalApp: "Battery"
+    readonly property string batteryCriticalSummary: "Battery critical"
+    readonly property string batteryCriticalBody: "%1% left. Plug in the charger."
+    readonly property string batteryCriticalIcon: "battery-caution"
     // Critical notifications waiting to be dismissed (click reopens the newest).
     readonly property string criticalMark: "!"
 

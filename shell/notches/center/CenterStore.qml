@@ -139,10 +139,20 @@ Singleton {
         target: Session
     }
 
-    // The critical-battery toast arrives with notch-notifications; log until then.
+    // The battery's one-shot critical event becomes a critical toast.
+    function postBatteryCritical() {
+        Notifs.post(Strings.batteryCriticalApp, Strings.batteryCriticalSummary, Strings.batteryCriticalBody.arg(Battery.percentage), Strings.batteryCriticalIcon);
+    }
+
+    // Already fired before this store connected (shell start at <= critical).
+    Component.onCompleted: {
+        if (!Battery.armed)
+            postBatteryCritical();
+    }
+
     Connections {
         function onCriticalReached() {
-            console.log("CenterStore: battery critical (" + Battery.percentage + "%)");
+            root.postBatteryCritical();
         }
 
         target: Battery
