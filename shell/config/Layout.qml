@@ -87,6 +87,10 @@ Singleton {
     readonly property int ccPad: 14
     readonly property int ccGap: 12
     readonly property int ccAvatar: 40
+    // Toggle tiles under the profile header.
+    readonly property int ccTileWidth: 84
+    readonly property int ccTileHeight: 48
+    readonly property int ccTileGap: 8
 
     // OSDs (BL, VR): window height, slider thumb (also the track height),
     // inner padding, and the slot width under which an OSD is not drawn at all.

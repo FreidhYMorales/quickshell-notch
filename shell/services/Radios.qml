@@ -30,6 +30,16 @@ Singleton {
             adapter.enabled = !adapter.enabled;
     }
 
+    // Detail views are the TUIs in kitty; the classes match the old config's
+    // window rules.
+    function openWifiTui() {
+        Quickshell.execDetached(["kitty", "--class", "qs-wifi", "-e", "impala"]);
+    }
+
+    function openBtTui() {
+        Quickshell.execDetached(["kitty", "--class", "qs-bluetooth", "-e", "bluetui"]);
+    }
+
     Process {
         command: ["rfkill", "event"]
         running: !Flags.smoke

@@ -1,6 +1,9 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import "../../components"
 import "../../config"
+import "../../logic/controlTiles.mjs" as ControlTiles
 import "../../logic/cornerLayout.mjs" as CornerLayout
 import "../../logic/format.mjs" as Format
 import "../../logic/workspaceStrip.mjs" as Strip
@@ -15,13 +18,40 @@ NotchSurface {
     readonly property var scheme: Colours.paletteFor(screen)
     property bool open: false
     readonly property var size: CornerLayout.cornerShape({
-        contentWidth: header.implicitWidth,
-        contentHeight: header.implicitHeight + 2 * Layout.ccPad,
+        contentWidth: panel.implicitWidth,
+        contentHeight: panel.implicitHeight + 2 * Layout.ccPad,
         pad: Layout.ccPad,
         ear: Layout.earRadius,
         maxWidth: root.implicitWidth,
         maxHeight: root.implicitHeight
     })
+    readonly property var tiles: ControlTiles.tilesFor({
+        wifi: Radios.wifi,
+        bt: Radios.bt,
+        dnd: Notifs.dnd
+    })
+    // Per tile id: glyph, label, left click and right click.
+    readonly property var tileInfo: ({
+            wifi: {
+                glyph: Strings.glyphWifi,
+                label: Strings.tileWifi,
+                toggle: Radios.toggleWifi,
+                detail: Radios.openWifiTui
+            },
+            bt: {
+                glyph: Strings.glyphBluetooth,
+                label: Strings.tileBluetooth,
+                toggle: Radios.toggleBt,
+                detail: Radios.openBtTui
+            },
+            dnd: {
+                glyph: Strings.glyphDnd,
+                label: Strings.tileDnd,
+                toggle: Notifs.toggleDnd,
+                // The notifications subpage arrives with #05.
+                detail: () => {}
+            }
+        })
     readonly property var body: CornerLayout.cornerBody(size, Layout.earRadius, "topRight")
 
     slotName: "tr"
@@ -44,46 +74,72 @@ NotchSurface {
             Anim {}
         }
 
-        Row {
-            id: header
+        Column {
+            id: panel
 
             x: Layout.earRadius + Layout.ccPad
             y: Layout.ccPad
             spacing: Layout.ccGap
 
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: Layout.ccAvatar
-                height: Layout.ccAvatar
-                radius: Layout.ccAvatar / 2
-                color: Colours.cardFor(root.screen)
+            Row {
+                id: header
 
-                Text {
-                    anchors.centerIn: parent
-                    text: Strip.appInitial(OsInfo.user, Strings.unknownInitial)
-                    color: root.scheme.primary
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.title
+                spacing: Layout.ccGap
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Layout.ccAvatar
+                    height: Layout.ccAvatar
+                    radius: Layout.ccAvatar / 2
+                    color: Colours.cardFor(root.screen)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Strip.appInitial(OsInfo.user, Strings.unknownInitial)
+                        color: root.scheme.primary
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.title
+                    }
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Text {
+                        text: OsInfo.user
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.title
+                    }
+
+                    Text {
+                        // Missing uptime hides the line.
+                        visible: OsInfo.uptime !== null
+                        text: Strings.uptimePrefix + Format.formatUptime(OsInfo.uptime ?? 0)
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.small
+                    }
                 }
             }
 
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
+            Row {
+                spacing: Layout.ccTileGap
 
-                Text {
-                    text: OsInfo.user
-                    color: root.scheme.onSurface
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.title
-                }
+                Repeater {
+                    model: root.tiles
 
-                Text {
-                    // Missing uptime hides the line.
-                    visible: OsInfo.uptime !== null
-                    text: Strings.uptimePrefix + Format.formatUptime(OsInfo.uptime ?? 0)
-                    color: root.scheme.muted
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.small
+                    ControlTile {
+                        required property var modelData
+
+                        scheme: root.scheme
+                        card: Colours.cardFor(root.screen)
+                        on: modelData.on
+                        glyph: root.tileInfo[modelData.id].glyph
+                        label: root.tileInfo[modelData.id].label
+                        onToggled: root.tileInfo[modelData.id].toggle()
+                        onDetailRequested: root.tileInfo[modelData.id].detail()
+                    }
                 }
             }
         }
