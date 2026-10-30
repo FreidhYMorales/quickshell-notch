@@ -49,7 +49,11 @@ export function toastPaused(state) {
 }
 
 // The unread dot is global: it shows while something arrived since the last
-// mark-seen.
-export function unreadDot(_state, unread) {
-  return { visible: unread, blinking: false };
+// mark-seen, and blinks while an open keyboard state or polkit mutes toasts.
+export function unreadDot(state, unread) {
+  const { keyboard, polkit } = state.global;
+  return {
+    visible: unread,
+    blinking: unread && (keyboard !== null || polkit !== null),
+  };
 }
