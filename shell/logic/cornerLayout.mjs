@@ -28,3 +28,5 @@ export function cornerBody(size, ear, anchor) {
     height: atLeast0(size.height - e),
   };
 }
+
+export function slideOffset(_height, _progress) {}
