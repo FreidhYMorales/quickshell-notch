@@ -183,13 +183,17 @@ const handlers = {
   ToastShown(state, { id, critical }) {
     if (suppressed(state.global, critical)) {
       // A muted critical toast must not be lost: it waits as the `!` indicator.
-      return setGlobal(
-        state,
-        merge(
-          { blinkDot: true },
-          critical ? { toast: { id, critical, phase: "indicator" } } : {},
-        ),
-      );
+      // A muted normal one is skipped, so it never shows once the mute lifts.
+      return {
+        state: setGlobal(
+          state,
+          merge(
+            { blinkDot: true },
+            critical ? { toast: { id, critical, phase: "indicator" } } : {},
+          ),
+        ).state,
+        effects: critical ? [] : [{ type: "toast.skip", id }],
+      };
     }
     return setGlobal(state, { toast: { id, critical, phase: "shown" } });
   },

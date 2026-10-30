@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import QtQuick
 import "../config"
@@ -16,6 +17,12 @@ Singleton {
     property var queue: NotifQueue.emptyQueue()
     readonly property var current: queue.current
     readonly property int waiting: queue.waiting.length
+    // Do-not-disturb: normal toasts are muted (session only, starts off).
+    property bool dnd: false
+
+    function toggleDnd() {
+        dnd = !dnd;
+    }
 
     // The shown toast ended without closing the notification (timeout).
     function advance() {
@@ -43,6 +50,15 @@ Singleton {
         notification.tracked = true;
         notification.closed.connect(() => root.queue = NotifQueue.close(root.queue, id));
         queue = NotifQueue.receive(queue, notification);
+    }
+
+    // `qs -c notch ipc call notifs <fn>`; keybinds and the control center reuse these.
+    IpcHandler {
+        target: "notifs"
+
+        function toggleDnd(): void {
+            root.toggleDnd();
+        }
     }
 
     LazyLoader {

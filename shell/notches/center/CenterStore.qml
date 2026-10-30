@@ -41,6 +41,10 @@ Singleton {
 
     // Effects whose services do not exist yet are logged only.
     function run(effect) {
+        if (effect.type === "toast.skip" && effect.id === Notifs.current?.id) {
+            Notifs.advance();
+            return;
+        }
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));
     }
 
@@ -87,6 +91,13 @@ Singleton {
     Connections {
         function onCurrentChanged() {
             root.syncToast();
+        }
+
+        function onDndChanged() {
+            root.dispatch({
+                type: "Dnd",
+                on: Notifs.dnd
+            });
         }
 
         target: Notifs
