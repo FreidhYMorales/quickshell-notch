@@ -541,3 +541,17 @@ test("Suppression: a muted normal toast is skipped, never shown later", () => {
   ]);
   assert.deepEqual(critical.effects, []);
 });
+
+test("Suppression: once DND is off again, a normal toast shows", () => {
+  const { state, effects } = play([
+    { type: "Dnd", on: true },
+    { type: "Dnd", on: false },
+    { type: "ToastShown", id: 1, critical: false },
+  ]);
+  assert.deepEqual(state.global.toast, {
+    id: 1,
+    critical: false,
+    phase: "shown",
+  });
+  assert.deepEqual(effects, []);
+});
