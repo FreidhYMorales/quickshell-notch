@@ -19,3 +19,9 @@ export function shortDate(month, day, months) {
 export function formatPercent(value) {
   return Math.round(value) + "%";
 }
+
+// Whole seconds from /proc/uptime ("11520.37 45678.90"); null if unreadable.
+export function parseUptime(text) {
+  const seconds = Math.floor(parseFloat(text));
+  return seconds >= 0 ? seconds : null;
+}
