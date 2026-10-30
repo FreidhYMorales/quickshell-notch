@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initialState, reduce } from "../shell/logic/centerState.mjs";
-import { toastPaused, viewFor } from "../shell/logic/centerView.mjs";
+import { toastPaused, unreadDot, viewFor } from "../shell/logic/centerView.mjs";
 
 const play = (events) =>
   events.reduce((s, ev) => reduce(s, ev).state, initialState(["A", "B"]));
@@ -137,4 +137,13 @@ test("toastPaused: hovering the toast on any monitor pauses it", () => {
   assert.equal(toastPaused(play([toast(1), onB])), true);
   const notchB = { type: "Hover", monitor: "B", on: true };
   assert.equal(toastPaused(play([toast(1), notchB])), true);
+});
+
+test("unreadDot: hidden with nothing unread, steady once something arrived", () => {
+  const hidden = { visible: false, blinking: false };
+  const steady = { visible: true, blinking: false };
+  assert.deepEqual(unreadDot(play([]), false), hidden);
+  assert.deepEqual(unreadDot(play([]), true), steady);
+  assert.deepEqual(unreadDot(play([{ type: "Dnd", on: true }]), true), steady);
+  assert.deepEqual(unreadDot(play([{ type: "Dnd", on: true }]), false), hidden);
 });
