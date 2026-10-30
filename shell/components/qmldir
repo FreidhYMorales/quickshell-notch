@@ -6,6 +6,7 @@ CriticalMark CriticalMark.qml
 NotchEarShape NotchEarShape.qml
 NotchSurface NotchSurface.qml
 NotchZone NotchZone.qml
+NotifIcon NotifIcon.qml
 Slider Slider.qml
 SpacerSurface SpacerSurface.qml
 Visualizer Visualizer.qml

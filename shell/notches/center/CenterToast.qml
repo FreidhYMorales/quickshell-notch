@@ -1,8 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
-import Quickshell
 import "../../components"
 import "../../config"
 import "../../services"
@@ -22,13 +20,6 @@ Item {
     readonly property var notif: Notifs.current
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property var actions: NotifToast.toastActions(notif?.actions ?? [])
-    readonly property var iconInfo: notif ? NotifToast.toastIconInfo({
-        image: notif.image,
-        appIcon: notif.appIcon
-    }, name => Quickshell.iconPath(name, true)) : {
-        source: "",
-        themed: false
-    }
 
     component ToastText: Text {
         color: root.scheme.onSurface
@@ -63,43 +54,13 @@ Item {
             anchors.top: parent.top
             height: Layout.idleHeight
 
-            // Fixed box: every icon, theme or picture, fits it the same way.
-            Item {
+            NotifIcon {
                 id: iconBox
 
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: Layout.toastIcon
-                height: Layout.toastIcon
-
-                Image {
-                    id: icon
-
-                    anchors.fill: parent
-                    sourceSize: Qt.size(Layout.toastIcon * 2, Layout.toastIcon * 2)
-                    fillMode: Image.PreserveAspectFit
-                    asynchronous: true
-                    smooth: true
-                    mipmap: true
-                    source: root.iconInfo.source
-                    visible: root.iconInfo.source !== "" && status !== Image.Error
-                    // Theme icons take the accent, like the fallback bell;
-                    // pictures (screenshots, avatars) keep their colours.
-                    layer.enabled: root.iconInfo.themed
-                    layer.effect: MultiEffect {
-                        colorization: 1
-                        colorizationColor: root.scheme.primary
-                    }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: !icon.visible
-                    text: Strings.glyphBell
-                    color: root.scheme.primary
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.toast
-                }
+                notif: root.notif
+                scheme: root.scheme
             }
 
             ToastText {
