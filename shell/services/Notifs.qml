@@ -72,7 +72,10 @@ Singleton {
     function receive(notification) {
         const id = notification.id;
         notification.tracked = true;
-        notification.closed.connect(() => root.queue = NotifQueue.close(root.queue, id));
+        notification.closed.connect(() => {
+            root.queue = NotifQueue.close(root.queue, id);
+            root.pinned = NotifQueue.unpin(root.pinned, id);
+        });
         queue = NotifQueue.receive(queue, notification);
         unread = true;
     }

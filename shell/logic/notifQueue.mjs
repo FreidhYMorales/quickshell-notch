@@ -54,3 +54,8 @@ export function reopen(queue, pinned) {
     : queue.waiting;
   return { queue: { current: pinned[0], waiting }, pinned: pinned.slice(1) };
 }
+
+// A waiting critical was dismissed (✕, an action) or closed by its app.
+export function unpin(pinned, id) {
+  return pinned.filter((n) => n.id !== id);
+}

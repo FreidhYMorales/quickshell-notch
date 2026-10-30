@@ -40,6 +40,9 @@ Item {
     readonly property Item leftEdge: mediaShown ? art : (layerShown ? layerGlyph : row)
     readonly property Item rightEdge: mediaShown ? viz : (layerShown ? layerPercent : row)
 
+    // What a visible dot or `!` adds on each side (CenterLayout.idleWidth).
+    readonly property int dotExtent: critical.visible ? Layout.rowGap + critical.implicitWidth : (unread.visible ? Layout.rowGap + Layout.dotSize : 0)
+
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property bool layerShown: batteryLayer !== "none" && !mediaShown
     readonly property color layerColor: batteryLayer === "low" ? Colours.critical : scheme.primary
@@ -113,7 +116,7 @@ Item {
         height: Layout.dotSize
         radius: Layout.dotSize / 2
         color: root.scheme.primary
-        visible: CenterStore.unreadDot.visible
+        visible: CenterStore.unreadDot.visible && !critical.visible
 
         SequentialAnimation on opacity {
             loops: Animation.Infinite
@@ -130,6 +133,17 @@ Item {
                 duration: Timings.blink
             }
         }
+    }
+
+    // Waiting criticals take the unread dot's place.
+    CriticalMark {
+        id: critical
+
+        anchors.left: root.rightEdge.right
+        anchors.leftMargin: Layout.rowGap
+        anchors.verticalCenter: parent.verticalCenter
+        visible: Notifs.pinned.length > 0
+        onClicked: Notifs.reopen()
     }
 
     ArtThumb {
