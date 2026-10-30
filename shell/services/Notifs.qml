@@ -46,6 +46,13 @@ Singleton {
         queue = result.queue;
     }
 
+    // A click on the `!`: the newest waiting critical shows again.
+    function reopen() {
+        const result = NotifQueue.reopen(queue, pinned);
+        pinned = result.pinned;
+        queue = result.queue;
+    }
+
     // ✕ on the toast: closes the notification for the app too; `closed` drops it.
     function dismiss(id: int) {
         if (current?.id === id)

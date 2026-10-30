@@ -43,4 +43,12 @@ Item {
             cardColor: Colours.cardFor(root.screen)
         }
     }
+
+    // Waiting criticals: the `!` sits in the right gutter, above the card.
+    CriticalMark {
+        x: parent.width - Layout.earRadius - Layout.expandedPad / 2 - width / 2
+        y: Layout.expandedPad
+        visible: Notifs.pinned.length > 0
+        onClicked: Notifs.reopen()
+    }
 }

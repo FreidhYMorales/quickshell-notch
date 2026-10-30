@@ -26,6 +26,8 @@ Singleton {
     readonly property string toastWaitingPrefix: "+"
     readonly property string glyphClose: "\uf00d"
     readonly property string glyphBell: "\uf0f3"
+    // Critical notifications waiting to be dismissed (click reopens the newest).
+    readonly property string criticalMark: "!"
 
     // Nerd Font glyphs for the idle row and battery layers.
     readonly property string glyphCpu: "\uf2db"

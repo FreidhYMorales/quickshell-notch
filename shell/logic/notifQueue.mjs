@@ -44,3 +44,13 @@ export function collapse(queue, pinned, critical) {
     pinned: critical && queue.current ? [queue.current].concat(pinned) : pinned,
   };
 }
+
+// A click on the `!`: the newest pin shows again; a toast that was showing
+// waits at the front so it is not lost.
+export function reopen(queue, pinned) {
+  if (pinned.length === 0) return { queue, pinned };
+  const waiting = queue.current
+    ? [queue.current].concat(queue.waiting)
+    : queue.waiting;
+  return { queue: { current: pinned[0], waiting }, pinned: pinned.slice(1) };
+}
