@@ -11,7 +11,7 @@
 ## Backlog
 
 01. [x] 538e39f As a user, I want incoming notifications to show as a compact toast in the centre notch that expands on hover with its actions so that I see them without leaving my work.
-02. [~] As a user, I want do-not-disturb and an unread dot (blinking while the launcher is open) so that notifications never interrupt me but I still know they arrived. Requires: #01
+02. [x] eb640ed As a user, I want do-not-disturb and an unread dot (blinking while the launcher is open) so that notifications never interrupt me but I still know they arrived. Requires: #01
 03. [ ] As a user, I want critical notifications, including the 10% battery warning even at shell start, to bypass do-not-disturb and stay as a ! until I dismiss them so that I never miss urgent ones. Requires: #01
 04. [ ] As a user, I want a hover control center in the top-right with my profile, uptime, power row and toggle tiles (WiFi, Bluetooth, DND, power profile, caffeine) so that I control the system from the notch. Requires: #02
 05. [ ] As a user, I want my notification history in the control center (latest 3 inline, full subpage, clear all) so that I can review what I missed. Requires: #01, #04

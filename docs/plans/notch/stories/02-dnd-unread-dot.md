@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the notch shell is running, when I run `qs -c notch ipc call notifs toggleDnd`, then DND turns on (or off); while it is on, normal notifications show no toast on any monitor, and once it is off again new notifications toast as before.
-- [ ] Given a notification arrived (toasted and hidden, or muted by DND), when the notch is idle, then a steady unread dot shows right of the row on every monitor, and the idle notch widens just enough on both sides (dot gap plus size) so the dot keeps the normal padding and the clock stays centred; `qs -c notch ipc call notifs markSeen` clears it and the next arrival brings it back.
-- [ ] Given a keyboard state or polkit flow is open (launcher, power), when a notification arrives, then no toast shows and the dot blinks; when that state closes, the dot stays steady until seen.
+- [x] Given the notch shell is running, when I run `qs -c notch ipc call notifs toggleDnd`, then DND turns on (or off); while it is on, normal notifications show no toast on any monitor, and once it is off again new notifications toast as before.
+- [x] Given a notification arrived (toasted and hidden, or muted by DND), when the notch is idle, then a steady unread dot shows right of the row on every monitor, and the idle notch widens just enough on both sides (dot gap plus size) so the dot keeps the normal padding and the clock stays centred; `qs -c notch ipc call notifs markSeen` clears it and the next arrival brings it back.
+- [x] Given a keyboard state or polkit flow is open (launcher, power), when a notification arrives, then no toast shows and the dot blinks; when that state closes, the dot stays steady until seen.
 
 ## Plan
 
@@ -42,3 +42,7 @@ Risk: item 3 (new IPC target `notifs` that keybinds and the control center will 
 - L2 assumptions: DND and mark-seen come through IPC until #04/#05 exist (user: "si, hazlo así con IPC"); notifications muted on arrival do not toast later; the launcher blink is visible only once #08 lands.
 - L3 approved by the user (2026-10-30).
 - L4 in-run change (user, 2026-10-30): the dot sat cramped against the ear curve; user: "hazlo que se expanda lo justo y necesario". Criterion 2 amended: the idle notch widens by rowGap + dotSize on both sides while the dot shows (overrides the plan rule "does not change the width").
+- L5 evidence: test→feat pairs 12cd2a7→a7d94d6, f5a9b25→7b164c2, 0147a00→646a3d5, 343e7b3→eb640ed; pinning test 5982742 (mutation-checked); manual script e777274; story amend d669392. `make check`: 396 pass, 0 fail, smoke: config loaded.
+- L6 manual: the user checked DND over IPC (burst muted, no late toasts, toasts back when off), the steady dot, markSeen and the widened notch live. Launcher blink reducer-tested only (#08).
+- L7 verifier (flow:verifier): FAIL (no DND-off test; width change unrecorded) → fixed by 5982742 and d669392 → recheck PASS. Follow-up: `global.blinkDot` / `view.blinkDot` are now dead state (still pinned by old tests).
+- Risk: item 3 (new IPC target `notifs` that keybinds and the control center will call), item 4 (global mute and unread state across monitors, queue re-sync), item 6 (dot and IPC verified only manually)
