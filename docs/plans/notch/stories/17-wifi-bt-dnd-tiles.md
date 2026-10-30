@@ -36,3 +36,6 @@ Risk: item 6 (toggles act on real radios and the TUI launch are verified only ma
 ## Log
 
 - L1 request: /flow:story 17
+- L2 build: e33c1b5 test → 907d72c feat (parseRfkillEvent); 79399c2 test → 349d204 feat (applyRfkillEvent + wifiOn); 49dc06e test → dea7f0c feat (tilesFor); 44e50f0 feat (Radios service); f8f0336 feat (tile row); 90948f6 feat (round icon-only buttons, user-requested look); c683110 fix (TUI commands moved to config/Commands, console.warn on missing Bluetooth adapter, from verifier notes). Test commits carry an empty stub so the committed red fails on the assertion.
+- L3 evidence: `make check` → 429 pass, 0 fail, "smoke: config loaded". Manual criteria walked and confirmed by the user (external changes, toggles, right-click TUIs). Verifier: PASS (notes 1-2 fixed in c683110). Known lint warning: BluetoothAdapter unresolved-type from Quickshell qmltypes.
+- Risk: item 6 (toggles act on real radios and the TUI launch are verified only manually)
