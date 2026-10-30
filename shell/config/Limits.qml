@@ -29,4 +29,8 @@ Singleton {
     readonly property real levelMid: 0.33
     // Days shown on each side of today in the week strip.
     readonly property int weekRadius: 3
+    // Notification history: session cap (oldest dropped) and rows shown
+    // inline in the control center.
+    readonly property int historyCap: 50
+    readonly property int historyInline: 3
 }
