@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { advance, emptyQueue, receive } from "../shell/logic/notifQueue.mjs";
+import { advance, close, emptyQueue, receive } from "../shell/logic/notifQueue.mjs";
 
 const notif = (id, summary = `n${id}`) => ({ id, summary });
 
@@ -47,5 +47,20 @@ test("receive: the same id as a waiting one updates it where it waits", () => {
   assert.deepEqual(receive(q, notif(3, "updated")), {
     current: notif(1),
     waiting: [notif(4), notif(3, "updated"), notif(2)],
+  });
+});
+
+test("close: the app closing the shown one brings the newest waiting", () => {
+  let q = receive(emptyQueue(), notif(1));
+  for (const id of [2, 3]) q = receive(q, notif(id));
+  assert.deepEqual(close(q, 1), { current: notif(3), waiting: [notif(2)] });
+});
+
+test("close: the app closing a waiting one removes it", () => {
+  let q = receive(emptyQueue(), notif(1));
+  for (const id of [2, 3, 4]) q = receive(q, notif(id));
+  assert.deepEqual(close(q, 3), {
+    current: notif(1),
+    waiting: [notif(4), notif(2)],
   });
 });
