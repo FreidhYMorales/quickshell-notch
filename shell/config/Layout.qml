@@ -27,6 +27,8 @@ Singleton {
     readonly property real arcRing: 2.5
     readonly property int arcIcon: 9
     readonly property int dotSize: 6
+    // Round `!` button for waiting criticals in the expanded notch.
+    readonly property int criticalButton: 26
     readonly property int rowGap: 8
 
     // Idle media layer: mini album art on the left, mirrored bars on the right.

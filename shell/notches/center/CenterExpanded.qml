@@ -12,7 +12,7 @@ Item {
 
     readonly property var scheme: Colours.paletteFor(screen)
     // What a visible `!` adds on each side (CenterLayout.expandedWidth).
-    readonly property int markExtent: mark.visible ? Layout.expandedGap + mark.implicitWidth : 0
+    readonly property int markExtent: mark.visible ? Layout.expandedGap + mark.width : 0
 
     NotchEarShape {
         anchors.fill: parent
@@ -48,14 +48,27 @@ Item {
         }
     }
 
-    // Waiting criticals: the `!` gets its own column right of the card.
-    CriticalMark {
+    // Waiting criticals: a round `!` button in its own column right of the card.
+    Rectangle {
         id: mark
 
         anchors.left: content.right
         anchors.leftMargin: Layout.expandedGap
         anchors.top: content.top
+        width: Layout.criticalButton
+        height: Layout.criticalButton
+        radius: Layout.criticalButton / 2
+        color: Colours.cardFor(root.screen)
         visible: Notifs.pinned.length > 0
-        onClicked: Notifs.reopen()
+
+        CriticalMark {
+            anchors.centerIn: parent
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Notifs.reopen()
+        }
     }
 }
