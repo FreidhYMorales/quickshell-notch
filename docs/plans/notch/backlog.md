@@ -14,7 +14,7 @@
 02. [x] eb640ed As a user, I want do-not-disturb and an unread dot (blinking while the launcher is open) so that notifications never interrupt me but I still know they arrived. Requires: #01
 03. [x] 638524d As a user, I want critical notifications, including the 10% battery warning even at shell start, to bypass do-not-disturb and stay as a ! until I dismiss them so that I never miss urgent ones. Requires: #01
 04. [-] split → #16, #17, #18, #19
-05. [ ] As a user, I want my notification history in the control center (latest 3 inline, full subpage, clear all) so that I can review what I missed. Requires: #01, #16
+05. [-] split → #20, #21
 06. [ ] As a user, I want a tray row in the control center so that I can restore apps minimised to the tray. Requires: #16
 07. [ ] As a user, I want to start and stop screen recording from the control center and see the red dot on the notch while recording so that I know I am recording. Requires: #16
 08. [ ] As a user, I want an app launcher that morphs out of the centre notch so that I can find and open apps from the keyboard.
@@ -29,3 +29,5 @@
 17. [x] c683110 As a user, I want toggle tiles for WiFi, Bluetooth and DND in the control center so that I switch them without leaving my work. Requires: #16
 18. [ ] As a user, I want a power row in the control center (lock, suspend, logout, reboot, shutdown) so that I reach session actions from the notch. Requires: #16, #10
 19. [ ] As a user, I want power profile and caffeine tiles in the control center so that I control performance and idle from the notch. Requires: #16, #12
+20. [x] 553a526 As a user, I want my latest notifications in the control center (up to 3, count, clear all) so that I can review what I missed. Requires: #01, #16
+21. [ ] As a user, I want a notifications subpage in the control center (full list, per-item dismiss, DND, back) that clears the unread dot so that I can manage my whole history. Requires: #20, #17

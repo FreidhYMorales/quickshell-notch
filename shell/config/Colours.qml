@@ -13,6 +13,8 @@ Singleton {
     readonly property real cardMix: 0.08
     // Control center toggle button fill while off (primary at this alpha).
     readonly property real tileOffAlpha: 0.18
+    // Divider lines inside control center cards (muted at this opacity).
+    readonly property real dividerAlpha: 0.3
 
     // Low and critical battery.
     readonly property color critical: "#ff5449"

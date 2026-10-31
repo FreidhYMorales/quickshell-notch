@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Services.Notifications
 import QtQuick
 import "../config"
+import "../logic/notifHistory.mjs" as NotifHistory
 import "../logic/notifQueue.mjs" as NotifQueue
 
 // Owns the DBus notification server and the global toast queue. Every
@@ -19,6 +20,8 @@ Singleton {
     readonly property int waiting: queue.waiting.length
     // Critical notifications that timed out, newest first: the `!` indicator.
     property var pinned: []
+    // Every open notification this session, newest first (control center).
+    property var history: []
     // Ids for shell-made notifications; negative so they never meet DBus ids.
     property int nextLocalId: -1
     readonly property bool currentCritical: current?.urgency === NotificationUrgency.Critical
@@ -75,7 +78,7 @@ Singleton {
     // a DBus one in the toast, with no actions; dismiss only closes it here.
     function post(appName: string, summary: string, body: string, appIcon: string) {
         const id = nextLocalId--;
-        queue = NotifQueue.receive(queue, {
+        const notif = {
             id: id,
             appName: appName,
             summary: summary,
@@ -85,7 +88,9 @@ Singleton {
             actions: [],
             urgency: NotificationUrgency.Critical,
             dismiss: () => root.closed(id)
-        });
+        };
+        queue = NotifQueue.receive(queue, notif);
+        remember(notif);
         unread = true;
     }
 
@@ -93,6 +98,24 @@ Singleton {
     function closed(id: int) {
         queue = NotifQueue.close(queue, id);
         pinned = NotifQueue.unpin(pinned, id);
+        history = NotifHistory.removeFromHistory(history, id);
+    }
+
+    // "Clear" in the control center: every notification is dismissed (apps
+    // are told; each close comes back through `closed`). Works on a copy
+    // because `closed` rewrites the lists.
+    function clearAll() {
+        const all = history.slice();
+        for (const n of pinned)
+            if (!all.includes(n))
+                all.push(n);
+        for (const n of all)
+            n.dismiss();
+        markSeen();
+    }
+
+    function remember(notif) {
+        history = NotifHistory.addToHistory(history, notif, Limits.historyCap);
     }
 
     function receive(notification) {
@@ -100,6 +123,7 @@ Singleton {
         notification.tracked = true;
         notification.closed.connect(() => root.closed(id));
         queue = NotifQueue.receive(queue, notification);
+        remember(notification);
         unread = true;
     }
 

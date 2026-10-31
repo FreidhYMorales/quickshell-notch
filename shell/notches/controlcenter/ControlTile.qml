@@ -35,10 +35,15 @@ Rectangle {
         font.pixelSize: Fonts.control
     }
 
+    // The cursor lives on a HoverHandler: a MouseArea with cursorShape takes
+    // the hover and the control center would collapse.
+    HoverHandler {
+        cursorShape: Qt.PointingHandCursor
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
                 root.detailRequested();

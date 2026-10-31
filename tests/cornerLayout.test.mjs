@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cornerBody, cornerShape } from "../shell/logic/cornerLayout.mjs";
+import {
+  cornerBody,
+  cornerShape,
+  slideOffset,
+} from "../shell/logic/cornerLayout.mjs";
 
 const base = {
   contentWidth: 100,
@@ -62,5 +66,19 @@ for (
 ) {
   test(`cornerBody: ${anchor} drops the ears`, () => {
     assert.deepEqual(cornerBody(size, 12, anchor), want);
+  });
+}
+
+// Hidden is exactly one height above the edge whatever the height is, so a
+// shape that grows while hidden never peeks out.
+for (
+  const [height, progress, y] of [
+    [280, 0, -280],
+    [280, 1, 0],
+    [200, 0.5, -100],
+  ]
+) {
+  test(`slideOffset: height ${height} at ${progress} -> ${y}`, () => {
+    assert.equal(slideOffset(height, progress), y);
   });
 }
