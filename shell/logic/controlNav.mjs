@@ -17,4 +17,8 @@ export function back() {
   return ROOT;
 }
 
-export function closeOnLeave(_view) {}
+// A brief pointer leave must not close a subpage; the surface waits for the
+// longer leave. The root collapses at once, as before.
+export function closeOnLeave(view) {
+  return view === ROOT ? "now" : "wait";
+}
