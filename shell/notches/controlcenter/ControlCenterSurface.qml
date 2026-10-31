@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../components"
 import "../../config"
+import "../../logic/controlNav.mjs" as ControlNav
 import "../../logic/controlTiles.mjs" as ControlTiles
 import "../../logic/cornerLayout.mjs" as CornerLayout
 import "../../logic/format.mjs" as Format
@@ -19,6 +20,9 @@ NotchSurface {
     property bool open: false
     // 0 hidden .. 1 shown; animated instead of y (see slideOffset).
     property real progress: open ? 1 : 0
+    // Root content, or the notifications subpage.
+    property string view: ControlNav.initialView()
+    readonly property bool rootView: view === ControlNav.ROOT
     readonly property var size: CornerLayout.cornerShape({
         contentWidth: panel.implicitWidth,
         contentHeight: panel.implicitHeight + 2 * Layout.ccPad,
@@ -47,11 +51,24 @@ NotchSurface {
             dnd: {
                 glyph: Strings.glyphDnd,
                 toggle: Notifs.toggleDnd,
-                // The notifications subpage arrives with #05.
-                detail: () => {}
+                detail: () => root.showNotifications()
             }
         })
     readonly property var body: CornerLayout.cornerBody(size, Layout.earRadius, "topRight")
+
+    // Both entries ("See all" and the DND right click) open the subpage, and
+    // only opening it clears the unread dot.
+    function showNotifications() {
+        view = ControlNav.openSubpage();
+        Notifs.markSeen();
+    }
+
+    // Collapsing always returns to the root, so the next open starts there.
+    function collapse() {
+        leaveTimer.stop();
+        view = ControlNav.initialView();
+        open = false;
+    }
 
     slotName: "tr"
     Behavior on progress {
@@ -89,6 +106,7 @@ NotchSurface {
             Row {
                 id: header
 
+                visible: root.rootView
                 spacing: Layout.ccGap
 
                 Rectangle {
@@ -129,6 +147,7 @@ NotchSurface {
             }
 
             Row {
+                visible: root.rootView
                 spacing: Layout.ccTileGap
 
                 Repeater {
@@ -147,7 +166,15 @@ NotchSurface {
             }
 
             NotifSection {
+                visible: root.rootView
                 scheme: root.scheme
+                onSeeAllRequested: root.showNotifications()
+            }
+
+            NotifSubpage {
+                visible: !root.rootView
+                scheme: root.scheme
+                onBackRequested: root.view = ControlNav.back()
             }
         }
     }
@@ -164,10 +191,27 @@ NotchSurface {
 
     // Below the content, so the buttons get their own hover; while one has
     // it, the panel's ancestor hover keeps the zone hovered.
+    // A brief pointer leave must not close a subpage; the longer leave does.
     NotchZone {
         z: -1
         anchors.fill: maskBox
         alsoHovered: panelHover.hovered
-        onHoverChanged: on => root.open = on
+        onHoverChanged: on => {
+            if (on) {
+                leaveTimer.stop();
+                root.open = true;
+            } else if (ControlNav.closeOnLeave(root.view) === "now") {
+                root.collapse();
+            } else {
+                leaveTimer.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: leaveTimer
+
+        interval: Timings.ccLeave
+        onTriggered: root.collapse()
     }
 }
