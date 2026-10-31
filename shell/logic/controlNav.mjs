@@ -4,6 +4,8 @@
 const ROOT = "root";
 const NOTIFICATIONS = "notifications";
 
+export { NOTIFICATIONS, ROOT };
+
 export function initialView() {
   return ROOT;
 }
