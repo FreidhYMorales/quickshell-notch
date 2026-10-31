@@ -100,6 +100,9 @@ Singleton {
     readonly property int ccRowIcon: 18
     readonly property int ccRowGap: 6
     readonly property int ccCardPad: 10
+    // Notifications subpage: the viewport of its scrolling list, so the panel
+    // never grows past its window.
+    readonly property int ccListHeight: 180
 
     // OSDs (BL, VR): window height, slider thumb (also the track height),
     // inner padding, and the slot width under which an OSD is not drawn at all.
