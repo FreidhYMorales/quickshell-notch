@@ -4,3 +4,7 @@
 export function initialView() {
   return "root";
 }
+
+export function openSubpage() {}
+
+export function back() {}
