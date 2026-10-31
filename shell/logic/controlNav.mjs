@@ -16,3 +16,5 @@ export function openSubpage() {
 export function back() {
   return ROOT;
 }
+
+export function closeOnLeave(_view) {}
