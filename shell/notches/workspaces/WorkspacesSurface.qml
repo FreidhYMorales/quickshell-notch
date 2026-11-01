@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Services.SystemTray
 import "../../components"
 import "../../config"
@@ -155,15 +156,34 @@ NotchSurface {
             Repeater {
                 model: root.reveal.row === "tray" && !root.strip.pinned ? SystemTray.items.values : []
 
-                Image {
+                Item {
+                    id: trayItem
+
                     required property var modelData
+                    readonly property string iconSource: modelData.icon
+                    readonly property string themePrefix: "image://icon/"
+                    readonly property bool missingNamedIcon: iconSource.startsWith(themePrefix) && iconSource.indexOf("?") < 0 && Quickshell.iconPath(iconSource.slice(themePrefix.length), true) === ""
 
                     anchors.verticalCenter: parent.verticalCenter
                     width: Layout.wsIcon
                     height: Layout.wsIcon
-                    source: modelData.icon
-                    sourceSize: Qt.size(Layout.wsIcon, Layout.wsIcon)
-                    fillMode: Image.PreserveAspectFit
+
+                    Image {
+                        anchors.fill: parent
+                        visible: !trayItem.missingNamedIcon
+                        source: trayItem.missingNamedIcon ? "" : trayItem.iconSource
+                        sourceSize: Qt.size(Layout.wsIcon, Layout.wsIcon)
+                        fillMode: Image.PreserveAspectFit
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: trayItem.missingNamedIcon
+                        text: Strings.unknownInitial
+                        color: root.scheme.primary
+                        font.family: Fonts.family
+                        font.pixelSize: Layout.wsIcon
+                    }
                 }
             }
         }
