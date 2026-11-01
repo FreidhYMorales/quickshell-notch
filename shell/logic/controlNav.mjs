@@ -25,4 +25,9 @@ export function closeOnLeave(view) {
   return view === ROOT ? "now" : "wait";
 }
 
-export function panelHeight(_view, _rootHeight, _subHeight) {}
+// The drawn panel never shrinks below the root around a subpage: the input
+// mask follows it, and a mask that slid out from under the pointer would close
+// the panel on its own.
+export function panelHeight(view, rootHeight, subHeight) {
+  return view === ROOT ? rootHeight : Math.max(rootHeight, subHeight);
+}

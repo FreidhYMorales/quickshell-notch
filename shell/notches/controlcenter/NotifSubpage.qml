@@ -12,6 +12,10 @@ Rectangle {
     id: root
 
     property var scheme
+    // The surface passes the root's height so the card never shrinks below it:
+    // the panel keeps its size and the input mask stays under the pointer. The
+    // list absorbs the extra room.
+    property real minHeight: 0
 
     signal backRequested
 
@@ -20,9 +24,12 @@ Rectangle {
         const p = Qt.color(scheme.primary);
         return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
     }
+    // Card height without the list: padding, the header row and its gap.
+    readonly property real baseHeight: 2 * Layout.ccCardPad + Layout.ccClearButton + Layout.ccRowGap
+    readonly property real listHeight: Math.max(Layout.ccListHeight, minHeight - baseHeight)
 
     width: Layout.ccListWidth
-    height: column.implicitHeight + 2 * Layout.ccCardPad
+    height: count > 0 ? baseHeight + listHeight : Math.max(minHeight, baseHeight + emptyLabel.implicitHeight)
     radius: Layout.cardRadius
     color: tint
 
@@ -194,12 +201,12 @@ Rectangle {
         }
 
         // A fixed viewport: the whole history scrolls inside it, so the panel
-        // never grows past its window.
+        // never grows past its window. It takes the room the root lends it.
         Flickable {
             id: flick
 
             width: parent.width
-            height: Layout.ccListHeight
+            height: root.listHeight
             visible: root.count > 0
             contentHeight: rows.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
@@ -285,6 +292,8 @@ Rectangle {
         }
 
         Text {
+            id: emptyLabel
+
             visible: root.count === 0
             text: Strings.noNotifications
             color: root.scheme.muted
