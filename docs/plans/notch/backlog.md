@@ -30,4 +30,4 @@
 18. [ ] As a user, I want a power row in the control center (lock, suspend, logout, reboot, shutdown) so that I reach session actions from the notch. Requires: #16, #10
 19. [ ] As a user, I want power profile and caffeine tiles in the control center so that I control performance and idle from the notch. Requires: #16, #12
 20. [x] 553a526 As a user, I want my latest notifications in the control center (up to 3, count, clear all) so that I can review what I missed. Requires: #01, #16
-21. [ ] As a user, I want a notifications subpage in the control center (full list, per-item dismiss, DND, back) that clears the unread dot so that I can manage my whole history. Requires: #20, #17
+21. [x] 876dedd As a user, I want a notifications subpage in the control center (full list, per-item dismiss, DND, back) that clears the unread dot so that I can manage my whole history. Requires: #20, #17

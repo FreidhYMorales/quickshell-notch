@@ -14,6 +14,8 @@ Rectangle {
 
     property var scheme
 
+    signal seeAllRequested
+
     readonly property int count: Notifs.history.length
     readonly property color tint: {
         const p = Qt.color(scheme.primary);
@@ -138,6 +140,33 @@ Rectangle {
                     font.family: Fonts.family
                     font.pixelSize: Fonts.toast
                 }
+            }
+        }
+
+        // "See all ›" opens the notifications subpage; hidden when empty.
+        Item {
+            width: parent.width
+            height: Layout.ccClearButton
+            visible: root.count > 0
+
+            Text {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: Strings.seeAll + " " + Strings.glyphChevronRight
+                color: seeAllHover.hovered ? root.scheme.primary : root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.small
+            }
+
+            HoverHandler {
+                id: seeAllHover
+
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.seeAllRequested()
             }
         }
     }

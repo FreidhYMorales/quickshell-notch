@@ -14,6 +14,10 @@ Singleton {
     // Control center notifications section; %1 = how many.
     readonly property string notificationsTitle: "Notifications (%1)"
     readonly property string noNotifications: "No notifications"
+    // Notifications subpage: the link that opens it and its chevrons.
+    readonly property string seeAll: "See all"
+    readonly property string glyphChevronRight: "\uf054"
+    readonly property string glyphChevronLeft: "\uf053"
     // Control center toggle tiles.
     readonly property string glyphWifi: "\udb81\udda9"
     readonly property string glyphBluetooth: "\udb80\udcaf"

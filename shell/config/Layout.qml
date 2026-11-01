@@ -80,9 +80,11 @@ Singleton {
     readonly property int wsGap: 4
 
     // Control center (TR): its own fixed window anchored right, the corner
-    // hot zone that opens it, and the profile header.
+    // hot zone that opens it, and the profile header. The window only caps the
+    // drawn shape (which follows its content), so it keeps room for the tray
+    // and power rows on the way.
     readonly property int ccWidth: 320
-    readonly property int ccHeight: 320
+    readonly property int ccHeight: 420
     readonly property int ccHotZone: 24
     readonly property int ccPad: 14
     readonly property int ccGap: 12
@@ -96,10 +98,16 @@ Singleton {
     readonly property int ccRowRadius: 12
     readonly property int ccRowPad: 8
     readonly property int ccClearButton: 22
+    // DND pill in the notifications subpage: track width and knob diameter.
+    readonly property int ccPill: 40
+    readonly property int ccKnob: 18
     readonly property int ccDivider: 1
     readonly property int ccRowIcon: 18
     readonly property int ccRowGap: 6
     readonly property int ccCardPad: 10
+    // Notifications subpage: the smallest height of its scrolling list. The
+    // list takes whatever the root lends it, so a subpage is never shorter.
+    readonly property int ccListHeight: 180
 
     // OSDs (BL, VR): window height, slider thumb (also the track height),
     // inner padding, and the slot width under which an OSD is not drawn at all.

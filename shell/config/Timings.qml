@@ -6,6 +6,8 @@ Singleton {
     // Interaction (milliseconds)
     readonly property int hoverOpen: 200
     readonly property int hoverDebounce: 50
+    // Pointer leave long enough to close a subpage (a brief one keeps it).
+    readonly property int ccLeave: 1200
     readonly property int reveal: 1500
     readonly property int holdConfirm: 1000
     // How long a notification toast shows (paused while hovered).

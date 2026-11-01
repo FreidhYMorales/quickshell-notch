@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../components"
 import "../../config"
+import "../../logic/controlNav.mjs" as ControlNav
 import "../../logic/controlTiles.mjs" as ControlTiles
 import "../../logic/cornerLayout.mjs" as CornerLayout
 import "../../logic/format.mjs" as Format
@@ -19,6 +20,9 @@ NotchSurface {
     property bool open: false
     // 0 hidden .. 1 shown; animated instead of y (see slideOffset).
     property real progress: open ? 1 : 0
+    // Root content, or the notifications subpage.
+    property string view: ControlNav.initialView()
+    readonly property bool rootView: view === ControlNav.ROOT
     readonly property var size: CornerLayout.cornerShape({
         contentWidth: panel.implicitWidth,
         contentHeight: panel.implicitHeight + 2 * Layout.ccPad,
@@ -47,11 +51,24 @@ NotchSurface {
             dnd: {
                 glyph: Strings.glyphDnd,
                 toggle: Notifs.toggleDnd,
-                // The notifications subpage arrives with #05.
-                detail: () => {}
+                detail: () => root.showNotifications()
             }
         })
     readonly property var body: CornerLayout.cornerBody(size, Layout.earRadius, "topRight")
+
+    // Both entries ("See all" and the DND right click) open the subpage, and
+    // only opening it clears the unread dot.
+    function showNotifications() {
+        view = ControlNav.openSubpage();
+        Notifs.markSeen();
+    }
+
+    // Collapsing keeps the view, so the slide-out still shows what the user
+    // was on; a fresh open resets it to the root.
+    function collapse() {
+        leaveTimer.stop();
+        open = false;
+    }
 
     slotName: "tr"
     Behavior on progress {
@@ -77,77 +94,102 @@ NotchSurface {
         // transparent ears never count).
         HoverHandler {
             id: panelHover
+
+            // Any hover on the shape cancels a pending close, even before the
+            // zone's own (debounced) hover is reported.
+            onHoveredChanged: if (hovered)
+                leaveTimer.stop()
         }
 
-        Column {
+        Item {
             id: panel
 
             x: Layout.earRadius + Layout.ccPad
             y: Layout.ccPad
-            spacing: Layout.ccGap
+            // Both views are built even while hidden, so the panel always
+            // knows the root's height (see panelHeight).
+            implicitWidth: Math.max(rootView.implicitWidth, subView.width)
+            implicitHeight: ControlNav.panelHeight(root.view, rootView.implicitHeight, subView.height)
 
-            Row {
-                id: header
+            Column {
+                id: rootView
 
+                visible: root.rootView
                 spacing: Layout.ccGap
 
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Layout.ccAvatar
-                    height: Layout.ccAvatar
-                    radius: Layout.ccAvatar / 2
-                    color: Colours.cardFor(root.screen)
+                Row {
+                    id: header
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: Strip.appInitial(OsInfo.user, Strings.unknownInitial)
-                        color: root.scheme.primary
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.title
+                    spacing: Layout.ccGap
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Layout.ccAvatar
+                        height: Layout.ccAvatar
+                        radius: Layout.ccAvatar / 2
+                        color: Colours.cardFor(root.screen)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: Strip.appInitial(OsInfo.user, Strings.unknownInitial)
+                            color: root.scheme.primary
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.title
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Text {
+                            text: OsInfo.user
+                            color: root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.title
+                        }
+
+                        Text {
+                            // Missing uptime hides the line.
+                            visible: OsInfo.uptime !== null
+                            text: Strings.uptimePrefix + Format.formatUptime(OsInfo.uptime ?? 0)
+                            color: root.scheme.muted
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.small
+                        }
                     }
                 }
 
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
+                Row {
+                    spacing: Layout.ccTileGap
 
-                    Text {
-                        text: OsInfo.user
-                        color: root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.title
-                    }
+                    Repeater {
+                        model: root.tiles
 
-                    Text {
-                        // Missing uptime hides the line.
-                        visible: OsInfo.uptime !== null
-                        text: Strings.uptimePrefix + Format.formatUptime(OsInfo.uptime ?? 0)
-                        color: root.scheme.muted
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.small
+                        ControlTile {
+                            required property var modelData
+
+                            scheme: root.scheme
+                            on: modelData.on
+                            glyph: root.tileInfo[modelData.id].glyph
+                            onToggled: root.tileInfo[modelData.id].toggle()
+                            onDetailRequested: root.tileInfo[modelData.id].detail()
+                        }
                     }
+                }
+
+                NotifSection {
+                    scheme: root.scheme
+                    onSeeAllRequested: root.showNotifications()
                 }
             }
 
-            Row {
-                spacing: Layout.ccTileGap
+            NotifSubpage {
+                id: subView
 
-                Repeater {
-                    model: root.tiles
-
-                    ControlTile {
-                        required property var modelData
-
-                        scheme: root.scheme
-                        on: modelData.on
-                        glyph: root.tileInfo[modelData.id].glyph
-                        onToggled: root.tileInfo[modelData.id].toggle()
-                        onDetailRequested: root.tileInfo[modelData.id].detail()
-                    }
-                }
-            }
-
-            NotifSection {
+                visible: !root.rootView
                 scheme: root.scheme
+                minHeight: rootView.implicitHeight
+                onBackRequested: root.view = ControlNav.back()
             }
         }
     }
@@ -164,10 +206,29 @@ NotchSurface {
 
     // Below the content, so the buttons get their own hover; while one has
     // it, the panel's ancestor hover keeps the zone hovered.
+    // A brief pointer leave must not close a subpage; the longer leave does.
     NotchZone {
         z: -1
         anchors.fill: maskBox
         alsoHovered: panelHover.hovered
-        onHoverChanged: on => root.open = on
+        onHoverChanged: on => {
+            if (on) {
+                leaveTimer.stop();
+                if (!root.open)
+                    root.view = ControlNav.initialView();
+                root.open = true;
+            } else if (ControlNav.closeOnLeave(root.view) === "now") {
+                root.collapse();
+            } else {
+                leaveTimer.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: leaveTimer
+
+        interval: Timings.ccLeave
+        onTriggered: root.collapse()
     }
 }
