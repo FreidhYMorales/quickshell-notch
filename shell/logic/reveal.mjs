@@ -42,6 +42,9 @@ export function stepReveal(state, event) {
   switch (event.type) {
     case "Ready":
       return result(next(state, { ready: true }), "none");
+    case "TrayHover":
+      if (!state.ready || event.count <= 0) return result(state, "none");
+      return rearm(next(state, { open: true }));
     case "Trigger": {
       if (!state.ready) return result(state, "none");
       const flash = event.flash === undefined ? state.flash : event.flash;
