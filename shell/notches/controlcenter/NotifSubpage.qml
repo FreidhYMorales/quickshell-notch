@@ -126,7 +126,7 @@ Rectangle {
                     width: Layout.ccKnob
                     height: width
                     radius: width / 2
-                    color: Colours.background
+                    color: root.scheme.onSurface
 
                     Behavior on x {
                         Anim {}
@@ -135,7 +135,7 @@ Rectangle {
                     Text {
                         anchors.centerIn: parent
                         text: Notifs.dnd ? Strings.glyphDnd : Strings.glyphBell
-                        color: Notifs.dnd ? dndPill.accent : root.scheme.onSurface
+                        color: Colours.background
                         font.family: Fonts.family
                         font.pixelSize: Fonts.small
                     }
