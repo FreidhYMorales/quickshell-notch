@@ -24,6 +24,7 @@ Line endings: `.gitattributes` forces LF (`* text=auto eol=lf`). A clone made be
 | matugen | 4.x | Colour scheme generation |
 | ttf-iosevkaterm-nerd | any | UI font (IosevkaTerm Nerd Font) |
 | make | any | `make check` quality gate |
+| python-dbus, python-gobject | system | Isolated D-Bus tray fixture for QML tests |
 | cava | 1.0 | Audio visualizer in the idle media layer (optional at runtime: without it only the visualizer hides) |
 | brightnessctl | any | Backlight read and set for the brightness OSD (optional at runtime: without it or a backlight device only that OSD hides) |
 | udevadm (systemd) | any | Backlight change watcher (`udevadm monitor --subsystem-match=backlight`); ships with systemd |
@@ -34,7 +35,7 @@ Line endings: `.gitattributes` forces LF (`* text=auto eol=lf`). A clone made be
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed qt6-declarative nodejs deno matugen ttf-iosevkaterm-nerd make cava brightnessctl
+sudo pacman -S --needed qt6-declarative nodejs deno matugen ttf-iosevkaterm-nerd make cava brightnessctl python-dbus python-gobject
 yay -S quickshell-git
 ```
 
@@ -71,6 +72,7 @@ qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C 
 | Run the app (until cutover) | `qs -p shell/shell.qml` |
 | See every slot | set `showPlaceholders: true` in `shell/config/Flags.qml` (do not commit) |
 | Tests | `make test` (`node --test tests/`) |
+| QML runtime tests | `make qml-test` (isolated tray fixture and `qs`) |
 | Lint | `make lint` |
 | Smoke | `make smoke` |
 | Format | `make fmt` |
