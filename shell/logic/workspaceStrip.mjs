@@ -62,6 +62,9 @@ export function stripFor(args) {
   if (args.special) {
     return { pinned: true, special: specialName(args.special), items: [] };
   }
+  if (args.view === "tray") {
+    return { pinned: false, special: "", items: args.trayItems };
+  }
   const windows = onMonitor(args.windows, args.monitor);
   const items = [];
   for (const id of slotRange(args)) {

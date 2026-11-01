@@ -44,7 +44,12 @@ export function stepReveal(state, event) {
       return result(next(state, { ready: true }), "none");
     case "TrayHover":
       if (!state.ready || event.count <= 0) return result(state, "none");
-      return rearm(next(state, { open: true, hover: true }));
+      return rearm(next(state, { open: true, hover: true, row: "tray" }));
+    case "ToggleTray":
+      return result(
+        next(state, { row: state.row === "tray" ? "workspaces" : "tray" }),
+        "none",
+      );
     case "Trigger": {
       if (!state.ready) return result(state, "none");
       const flash = event.flash === undefined ? state.flash : event.flash;
