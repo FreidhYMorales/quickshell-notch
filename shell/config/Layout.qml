@@ -80,9 +80,11 @@ Singleton {
     readonly property int wsGap: 4
 
     // Control center (TR): its own fixed window anchored right, the corner
-    // hot zone that opens it, and the profile header.
+    // hot zone that opens it, and the profile header. The window only caps the
+    // drawn shape (which follows its content), so it keeps room for the tray
+    // and power rows on the way.
     readonly property int ccWidth: 320
-    readonly property int ccHeight: 320
+    readonly property int ccHeight: 420
     readonly property int ccHotZone: 24
     readonly property int ccPad: 14
     readonly property int ccGap: 12
