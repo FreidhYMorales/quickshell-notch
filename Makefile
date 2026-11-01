@@ -6,10 +6,10 @@ QML_FILES := $(shell find shell -name '*.qml')
 QMLDIRS   := $(addprefix -i ,$(shell find shell -name qmldir))
 JS_PATHS  := shell/logic tests
 
-.PHONY: check ci fmt fmt-check lint lint-qml lint-js test smoke
+.PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke
 
 # Full local quality gate (read-only).
-check: fmt-check lint test smoke
+check: fmt-check lint test qml-test smoke
 
 # Subset that runs in GitHub Actions (no Quickshell types, no Wayland session).
 ci: fmt-check lint-js test
@@ -34,6 +34,9 @@ lint-js:
 
 test:
 	node --test tests/
+
+qml-test:
+	node --test tests/qml/qs-runtime.mjs
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:
