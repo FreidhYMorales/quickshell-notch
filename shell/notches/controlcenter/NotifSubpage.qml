@@ -38,27 +38,35 @@ Rectangle {
             width: parent.width
             height: Layout.ccClearButton
 
-            Row {
+            Item {
                 id: backButton
 
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: Layout.ccRowPad
+                width: backLabel.implicitWidth
+                height: parent.height
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Strings.glyphChevronLeft
-                    color: backHover.hovered ? root.scheme.primary : root.scheme.onSurface
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.body
-                }
+                Row {
+                    id: backLabel
 
-                Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Strings.back
-                    color: backHover.hovered ? root.scheme.primary : root.scheme.onSurface
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.toast
+                    spacing: Layout.ccRowPad
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Strings.glyphChevronLeft
+                        color: backHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Strings.back
+                        color: backHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.toast
+                    }
                 }
 
                 HoverHandler {
