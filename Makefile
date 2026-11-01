@@ -36,7 +36,7 @@ test:
 	node --test tests/
 
 qml-test:
-	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs
+	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs tests/qml/tray-placeholder.mjs
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:
