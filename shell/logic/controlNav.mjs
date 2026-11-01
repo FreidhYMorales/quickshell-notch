@@ -24,3 +24,5 @@ export function back() {
 export function closeOnLeave(view) {
   return view === ROOT ? "now" : "wait";
 }
+
+export function panelHeight(_view, _rootHeight, _subHeight) {}
