@@ -29,6 +29,8 @@ class Item(dbus.service.Object):
             pixels = dbus.ByteArray(bytes([255, 0, 0, 255] * 4))
             pixmap = dbus.Struct((2, 2, pixels), signature="iiay")
             properties["IconPixmap"] = dbus.Array([pixmap], signature="(iiay)")
+        elif os.environ.get("NOTCH_TEST_ICON") == "missing":
+            properties["IconName"] = "notch-test-missing-icon-83db4939"
         return properties
 
     @dbus.service.method("org.kde.StatusNotifierItem", in_signature="ii")
