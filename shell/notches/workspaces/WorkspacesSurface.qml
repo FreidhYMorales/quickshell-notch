@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Services.SystemTray
 import "../../components"
 import "../../config"
 import "../../logic/cornerLayout.mjs" as CornerLayout
@@ -132,7 +133,7 @@ NotchSurface {
             }
 
             Repeater {
-                model: root.strip.pinned ? [
+                model: root.reveal.row === "tray" && !root.strip.pinned ? [] : root.strip.pinned ? [
                     {
                         id: 0,
                         kind: "special",
@@ -148,6 +149,21 @@ NotchSurface {
                     app: modelData.cls ?? ""
                     scheme: root.scheme
                     onClicked: root.activate(modelData)
+                }
+            }
+
+            Repeater {
+                model: root.reveal.row === "tray" && !root.strip.pinned ? SystemTray.items.values : []
+
+                Image {
+                    required property var modelData
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Layout.wsIcon
+                    height: Layout.wsIcon
+                    source: modelData.icon
+                    sourceSize: Qt.size(Layout.wsIcon, Layout.wsIcon)
+                    fillMode: Image.PreserveAspectFit
                 }
             }
         }
