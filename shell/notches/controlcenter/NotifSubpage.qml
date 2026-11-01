@@ -38,34 +38,33 @@ Rectangle {
             width: parent.width
             height: Layout.ccClearButton
 
+            // Round buttons like the clear ✕ of the root: the tinted
+            // circle only shows under the pointer.
             Item {
                 id: backButton
 
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: backLabel.implicitWidth
-                height: parent.height
+                width: Layout.ccClearButton
+                height: width
 
-                Row {
-                    id: backLabel
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: backHover.hovered ? root.scheme.primary : root.tint
 
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Layout.ccRowPad
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Strings.glyphChevronLeft
-                        color: backHover.hovered ? root.scheme.primary : root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Timings.animFast
+                        }
                     }
 
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Strings.back
-                        color: backHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                        anchors.centerIn: parent
+                        text: Strings.glyphChevronLeft
+                        color: backHover.hovered ? Colours.background : root.scheme.onSurface
                         font.family: Fonts.family
-                        font.pixelSize: Fonts.toast
+                        font.pixelSize: Fonts.body
                     }
                 }
 
@@ -82,11 +81,74 @@ Rectangle {
             }
 
             Text {
-                anchors.centerIn: parent
+                anchors.left: backButton.right
+                anchors.leftMargin: Layout.ccRowPad
+                anchors.right: dndPill.left
+                anchors.rightMargin: Layout.ccRowPad
+                anchors.verticalCenter: parent.verticalCenter
                 text: Strings.notificationsTitle.arg(root.count)
                 color: root.scheme.onSurface
+                elide: Text.ElideRight
                 font.family: Fonts.family
                 font.pixelSize: Fonts.toast
+            }
+
+            // DND as a pill: the knob slides and the track fills when it is
+            // on, and the bell turns into the muted bell.
+            Item {
+                id: dndPill
+
+                anchors.right: clearButton.left
+                anchors.rightMargin: Layout.ccRowPad
+                anchors.verticalCenter: parent.verticalCenter
+                width: Layout.ccPill
+                height: Layout.ccClearButton
+
+                readonly property color accent: Qt.color(root.scheme.primary)
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: Notifs.dnd ? dndPill.accent : Qt.rgba(dndPill.accent.r, dndPill.accent.g, dndPill.accent.b, Colours.tileOffAlpha)
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Timings.animFast
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: knob
+
+                    x: Notifs.dnd ? parent.width - width - 2 : 2
+                    y: (parent.height - height) / 2
+                    width: Layout.ccKnob
+                    height: width
+                    radius: width / 2
+                    color: Colours.background
+
+                    Behavior on x {
+                        Anim {}
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Notifs.dnd ? Strings.glyphDnd : Strings.glyphBell
+                        color: Notifs.dnd ? dndPill.accent : root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.small
+                    }
+                }
+
+                HoverHandler {
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: Notifs.toggleDnd()
+                }
             }
 
             Item {
@@ -94,18 +156,28 @@ Rectangle {
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: clearLabel.width
-                height: parent.height
+                width: Layout.ccClearButton
+                height: width
                 visible: root.count > 0
 
-                Text {
-                    id: clearLabel
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: clearHover.hovered ? root.scheme.primary : root.tint
 
-                    anchors.centerIn: parent
-                    text: Strings.clearAll
-                    color: clearHover.hovered ? root.scheme.primary : root.scheme.onSurface
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.toast
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Timings.animFast
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: Strings.glyphClose
+                        color: clearHover.hovered ? Colours.background : root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
                 }
 
                 HoverHandler {
@@ -118,35 +190,6 @@ Rectangle {
                     anchors.fill: parent
                     onClicked: Notifs.clearAll()
                 }
-            }
-        }
-
-        // Do-not-disturb keeps its own toggle here, next to the list it mutes.
-        Item {
-            width: parent.width
-            height: Layout.ccTile
-
-            ControlTile {
-                id: dndTile
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                scheme: root.scheme
-                on: Notifs.dnd
-                glyph: Strings.glyphDnd
-                onToggled: Notifs.toggleDnd()
-            }
-
-            Text {
-                anchors.left: dndTile.right
-                anchors.leftMargin: Layout.ccRowPad
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                text: Strings.dndLabel
-                color: root.scheme.onSurface
-                elide: Text.ElideRight
-                font.family: Fonts.family
-                font.pixelSize: Fonts.toast
             }
         }
 

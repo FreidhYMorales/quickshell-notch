@@ -14,12 +14,8 @@ Singleton {
     // Control center notifications section; %1 = how many.
     readonly property string notificationsTitle: "Notifications (%1)"
     readonly property string noNotifications: "No notifications"
-    // Notifications subpage: the link that opens it, Back, Clear all, the DND
-    // row and its chevrons.
+    // Notifications subpage: the link that opens it and its chevrons.
     readonly property string seeAll: "See all"
-    readonly property string back: "Back"
-    readonly property string clearAll: "Clear"
-    readonly property string dndLabel: "Do not disturb"
     readonly property string glyphChevronRight: "\uf054"
     readonly property string glyphChevronLeft: "\uf053"
     // Control center toggle tiles.

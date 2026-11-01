@@ -98,6 +98,9 @@ Singleton {
     readonly property int ccRowRadius: 12
     readonly property int ccRowPad: 8
     readonly property int ccClearButton: 22
+    // DND pill in the notifications subpage: track width and knob diameter.
+    readonly property int ccPill: 40
+    readonly property int ccKnob: 18
     readonly property int ccDivider: 1
     readonly property int ccRowIcon: 18
     readonly property int ccRowGap: 6
