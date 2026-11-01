@@ -9,7 +9,7 @@ trap 'kill "$fixture" 2>/dev/null; wait "$fixture" 2>/dev/null' EXIT
 qs -p "$2"
 `;
 
-export function runTrayProbe(probe) {
+export function runTrayProbe(probe, extraEnv = {}) {
   return spawnSync("dbus-run-session", [
     `--config-file=${path("./test-bus.conf")}`,
     "--",
@@ -30,6 +30,6 @@ export function runTrayProbe(probe) {
         "../../shell/notches/workspaces/WorkspacesSurface.qml",
         import.meta.url,
       ).href,
-    }),
+    }, extraEnv),
   });
 }

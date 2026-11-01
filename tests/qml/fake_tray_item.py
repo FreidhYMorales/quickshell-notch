@@ -1,3 +1,5 @@
+import os
+
 import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
@@ -15,7 +17,7 @@ class Item(dbus.service.Object):
 
     @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="s", out_signature="a{sv}")
     def GetAll(self, interface):
-        return {
+        properties = {
             "Category": "ApplicationStatus",
             "Id": "qs-test",
             "Title": "QS Test App",
@@ -23,6 +25,11 @@ class Item(dbus.service.Object):
             "IconName": "",
             "ItemIsMenu": False,
         }
+        if os.environ.get("NOTCH_TEST_ICON") == "1":
+            pixels = dbus.ByteArray(bytes([255, 0, 0, 255] * 4))
+            pixmap = dbus.Struct((2, 2, pixels), signature="iiay")
+            properties["IconPixmap"] = dbus.Array([pixmap], signature="(iiay)")
+        return properties
 
     @dbus.service.method("org.kde.StatusNotifierItem", in_signature="ii")
     def Activate(self, x, y):
