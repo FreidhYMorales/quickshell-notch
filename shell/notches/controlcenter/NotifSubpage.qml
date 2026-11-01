@@ -24,8 +24,8 @@ Rectangle {
         const p = Qt.color(scheme.primary);
         return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
     }
-    // Card height without the list: padding, the header row and its gap.
-    readonly property real baseHeight: 2 * Layout.ccCardPad + Layout.ccClearButton + Layout.ccRowGap
+    // Card height without the list: padding, header row, divider and gaps.
+    readonly property real baseHeight: 2 * Layout.ccCardPad + Layout.ccClearButton + 2 * Layout.ccRowGap + Layout.ccDivider
     readonly property real listHeight: Math.max(Layout.ccListHeight, minHeight - baseHeight)
 
     width: Layout.ccListWidth
@@ -198,6 +198,14 @@ Rectangle {
                     onClicked: Notifs.clearAll()
                 }
             }
+        }
+
+        // Same divider as the root section, so the header reads apart.
+        Rectangle {
+            width: parent.width
+            height: Layout.ccDivider
+            color: root.scheme.muted
+            opacity: Colours.dividerAlpha
         }
 
         // A fixed viewport: the whole history scrolls inside it, so the panel
