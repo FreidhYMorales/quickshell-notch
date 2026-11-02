@@ -26,7 +26,7 @@ ShellRoot {
             wait(500);
             const glyph = Visual.findText(root.panel.content, "󰻃");
             if (!glyph) { console.error("recording stop: control missing"); return Qt.exit(2); }
-            mouseClick(glyph, glyph.width / 2, glyph.height / 2); wait(500);
+            mouseClick(glyph, glyph.width / 2, glyph.height / 2); wait(5600);
             if (!root.red(root.idle.children)) { console.error("recording stop: start failed"); return Qt.exit(2); }
             mouseClick(glyph, glyph.width / 2, glyph.height / 2); wait(500);
             if (root.red(root.idle.children)) { console.error("recording stop: red dot still visible"); return Qt.exit(1); }

@@ -30,7 +30,7 @@ ShellRoot {
                 return Qt.exit(2);
             }
             mouseClick(glyph, glyph.width / 2, glyph.height / 2);
-            wait(500);
+            wait(5600);
             if (!root.red(root.idle.children)) {
                 console.error("recording start: red dot missing");
                 return Qt.exit(1);
