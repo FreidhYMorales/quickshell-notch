@@ -123,7 +123,9 @@ Singleton {
         command: ["sh", "-c", "for f in \"$1\"/.notch-recording-*/*.mp4; do [ -s \"$f\" ] && printf '%s\\n' \"$f\"; done; exit 0", "sh", root.recordingsRoot()]
         stdout: StdioCollector {
             onStreamFinished: {
-                const found = text.split("\n").filter(path => path.length > 0);
+                // A recording started during the scan owns its workspace.
+                const own = root.workspacePath ? root.workspacePath + "/" : "";
+                const found = text.split("\n").filter(path => path.length > 0 && !(own && path.startsWith(own)));
                 if (found.length > 0)
                     Notifs.postNormal(Strings.center, Strings.recordingLeftover, Strings.recordingLeftoverBody.arg(found.length).arg(root.recordingsRoot()), "");
             }
