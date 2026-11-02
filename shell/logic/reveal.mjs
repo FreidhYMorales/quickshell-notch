@@ -65,7 +65,15 @@ export function stepReveal(state, event) {
       return rearm(next(state, { pinned: false, open: true }));
     case "Timeout":
       if (held(state) || !state.open) return result(state, "none");
-      return result(next(state, { open: false, flash: null }), "none");
+      return result(
+        next(
+          state,
+          state.row === "tray"
+            ? { open: false, flash: null, row: "workspaces" }
+            : { open: false, flash: null },
+        ),
+        "none",
+      );
     default:
       return result(state, "none");
   }
