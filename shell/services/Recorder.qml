@@ -48,7 +48,7 @@ Singleton {
         workspace.pending = true;
         workspace.path = "";
         workspace.command = ["mktemp", "-d", "--", parent + "/.notch-recording-XXXXXXXX"];
-        workspace.running = true;
+        runHelper(workspace);
     }
 
     Process {
@@ -70,12 +70,16 @@ Singleton {
 
         onStarted: didStart = true
         onRunningChanged: {
-            if (!running && pending && !didStart) {
+            if (!running && pending && !didStart && root.claimHelper(workspace)) {
                 pending = false;
                 root.workspaceCreated("");
             }
         }
         onExited: (code, exitStatus) => {
+            if (!root.claimHelper(workspace)) {
+                pending = false;
+                return;
+            }
             exitCode = code;
             exitDone = true;
             finish();
