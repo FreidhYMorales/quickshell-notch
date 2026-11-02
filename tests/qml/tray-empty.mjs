@@ -18,6 +18,7 @@ test("empty tray leaves the corner hidden and click-through", () => {
       NOTCH_SMOKE: "1",
       QT_QPA_PLATFORM: "wayland",
       NO_COLOR: "1",
+      QS_DISABLE_CRASH_HANDLER: "1",
       NOTCH_TEST_SURFACE: new URL(
         "../../shell/notches/workspaces/WorkspacesSurface.qml",
         import.meta.url,

@@ -10,6 +10,85 @@ bus = dbus.SessionBus()
 name = dbus.service.BusName("org.kde.StatusNotifierItem.qstest", bus)
 
 
+class Menu(dbus.service.Object):
+    def __init__(self):
+        super().__init__(bus, "/Menu")
+
+    @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="s", out_signature="a{sv}")
+    def GetAll(self, interface):
+        return {"Version": dbus.UInt32(3), "TextDirection": "ltr", "Status": "normal", "IconThemePath": dbus.Array([], signature="s")}
+
+    @staticmethod
+    def entry(item_id, properties):
+        variants = {}
+        for key, value in properties.items():
+            if isinstance(value, bool):
+                variants[key] = dbus.Boolean(value, variant_level=1)
+            elif isinstance(value, int):
+                variants[key] = dbus.Int32(value, variant_level=1)
+            else:
+                variants[key] = dbus.String(value, variant_level=1)
+        return dbus.Struct(
+            (item_id, dbus.Dictionary(variants, signature="sv"), dbus.Array([], signature="v")),
+            signature="ia{sv}av",
+            variant_level=1,
+        )
+
+    def typedEntries(self):
+        return [
+            self.entry(10, {"label": "Open"}),
+            self.entry(11, {"type": "separator"}),
+            self.entry(12, {"label": "Checked", "toggle-type": "checkmark", "toggle-state": 1}),
+            self.entry(13, {"label": "Unchecked", "toggle-type": "checkmark", "toggle-state": 0}),
+        ]
+
+    @dbus.service.method("com.canonical.dbusmenu", in_signature="iias", out_signature="u(ia{sv}av)")
+    def GetLayout(self, parent, depth, properties):
+        if os.environ.get("NOTCH_TEST_MENU_SUBMENU") == "1":
+            if parent == 20:
+                return 1, (20, {}, dbus.Array([
+                    self.entry(21, {"label": "Nested A"}),
+                    self.entry(22, {"label": "Nested B"}),
+                ], signature="v"))
+            return 1, (0, {}, dbus.Array([
+                self.entry(1, {"label": "Open"}),
+                self.entry(20, {"label": "More", "children-display": "submenu"}),
+            ], signature="v"))
+        if os.environ.get("NOTCH_TEST_MENU_TYPES") == "1":
+            return 1, (0, {}, dbus.Array(self.typedEntries(), signature="v"))
+        count = int(os.environ.get("NOTCH_TEST_MENU_COUNT", "1"))
+        entries = []
+        for index in range(count):
+            label = "Open" if count == 1 else "Item %d" % (index + 1)
+            entries.append(
+                dbus.Struct(
+                    (index + 1, dbus.Dictionary({"label": dbus.String(label, variant_level=1)}, signature="sv"), dbus.Array([], signature="v")),
+                    signature="ia{sv}av",
+                    variant_level=1,
+                )
+            )
+        if os.environ.get("NOTCH_TEST_MENU_DISABLED") == "1":
+            entries.append(
+                dbus.Struct(
+                    (
+                        2,
+                        dbus.Dictionary(
+                            {"label": dbus.String("Disabled", variant_level=1), "enabled": dbus.Boolean(False, variant_level=1)},
+                            signature="sv",
+                        ),
+                        dbus.Array([], signature="v"),
+                    ),
+                    signature="ia{sv}av",
+                    variant_level=1,
+                )
+            )
+        return 1, (0, {}, dbus.Array(entries, signature="v"))
+
+    @dbus.service.method("com.canonical.dbusmenu", in_signature="isvu", out_signature="")
+    def Event(self, item, event_id, data, timestamp):
+        print("FAKE_MENU_EVENT", item, event_id, flush=True)
+
+
 class Item(dbus.service.Object):
     def __init__(self, path, identifier, title):
         super().__init__(bus, path)
@@ -30,6 +109,8 @@ class Item(dbus.service.Object):
             "IconName": "",
             "ItemIsMenu": False,
         }
+        if os.environ.get("NOTCH_TEST_MENU") == "1":
+            properties["Menu"] = dbus.ObjectPath("/Menu")
         if os.environ.get("NOTCH_TEST_ICON") == "1":
             pixels = dbus.ByteArray(bytes([255, 0, 0, 255] * 4))
             pixmap = dbus.Struct((2, 2, pixels), signature="iiay")
@@ -44,6 +125,7 @@ class Item(dbus.service.Object):
 
 
 paths = ["/StatusNotifierItem"]
+menu = Menu() if os.environ.get("NOTCH_TEST_MENU") == "1" else None
 items = [Item(paths[0], "qs-test", "QS Test App")]
 if os.environ.get("NOTCH_TEST_COUNT") == "2":
     paths.append("/StatusNotifierItem2")

@@ -81,6 +81,14 @@ Singleton {
     readonly property int wsHotZone: 24
     readonly property int wsPad: 10
     readonly property int wsGap: 4
+    // Tray item menu inside the notch: option row, separator space and the
+    // check mark shown for a checked option.
+    readonly property int wsMenuRow: 24
+    readonly property int wsMenuSeparator: 9
+    readonly property int wsMenuGlyph: 12
+    // Room around the options so the menu does not hug the notch edges.
+    readonly property int wsMenuPad: 8
+    readonly property int wsMenuPadBottom: 8
 
     // Control center (TR): its own fixed window anchored right, the corner
     // hot zone that opens it, and the profile header. The window only caps the

@@ -19,7 +19,11 @@ NotchSurface {
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property string special: Workspaces.specialByMonitor[monitorName] ?? ""
     property var reveal: Reveal.initialReveal()
+    property var menuItem: null
     readonly property bool open: Reveal.isVisible(reveal)
+    // Width of the option column: the widest label plus the check mark and the
+    // side padding, capped to the notch body.
+    readonly property real menuContentWidth: Math.min(Layout.cornerMaxWidth - 2 * Layout.wsPad - Layout.earRadius, menuMeasure.implicitWidth + Layout.wsMenuGlyph + Layout.wsGap + 2 * Layout.wsMenuPad)
     readonly property var strip: Strip.stripFor({
         activeId: Workspaces.snapshot.monitors[monitorName]?.activeId ?? 1,
         windows: Workspaces.normalWindows,
@@ -29,12 +33,12 @@ NotchSurface {
         flash: reveal.flash
     })
     readonly property var size: CornerLayout.cornerShape({
-        contentWidth: row.implicitWidth,
-        contentHeight: Layout.idleHeight,
+        contentWidth: Math.max(row.implicitWidth, menuItem ? menuContentWidth : 0),
+        contentHeight: Layout.idleHeight + menuColumn.implicitHeight + (menuItem ? Layout.wsMenuSeparator + Layout.wsMenuPadBottom : 0),
         pad: Layout.wsPad,
         ear: Layout.earRadius,
         maxWidth: root.implicitWidth,
-        maxHeight: slot.height
+        maxHeight: root.implicitHeight
     })
 
     function step(event) {
@@ -62,8 +66,11 @@ NotchSurface {
 
     slotName: "tl"
     minWidth: Layout.cornerMaxWidth
+    minHeight: menuItem ? Math.floor(screen.height / 2) : 0
     // Hidden: expose only a small hot zone when tray apps exist.
     maskItem: maskBox
+    onOpenChanged: if (!open)
+        menuItem = null
     onSpecialChanged: {
         if (special !== "" || reveal.pinned)
             step({
@@ -109,6 +116,11 @@ NotchSurface {
         target: Workspaces
     }
 
+    QsMenuOpener {
+        id: menuOpener
+        menu: root.menuItem ? root.menuItem.menu : null
+    }
+
     CornerEarShape {
         id: shape
 
@@ -116,6 +128,12 @@ NotchSurface {
         height: root.size.height
         y: root.open ? 0 : -height
         anchor: "topLeft"
+
+        // Keeps the zone hovered while the pointer is anywhere on the shape,
+        // including over menu options that take their own hover.
+        HoverHandler {
+            id: shapeHover
+        }
 
         Behavior on y {
             Anim {}
@@ -210,8 +228,121 @@ NotchSurface {
 
                     MouseArea {
                         anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton
-                        onClicked: trayItem.modelData.activate()
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.LeftButton)
+                                trayItem.modelData.activate();
+                            else if (trayItem.modelData.hasMenu)
+                                root.menuItem = root.menuItem === trayItem.modelData ? null : trayItem.modelData;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Hidden: measures the widest option label so the menu fits its
+        // contents instead of taking the whole corner body.
+        Column {
+            id: menuMeasure
+
+            visible: false
+            Repeater {
+                model: menuOpener.children
+                Text {
+                    required property var modelData
+                    visible: !modelData.isSeparator
+                    text: modelData.text
+                    font.family: Fonts.family
+                    font.pixelSize: Layout.wsIcon
+                }
+            }
+        }
+
+        Rectangle {
+            x: Layout.wsPad + Layout.wsMenuPad
+            y: Layout.idleHeight + (Layout.wsMenuSeparator - height) / 2
+            width: root.menuContentWidth - 2 * Layout.wsMenuPad
+            height: Layout.wsDivider
+            visible: root.menuItem !== null
+            color: root.scheme.muted
+            opacity: Colours.dividerAlpha
+        }
+
+        Text {
+            x: Layout.wsPad + (root.menuContentWidth - width) / 2
+            y: menuViewport.y + menuViewport.height
+            visible: root.menuItem !== null && menuViewport.contentY + menuViewport.height < menuViewport.contentHeight - 1
+            text: Strings.glyphChevronDown
+            color: root.scheme.primary
+            font.family: Fonts.family
+            font.pixelSize: Layout.wsMenuGlyph
+        }
+
+        Flickable {
+            id: menuViewport
+
+            x: Layout.wsPad
+            y: Layout.idleHeight + Layout.wsMenuSeparator
+            width: root.menuContentWidth
+            height: Math.max(0, root.size.height - y - Layout.wsMenuPadBottom - Layout.earRadius)
+            contentWidth: width
+            contentHeight: menuColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Column {
+                id: menuColumn
+                Repeater {
+                    model: menuOpener.children
+                    Item {
+                        required property var modelData
+                        width: root.menuContentWidth
+                        height: modelData.isSeparator ? Layout.wsMenuSeparator : Layout.wsMenuRow
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: Layout.wsMenuPad
+                            visible: modelData.isSeparator
+                            width: root.menuContentWidth - 2 * Layout.wsMenuPad
+                            height: Layout.wsDivider
+                            color: root.scheme.muted
+                            opacity: Colours.dividerAlpha
+                        }
+
+                        Row {
+                            id: menuRow
+
+                            x: Layout.wsMenuPad
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !modelData.isSeparator
+                            spacing: Layout.wsGap
+
+                            Text {
+                                text: Strings.glyphCheck
+                                visible: modelData.checkState === Qt.Checked
+                                color: root.scheme.primary
+                                font.family: Fonts.family
+                                font.pixelSize: Layout.wsMenuGlyph
+                            }
+
+                            Text {
+                                text: modelData.text
+                                color: !modelData.enabled ? root.scheme.muted : rowHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                                font.family: Fonts.family
+                                font.pixelSize: Layout.wsIcon
+                            }
+                        }
+
+                        HoverHandler {
+                            id: rowHover
+                            enabled: modelData.enabled && !modelData.isSeparator
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: modelData.enabled && !modelData.isSeparator
+                            onClicked: modelData.triggered()
+                        }
                     }
                 }
             }
@@ -221,6 +352,10 @@ NotchSurface {
     NotchZone {
         id: maskBox
 
+        // Below the content so menu options get their own hover; the shape's
+        // hover keeps the zone hovered meanwhile.
+        z: -1
+        alsoHovered: shapeHover.hovered
         width: root.open ? shape.width : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
         height: root.open ? shape.height : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
         onHoverChanged: on => {

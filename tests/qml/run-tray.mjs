@@ -22,14 +22,20 @@ export function runTrayProbe(probe, extraEnv = {}) {
   ], {
     encoding: "utf8",
     timeout: 15000,
-    env: Object.assign({}, process.env, {
-      NOTCH_SMOKE: "1",
-      QT_QPA_PLATFORM: "wayland",
-      NO_COLOR: "1",
-      NOTCH_TEST_SURFACE: new URL(
-        "../../shell/notches/workspaces/WorkspacesSurface.qml",
-        import.meta.url,
-      ).href,
-    }, extraEnv),
+    env: Object.assign(
+      {},
+      process.env,
+      {
+        NOTCH_SMOKE: "1",
+        QT_QPA_PLATFORM: "wayland",
+        NO_COLOR: "1",
+        NOTCH_TEST_SURFACE: new URL(
+          "../../shell/notches/workspaces/WorkspacesSurface.qml",
+          import.meta.url,
+        ).href,
+      },
+      extraEnv,
+      { QS_DISABLE_CRASH_HANDLER: "1" },
+    ),
   });
 }

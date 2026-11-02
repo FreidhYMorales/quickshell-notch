@@ -36,11 +36,17 @@ test:
 	node --test tests/
 
 qml-test:
+	node --test tests/qml/tray-runner-safety.mjs tests/qml/other-runners-safety.mjs
+	node --test tests/qml/tray-menu-fixture.mjs tests/qml/tray-menu-entry.mjs
+	node --test tests/qml/tray-menu-open.mjs tests/qml/tray-menu-size.mjs tests/qml/tray-menu-activate.mjs tests/qml/tray-menu-disabled.mjs tests/qml/tray-menu-separator.mjs
+	node --test tests/qml/tray-menu-look.mjs tests/qml/tray-menu-hover.mjs tests/qml/tray-menu-toggle.mjs tests/qml/tray-menu-leave.mjs
+	node --test tests/qml/tray-menu-scroll.mjs tests/qml/tray-menu-indicator.mjs tests/qml/tray-menu-header.mjs
+	node --test tests/qml/tray-menu-width.mjs tests/qml/tray-menu-checkmark.mjs tests/qml/tray-menu-app-separator.mjs
 	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs tests/qml/tray-placeholder.mjs tests/qml/tray-hover.mjs tests/qml/tray-empty.mjs tests/qml/tray-switch.mjs tests/qml/tray-activate.mjs tests/qml/tray-close.mjs tests/qml/tray-closing-priority.mjs tests/qml/tray-open-priority.mjs tests/qml/tray-divider.mjs tests/qml/tray-icon-size.mjs tests/qml/tray-image-error.mjs tests/qml/tray-image-ready.mjs tests/qml/tray-multiple.mjs
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:
-	@log=$$(NOTCH_SMOKE=1 timeout 10 qs -p shell/shell.qml 2>&1); code=$$?; \
+	@log=$$(QS_DISABLE_CRASH_HANDLER=1 NOTCH_SMOKE=1 timeout 10 qs -p shell/shell.qml 2>&1); code=$$?; \
 	if [ $$code -ne 0 ] && [ $$code -ne 124 ]; then echo "$$log"; echo "smoke: qs exited with $$code"; exit 1; fi; \
 	if echo "$$log" | grep -qE 'ERROR|Failed to load|is not a type|is not installed'; then echo "$$log"; echo "smoke: load errors"; exit 1; fi; \
 	echo "smoke: config loaded"

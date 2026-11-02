@@ -12,6 +12,7 @@ const run = (fail) =>
       NOTCH_SMOKE: "1",
       NOTCH_QML_TEST_FAIL: fail ? "1" : "0",
       NO_COLOR: "1",
+      QS_DISABLE_CRASH_HANDLER: "1",
     }),
   });
 
@@ -51,6 +52,7 @@ qs -p "$2"
       NOTCH_SMOKE: "1",
       QT_QPA_PLATFORM: "offscreen",
       NO_COLOR: "1",
+      QS_DISABLE_CRASH_HANDLER: "1",
     }),
   });
   assert.equal(result.status, 0, result.stderr);
