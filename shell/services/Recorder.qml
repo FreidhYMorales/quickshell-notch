@@ -26,8 +26,10 @@ Singleton {
     }
 
     function stop() {
-        if (recorder.running)
+        if (recorder.running) {
+            recorder.stopRequested = true;
             recorder.signal(2);
+        }
     }
 
     Process {
@@ -49,6 +51,7 @@ Singleton {
                     return;
                 recorder.command = ["gpu-screen-recorder", "-w", "screen", "-a", "default_output", "-c", "mp4", "-o", path];
                 recorder.didStart = false;
+                recorder.stopRequested = false;
                 recorder.running = true;
                 root.privateRecording = true;
             }
@@ -59,6 +62,7 @@ Singleton {
         id: recorder
 
         property bool didStart: false
+        property bool stopRequested: false
 
         onStarted: didStart = true
         onRunningChanged: {
@@ -69,7 +73,7 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             root.privateRecording = false;
-            if (exitCode !== 0)
+            if (exitCode !== 0 || !stopRequested)
                 Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
         }
     }
