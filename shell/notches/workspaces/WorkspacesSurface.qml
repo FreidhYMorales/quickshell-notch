@@ -241,6 +241,11 @@ NotchSurface {
                     color: root.scheme.primary
                     font.family: Fonts.family
                     font.pixelSize: Layout.wsIcon
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: modelData.triggered()
+                    }
                 }
             }
         }
