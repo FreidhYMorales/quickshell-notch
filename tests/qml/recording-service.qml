@@ -1,0 +1,31 @@
+import QtQuick
+import Quickshell
+import "../../shell/services" as Services
+
+ShellRoot {
+    id: root
+    property var recorder: Services.Recorder
+    property int step: 0
+    Timer {
+        interval: 500
+        running: true
+        repeat: true
+        onTriggered: {
+            if (step === 0) {
+                if (typeof root.recorder.start === "function") root.recorder.start();
+            } else if (step === 1 && !root.recorder.recording) {
+                console.error("recording service: did not start");
+                return Qt.exit(1);
+            } else if (step === 1) {
+                if (typeof root.recorder.stop === "function") root.recorder.stop();
+            } else if (root.recorder.recording) {
+                console.error("recording service: did not stop");
+                return Qt.exit(1);
+            } else {
+                console.log("recording service: started and stopped");
+                return Qt.exit(0);
+            }
+            step++;
+        }
+    }
+}
