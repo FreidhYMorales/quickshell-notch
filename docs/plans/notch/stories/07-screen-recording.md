@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given recording is idle and the recorder is available, when I start it from the control center, then it records the full screen with system audio and the idle notch shows a red dot while recording is active.
-- [ ] Given a recording is active, when I stop it from the control center, then the recording is finalized and saved without overwriting an existing recording, and the red dot disappears when recording ends.
-- [ ] Given recording cannot start or ends unexpectedly, when the failure occurs, then I am informed and the control center and red dot do not indicate that recording is still active.
+- [ ] Given recording is idle and the recorder is available, when I start it from the control center, then the central notch shows a cancellable five-second countdown, followed by full-screen recording with system audio, a red recording dot and a stop icon; cancelling the countdown starts no capture and creates no recording.
+- [ ] Given a recording is active or still preparing, when I stop it from the control center, then an early stop waits until capture is ready, the recording is finalized and saved without overwriting an existing recording under a date-and-time name with a unique suffix, the red dot disappears when recording ends, and I receive a saved notification.
+- [ ] Given recording cannot start, ends unexpectedly, or does not become ready within 15 seconds, when the failure occurs, then the attempt ends, I am informed, and the control center and red dot do not indicate that recording is still active.
 
 ## Plan
 
@@ -16,6 +16,7 @@
 - Connect the control center action and idle-notch indicator to the recording state.
 - Cover state transitions and failures with tests; verify a real recording manually.
 - Assumption for approval: save MP4 recordings in the old shell's recordings directory, `~/Videos/Recordings`, honoring its existing `QS_RECORDINGS_DIR` override.
+- Show and cancel the countdown, defer an early stop until capture is ready, and report a preparation timeout.
 
 ## Out of scope
 
@@ -30,7 +31,7 @@
 ## Size
 
 normal
-Risk: item 1, 6 (recording files must not overwrite existing data; real capture and audio require manual verification)
+Risk: item 1, 4, 6 (preserve recording files; coordinate countdown, readiness and stop; real capture and audio require manual verification)
 
 ## Log
 
@@ -68,3 +69,4 @@ Risk: item 1, 6 (recording files must not overwrite existing data; real capture 
 - L32 readiness investigation: user approved investigation. An isolated fake recorder deliberately delaying its SIGINT handler reproduced an empty output when stopped immediately after the indicator appeared; the event log showed process entry but not handler readiness. This demonstrates a possible race, not the proven cause of L31 or a confirmed real-recorder failure. The installed manual documents `-write-first-frame-ts`; using it would need sidecar lifecycle design and tests. No production or committed test was changed.
 - L33 check: after the investigation, `make check` failed in `recording-normal-stop.test.mjs` with `normal stop: unexpected error notice`. Its relation to the controlled readiness reproduction remains unconfirmed; the prior passing checks are unchanged.
 - L34 readiness research: user approved further investigation. The installed gpu-screen-recorder 6.0.0 supports `-write-first-frame-ts`; its installed manual describes a timestamp sidecar for the first frame. An isolated Quickshell FileView probe observed creation of a previously absent file without polling. No real-recorder readiness test was performed, and the documentation does not explicitly guarantee SIGINT readiness at sidecar creation. Sidecar collision, safe cleanup and process-exit/never-ready behavior require design. A later focused normal-stop test and `make check` passed; L33 remains an unresolved intermittent failure.
+- L35 readiness decision: user approved queuing stop during preparation until a reliable readiness signal arrives, reporting failure if the process exits beforehand, and terminating with an error if readiness does not arrive within 15 seconds. Acceptance criteria now include the approved countdown, icon, save notification, timestamp naming and readiness refinements; risk item 4 is added for asynchronous lifecycle coordination. Test-list approval and real-recorder validation are pending.
