@@ -20,8 +20,18 @@ class Menu(dbus.service.Object):
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="iias", out_signature="u(ia{sv}av)")
     def GetLayout(self, parent, depth, properties):
-        entry = dbus.Struct((1, dbus.Dictionary({"label": dbus.String("Open", variant_level=1)}, signature="sv"), dbus.Array([], signature="v")), signature="ia{sv}av", variant_level=1)
-        return 1, (0, {}, dbus.Array([entry], signature="v"))
+        count = int(os.environ.get("NOTCH_TEST_MENU_COUNT", "1"))
+        entries = []
+        for index in range(count):
+            label = "Open" if count == 1 else "Item %d" % (index + 1)
+            entries.append(
+                dbus.Struct(
+                    (index + 1, dbus.Dictionary({"label": dbus.String(label, variant_level=1)}, signature="sv"), dbus.Array([], signature="v")),
+                    signature="ia{sv}av",
+                    variant_level=1,
+                )
+            )
+        return 1, (0, {}, dbus.Array(entries, signature="v"))
 
 
 class Item(dbus.service.Object):
