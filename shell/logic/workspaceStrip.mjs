@@ -45,9 +45,9 @@ export function specialName(wsName) {
 }
 
 /** appInitial("org.gnome.Nautilus", "?") -> "N" */
-export function appInitial(cls, fallback) {
+export function appInitial(cls, fallback, fullTitle = false) {
   if (!cls) return fallback;
-  const name = cls.slice(cls.lastIndexOf(".") + 1);
+  const name = fullTitle ? cls : cls.slice(cls.lastIndexOf(".") + 1);
   return name ? name.charAt(0).toUpperCase() : fallback;
 }
 
@@ -61,6 +61,9 @@ export function appInitial(cls, fallback) {
 export function stripFor(args) {
   if (args.special) {
     return { pinned: true, special: specialName(args.special), items: [] };
+  }
+  if (args.view === "tray") {
+    return { pinned: false, special: "", items: args.trayItems };
   }
   const windows = onMonitor(args.windows, args.monitor);
   const items = [];

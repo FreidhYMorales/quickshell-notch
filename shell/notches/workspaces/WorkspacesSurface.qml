@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell
+import Quickshell.Services.SystemTray
 import "../../components"
 import "../../config"
 import "../../logic/cornerLayout.mjs" as CornerLayout
@@ -36,6 +38,9 @@ NotchSurface {
     })
 
     function step(event) {
+        // Do not replace the tray while its exit animation is still visible.
+        if (event.type === "Trigger" && !open && reveal.row === "tray" && shape.y > -shape.height)
+            return;
         const r = Reveal.stepReveal(reveal, event);
         reveal = r.state;
         if (r.timer === "restart")
@@ -57,7 +62,7 @@ NotchSurface {
 
     slotName: "tl"
     minWidth: Layout.cornerMaxWidth
-    // Hidden: empty mask, clicks pass through.
+    // Hidden: expose only a small hot zone when tray apps exist.
     maskItem: maskBox
     onSpecialChanged: {
         if (special !== "" || reveal.pinned)
@@ -129,10 +134,28 @@ NotchSurface {
                 color: root.scheme.primary
                 font.family: Fonts.family
                 font.pixelSize: Layout.wsIcon
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+                    enabled: SystemTray.items.values.length > 0 && !root.strip.pinned
+                    onClicked: root.step({
+                        type: "ToggleTray"
+                    })
+                }
+            }
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.reveal.row === "tray" && !root.strip.pinned
+                width: Layout.wsDivider
+                height: Layout.wsIcon
+                color: root.scheme.muted
+                opacity: Colours.dividerAlpha
             }
 
             Repeater {
-                model: root.strip.pinned ? [
+                model: root.reveal.row === "tray" && !root.strip.pinned ? [] : root.strip.pinned ? [
                     {
                         id: 0,
                         kind: "special",
@@ -150,21 +173,67 @@ NotchSurface {
                     onClicked: root.activate(modelData)
                 }
             }
+
+            Repeater {
+                model: root.reveal.row === "tray" && !root.strip.pinned ? SystemTray.items.values : []
+
+                Item {
+                    id: trayItem
+
+                    required property var modelData
+                    readonly property string iconSource: modelData.icon
+                    readonly property string themePrefix: "image://icon/"
+                    readonly property bool missingNamedIcon: iconSource.startsWith(themePrefix) && iconSource.indexOf("?") < 0 && Quickshell.iconPath(iconSource.slice(themePrefix.length), true) === ""
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Layout.wsTrayIcon
+                    height: Layout.wsTrayIcon
+
+                    Image {
+                        id: trayIcon
+
+                        anchors.fill: parent
+                        visible: !trayItem.missingNamedIcon && status !== Image.Error
+                        source: trayItem.missingNamedIcon ? "" : trayItem.iconSource
+                        sourceSize: Qt.size(Layout.wsTrayIcon, Layout.wsTrayIcon)
+                        fillMode: Image.PreserveAspectFit
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: trayItem.missingNamedIcon || trayIcon.status === Image.Error
+                        text: Strings.unknownInitial
+                        color: root.scheme.primary
+                        font.family: Fonts.family
+                        font.pixelSize: Layout.wsIcon
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        onClicked: trayItem.modelData.activate()
+                    }
+                }
+            }
         }
     }
 
-    Item {
+    NotchZone {
         id: maskBox
 
-        width: shape.width
-        height: root.open ? shape.height : 0
-    }
-
-    NotchZone {
-        anchors.fill: maskBox
-        onHoverChanged: on => root.step({
-                type: "Hover",
-                on: on
-            })
+        width: root.open ? shape.width : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
+        height: root.open ? shape.height : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
+        onHoverChanged: on => {
+            if (on && !root.open)
+                root.step({
+                    type: "TrayHover",
+                    count: SystemTray.items.values.length
+                });
+            else
+                root.step({
+                    type: "Hover",
+                    on: on
+                });
+        }
     }
 }

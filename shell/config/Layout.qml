@@ -76,6 +76,9 @@ Singleton {
     readonly property int wsSlot: 22
     readonly property int wsSlotActive: 28
     readonly property int wsIcon: 16
+    readonly property int wsTrayIcon: 20
+    readonly property int wsDivider: 1
+    readonly property int wsHotZone: 24
     readonly property int wsPad: 10
     readonly property int wsGap: 4
 

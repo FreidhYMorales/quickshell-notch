@@ -6,10 +6,10 @@ QML_FILES := $(shell find shell -name '*.qml')
 QMLDIRS   := $(addprefix -i ,$(shell find shell -name qmldir))
 JS_PATHS  := shell/logic tests
 
-.PHONY: check ci fmt fmt-check lint lint-qml lint-js test smoke
+.PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke
 
 # Full local quality gate (read-only).
-check: fmt-check lint test smoke
+check: fmt-check lint test qml-test smoke
 
 # Subset that runs in GitHub Actions (no Quickshell types, no Wayland session).
 ci: fmt-check lint-js test
@@ -34,6 +34,9 @@ lint-js:
 
 test:
 	node --test tests/
+
+qml-test:
+	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs tests/qml/tray-placeholder.mjs tests/qml/tray-hover.mjs tests/qml/tray-empty.mjs tests/qml/tray-switch.mjs tests/qml/tray-activate.mjs tests/qml/tray-close.mjs tests/qml/tray-closing-priority.mjs tests/qml/tray-open-priority.mjs tests/qml/tray-divider.mjs tests/qml/tray-icon-size.mjs tests/qml/tray-image-error.mjs tests/qml/tray-image-ready.mjs tests/qml/tray-multiple.mjs
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:

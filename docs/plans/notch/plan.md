@@ -18,6 +18,7 @@
 - Reference 1: saneAspect, "I Replaced My Whole Hyprland Bar With One Notch" (youtu.be/nKomstQedmE). Source of the expanded layout (media left, clock + week strip right). Subtitles were not retrievable (HTTP 429); the design was taken from a user screenshot. (v1)
 - Reference 2: vyeos/dotarch (github.com/vyeos/dotarch). A simpler flat `Notch.qml` plus panels. Used for orientation only. (v1)
 - Old config inventory (`~/Mio/Configuraciones/dotfiles/quickshell/.config/quickshell`): see "Reuse map" under Core model. (v1)
+- Story 22 test research: the installed Quickshell build links its QML plugins into `qs`; standalone Qt `qmltestrunner` cannot load the actual panel from the installed metadata alone. The `qs`-hosted tests exercise the real runtime, simulate input and report failures explicitly; real panel tests require Wayland. Sources: installed `/usr/lib/qt6/qml/Quickshell/qmldir`, Quickshell build's `quickshell_widgetsplugin_init.cpp`, [Qt Quick Test](https://doc.qt.io/qt-6/qtquicktest-index.html). (v1)
 
 ## Product vision
 
@@ -170,10 +171,17 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 ╭─────────────────────────╮    ╭─────────────────────────╮      ╭──────────╮
 │    –   ●     –   │    │    –  []   –   │      │   │ 󰎆   │
 ╰─────────────────────────╯    ╰─────────────────────────╯      ╰──────────╯
+
+ hover in the left zone (tray)
+╭───────────────────────────────╮
+│ 󰣇  │  󰙯   󰓓   󰍡             │
+╰───────────────────────────────╯
 ```
 
 - Chosen: A (dots) mixed with C (app icons).
 - Rules: ● = active, – = empty, app icon = occupied but inactive (the last-focused app there, fallback ○). Triggers: workspace change, window open (the active slot shows the new app icon for a few seconds), window moved (the icon flies from source to destination slot; SHOULD). Only normal toplevel windows count (dialogs, popups and transient floats are ignored), with a short debounce. Moving to a special -> the icon fades out. Concave ears to the top and left screen edges.
+- Tray row: hovering the left zone opens the notch as Arch + a separator + one icon per StatusNotifierItem (apps minimised to the tray have no Hyprland toplevel, so this is the only source). Left click requests activation; the app decides how to respond. Right click opens the item's own menu (#23; presentation not yet decided). Hidden when empty (hover then does nothing). Right click on the Arch icon swaps the open row between the workspace strip and the tray icons.
+- Priority: while the tray row is open it wins over a workspace reveal (a workspace change does not replace or close it); once it is closed, workspace reveals behave exactly as before. Pin from a special workspace still wins over the tray row.
 - Per monitor: each monitor's notch shows the workspaces bound to that monitor; the slot count is a config token (default = the old widget's `maxVisible`).
 - States: special active -> pinned, showing only Arch + special icon.
 
@@ -182,6 +190,8 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 | occupancy + icon | per-workspace windows + `focusHistoryID`; class -> DesktopEntries icon |
 | triggers | Hyprland events: workspace, activespecial, openwindow, movewindowv2, closewindow |
 | fly animation | own window -> workspace map (move events only give the destination) |
+| tray icons | `Quickshell.Services.SystemTray` items, `activate()`; generic fallback for detectable missing icons; Quickshell's placeholder is accepted when failure cannot be detected (#24 explores that case) |
+| tray menu | the item's `QsMenuHandle` (DBusMenu), entries with separators, check state and enabled |
 
 ### Volume / brightness OSD
 
@@ -212,8 +222,6 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 │ [󰖩 WiFi] [󰂯 BT] [󰂛 DND]          │
 │ [󰾆 Profile] [󰅶 Caffeine] [󰑊 Rec] │
 │ ────────────────────────────── │
-│ Tray:  󰙯  󰓓  󰍡                   │
-│ ────────────────────────────── │
 │ Notifications (5)        Clear │
 │ [ico] Discord: Juan: ¿jug…     │
 │ [ico] Steam: Update ready      │
@@ -224,7 +232,6 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 
 - Chosen: profile header from the old config + tile grid (A) + inline notifications (C).
 - Rules: opens on hover with a ~200ms activation delay and a small hot zone. Tiles: left click toggles, right click opens the subpage. WiFi/BT right click opens impala/bluetui in a terminal (v1). DND right click and "See all" open the notifications subpage. At most 3 inline notifications. Power row: lock/suspend run directly; logout/reboot/shutdown open the power menu with that action preselected. Inside a subpage the panel does not collapse on a brief mouse leave (Esc, click outside or a longer delay closes it). Only opening the notifications subpage marks notifications as seen (clears the dot); hovering the root does not.
-- Tray row: compact icon row of StatusNotifierItems; left click = activate (restore the app), right click = the item's menu. Hidden when empty.
 - Subpage "Notifications": back button + the full history list (same item style as inline), per-item dismiss, Clear all, DND toggle. Derived; no variants shown.
 - States: no notifications -> "No notifications" line, no list.
 
@@ -232,7 +239,6 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 |---|---|
 | profile | user name/avatar, `OsInfo.uptime` |
 | tiles | WiFi radio via `rfkill` (state read without root), BT power via `Quickshell.Bluetooth`, `Notifs.dnd`, `BatteryProfile`, `IdleManager.caffeineMode` (inhibitor lives on the BG surface), `Recorder` |
-| tray | `Quickshell.Services.SystemTray` items + menus |
 | navigation | control center stack (root -> subpage) |
 
 ### Power menu (main notch state)
@@ -296,9 +302,9 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 | Background | wallpaper image/video | (none; set by the wallpaper command) | Wallpapers |
 | Expanded | track, art, week/month | play/pause/next/prev, open month, scroll, today | Mpris, Time |
 | Toast | app, summary, body, actions | action, dismiss, default action | Notifs |
-| Workspaces | occupancy, active, app icons, special | (display only) | Hyprland, DesktopEntries |
+| Workspaces | occupancy, active, app icons, special, tray icons | (display only), tray activate/menu | Hyprland, DesktopEntries, SystemTray |
 | OSD | volume/brightness % | drag, scroll, mute | Audio, Brightness |
-| Control center | profile, uptime, tile states, tray items, notifications | toggles, subpages, power, tray activate/menu, clear | OsInfo, services, SystemTray, Notifs |
+| Control center | profile, uptime, tile states, notifications | toggles, subpages, power, clear | OsInfo, services, Notifs |
 | Power menu | actions | select, hold-confirm | PowerActions |
 | Launcher | apps, commands, descriptions | search, launch, open command | DesktopEntries, commands |
 | Polkit | message, password | authenticate, cancel | Polkit |
@@ -321,7 +327,7 @@ Done. See [architecture](../../architecture.md), [development setup](../../devel
 | Power menu with hold-confirm + Ctrl+Alt+Del | MUST | 1 | medium |
 | Polkit state | MUST | 0.5 | medium |
 | Control center root + tiles + notifications subpage | MUST | 3 | high |
-| System tray row in the control center | MUST | 1.5 | high |
+| System tray row in the workspaces notch (icons, activate, item menu, priority over workspace reveals) | MUST | 1.5 | high |
 | Lock module integration (with deps + `Session` adapter) | MUST | 1.5 | medium |
 | Expanded hover: media + week strip | MUST | 1.5 | high |
 | Charging layer + animation + glow pulse | SHOULD | 1 | high |
@@ -388,9 +394,9 @@ One SDD change per phase, in order. Each phase ends with `make check` green and 
 |---|---|---|---|
 | 1 | `notch-foundation` | Shell skeleton (surfaces per monitor, spacer zone, masks, ears, tokens, `NOTCH_SMOKE`), `Session`, `Hypr` wrapper, centre state machine reducer (pure logic, per-monitor + global inputs, mid-flow rules) | 6.25 |
 | 2 | `notch-center` | Battery (UPower), Mpris, SysInfo/Time reuse; idle notch + low-battery layer + 10% toast hook + recording dot; expanded hover (media + week) | 4.25 |
-| 3 | `notch-workspaces-osd` | Workspaces notch; Audio (Pipewire); volume/brightness OSDs | 5.25 |
+| 3 | `notch-workspaces-osd` | Workspaces notch + tray row; Audio (Pipewire); volume/brightness OSDs | 5.25 |
 | 4 | `notch-notifications` | Notifs rewrite (tracked, id-keyed, cap 50, DND, critical `!`); toast + unread dot | 3.5 |
-| 5 | `notch-control-center` | Control center root, tiles (rfkill/BT checks first), tray row, notifications subpage | 4.5 |
+| 5 | `notch-control-center` | Control center root, tiles (rfkill/BT checks first), notifications subpage | 4.5 |
 | 6 | `notch-launcher-power` | Launcher apps + commands; wallpaper/theme/keybinds views; power menu; polkit | 6.5 |
 | 7 | `notch-cutover` | Background surface + IdleInhibitor + hyprpaper fallback; lock integration; state import; Hyprland cutover (exec, env, IPC, keybinds, sleep hook, rollback) | 3.5 |
 | 8+ | `notch-polish-*` | SHOULD items in the Scope order | 5.75 |
@@ -414,7 +420,7 @@ Superseded: the old bar config and its paused `modules/notch` attempt (reuse onl
 | R1-2 | No background surface (video wallpaper, caffeine inhibitor) | BG surface reuses old Background/BackgroundSurface + IdleInhibitor; wallpaper changes also set hyprpaper as fallback. MUST, 1d | user |
 | R1-3 | Exclusive zones stack between top surfaces | One invisible spacer per monitor owns the zone; all other top surfaces use `ExclusionMode.Ignore`; ADR 0004 updated | planner |
 | R1-4 | No Hyprland cutover | MUST item: exec `qs -c notch` + `QML_IMPORT_PATH`, `qs -c notch ipc call`, IPC targets launcher/power/lock/caffeine/controlcenter, rollback script. 0.5d | planner |
-| R1-5 | No system tray | MUST: compact tray row in the control center (activate + menu). 1.5d | user |
+| R1-5 | No system tray | MUST: compact tray row in the workspaces notch (Arch + separator + icons, activate + item menu, priority over workspace reveals). 1.5d. Moved from the control center on 2026-10-31 (user, during story #06) | user |
 | R1-6 | No battery while discharging / low-battery warning | Low-battery layer below 20% (mirror of charging, red), slow red breathing glow every ~30s, critical toast at 10% | user |
 | R1-7 | Lock integration underestimated | Re-estimated 1.5d; transitive deps listed in the reuse map; `Style.*` inside the lock exempt until restyled | planner |
 | R1-8 | Command views underestimated | Wallpaper/theme/keybinds MUST (2.5d); screensaver/security/webapp SHOULD (2d) | user |
