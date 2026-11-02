@@ -38,6 +38,8 @@ Singleton {
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0)
                 reserve.running = true;
+            else
+                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
         }
     }
 
