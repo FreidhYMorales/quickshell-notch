@@ -19,6 +19,7 @@ NotchSurface {
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property string special: Workspaces.specialByMonitor[monitorName] ?? ""
     property var reveal: Reveal.initialReveal()
+    property var menuItem: null
     readonly property bool open: Reveal.isVisible(reveal)
     readonly property var strip: Strip.stripFor({
         activeId: Workspaces.snapshot.monitors[monitorName]?.activeId ?? 1,
@@ -29,12 +30,12 @@ NotchSurface {
         flash: reveal.flash
     })
     readonly property var size: CornerLayout.cornerShape({
-        contentWidth: row.implicitWidth,
-        contentHeight: Layout.idleHeight,
+        contentWidth: Math.max(row.implicitWidth, menuColumn.implicitWidth),
+        contentHeight: Layout.idleHeight + menuColumn.implicitHeight,
         pad: Layout.wsPad,
         ear: Layout.earRadius,
         maxWidth: root.implicitWidth,
-        maxHeight: slot.height
+        maxHeight: root.implicitHeight
     })
 
     function step(event) {
@@ -62,6 +63,7 @@ NotchSurface {
 
     slotName: "tl"
     minWidth: Layout.cornerMaxWidth
+    minHeight: menuItem ? Math.floor(screen.height / 2) : 0
     // Hidden: expose only a small hot zone when tray apps exist.
     maskItem: maskBox
     onSpecialChanged: {
@@ -107,6 +109,11 @@ NotchSurface {
         }
 
         target: Workspaces
+    }
+
+    QsMenuOpener {
+        id: menuOpener
+        menu: root.menuItem ? root.menuItem.menu : null
     }
 
     CornerEarShape {
@@ -210,9 +217,30 @@ NotchSurface {
 
                     MouseArea {
                         anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton
-                        onClicked: trayItem.modelData.activate()
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.LeftButton)
+                                trayItem.modelData.activate();
+                            else if (trayItem.modelData.hasMenu)
+                                root.menuItem = trayItem.modelData;
+                        }
                     }
+                }
+            }
+        }
+
+        Column {
+            id: menuColumn
+            x: Layout.wsPad
+            y: Layout.idleHeight
+            Repeater {
+                model: menuOpener.children
+                Text {
+                    required property var modelData
+                    text: modelData.text
+                    color: root.scheme.primary
+                    font.family: Fonts.family
+                    font.pixelSize: Layout.wsIcon
                 }
             }
         }

@@ -19,6 +19,7 @@ PanelWindow {
     // Lets a surface outgrow its layout slot (windows are transparent and
     // masked, so only the visible shape matters).
     property int minWidth: 0
+    property int minHeight: 0
     // Item whose area receives input; defaults to the whole surface.
     property Item maskItem: body
 
@@ -30,7 +31,7 @@ PanelWindow {
     // wlr-layer-shell rejects a zero width unless both left and right are
     // anchored, which would kill the shell on screens too narrow for an OSD.
     implicitWidth: Math.max(1, slot.width, minWidth)
-    implicitHeight: slot.height
+    implicitHeight: Math.max(slot.height, minHeight)
     visible: shown
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
