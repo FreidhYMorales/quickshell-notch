@@ -9,6 +9,8 @@ ShellRoot {
         function test_stall() {
             root.services.recorder.start();
             tryVerify(() => root.services.notifs.history.length > 0, 8000);
+            // Late helper output must not restart preparation after the notice.
+            wait(1500);
             if (root.services.recorder.recording || root.services.recorder.preparing) {
                 console.error("helper stall: still preparing or recording"); return Qt.exit(1);
             }

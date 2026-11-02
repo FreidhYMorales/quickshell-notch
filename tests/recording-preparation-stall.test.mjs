@@ -11,14 +11,15 @@ import { join } from "node:path";
 import { runTrayProbe } from "./qml/run-tray.mjs";
 
 // Installs `name` as a fake that stalls when its arguments match `stalls`
-// (a shell case pattern) and otherwise runs the real tool.
-function expectStallReported(name, stalls) {
+// (a shell case pattern) and otherwise runs the real tool. `before` runs
+// first, so a fake can produce output and then stall.
+function expectStallReported(name, stalls, before = "") {
   const dir = mkdtempSync("/tmp/opencode/notch-preparation-stall-");
   try {
     writeFileSync(
       join(dir, name),
       `#!/bin/sh
-case "$*" in ${stalls}) echo $$ > "$PID_LOG"; exec sleep 30 ;; esac
+case "$*" in ${stalls}) ${before} echo $$ > "$PID_LOG"; exec sleep 30 ;; esac
 exec /usr/bin/${name} "$@"
 `,
       { mode: 0o755 },
@@ -55,4 +56,8 @@ test("stalled video reservation is terminated and reported", () => {
 
 test("stalled sidecar reservation is terminated and reported", () => {
   expectStallReported("ln", "*.owner");
+});
+
+test("a reservation that stalls after printing its path does not start capture", () => {
+  expectStallReported("mktemp", "--suffix=.mp4*", '/usr/bin/mktemp "$@";');
 });
