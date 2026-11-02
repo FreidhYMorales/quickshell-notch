@@ -23,6 +23,7 @@ Singleton {
     readonly property string glyphBluetooth: "\udb80\udcaf"
     readonly property string glyphDnd: "\udb80\udc9b"
     readonly property string glyphRecording: "󰻃"
+    readonly property string glyphStop: "\uf04d"
     readonly property string recordingFailed: "Recording failed"
     readonly property string recordingFailedBody: "Screen recording stopped unexpectedly."
 
