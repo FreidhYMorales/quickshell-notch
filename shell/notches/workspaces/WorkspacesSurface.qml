@@ -34,7 +34,7 @@ NotchSurface {
     })
     readonly property var size: CornerLayout.cornerShape({
         contentWidth: Math.max(row.implicitWidth, menuItem ? menuContentWidth : 0),
-        contentHeight: Layout.idleHeight + menuColumn.implicitHeight + (menuItem ? Layout.wsMenuPadBottom : 0),
+        contentHeight: Layout.idleHeight + menuColumn.implicitHeight + (menuItem ? Layout.wsMenuSeparator + Layout.wsMenuPadBottom : 0),
         pad: Layout.wsPad,
         ear: Layout.earRadius,
         maxWidth: root.implicitWidth,
@@ -258,6 +258,16 @@ NotchSurface {
             }
         }
 
+        Rectangle {
+            x: Layout.wsPad + Layout.wsMenuPad
+            y: Layout.idleHeight + (Layout.wsMenuSeparator - height) / 2
+            width: root.menuContentWidth - 2 * Layout.wsMenuPad
+            height: Layout.wsDivider
+            visible: root.menuItem !== null
+            color: root.scheme.muted
+            opacity: Colours.dividerAlpha
+        }
+
         Text {
             x: Layout.wsPad + (root.menuContentWidth - width) / 2
             y: menuViewport.y + menuViewport.height
@@ -272,9 +282,9 @@ NotchSurface {
             id: menuViewport
 
             x: Layout.wsPad
-            y: Layout.idleHeight
+            y: Layout.idleHeight + Layout.wsMenuSeparator
             width: root.menuContentWidth
-            height: Math.max(0, root.size.height - Layout.idleHeight - Layout.wsMenuPadBottom - Layout.earRadius)
+            height: Math.max(0, root.size.height - y - Layout.wsMenuPadBottom - Layout.earRadius)
             contentWidth: width
             contentHeight: menuColumn.implicitHeight
             clip: true
