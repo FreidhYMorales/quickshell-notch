@@ -33,6 +33,10 @@ class Menu(dbus.service.Object):
             )
         return 1, (0, {}, dbus.Array(entries, signature="v"))
 
+    @dbus.service.method("com.canonical.dbusmenu", in_signature="isvu", out_signature="")
+    def Event(self, item, event_id, data, timestamp):
+        print("FAKE_MENU_EVENT", item, event_id, flush=True)
+
 
 class Item(dbus.service.Object):
     def __init__(self, path, identifier, title):
