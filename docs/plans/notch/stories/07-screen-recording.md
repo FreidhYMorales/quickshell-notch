@@ -37,3 +37,4 @@ Risk: item 1, 6 (recording files must not overwrite existing data; real capture 
 - L1 request: Load the `flow-story` skill and follow it. 07
 - L2 scope: user approved full-screen recording with system audio; region, window and microphone selection deferred.
 - L3 pairing: user approved the proposed test list. The first integration test spans the control, recorder process and indicator; pause to propose smaller steps before writing tests or code.
+- L4 idle control: test c99c25f failed with `recording control: missing`; 337126c shows the idle control and `make check` passed. The user approved continuing with activation. Starting a real recorder before a stop control exists would leave an unfinished user-facing action; pause to propose a safe isolated recorder step.
