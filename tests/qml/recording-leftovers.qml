@@ -7,6 +7,9 @@ ShellRoot {
     TestCase {
         name: "RecordingLeftovers"; when: true
         function test_leftovers() {
+            // The idle notch reads this at startup, which creates the singleton.
+            if (root.services.recorder.recording)
+                console.warn("leftovers: unexpected recording");
             if (Quickshell.env("LEFTOVER_START") === "1")
                 root.services.recorder.start();
             wait(2500);
