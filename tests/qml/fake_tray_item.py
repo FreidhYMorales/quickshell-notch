@@ -10,6 +10,20 @@ bus = dbus.SessionBus()
 name = dbus.service.BusName("org.kde.StatusNotifierItem.qstest", bus)
 
 
+class Menu(dbus.service.Object):
+    def __init__(self):
+        super().__init__(bus, "/Menu")
+
+    @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="s", out_signature="a{sv}")
+    def GetAll(self, interface):
+        return {"Version": dbus.UInt32(3), "TextDirection": "ltr", "Status": "normal", "IconThemePath": dbus.Array([], signature="s")}
+
+    @dbus.service.method("com.canonical.dbusmenu", in_signature="iias", out_signature="u(ia{sv}av)")
+    def GetLayout(self, parent, depth, properties):
+        entry = dbus.Struct((1, dbus.Dictionary({"label": dbus.String("Open", variant_level=1)}, signature="sv"), dbus.Array([], signature="v")), signature="ia{sv}av", variant_level=1)
+        return 1, (0, {}, dbus.Array([entry], signature="v"))
+
+
 class Item(dbus.service.Object):
     def __init__(self, path, identifier, title):
         super().__init__(bus, path)
@@ -46,6 +60,7 @@ class Item(dbus.service.Object):
 
 
 paths = ["/StatusNotifierItem"]
+menu = Menu() if os.environ.get("NOTCH_TEST_MENU") == "1" else None
 items = [Item(paths[0], "qs-test", "QS Test App")]
 if os.environ.get("NOTCH_TEST_COUNT") == "2":
     paths.append("/StatusNotifierItem2")
