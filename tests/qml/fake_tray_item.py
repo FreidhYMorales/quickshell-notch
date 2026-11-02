@@ -44,6 +44,16 @@ class Menu(dbus.service.Object):
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="iias", out_signature="u(ia{sv}av)")
     def GetLayout(self, parent, depth, properties):
+        if os.environ.get("NOTCH_TEST_MENU_SUBMENU") == "1":
+            if parent == 20:
+                return 1, (0, {}, dbus.Array([
+                    self.entry(21, {"label": "Nested A"}),
+                    self.entry(22, {"label": "Nested B"}),
+                ], signature="v"))
+            return 1, (0, {}, dbus.Array([
+                self.entry(1, {"label": "Open"}),
+                self.entry(20, {"label": "More", "children-display": "submenu"}),
+            ], signature="v"))
         if os.environ.get("NOTCH_TEST_MENU_TYPES") == "1":
             return 1, (0, {}, dbus.Array(self.typedEntries(), signature="v"))
         count = int(os.environ.get("NOTCH_TEST_MENU_COUNT", "1"))
