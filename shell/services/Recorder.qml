@@ -107,6 +107,29 @@ Singleton {
         onExited: (exitCode, exitStatus) => root.sidecarClaimed(exitCode === 0)
     }
 
+    function recordingsRoot(): string {
+        return Quickshell.env("QS_RECORDINGS_DIR") || Quickshell.env("HOME") + "/Videos/Recordings";
+    }
+
+    // One startup scan for videos left in private workspaces by a crash or
+    // logout; nothing is deleted, the user decides what to recover.
+    Component.onCompleted: {
+        leftovers.running = true;
+    }
+
+    Process {
+        id: leftovers
+
+        command: ["sh", "-c", "for f in \"$1\"/.notch-recording-*/*.mp4; do [ -s \"$f\" ] && printf '%s\\n' \"$f\"; done; exit 0", "sh", root.recordingsRoot()]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const found = text.split("\n").filter(path => path.length > 0);
+                if (found.length > 0)
+                    Notifs.postNormal(Strings.center, Strings.recordingLeftover, Strings.recordingLeftoverBody.arg(found.length).arg(root.recordingsRoot()), "");
+            }
+        }
+    }
+
     function setRecording(value: bool) {
         privateRecording = value;
     }
@@ -145,7 +168,7 @@ Singleton {
         pendingStop = false;
         reservationAttempts = 0;
         mkdir.didStart = false;
-        recordingsDir = Quickshell.env("QS_RECORDINGS_DIR") || Quickshell.env("HOME") + "/Videos/Recordings";
+        recordingsDir = recordingsRoot();
         mkdir.command = ["mkdir", "-p", recordingsDir];
         runHelper(mkdir);
     }

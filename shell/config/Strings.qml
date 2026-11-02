@@ -29,6 +29,8 @@ Singleton {
     readonly property string recordingRecoveryBody: "Could not save the recording. Recover it from: %1"
     readonly property string recordingPartialBody: "Recording stopped. A partial file may be available at: %1"
     readonly property string recordingSaved: "Recording saved"
+    readonly property string recordingLeftover: "Interrupted recordings found"
+    readonly property string recordingLeftoverBody: "%1 interrupted recording(s) can be recovered from hidden folders in: %2"
 
     // Calendar names (index 0 = January, 0 = Monday).
     readonly property var months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
