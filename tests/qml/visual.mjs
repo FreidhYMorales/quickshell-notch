@@ -6,3 +6,14 @@ export function findText(items, text) {
   }
   return null;
 }
+
+export function findImage(items, source) {
+  for (const item of items) {
+    if (item.visible && item.source && String(item.source) === source) {
+      return item;
+    }
+    const nested = findImage(item.children || [], source);
+    if (nested) return nested;
+  }
+  return null;
+}
