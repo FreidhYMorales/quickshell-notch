@@ -629,3 +629,24 @@ test("PowerActivate: ignored while the launcher is open", () => {
   assert.deepEqual(effects, []);
   assert.equal(state.global.keyboard.kind, "launcher");
 });
+
+test("HoldStart: a repeated start leaves the running hold untouched", () => {
+  const first = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "HoldStart", action: "reboot" },
+  ]).state;
+  const repeat = reduce(first, { type: "HoldStart", action: "reboot" });
+  // Same state object: nothing re-binds, so the hold timer keeps its progress.
+  assert.equal(repeat.state, first);
+  assert.deepEqual(repeat.effects, []);
+});
+
+test("HoldStart: ignored for actions that fire at once", () => {
+  for (const action of ["lock", "suspend"]) {
+    const { state } = play([
+      { type: "PowerOpen", monitor: "A", action },
+      { type: "HoldStart", action },
+    ]);
+    assert.equal(state.global.keyboard.hold, null, action);
+  }
+});
