@@ -207,7 +207,7 @@ Singleton {
 
     function reserveCandidate() {
         reservationAttempts++;
-        reserve.running = true;
+        runHelper(reserve);
     }
 
     function reservationFailed() {
@@ -276,7 +276,7 @@ Singleton {
         id: reserve
 
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0)
+            if (root.claimHelper(reserve) && exitCode !== 0)
                 root.reservationFailed();
         }
 
