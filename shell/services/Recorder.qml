@@ -173,7 +173,10 @@ Singleton {
             root.activeHelper = null;
             if (helper && helper.running)
                 helper.signal(9);
-            root.reservationFailed();
+            if (helper === publish)
+                root.publicationFailed();
+            else
+                root.reservationFailed();
         }
     }
 
@@ -269,7 +272,7 @@ Singleton {
         publicationAttempts++;
         outputPath = recordingsDir + "/" + publicationStem + "-" + publicationAttempts + ".mp4";
         publish.command = ["ln", "--", capturePath, outputPath];
-        publish.running = true;
+        runHelper(publish);
     }
 
     function publicationFailed() {
@@ -284,10 +287,12 @@ Singleton {
         property bool didStart: false
         onStarted: didStart = true
         onRunningChanged: {
-            if (!running && !didStart && root.preparing)
+            if (!running && !didStart && root.claimHelper(publish))
                 root.publicationFailed();
         }
         onExited: (exitCode, exitStatus) => {
+            if (!root.claimHelper(publish))
+                return;
             if (exitCode === 0) {
                 cleanup.command = ["sh", "-c", "if [ \"$1\" -ef \"$2\" ] && [ \"$3\" -ef \"$4\" ]; then rm -- \"$1\" \"$2\" \"$3\" && rmdir -- \"$5\"; else exit 1; fi", "sh", root.capturePath + ".ts", root.capturePath + ".owner", root.capturePath, root.outputPath, root.workspacePath];
                 cleanup.running = true;
