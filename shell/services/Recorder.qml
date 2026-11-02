@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import QtQuick
 import "../config"
 
 // Minimal recording state for the idle notch's red dot. The capture process
@@ -15,6 +16,27 @@ Singleton {
 
     function setRecording(value: bool) {
         privateRecording = value;
+    }
+
+    function beginCountdown() {
+        if (countdown > 0 || privateRecording || mkdir.running || reserve.running || recorder.running)
+            return;
+        countdown = Limits.recordingCountdown;
+        countdownTimer.start();
+    }
+
+    Timer {
+        id: countdownTimer
+
+        interval: Timings.recordingCountdownTick
+        repeat: true
+        onTriggered: {
+            root.countdown--;
+            if (root.countdown === 0) {
+                stop();
+                root.start();
+            }
+        }
     }
 
     function start() {

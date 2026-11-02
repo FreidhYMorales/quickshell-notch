@@ -16,6 +16,7 @@ Singleton {
     readonly property int wsDebounce: 150
     // Triggers are ignored this long after startup (initial reads are not news).
     readonly property int startupGate: 1000
+    readonly property int recordingCountdownTick: 1000
 
     // Unread dot blink half-period (milliseconds).
     readonly property int blink: 700

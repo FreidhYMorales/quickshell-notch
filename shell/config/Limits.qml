@@ -33,4 +33,5 @@ Singleton {
     // inline in the control center.
     readonly property int historyCap: 50
     readonly property int historyInline: 3
+    readonly property int recordingCountdown: 5
 }
