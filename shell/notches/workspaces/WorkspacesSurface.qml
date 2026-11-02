@@ -145,6 +145,15 @@ NotchSurface {
                 }
             }
 
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.reveal.row === "tray" && !root.strip.pinned
+                width: Layout.wsDivider
+                height: Layout.wsIcon
+                color: root.scheme.muted
+                opacity: Colours.dividerAlpha
+            }
+
             Repeater {
                 model: root.reveal.row === "tray" && !root.strip.pinned ? [] : root.strip.pinned ? [
                     {
