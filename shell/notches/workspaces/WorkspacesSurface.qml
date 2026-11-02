@@ -231,7 +231,7 @@ NotchSurface {
                             if (mouse.button === Qt.LeftButton)
                                 trayItem.modelData.activate();
                             else if (trayItem.modelData.hasMenu)
-                                root.menuItem = trayItem.modelData;
+                                root.menuItem = root.menuItem === trayItem.modelData ? null : trayItem.modelData;
                         }
                     }
                 }
