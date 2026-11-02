@@ -9,7 +9,17 @@ test("stopping recording hides the notch indicator", () => {
   try {
     writeFileSync(
       join(dir, "gpu-screen-recorder"),
-      "#!/bin/sh\nexec sleep 10\n",
+      `#!/bin/sh
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -o) output=$2; shift ;;
+    -write-first-frame-ts) readiness=$2; shift ;;
+  esac
+  shift
+done
+if [ "$readiness" = yes ]; then printf '123 456\\n' > "$output.ts"; fi
+exec sleep 10
+`,
       { mode: 0o755 },
     );
     const result = runTrayProbe("./recording-stop.qml", {
