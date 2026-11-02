@@ -13,6 +13,7 @@ Singleton {
     readonly property bool recording: privateRecording
     property bool privateRecording: false
     property int countdown: 0
+    property string outputPath: ""
 
     function setRecording(value: bool) {
         privateRecording = value;
@@ -84,6 +85,7 @@ Singleton {
                 const path = text.trim();
                 if (!path)
                     return;
+                root.outputPath = path;
                 recorder.command = ["gpu-screen-recorder", "-w", "screen", "-a", "default_output", "-c", "mp4", "-o", path];
                 recorder.didStart = false;
                 recorder.stopRequested = false;
@@ -110,6 +112,8 @@ Singleton {
             root.privateRecording = false;
             if (exitCode !== 0 || !stopRequested)
                 Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
+            else
+                Notifs.postNormal(Strings.center, Strings.recordingSaved, root.outputPath, "");
         }
     }
 }
