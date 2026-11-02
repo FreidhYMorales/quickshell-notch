@@ -131,6 +131,15 @@ NotchSurface {
                 color: root.scheme.primary
                 font.family: Fonts.family
                 font.pixelSize: Layout.wsIcon
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+                    enabled: SystemTray.items.values.length > 0 && !root.strip.pinned
+                    onClicked: root.step({
+                        type: "ToggleTray"
+                    })
+                }
             }
 
             Repeater {
