@@ -592,3 +592,40 @@ test("PowerMove: ignored while the launcher is open", () => {
   ]);
   assert.equal(state.global.keyboard.sub, null);
 });
+
+test("PowerActivate: lock runs at once and closes the menu", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "PowerActivate" },
+  ]);
+  assert.deepEqual(effects, [{ type: "power.run", action: "lock" }]);
+  assert.equal(state.global.keyboard, null);
+});
+
+test("PowerActivate: a clicked suspend runs at once and closes the menu", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "PowerActivate", action: "suspend" },
+  ]);
+  assert.deepEqual(effects, [{ type: "power.run", action: "suspend" }]);
+  assert.equal(state.global.keyboard, null);
+});
+
+test("PowerActivate: a hold action runs nothing and keeps the menu", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "PowerActivate" },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "power");
+  assert.equal(state.global.keyboard.sub, "reboot");
+});
+
+test("PowerActivate: ignored while the launcher is open", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "PowerActivate", action: "lock" },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "launcher");
+});
