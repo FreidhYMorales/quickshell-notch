@@ -31,6 +31,21 @@ class Menu(dbus.service.Object):
                     variant_level=1,
                 )
             )
+        if os.environ.get("NOTCH_TEST_MENU_DISABLED") == "1":
+            entries.append(
+                dbus.Struct(
+                    (
+                        2,
+                        dbus.Dictionary(
+                            {"label": dbus.String("Disabled", variant_level=1), "enabled": dbus.Boolean(False, variant_level=1)},
+                            signature="sv",
+                        ),
+                        dbus.Array([], signature="v"),
+                    ),
+                    signature="ia{sv}av",
+                    variant_level=1,
+                )
+            )
         return 1, (0, {}, dbus.Array(entries, signature="v"))
 
     @dbus.service.method("com.canonical.dbusmenu", in_signature="isvu", out_signature="")
