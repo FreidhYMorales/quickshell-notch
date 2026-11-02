@@ -27,7 +27,7 @@ time.sleep(10)
     });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     const args = JSON.parse(readFileSync(join(dir, "arguments.json"), "utf8"));
-    assert.equal(args.length, 8);
+    assert.equal(args.length, 10);
     assert.deepEqual(args.slice(0, 7), [
       "-w",
       "screen",
@@ -39,6 +39,7 @@ time.sleep(10)
     ]);
     assert.equal(dirname(args[7]), dir);
     assert.equal(extname(args[7]), ".mp4");
+    assert.deepEqual(args.slice(8), ["-write-first-frame-ts", "yes"]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
