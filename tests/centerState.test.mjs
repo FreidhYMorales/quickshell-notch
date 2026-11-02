@@ -555,3 +555,40 @@ test("Suppression: once DND is off again, a normal toast shows", () => {
   });
   assert.deepEqual(effects, []);
 });
+
+test("PowerMove: moves from the first action when nothing is preselected", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "PowerMove", step: 1 },
+  ]);
+  assert.equal(state.global.keyboard.sub, "suspend");
+});
+
+test("PowerMove: moves from the preselected action both ways", () => {
+  const open = { type: "PowerOpen", monitor: "A", action: "logout" };
+  const right = play([open, { type: "PowerMove", step: 1 }]);
+  assert.equal(right.state.global.keyboard.sub, "reboot");
+  const left = play([open, { type: "PowerMove", step: -1 }]);
+  assert.equal(left.state.global.keyboard.sub, "suspend");
+});
+
+test("PowerMove: stays put at either end", () => {
+  const first = play([
+    { type: "PowerOpen", monitor: "A", action: "lock" },
+    { type: "PowerMove", step: -1 },
+  ]);
+  assert.equal(first.state.global.keyboard.sub, "lock");
+  const last = play([
+    { type: "PowerOpen", monitor: "A", action: "poweroff" },
+    { type: "PowerMove", step: 1 },
+  ]);
+  assert.equal(last.state.global.keyboard.sub, "poweroff");
+});
+
+test("PowerMove: ignored while the launcher is open", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "PowerMove", step: 1 },
+  ]);
+  assert.equal(state.global.keyboard.sub, null);
+});
