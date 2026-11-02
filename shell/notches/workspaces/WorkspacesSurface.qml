@@ -193,6 +193,12 @@ NotchSurface {
                         font.family: Fonts.family
                         font.pixelSize: Layout.wsIcon
                     }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton
+                        onClicked: trayItem.modelData.activate()
+                    }
                 }
             }
         }
