@@ -18,8 +18,34 @@ class Menu(dbus.service.Object):
     def GetAll(self, interface):
         return {"Version": dbus.UInt32(3), "TextDirection": "ltr", "Status": "normal", "IconThemePath": dbus.Array([], signature="s")}
 
+    @staticmethod
+    def entry(item_id, properties):
+        variants = {}
+        for key, value in properties.items():
+            if isinstance(value, bool):
+                variants[key] = dbus.Boolean(value, variant_level=1)
+            elif isinstance(value, int):
+                variants[key] = dbus.Int32(value, variant_level=1)
+            else:
+                variants[key] = dbus.String(value, variant_level=1)
+        return dbus.Struct(
+            (item_id, dbus.Dictionary(variants, signature="sv"), dbus.Array([], signature="v")),
+            signature="ia{sv}av",
+            variant_level=1,
+        )
+
+    def typedEntries(self):
+        return [
+            self.entry(10, {"label": "Open"}),
+            self.entry(11, {"type": "separator"}),
+            self.entry(12, {"label": "Checked", "toggle-type": "checkmark", "toggle-state": 1}),
+            self.entry(13, {"label": "Unchecked", "toggle-type": "checkmark", "toggle-state": 0}),
+        ]
+
     @dbus.service.method("com.canonical.dbusmenu", in_signature="iias", out_signature="u(ia{sv}av)")
     def GetLayout(self, parent, depth, properties):
+        if os.environ.get("NOTCH_TEST_MENU_TYPES") == "1":
+            return 1, (0, {}, dbus.Array(self.typedEntries(), signature="v"))
         count = int(os.environ.get("NOTCH_TEST_MENU_COUNT", "1"))
         entries = []
         for index in range(count):

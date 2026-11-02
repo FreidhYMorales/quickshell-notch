@@ -37,3 +37,24 @@ export function findVerticalDivider(items) {
   }
   return null;
 }
+
+export function findHorizontalDivider(items) {
+  for (const item of items) {
+    if (
+      item.visible && item.color !== undefined && item.height > 0 &&
+      item.height <= 2 && item.width >= 8
+    ) return item;
+    const nested = findHorizontalDivider(childItems(item));
+    if (nested) return nested;
+  }
+  return null;
+}
+
+export function countText(items, text) {
+  let count = 0;
+  for (const item of items) {
+    if (item.visible && item.text === text) count++;
+    count += countText(childItems(item), text);
+  }
+  return count;
+}
