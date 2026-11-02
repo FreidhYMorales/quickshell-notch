@@ -26,7 +26,8 @@ ShellRoot {
             wait(500);
             const button = Visual.findText(root.panel.content, "󰻃");
             if (!button) { console.error("unexpected exit: control missing"); return Qt.exit(2); }
-            mouseClick(button, button.width / 2, button.height / 2); wait(400);
+            mouseClick(button, button.width / 2, button.height / 2);
+            tryVerify(() => root.red(root.idle.children), 6500);
             if (!root.red(root.idle.children)) { console.error("unexpected exit: recording not active"); return Qt.exit(2); }
             wait(1100);
             if (root.red(root.idle.children)) { console.error("unexpected exit: red dot remains"); return Qt.exit(1); }

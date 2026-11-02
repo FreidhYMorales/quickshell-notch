@@ -26,7 +26,8 @@ ShellRoot {
             wait(500);
             const button = Visual.findText(root.panel.content, "󰻃");
             if (!button) { console.error("normal stop: control missing"); return Qt.exit(2); }
-            mouseClick(button, button.width / 2, button.height / 2); wait(500);
+            mouseClick(button, button.width / 2, button.height / 2);
+            tryVerify(() => root.red(root.idle.children), 6500);
             if (!root.red(root.idle.children)) { console.error("normal stop: recording not active"); return Qt.exit(2); }
             mouseClick(button, button.width / 2, button.height / 2); wait(500);
             if (root.red(root.idle.children)) { console.error("normal stop: dot remains"); return Qt.exit(1); }
