@@ -7,14 +7,14 @@
 ## Acceptance criteria
 
 - [ ] Given the tray row is open and an app provides a menu, when I right-click its icon, then the notch expands horizontally and vertically to show that menu below the still-visible icons and a separator, sized to its contents up to half the height of that screen.
-- [ ] Given an app's menu is open, when I choose an enabled action, then the app receives it; separators, checked states and disabled options are shown correctly, and disabled options cannot be activated. When I enter a submenu, its options replace the current list and I can return to the previous menu.
-- [ ] Given a menu has more options than fit within the height limit, when I scroll the options, then I can reach all of them, an indicator shows there is more content, and the icons, separator and submenu back control remain visible.
+- [ ] Given an app's menu is open, when I choose an enabled action, then the app receives it; separators, checked states and disabled options are shown correctly, and disabled options cannot be activated.
+- [ ] Given a menu has more options than fit within the height limit, when I scroll the options, then I can reach all of them, an indicator shows there is more content, and the icons and separator remain visible.
 
 ## Plan
 
-- Expose the selected app's menu and its current entries, including their states and actions.
+- Expose the selected app's root menu and its current entries, including their states and actions.
 - Expand the existing workspace notch around the tray row and menu, respecting the screen-height limit.
-- Navigate submenus within the notch and scroll only the options when necessary.
+- Scroll only the options when necessary.
 - Preserve existing tray activation, row switching, workspace priority and monitor behavior.
 - Verify menu interactions and overflow with a simulated tray app and check the appearance with real apps.
 
@@ -23,6 +23,7 @@
 - Replacing Quickshell's undetectable missing-icon placeholder (story #24).
 - Changing left-click activation, tray overflow, or adding keyboard access to the tray row.
 - Adding a separate floating or cascading submenu window.
+- Navigating submenus inside the notch (deferred to story #25, blocked by Quickshell's submenu loading).
 
 ## Suggestions (your call)
 
@@ -58,3 +59,6 @@ Risk: item 6 (visual fit and live app menu behavior require manual verification)
 - L21 scrolling paused: the new uncommitted scroll probe fails as expected (`Item 30` remains at y=730 after wheel events). The proposed test step exceeds the roughly 50-line stop limit; no scrolling implementation was added. Awaiting user direction on splitting the probe into a smaller reusable setup and the scroll assertion before continuing.
 - L22 scrolling resumed and paused: user approved splitting setup. `a6cf12d` adds reusable setup and red test `73545fa` still reports y=730. Two uncommitted implementation attempts (a Flickable, then a WheelHandler) both moved the last option only to y=658, still outside the viewport. Strict TDD stops after two failed attempts; the production change and red marker remain for investigation after user direction.
 - L23 investigation: user approved diagnosis. A temporary copy of the probe passed with 50 ms between wheel events; the committed probe sends all 40 synchronously, and the Flickable only moves 72 px under that burst. Instrumentation showed the added WheelHandler did not receive the events; it and the temporary probe were removed. The uncommitted Flickable remains. Correcting the committed probe requires user direction under Strict TDD.
+- L24 overflow: user approved correcting the probe timing (`56036e8`). The corrected probe failed with Flickable interaction disabled and passed with scrolling (`c23fe8c`); icons remain fixed. `018c7bf`/`1abdbc7` add the more-options indicator, and `f0f1a02`/`d97b29f` register both probes. `make check` passes.
+- L25 scope: user approved deferring submenu navigation to a separate story blocked by Quickshell's submenu loading; submenus must remain inside the notch, never in floating windows.
+- L26 independent verification: FAIL. The required fixed horizontal separator between tray icons and menu options is missing; horizontal expansion and the fixed separator need direct coverage. The checked-state probe accepts any short glyph instead of the actual check mark. The verifier also flagged sizing implemented before its test (`e027f60`/`5b78e50`) and a modified check-mark assertion (`d266dfe`/`72a2b56`) as Strict TDD exceptions. Real-app visual verification is still pending. `make check` passed; the story remains open pending corrections and recheck.
