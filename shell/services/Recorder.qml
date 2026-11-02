@@ -149,6 +149,7 @@ Singleton {
     // Runs one helper under the watchdog; a late exit after a timeout is
     // ignored because the helper is no longer the active one.
     property var activeHelper: null
+    property var timedOutHelper: null
 
     function runHelper(helper: var) {
         activeHelper = helper;
@@ -156,7 +157,14 @@ Singleton {
         helper.running = true;
     }
 
+    // Called when a helper ends. True only for the active helper; a helper
+    // that already timed out reports its timeout once and returns false.
     function claimHelper(helper: var): bool {
+        if (timedOutHelper === helper) {
+            timedOutHelper = null;
+            helperTimedOut(helper);
+            return false;
+        }
         if (activeHelper !== helper)
             return false;
         activeHelper = null;
@@ -171,13 +179,26 @@ Singleton {
         onTriggered: {
             const helper = root.activeHelper;
             root.activeHelper = null;
-            if (helper && helper.running)
-                helper.signal(9);
-            if (helper === publish)
-                root.publicationFailed();
-            else
-                root.reservationFailed();
+            root.timedOutHelper = helper;
+            // Children go first: a shell helper's commands would be orphaned.
+            // The outcome is reported only once the helper is gone.
+            if (helper && helper.running && helper.processId) {
+                reaper.helper = helper;
+                reaper.command = ["pkill", "-KILL", "-P", String(helper.processId)];
+                reaper.running = true;
+            } else {
+                root.claimHelper(helper);
+            }
         }
+    }
+
+    function helperTimedOut(helper: var) {
+        if (helper === publish)
+            publicationFailed();
+        else if (helper === cleanup)
+            cleanupFinished(false);
+        else
+            reservationFailed();
     }
 
     function reserveCandidate() {
@@ -295,7 +316,7 @@ Singleton {
                 return;
             if (exitCode === 0) {
                 cleanup.command = ["sh", "-c", "if [ \"$1\" -ef \"$2\" ] && [ \"$3\" -ef \"$4\" ]; then rm -- \"$1\" \"$2\" \"$3\" && rmdir -- \"$5\"; else exit 1; fi", "sh", root.capturePath + ".ts", root.capturePath + ".owner", root.capturePath, root.outputPath, root.workspacePath];
-                cleanup.running = true;
+                root.runHelper(cleanup);
             } else if (root.publicationAttempts < Limits.recordingReservationAttempts) {
                 Qt.callLater(root.publishCandidate);
             } else {
@@ -308,11 +329,33 @@ Singleton {
         id: cleanup
 
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0)
-                console.warn("Recording workspace cleanup incomplete: " + root.workspacePath);
-            root.preparing = false;
-            Notifs.postNormal(Strings.center, Strings.recordingSaved, root.outputPath, "");
+            if (root.claimHelper(cleanup))
+                root.cleanupFinished(exitCode === 0);
         }
+    }
+
+    Process {
+        id: reaper
+
+        property var helper: null
+
+        onRunningChanged: {
+            if (!running && helper) {
+                const stalled = helper;
+                helper = null;
+                if (stalled.running)
+                    stalled.signal(9);
+                else
+                    root.claimHelper(stalled);
+            }
+        }
+    }
+
+    function cleanupFinished(success: bool) {
+        if (!success)
+            console.warn("Recording workspace cleanup incomplete: " + workspacePath);
+        preparing = false;
+        Notifs.postNormal(Strings.center, Strings.recordingSaved, outputPath, "");
     }
 
     Process {
