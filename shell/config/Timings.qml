@@ -18,6 +18,8 @@ Singleton {
     readonly property int startupGate: 1000
     readonly property int recordingCountdownTick: 1000
     readonly property int recordingReadyTimeout: 15000
+    // A recording helper (mkdir, mktemp, ln, sh) is killed after this long.
+    readonly property int recordingHelperTimeout: 5000
 
     // Unread dot blink half-period (milliseconds).
     readonly property int blink: 700

@@ -143,7 +143,38 @@ Singleton {
         mkdir.didStart = false;
         recordingsDir = Quickshell.env("QS_RECORDINGS_DIR") || Quickshell.env("HOME") + "/Videos/Recordings";
         mkdir.command = ["mkdir", "-p", recordingsDir];
-        mkdir.running = true;
+        runHelper(mkdir);
+    }
+
+    // Runs one helper under the watchdog; a late exit after a timeout is
+    // ignored because the helper is no longer the active one.
+    property var activeHelper: null
+
+    function runHelper(helper: var) {
+        activeHelper = helper;
+        helperTimer.restart();
+        helper.running = true;
+    }
+
+    function claimHelper(helper: var): bool {
+        if (activeHelper !== helper)
+            return false;
+        activeHelper = null;
+        helperTimer.stop();
+        return true;
+    }
+
+    Timer {
+        id: helperTimer
+
+        interval: Timings.recordingHelperTimeout
+        onTriggered: {
+            const helper = root.activeHelper;
+            root.activeHelper = null;
+            if (helper && helper.running)
+                helper.signal(9);
+            root.reservationFailed();
+        }
     }
 
     function reserveCandidate() {
@@ -200,10 +231,12 @@ Singleton {
         property bool didStart: false
         onStarted: didStart = true
         onRunningChanged: {
-            if (!running && !didStart && root.preparingCapture)
+            if (!running && !didStart && root.claimHelper(mkdir))
                 root.reservationFailed();
         }
         onExited: (exitCode, exitStatus) => {
+            if (!root.claimHelper(mkdir))
+                return;
             if (exitCode === 0)
                 root.createWorkspace(root.recordingsDir);
             else
