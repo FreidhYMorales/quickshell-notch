@@ -26,6 +26,8 @@ Singleton {
     readonly property string glyphStop: "\uf04d"
     readonly property string recordingFailed: "Recording failed"
     readonly property string recordingFailedBody: "Screen recording stopped unexpectedly."
+    readonly property string recordingRecoveryBody: "Could not save the recording. Recover it from: %1"
+    readonly property string recordingPartialBody: "Recording stopped. A partial file may be available at: %1"
     readonly property string recordingSaved: "Recording saved"
 
     // Calendar names (index 0 = January, 0 = Monday).

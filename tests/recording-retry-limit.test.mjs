@@ -8,7 +8,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { runTrayProbe } from "./qml/run-tray.mjs";
 
 test("ten sidecar collisions report failure without starting capture", () => {
@@ -16,9 +16,6 @@ test("ten sidecar collisions report failure without starting capture", () => {
   const recordings = join(dir, "recordings");
   try {
     mkdirSync(recordings);
-    for (let i = 0; i < 10; i++) {
-      writeFileSync(join(recordings, `recording-${i}.mp4.ts`), `existing ${i}`);
-    }
     writeFileSync(
       join(dir, "mktemp"),
       `#!/usr/bin/python3
@@ -31,8 +28,10 @@ try:
 except FileNotFoundError:
     count = 0
 with open(counter, 'w') as f: f.write(str(count + 1))
-path = os.path.join(os.environ['QS_RECORDINGS_DIR'], 'recording-' + str(count) + '.mp4')
+path = os.path.join(os.path.dirname(sys.argv[-1]), 'recording-' + str(count) + '.mp4')
 with open(path, 'x'): pass
+with open(path + '.ts', 'x') as f: f.write('existing ' + str(count))
+with open(os.environ['SIDECAR_LOG'], 'a') as f: f.write(path + '.ts\\n')
 print(path)
 `,
       { mode: 0o755 },
@@ -63,6 +62,7 @@ ShellRoot {
       PATH: `${dir}:${process.env.PATH}`,
       QS_RECORDINGS_DIR: recordings,
       RESERVE_COUNT: count,
+      SIDECAR_LOG: join(dir, "sidecars.log"),
       CAPTURE_LOG: capture,
       NOTCH_SERVICES_URL: new URL("../shell/services", import.meta.url).href,
     });
@@ -72,11 +72,12 @@ ShellRoot {
       "try exactly ten candidates",
     );
     assert.equal(existsSync(capture), false, "capture must not start");
+    const sidecars = readFileSync(join(dir, "sidecars.log"), "utf8").trim()
+      .split("\n");
+    assert.equal(sidecars.length, 10);
     for (let i = 0; i < 10; i++) {
-      assert.equal(
-        readFileSync(join(recordings, `recording-${i}.mp4.ts`), "utf8"),
-        `existing ${i}`,
-      );
+      assert.equal(dirname(dirname(sidecars[i])), recordings);
+      assert.equal(readFileSync(sidecars[i], "utf8"), `existing ${i}`);
     }
     assert.equal(result.status, 0, result.stdout + result.stderr);
   } finally {

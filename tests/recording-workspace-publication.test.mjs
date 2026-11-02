@@ -23,6 +23,8 @@ def stop(*_):
     with open(path, 'w') as f: f.write('saved video')
     sys.exit(0)
 signal.signal(signal.SIGINT, stop)
+if '-write-first-frame-ts' in sys.argv:
+    with open(path + '.ts', 'w') as f: f.write('123 456\\n')
 with open(os.environ['CAPTURE_LOG'], 'w') as f: f.write(path)
 time.sleep(10)
 `,

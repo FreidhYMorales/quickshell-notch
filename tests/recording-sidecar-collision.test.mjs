@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -70,7 +71,14 @@ time.sleep(10)
       conflict,
       "capture must not use a path with an existing sidecar",
     );
-    assert.equal(readFileSync(selected, "utf8"), "saved recording");
+    const published = readdirSync(recordings).filter((name) =>
+      name.endsWith(".mp4")
+    );
+    assert.equal(published.length, 1);
+    assert.equal(
+      readFileSync(join(recordings, published[0]), "utf8"),
+      "saved recording",
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

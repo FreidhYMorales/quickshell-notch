@@ -37,7 +37,8 @@ time.sleep(10)
       "mp4",
       "-o",
     ]);
-    assert.equal(dirname(args[7]), dir);
+    assert.notEqual(dirname(args[7]), dir);
+    assert.equal(dirname(dirname(args[7])), dir);
     assert.equal(extname(args[7]), ".mp4");
     assert.deepEqual(args.slice(8), ["-write-first-frame-ts", "yes"]);
   } finally {

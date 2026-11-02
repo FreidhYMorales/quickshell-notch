@@ -14,8 +14,81 @@ Singleton {
     property bool privateRecording: false
     property int countdown: 0
     property string outputPath: ""
+    property bool preparing: false
+    property bool preparingCapture: false
+    property bool pendingStop: false
+    property int reservationAttempts: 0
+    property int publicationAttempts: 0
+    property string recordingsDir: ""
+    property string workspacePath: ""
+    property string capturePath: ""
+    property string publicationStem: ""
 
     signal sidecarClaimed(bool success)
+    signal workspaceCreated(string path)
+
+    onWorkspaceCreated: path => {
+        if (!preparing)
+            return;
+        if (!path) {
+            reservationFailed();
+            return;
+        }
+        workspacePath = path;
+        reserve.command = ["mktemp", "--suffix=.mp4", path + "/recording-XXXXXXXX"];
+        reserveCandidate();
+    }
+
+    function createWorkspace(parent: string) {
+        if (workspace.running)
+            return;
+        workspace.streamDone = false;
+        workspace.exitDone = false;
+        workspace.didStart = false;
+        workspace.pending = true;
+        workspace.path = "";
+        workspace.command = ["mktemp", "-d", "--", parent + "/.notch-recording-XXXXXXXX"];
+        workspace.running = true;
+    }
+
+    Process {
+        id: workspace
+
+        property bool streamDone: false
+        property bool exitDone: false
+        property bool didStart: false
+        property bool pending: false
+        property int exitCode: -1
+        property string path: ""
+
+        function finish() {
+            if (pending && streamDone && exitDone) {
+                pending = false;
+                root.workspaceCreated(exitCode === 0 ? path : "");
+            }
+        }
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                root.workspaceCreated("");
+            }
+        }
+        onExited: (code, exitStatus) => {
+            exitCode = code;
+            exitDone = true;
+            finish();
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                workspace.path = text.trim();
+                workspace.streamDone = true;
+                workspace.finish();
+            }
+        }
+    }
 
     function claimSidecar(source: string, target: string) {
         if (sidecarClaim.running)
@@ -35,7 +108,7 @@ Singleton {
     }
 
     function beginCountdown() {
-        if (countdown > 0 || privateRecording || mkdir.running || reserve.running || recorder.running)
+        if (countdown > 0 || privateRecording || preparing || recorder.running)
             return;
         countdown = Limits.recordingCountdown;
         countdownTimer.start();
@@ -61,29 +134,80 @@ Singleton {
     }
 
     function start() {
-        if (privateRecording || mkdir.running || reserve.running || recorder.running)
+        if (privateRecording || preparing || recorder.running)
             return;
-        const dir = Quickshell.env("QS_RECORDINGS_DIR") || Quickshell.env("HOME") + "/Videos/Recordings";
-        reserve.command = ["mktemp", "--suffix=.mp4", dir + "/recording-XXXXXXXX"];
-        mkdir.command = ["mkdir", "-p", dir];
+        preparing = true;
+        preparingCapture = true;
+        pendingStop = false;
+        reservationAttempts = 0;
+        mkdir.didStart = false;
+        recordingsDir = Quickshell.env("QS_RECORDINGS_DIR") || Quickshell.env("HOME") + "/Videos/Recordings";
+        mkdir.command = ["mkdir", "-p", recordingsDir];
         mkdir.running = true;
     }
 
+    function reserveCandidate() {
+        reservationAttempts++;
+        reserve.running = true;
+    }
+
+    function reservationFailed() {
+        preparing = false;
+        preparingCapture = false;
+        pendingStop = false;
+        Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
+    }
+
     function stop() {
+        if (preparingCapture)
+            pendingStop = true;
         if (recorder.running) {
             recorder.stopRequested = true;
-            recorder.signal(2);
+            if (recorder.ready)
+                recorder.signal(2);
+        }
+    }
+
+    FileView {
+        id: readiness
+
+        path: root.privateRecording ? root.capturePath + ".ts" : ""
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            if (text().trim() && recorder.running && !recorder.ready) {
+                recorder.ready = true;
+                readyTimer.stop();
+                if (recorder.stopRequested)
+                    recorder.signal(2);
+            }
+        }
+    }
+
+    Timer {
+        id: readyTimer
+
+        interval: Timings.recordingReadyTimeout
+        onTriggered: {
+            if (recorder.running && !recorder.ready)
+                recorder.signal(9);
         }
     }
 
     Process {
         id: mkdir
 
+        property bool didStart: false
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && !didStart && root.preparingCapture)
+                root.reservationFailed();
+        }
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0)
-                reserve.running = true;
+                root.createWorkspace(root.recordingsDir);
             else
-                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
+                root.reservationFailed();
         }
     }
 
@@ -92,7 +216,7 @@ Singleton {
 
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0)
-                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
+                root.reservationFailed();
         }
 
         stdout: StdioCollector {
@@ -101,12 +225,79 @@ Singleton {
                 if (!path)
                     return;
                 root.outputPath = path;
-                recorder.command = ["gpu-screen-recorder", "-w", "screen", "-a", "default_output", "-c", "mp4", "-o", path];
-                recorder.didStart = false;
-                recorder.stopRequested = false;
-                recorder.running = true;
-                root.privateRecording = true;
+                root.capturePath = path;
+                reserveSidecar.command = ["sh", "-c", "set -C; : > \"$1\" && ln -- \"$1\" \"$2\"", "sh", path + ".ts", path + ".owner"];
+                reserveSidecar.running = true;
             }
+        }
+    }
+
+    function publishCandidate() {
+        publicationAttempts++;
+        outputPath = recordingsDir + "/" + publicationStem + "-" + publicationAttempts + ".mp4";
+        publish.command = ["ln", "--", capturePath, outputPath];
+        publish.running = true;
+    }
+
+    function publicationFailed() {
+        preparing = false;
+        outputPath = capturePath;
+        Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingRecoveryBody.arg(capturePath), "");
+    }
+
+    Process {
+        id: publish
+
+        property bool didStart: false
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && !didStart && root.preparing)
+                root.publicationFailed();
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                cleanup.command = ["sh", "-c", "if [ \"$1\" -ef \"$2\" ] && [ \"$3\" -ef \"$4\" ]; then rm -- \"$1\" \"$2\" \"$3\" && rmdir -- \"$5\"; else exit 1; fi", "sh", root.capturePath + ".ts", root.capturePath + ".owner", root.capturePath, root.outputPath, root.workspacePath];
+                cleanup.running = true;
+            } else if (root.publicationAttempts < Limits.recordingReservationAttempts) {
+                Qt.callLater(root.publishCandidate);
+            } else {
+                root.publicationFailed();
+            }
+        }
+    }
+
+    Process {
+        id: cleanup
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0)
+                console.warn("Recording workspace cleanup incomplete: " + root.workspacePath);
+            root.preparing = false;
+            Notifs.postNormal(Strings.center, Strings.recordingSaved, root.outputPath, "");
+        }
+    }
+
+    Process {
+        id: reserveSidecar
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                if (root.reservationAttempts < Limits.recordingReservationAttempts)
+                    Qt.callLater(root.reserveCandidate);
+                else
+                    root.reservationFailed();
+                return;
+            }
+            recorder.command = ["gpu-screen-recorder", "-w", "screen", "-a", "default_output", "-c", "mp4", "-o", root.outputPath, "-write-first-frame-ts", "yes"];
+            recorder.didStart = false;
+            recorder.stopRequested = root.pendingStop;
+            root.pendingStop = false;
+            root.preparingCapture = false;
+            recorder.ready = false;
+            recorder.running = true;
+            root.privateRecording = true;
+            root.preparing = false;
+            readyTimer.start();
         }
     }
 
@@ -115,20 +306,28 @@ Singleton {
 
         property bool didStart: false
         property bool stopRequested: false
+        property bool ready: false
 
         onStarted: didStart = true
         onRunningChanged: {
             if (!running && !didStart && root.privateRecording) {
+                readyTimer.stop();
                 root.privateRecording = false;
                 Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
             }
         }
         onExited: (exitCode, exitStatus) => {
+            readyTimer.stop();
             root.privateRecording = false;
-            if (exitCode !== 0 || !stopRequested)
-                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
-            else
-                Notifs.postNormal(Strings.center, Strings.recordingSaved, root.outputPath, "");
+            if (exitCode !== 0 || !stopRequested || !ready)
+                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingPartialBody.arg(root.capturePath), "");
+            else {
+                root.preparing = true;
+                root.publicationAttempts = 0;
+                root.publicationStem = "recording-" + Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + "-" + root.workspacePath.split("/").pop();
+                publish.didStart = false;
+                root.publishCandidate();
+            }
         }
     }
 }
