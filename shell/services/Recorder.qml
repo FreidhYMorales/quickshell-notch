@@ -11,6 +11,7 @@ Singleton {
 
     readonly property bool recording: privateRecording
     property bool privateRecording: false
+    property int countdown: 0
 
     function setRecording(value: bool) {
         privateRecording = value;

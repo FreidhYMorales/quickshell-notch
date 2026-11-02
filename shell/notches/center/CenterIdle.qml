@@ -35,7 +35,7 @@ Item {
             gap: Layout.rowGap
         })
     })
-    readonly property bool mediaShown: batteryLayer === "media"
+    readonly property bool mediaShown: batteryLayer === "media" && Recorder.countdown === 0
     // Outermost item of each side: the dots sit beyond it.
     readonly property Item leftEdge: mediaShown ? art : (layerShown ? layerGlyph : row)
     readonly property Item rightEdge: mediaShown ? viz : (layerShown ? layerPercent : row)
@@ -44,7 +44,7 @@ Item {
     readonly property int dotExtent: critical.visible ? Layout.rowGap + critical.implicitWidth : (unread.visible ? Layout.rowGap + Layout.dotSize : 0)
 
     readonly property var scheme: Colours.paletteFor(screen)
-    readonly property bool layerShown: batteryLayer !== "none" && !mediaShown
+    readonly property bool layerShown: batteryLayer !== "none" && !mediaShown && Recorder.countdown === 0
     readonly property color layerColor: batteryLayer === "low" ? Colours.critical : scheme.primary
 
     function glyphFor(): string {
@@ -69,6 +69,7 @@ Item {
 
         anchors.centerIn: parent
         spacing: Layout.rowGap
+        visible: Recorder.countdown === 0
 
         ArcMeter {
             anchors.verticalCenter: parent.verticalCenter
@@ -91,6 +92,15 @@ Item {
             icon: Strings.glyphRam
             ringColor: root.scheme.primary
         }
+    }
+
+    Text {
+        anchors.centerIn: parent
+        visible: Recorder.countdown > 0
+        text: Recorder.countdown
+        color: root.scheme.onSurface
+        font.family: Fonts.family
+        font.pixelSize: Fonts.idleClock
     }
 
     // Recording dot, left of the row; it never changes the width.
