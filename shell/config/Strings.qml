@@ -61,6 +61,8 @@ Singleton {
     readonly property string symbolEmpty: "\u2013"
     readonly property string unknownInitial: "?"
     readonly property string glyphSpecial: "\uf005"
+    // Tray item menu: a checked option shows this mark.
+    readonly property string glyphCheck: "\uf00c"
     readonly property var specialGlyphs: ({
             messaging: "\uf075",
             music: glyphMusic,

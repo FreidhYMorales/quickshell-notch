@@ -21,6 +21,9 @@ NotchSurface {
     property var reveal: Reveal.initialReveal()
     property var menuItem: null
     readonly property bool open: Reveal.isVisible(reveal)
+    // Width of the option column while a tray menu is open: the corner body
+    // inside its padding and ear, so separators can span it.
+    readonly property real menuWidth: Layout.cornerMaxWidth - 2 * Layout.wsPad - Layout.earRadius
     readonly property var strip: Strip.stripFor({
         activeId: Workspaces.snapshot.monitors[monitorName]?.activeId ?? 1,
         windows: Workspaces.normalWindows,
@@ -30,7 +33,7 @@ NotchSurface {
         flash: reveal.flash
     })
     readonly property var size: CornerLayout.cornerShape({
-        contentWidth: Math.max(row.implicitWidth, menuColumn.implicitWidth),
+        contentWidth: Math.max(row.implicitWidth, menuItem ? menuWidth : 0),
         contentHeight: Layout.idleHeight + menuColumn.implicitHeight,
         pad: Layout.wsPad,
         ear: Layout.earRadius,
@@ -233,19 +236,48 @@ NotchSurface {
             id: menuColumn
             x: Layout.wsPad
             y: Layout.idleHeight
+            width: root.menuWidth
             Repeater {
                 model: menuOpener.children
-                Text {
+                Item {
                     required property var modelData
-                    text: modelData.text
-                    color: modelData.enabled ? root.scheme.primary : root.scheme.muted
-                    font.family: Fonts.family
-                    font.pixelSize: Layout.wsIcon
+                    width: menuColumn.width
+                    height: modelData.isSeparator ? Layout.wsMenuSeparator : Layout.wsMenuRow
 
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: modelData.enabled
-                        onClicked: modelData.triggered()
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: modelData.isSeparator
+                        width: parent.width
+                        height: Layout.wsDivider
+                        color: root.scheme.muted
+                        opacity: Colours.dividerAlpha
+                    }
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !modelData.isSeparator
+                        spacing: Layout.wsGap
+
+                        Text {
+                            text: Strings.glyphCheck
+                            visible: modelData.checkState === Qt.Checked
+                            color: root.scheme.primary
+                            font.family: Fonts.family
+                            font.pixelSize: Layout.wsMenuGlyph
+                        }
+
+                        Text {
+                            text: modelData.text
+                            color: modelData.enabled ? root.scheme.primary : root.scheme.muted
+                            font.family: Fonts.family
+                            font.pixelSize: Layout.wsIcon
+
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: modelData.enabled
+                                onClicked: modelData.triggered()
+                            }
+                        }
                     }
                 }
             }
