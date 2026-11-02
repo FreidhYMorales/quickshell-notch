@@ -25,6 +25,11 @@ Singleton {
         countdownTimer.start();
     }
 
+    function cancelCountdown() {
+        countdownTimer.stop();
+        countdown = 0;
+    }
+
     Timer {
         id: countdownTimer
 
