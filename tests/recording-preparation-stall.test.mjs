@@ -48,3 +48,7 @@ exec /usr/bin/${name} "$@"
 test("stalled workspace creator is terminated and reported", () => {
   expectStallReported("mktemp", "-d*");
 });
+
+test("stalled video reservation is terminated and reported", () => {
+  expectStallReported("mktemp", "--suffix=.mp4*");
+});
