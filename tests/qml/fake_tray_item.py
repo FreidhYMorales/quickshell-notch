@@ -46,7 +46,7 @@ class Menu(dbus.service.Object):
     def GetLayout(self, parent, depth, properties):
         if os.environ.get("NOTCH_TEST_MENU_SUBMENU") == "1":
             if parent == 20:
-                return 1, (0, {}, dbus.Array([
+                return 1, (20, {}, dbus.Array([
                     self.entry(21, {"label": "Nested A"}),
                     self.entry(22, {"label": "Nested B"}),
                 ], signature="v"))
