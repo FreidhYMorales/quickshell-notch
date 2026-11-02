@@ -258,60 +258,71 @@ NotchSurface {
             }
         }
 
-        Column {
-            id: menuColumn
+        Flickable {
+            id: menuViewport
+
             x: Layout.wsPad
             y: Layout.idleHeight
-            Repeater {
-                model: menuOpener.children
-                Item {
-                    required property var modelData
-                    width: root.menuContentWidth
-                    height: modelData.isSeparator ? Layout.wsMenuSeparator : Layout.wsMenuRow
+            width: root.menuContentWidth
+            height: Math.max(0, root.size.height - Layout.idleHeight - Layout.wsMenuPadBottom - Layout.earRadius)
+            contentWidth: width
+            contentHeight: menuColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-                    Rectangle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: Layout.wsMenuPad
-                        visible: modelData.isSeparator
-                        width: root.menuContentWidth - 2 * Layout.wsMenuPad
-                        height: Layout.wsDivider
-                        color: root.scheme.muted
-                        opacity: Colours.dividerAlpha
-                    }
+            Column {
+                id: menuColumn
+                Repeater {
+                    model: menuOpener.children
+                    Item {
+                        required property var modelData
+                        width: root.menuContentWidth
+                        height: modelData.isSeparator ? Layout.wsMenuSeparator : Layout.wsMenuRow
 
-                    Row {
-                        id: menuRow
-
-                        x: Layout.wsMenuPad
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: !modelData.isSeparator
-                        spacing: Layout.wsGap
-
-                        Text {
-                            text: Strings.glyphCheck
-                            visible: modelData.checkState === Qt.Checked
-                            color: root.scheme.primary
-                            font.family: Fonts.family
-                            font.pixelSize: Layout.wsMenuGlyph
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: Layout.wsMenuPad
+                            visible: modelData.isSeparator
+                            width: root.menuContentWidth - 2 * Layout.wsMenuPad
+                            height: Layout.wsDivider
+                            color: root.scheme.muted
+                            opacity: Colours.dividerAlpha
                         }
 
-                        Text {
-                            text: modelData.text
-                            color: !modelData.enabled ? root.scheme.muted : rowHover.hovered ? root.scheme.primary : root.scheme.onSurface
-                            font.family: Fonts.family
-                            font.pixelSize: Layout.wsIcon
+                        Row {
+                            id: menuRow
+
+                            x: Layout.wsMenuPad
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !modelData.isSeparator
+                            spacing: Layout.wsGap
+
+                            Text {
+                                text: Strings.glyphCheck
+                                visible: modelData.checkState === Qt.Checked
+                                color: root.scheme.primary
+                                font.family: Fonts.family
+                                font.pixelSize: Layout.wsMenuGlyph
+                            }
+
+                            Text {
+                                text: modelData.text
+                                color: !modelData.enabled ? root.scheme.muted : rowHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                                font.family: Fonts.family
+                                font.pixelSize: Layout.wsIcon
+                            }
                         }
-                    }
 
-                    HoverHandler {
-                        id: rowHover
-                        enabled: modelData.enabled && !modelData.isSeparator
-                    }
+                        HoverHandler {
+                            id: rowHover
+                            enabled: modelData.enabled && !modelData.isSeparator
+                        }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: modelData.enabled && !modelData.isSeparator
-                        onClicked: modelData.triggered()
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: modelData.enabled && !modelData.isSeparator
+                            onClicked: modelData.triggered()
+                        }
                     }
                 }
             }
