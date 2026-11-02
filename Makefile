@@ -43,6 +43,7 @@ qml-test:
 	node --test tests/qml/tray-menu-scroll.mjs tests/qml/tray-menu-indicator.mjs tests/qml/tray-menu-header.mjs
 	node --test tests/qml/tray-menu-width.mjs tests/qml/tray-menu-checkmark.mjs tests/qml/tray-menu-app-separator.mjs
 	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs tests/qml/tray-placeholder.mjs tests/qml/tray-hover.mjs tests/qml/tray-empty.mjs tests/qml/tray-switch.mjs tests/qml/tray-activate.mjs tests/qml/tray-close.mjs tests/qml/tray-closing-priority.mjs tests/qml/tray-open-priority.mjs tests/qml/tray-divider.mjs tests/qml/tray-icon-size.mjs tests/qml/tray-image-error.mjs tests/qml/tray-image-ready.mjs tests/qml/tray-multiple.mjs
+	node --test tests/qml/recording-*.mjs
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:
