@@ -190,8 +190,10 @@ NotchSurface {
                     height: Layout.wsTrayIcon
 
                     Image {
+                        id: trayIcon
+
                         anchors.fill: parent
-                        visible: !trayItem.missingNamedIcon
+                        visible: !trayItem.missingNamedIcon && status !== Image.Error
                         source: trayItem.missingNamedIcon ? "" : trayItem.iconSource
                         sourceSize: Qt.size(Layout.wsTrayIcon, Layout.wsTrayIcon)
                         fillMode: Image.PreserveAspectFit
@@ -199,7 +201,7 @@ NotchSurface {
 
                     Text {
                         anchors.centerIn: parent
-                        visible: trayItem.missingNamedIcon
+                        visible: trayItem.missingNamedIcon || trayIcon.status === Image.Error
                         text: Strings.unknownInitial
                         color: root.scheme.primary
                         font.family: Fonts.family
