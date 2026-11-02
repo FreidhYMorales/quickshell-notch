@@ -148,10 +148,13 @@ const handlers = {
   Dnd(state, { on }) {
     return setGlobal(state, { dnd: on });
   },
+  // Key auto-repeat sends more starts: an existing hold is left untouched.
   HoldStart(state, { action }) {
-    return state.global.keyboard?.kind === "power" && !state.global.polkit
-      ? withHold(state, { action })
-      : unchanged(state);
+    const { keyboard, polkit } = state.global;
+    if (keyboard?.kind !== "power" || polkit || keyboard.hold) {
+      return unchanged(state);
+    }
+    return needsHold(action) ? withHold(state, { action }) : unchanged(state);
   },
   HoldCancel(state) {
     return withHold(state, null);
