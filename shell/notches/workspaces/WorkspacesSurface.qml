@@ -127,6 +127,12 @@ NotchSurface {
         y: root.open ? 0 : -height
         anchor: "topLeft"
 
+        // Keeps the zone hovered while the pointer is anywhere on the shape,
+        // including over menu options that take their own hover.
+        HoverHandler {
+            id: shapeHover
+        }
+
         Behavior on y {
             Anim {}
         }
@@ -289,16 +295,21 @@ NotchSurface {
 
                         Text {
                             text: modelData.text
-                            color: modelData.enabled ? root.scheme.primary : root.scheme.muted
+                            color: !modelData.enabled ? root.scheme.muted : rowHover.hovered ? root.scheme.primary : root.scheme.onSurface
                             font.family: Fonts.family
                             font.pixelSize: Layout.wsIcon
-
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: modelData.enabled
-                                onClicked: modelData.triggered()
-                            }
                         }
+                    }
+
+                    HoverHandler {
+                        id: rowHover
+                        enabled: modelData.enabled && !modelData.isSeparator
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: modelData.enabled && !modelData.isSeparator
+                        onClicked: modelData.triggered()
                     }
                 }
             }
@@ -308,6 +319,10 @@ NotchSurface {
     NotchZone {
         id: maskBox
 
+        // Below the content so menu options get their own hover; the shape's
+        // hover keeps the zone hovered meanwhile.
+        z: -1
+        alsoHovered: shapeHover.hovered
         width: root.open ? shape.width : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
         height: root.open ? shape.height : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
         onHoverChanged: on => {
