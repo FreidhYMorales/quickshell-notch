@@ -8,4 +8,5 @@ test("qml checks include the tray menu probes", () => {
   assert.match(result.stdout, /tests\/qml\/tray-menu-open\.mjs/);
   assert.match(result.stdout, /tests\/qml\/tray-menu-size\.mjs/);
   assert.match(result.stdout, /tests\/qml\/tray-menu-activate\.mjs/);
+  assert.match(result.stdout, /tests\/qml\/tray-menu-disabled\.mjs/);
 });
