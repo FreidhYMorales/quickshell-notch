@@ -22,6 +22,7 @@ time.sleep(10)
       PATH: `${dir}:${process.env.PATH}`,
       CAPTURE_LOG: join(dir, "capture.log"),
       QS_RECORDINGS_DIR: dir,
+      NOTCH_SERVICES_URL: new URL("../shell/services", import.meta.url).href,
     });
     const output = result.stdout + result.stderr;
     assert.equal(result.status, 0, output);

@@ -1,10 +1,9 @@
 import QtQuick
 import Quickshell
-import "../../shell/services" as Services
 
 ShellRoot {
     id: root
-    property var recorder: Services.Recorder
+    property var recorder: Qt.createQmlObject('import QtQuick; import "' + Quickshell.env("NOTCH_SERVICES_URL") + '" as Services; QtObject { property var service: Services.Recorder }', root).service
     property int step: 0
     Timer {
         interval: 500
@@ -12,6 +11,10 @@ ShellRoot {
         repeat: true
         onTriggered: {
             if (step === 0) {
+                if (typeof root.recorder.setRecording !== "function") {
+                    console.error("recording service: invalid test setup");
+                    return Qt.exit(2);
+                }
                 if (typeof root.recorder.start === "function") root.recorder.start();
             } else if (step === 1 && !root.recorder.recording) {
                 console.error("recording service: did not start");
