@@ -9,7 +9,18 @@ test("a recording that ends without a stop request reports failure", () => {
   try {
     writeFileSync(
       join(dir, "gpu-screen-recorder"),
-      "#!/bin/sh\nsleep 1\nexit 0\n",
+      `#!/bin/sh
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -o) output=$2; shift ;;
+    -write-first-frame-ts) readiness=$2; shift ;;
+  esac
+  shift
+done
+if [ "$readiness" = yes ]; then printf '123 456\\n' > "$output.ts"; fi
+sleep 1
+exit 0
+`,
       { mode: 0o755 },
     );
     const result = runTrayProbe("./recording-unexpected.qml", {

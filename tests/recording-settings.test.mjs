@@ -12,6 +12,8 @@ test("capture uses full screen, system audio and an MP4 output", () => {
       `#!/usr/bin/python3
 import json, os, signal, sys, time
 signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
+if '-write-first-frame-ts' in sys.argv:
+    open(sys.argv[sys.argv.index('-o') + 1] + '.ts', 'w').write('123 456\\n')
 open(os.environ['CAPTURE_LOG'], 'w').write(json.dumps(sys.argv[1:]))
 time.sleep(10)
 `,
