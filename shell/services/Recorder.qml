@@ -46,6 +46,11 @@ Singleton {
     Process {
         id: reserve
 
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0)
+                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
+        }
+
         stdout: StdioCollector {
             onStreamFinished: {
                 const path = text.trim();
