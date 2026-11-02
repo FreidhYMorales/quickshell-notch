@@ -38,6 +38,9 @@ NotchSurface {
     })
 
     function step(event) {
+        // Do not replace the tray while its exit animation is still visible.
+        if (event.type === "Trigger" && !open && reveal.row === "tray" && shape.y > -shape.height)
+            return;
         const r = Reveal.stepReveal(reveal, event);
         reveal = r.state;
         if (r.timer === "restart")
