@@ -52,3 +52,7 @@ test("stalled workspace creator is terminated and reported", () => {
 test("stalled video reservation is terminated and reported", () => {
   expectStallReported("mktemp", "--suffix=.mp4*");
 });
+
+test("stalled sidecar reservation is terminated and reported", () => {
+  expectStallReported("ln", "*.owner");
+});
