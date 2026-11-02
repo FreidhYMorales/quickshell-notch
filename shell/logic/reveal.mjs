@@ -53,7 +53,9 @@ export function stepReveal(state, event) {
     case "Trigger": {
       if (!state.ready) return result(state, "none");
       const flash = event.flash === undefined ? state.flash : event.flash;
-      return rearm(next(state, { open: true, flash }));
+      const patch = { open: true, flash };
+      if (!isVisible(state) && state.row === "tray") patch.row = "workspaces";
+      return rearm(next(state, patch));
     }
     case "Hover":
       return setHeld(state, "hover", !!event.on);
@@ -65,15 +67,7 @@ export function stepReveal(state, event) {
       return rearm(next(state, { pinned: false, open: true }));
     case "Timeout":
       if (held(state) || !state.open) return result(state, "none");
-      return result(
-        next(
-          state,
-          state.row === "tray"
-            ? { open: false, flash: null, row: "workspaces" }
-            : { open: false, flash: null },
-        ),
-        "none",
-      );
+      return result(next(state, { open: false, flash: null }), "none");
     default:
       return result(state, "none");
   }
