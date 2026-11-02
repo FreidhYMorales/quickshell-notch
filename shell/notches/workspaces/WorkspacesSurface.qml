@@ -59,7 +59,7 @@ NotchSurface {
 
     slotName: "tl"
     minWidth: Layout.cornerMaxWidth
-    // Hidden: empty mask, clicks pass through.
+    // Hidden: expose only a small hot zone when tray apps exist.
     maskItem: maskBox
     onSpecialChanged: {
         if (special !== "" || reveal.pinned)
@@ -189,18 +189,22 @@ NotchSurface {
         }
     }
 
-    Item {
+    NotchZone {
         id: maskBox
 
-        width: shape.width
-        height: root.open ? shape.height : 0
-    }
-
-    NotchZone {
-        anchors.fill: maskBox
-        onHoverChanged: on => root.step({
-                type: "Hover",
-                on: on
-            })
+        width: root.open ? shape.width : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
+        height: root.open ? shape.height : SystemTray.items.values.length > 0 ? Layout.wsHotZone : 0
+        onHoverChanged: on => {
+            if (on && !root.open)
+                root.step({
+                    type: "TrayHover",
+                    count: SystemTray.items.values.length
+                });
+            else
+                root.step({
+                    type: "Hover",
+                    on: on
+                });
+        }
     }
 }
