@@ -11,6 +11,11 @@ name = dbus.service.BusName("org.kde.StatusNotifierItem.qstest", bus)
 
 
 class Item(dbus.service.Object):
+    def __init__(self, path, identifier, title):
+        super().__init__(bus, path)
+        self.identifier = identifier
+        self.title = title
+
     @dbus.service.method("org.freedesktop.DBus.Properties", in_signature="ss", out_signature="v")
     def Get(self, interface, prop):
         return self.GetAll(interface)[prop]
@@ -19,8 +24,8 @@ class Item(dbus.service.Object):
     def GetAll(self, interface):
         properties = {
             "Category": "ApplicationStatus",
-            "Id": "qs-test",
-            "Title": "QS Test App",
+            "Id": self.identifier,
+            "Title": self.title,
             "Status": "Active",
             "IconName": "",
             "ItemIsMenu": False,
@@ -38,13 +43,18 @@ class Item(dbus.service.Object):
         print("FAKE_ACTIVATED", flush=True)
 
 
-item = Item(bus, "/StatusNotifierItem")
+paths = ["/StatusNotifierItem"]
+items = [Item(paths[0], "qs-test", "QS Test App")]
+if os.environ.get("NOTCH_TEST_COUNT") == "2":
+    paths.append("/StatusNotifierItem2")
+    items.append(Item(paths[1], "qs-test-2", "QS Test App 2"))
 
 
 def register():
     try:
         watcher = bus.get_object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
-        watcher.RegisterStatusNotifierItem(name.get_name(), dbus_interface="org.kde.StatusNotifierWatcher")
+        for path in paths:
+            watcher.RegisterStatusNotifierItem(name.get_name() + path, dbus_interface="org.kde.StatusNotifierWatcher")
         print("FAKE_REGISTERED", flush=True)
         return False
     except dbus.DBusException:
