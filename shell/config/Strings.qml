@@ -23,6 +23,8 @@ Singleton {
     readonly property string glyphBluetooth: "\udb80\udcaf"
     readonly property string glyphDnd: "\udb80\udc9b"
     readonly property string glyphRecording: "󰻃"
+    readonly property string recordingFailed: "Recording failed"
+    readonly property string recordingFailedBody: "Screen recording stopped unexpectedly."
 
     // Calendar names (index 0 = January, 0 = Monday).
     readonly property var months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]

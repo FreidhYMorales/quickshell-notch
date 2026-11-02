@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import "../config"
 
 // Minimal recording state for the idle notch's red dot. The capture process
 // port arrives with the control centre's Rec tile (notch-control-center).
@@ -56,6 +57,10 @@ Singleton {
     Process {
         id: recorder
 
-        onExited: root.privateRecording = false
+        onExited: (exitCode, exitStatus) => {
+            root.privateRecording = false;
+            if (exitCode !== 0)
+                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
+        }
     }
 }
