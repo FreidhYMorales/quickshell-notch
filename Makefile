@@ -40,7 +40,7 @@ qml-test:
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:
-	@log=$$(NOTCH_SMOKE=1 timeout 10 qs -p shell/shell.qml 2>&1); code=$$?; \
+	@log=$$(QS_DISABLE_CRASH_HANDLER=1 NOTCH_SMOKE=1 timeout 10 qs -p shell/shell.qml 2>&1); code=$$?; \
 	if [ $$code -ne 0 ] && [ $$code -ne 124 ]; then echo "$$log"; echo "smoke: qs exited with $$code"; exit 1; fi; \
 	if echo "$$log" | grep -qE 'ERROR|Failed to load|is not a type|is not installed'; then echo "$$log"; echo "smoke: load errors"; exit 1; fi; \
 	echo "smoke: config loaded"
