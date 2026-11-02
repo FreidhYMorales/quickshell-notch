@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the tray row is open and an app provides a menu, when I right-click its icon, then the notch expands horizontally and vertically to show that menu below the still-visible icons and a separator, sized to its contents up to half the height of that screen.
-- [ ] Given an app's menu is open, when I choose an enabled action, then the app receives it; separators, checked states and disabled options are shown correctly, and disabled options cannot be activated.
-- [ ] Given a menu has more options than fit within the height limit, when I scroll the options, then I can reach all of them, an indicator shows there is more content, and the icons and separator remain visible.
+- [x] Given the tray row is open and an app provides a menu, when I right-click its icon, then the notch expands horizontally and vertically to show that menu below the still-visible icons and a separator, sized to its contents up to half the height of that screen.
+- [x] Given an app's menu is open, when I choose an enabled action, then the app receives it; separators, checked states and disabled options are shown correctly, and disabled options cannot be activated.
+- [x] Given a menu has more options than fit within the height limit, when I scroll the options, then I can reach all of them, an indicator shows there is more content, and the icons and separator remain visible.
 
 ## Plan
 
@@ -68,3 +68,4 @@ Risk: item 6 (visual fit and live app menu behavior require manual verification)
 - L30 independent recheck: FAIL. The fixed header separator now masks the existing app-provided separator probe: it finds the header first, so removing the app separator would not fail that assertion. The verifier requests a separate probe between adjacent menu options, demonstrated failing with only the app separator hidden. C1 and C3 pass; action, disabled, and exact-checkmark probes pass; C2 lacks valid app-separator coverage. The historical TDD exceptions in L26 remain and require an explicit decision. User's manual report was positive but did not identify apps or cases. `make check` passed. Under the review stop rule, the story remains open pending user direction.
 - L31 app separator: user approved a separate probe (`02ced07`) that finds the application-provided separator between the Open and Checked options, independently of the header. The existing implementation passed; temporarily hiding only the app separator made the probe fail, and restoring it passed. `ae576c9`/`33c02eb` register the probe; `make check` passes. The historical Strict TDD exceptions and failed independent recheck remain recorded and unresolved.
 - L32 TDD decision: user explicitly accepted the historical Strict TDD exceptions recorded in L26. This acceptance does not change the independent recheck's FAIL verdict; the story remains open pending a decision on closure.
+- L33 closure: user explicitly authorized closing despite the recorded independent recheck FAIL and accepted TDD exceptions. The app-separator coverage was added and verified after that recheck (L31); there was no subsequent verifier PASS. User reported the tray works (L28), and `make check` passes. Final code commit: `8fe1e16`. Risk: item 6. Submenus remain blocked in story #25.
