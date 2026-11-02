@@ -258,6 +258,16 @@ NotchSurface {
             }
         }
 
+        Text {
+            x: Layout.wsPad + (root.menuContentWidth - width) / 2
+            y: menuViewport.y + menuViewport.height
+            visible: root.menuItem !== null && menuViewport.contentY + menuViewport.height < menuViewport.contentHeight - 1
+            text: Strings.glyphChevronDown
+            color: root.scheme.primary
+            font.family: Fonts.family
+            font.pixelSize: Layout.wsMenuGlyph
+        }
+
         Flickable {
             id: menuViewport
 
