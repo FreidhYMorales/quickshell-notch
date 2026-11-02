@@ -179,7 +179,7 @@ NotchSurface {
                     ControlTile {
                         scheme: root.scheme
                         glyph: Recorder.recording ? Strings.glyphStop : Strings.glyphRecording
-                        onToggled: Recorder.recording ? Recorder.stop() : Recorder.start()
+                        onToggled: Recorder.recording ? Recorder.stop() : Recorder.beginCountdown()
                     }
                 }
 
