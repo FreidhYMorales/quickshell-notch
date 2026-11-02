@@ -77,6 +77,14 @@ Singleton {
     // A shell-made critical notification (the battery warning). It behaves like
     // a DBus one in the toast, with no actions; dismiss only closes it here.
     function post(appName: string, summary: string, body: string, appIcon: string) {
+        postWithUrgency(appName, summary, body, appIcon, NotificationUrgency.Critical);
+    }
+
+    function postNormal(appName: string, summary: string, body: string, appIcon: string) {
+        postWithUrgency(appName, summary, body, appIcon, NotificationUrgency.Normal);
+    }
+
+    function postWithUrgency(appName: string, summary: string, body: string, appIcon: string, urgency) {
         const id = nextLocalId--;
         const notif = {
             id: id,
@@ -86,7 +94,7 @@ Singleton {
             appIcon: appIcon,
             image: "",
             actions: [],
-            urgency: NotificationUrgency.Critical,
+            urgency: urgency,
             dismiss: () => root.closed(id)
         };
         queue = NotifQueue.receive(queue, notif);

@@ -175,6 +175,19 @@ NotchSurface {
                             onDetailRequested: root.tileInfo[modelData.id].detail()
                         }
                     }
+
+                    ControlTile {
+                        scheme: root.scheme
+                        glyph: Recorder.recording || Recorder.preparingCapture ? Strings.glyphStop : Strings.glyphRecording
+                        onToggled: {
+                            if (Recorder.recording || Recorder.preparingCapture)
+                                Recorder.stop();
+                            else if (Recorder.countdown > 0)
+                                Recorder.cancelCountdown();
+                            else
+                                Recorder.beginCountdown();
+                        }
+                    }
                 }
 
                 NotifSection {
