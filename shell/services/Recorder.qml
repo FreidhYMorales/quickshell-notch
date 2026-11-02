@@ -48,6 +48,7 @@ Singleton {
                 if (!path)
                     return;
                 recorder.command = ["gpu-screen-recorder", "-w", "screen", "-a", "default_output", "-c", "mp4", "-o", path];
+                recorder.didStart = false;
                 recorder.running = true;
                 root.privateRecording = true;
             }
@@ -57,6 +58,15 @@ Singleton {
     Process {
         id: recorder
 
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && !didStart && root.privateRecording) {
+                root.privateRecording = false;
+                Notifs.post(Strings.center, Strings.recordingFailed, Strings.recordingFailedBody, "");
+            }
+        }
         onExited: (exitCode, exitStatus) => {
             root.privateRecording = false;
             if (exitCode !== 0)
