@@ -1,7 +1,7 @@
 // Pure reducer for the centre notch. No Qt imports, no I/O, no timers.
 // reduce(state, event) -> { state, effects }
 
-import { ACTIONS } from "./powerMenu.mjs";
+import { ACTIONS, needsHold } from "./powerMenu.mjs";
 
 const freshMonitor = () => ({
   hovered: false,
@@ -121,6 +121,17 @@ const handlers = {
     return setGlobal(state, {
       keyboard: merge(keyboard, { sub: ACTIONS[to] }),
     });
+  },
+  // Lock and suspend fire at once and close the menu; the rest need a hold.
+  PowerActivate(state, { action = null }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "power") return unchanged(state);
+    const chosen = action ?? keyboard.sub ?? ACTIONS[0];
+    if (needsHold(chosen)) return unchanged(state);
+    return {
+      state: setGlobal(state, { keyboard: null }).state,
+      effects: [{ type: "power.run", action: chosen }],
+    };
   },
   Close(state, { monitor }) {
     return state.global.keyboard?.owner === monitor
