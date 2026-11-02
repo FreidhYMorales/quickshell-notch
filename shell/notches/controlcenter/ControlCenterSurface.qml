@@ -175,6 +175,11 @@ NotchSurface {
                             onDetailRequested: root.tileInfo[modelData.id].detail()
                         }
                     }
+
+                    ControlTile {
+                        scheme: root.scheme
+                        glyph: Strings.glyphRecording
+                    }
                 }
 
                 NotifSection {
