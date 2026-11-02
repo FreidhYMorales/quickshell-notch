@@ -308,7 +308,8 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 const path = text.trim();
-                if (!path)
+                // Output that arrives after a timeout belongs to a failed attempt.
+                if (!path || !root.preparing || root.timedOutHelper === reserve)
                     return;
                 root.outputPath = path;
                 root.capturePath = path;
