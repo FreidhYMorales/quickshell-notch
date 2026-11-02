@@ -69,6 +69,8 @@ NotchSurface {
     minHeight: menuItem ? Math.floor(screen.height / 2) : 0
     // Hidden: expose only a small hot zone when tray apps exist.
     maskItem: maskBox
+    onOpenChanged: if (!open)
+        menuItem = null
     onSpecialChanged: {
         if (special !== "" || reveal.pinned)
             step({
