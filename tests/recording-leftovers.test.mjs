@@ -49,3 +49,32 @@ test("published videos and empty placeholders are not reported", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("the current recording's workspace is not reported", () => {
+  const dir = mkdtempSync("/tmp/opencode/notch-leftovers-");
+  try {
+    // Delay only the startup scan so it finishes after capture has begun.
+    writeFileSync(
+      join(dir, "sh"),
+      `#!/usr/bin/sh
+case "$2" in *notch-recording-*) sleep 1.5 ;; esac
+exec /usr/bin/sh "$@"
+`,
+      { mode: 0o755 },
+    );
+    writeFileSync(
+      join(dir, "gpu-screen-recorder"),
+      `#!/usr/bin/sh
+path=""
+while [ "$#" -gt 0 ]; do [ "$1" = -o ] && path="$2"; shift; done
+printf 'live video' > "$path"
+printf '123 456\\n' > "$path.ts"
+exec sleep 5
+`,
+      { mode: 0o755 },
+    );
+    assert.deepEqual(startupNotices(dir, { LEFTOVER_START: "1" }), []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
