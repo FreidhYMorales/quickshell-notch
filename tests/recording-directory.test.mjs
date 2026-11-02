@@ -9,7 +9,7 @@ test("recording creates its missing output directory before starting", () => {
   try {
     writeFileSync(
       join(dir, "gpu-screen-recorder"),
-      "#!/usr/bin/python3\nimport signal,time\nsignal.signal(signal.SIGINT, lambda *_: exit(0))\ntime.sleep(10)\n",
+      "#!/usr/bin/python3\nimport signal,sys,time\nsignal.signal(signal.SIGINT, lambda *_: exit(0))\nif '-write-first-frame-ts' in sys.argv: open(sys.argv[sys.argv.index('-o') + 1] + '.ts', 'w').write('123 456\\n')\ntime.sleep(10)\n",
       { mode: 0o755 },
     );
     const destination = join(dir, "new", "recordings");

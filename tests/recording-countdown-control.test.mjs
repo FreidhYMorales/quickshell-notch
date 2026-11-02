@@ -10,7 +10,9 @@ test("record button counts down before starting capture", () => {
     writeFileSync(
       join(dir, "gpu-screen-recorder"),
       `#!/usr/bin/python3
-import os, time
+import os, sys, time
+if '-write-first-frame-ts' in sys.argv:
+    open(sys.argv[sys.argv.index('-o') + 1] + '.ts', 'w').write('123 456\\n')
 open(os.environ['CAPTURE_LOG'], 'w').write(str(int(time.time() * 1000)))
 time.sleep(10)
 `,

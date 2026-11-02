@@ -26,6 +26,8 @@ def stop(*_):
     open(path, 'w').write('new recording')
     sys.exit(0)
 signal.signal(signal.SIGINT, stop)
+if '-write-first-frame-ts' in sys.argv:
+    open(path + '.ts', 'w').write('123 456\\n')
 time.sleep(10)
 `,
       { mode: 0o755 },
