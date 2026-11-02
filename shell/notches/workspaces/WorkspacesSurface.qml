@@ -186,14 +186,14 @@ NotchSurface {
                     readonly property bool missingNamedIcon: iconSource.startsWith(themePrefix) && iconSource.indexOf("?") < 0 && Quickshell.iconPath(iconSource.slice(themePrefix.length), true) === ""
 
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Layout.wsIcon
-                    height: Layout.wsIcon
+                    width: Layout.wsTrayIcon
+                    height: Layout.wsTrayIcon
 
                     Image {
                         anchors.fill: parent
                         visible: !trayItem.missingNamedIcon
                         source: trayItem.missingNamedIcon ? "" : trayItem.iconSource
-                        sourceSize: Qt.size(Layout.wsIcon, Layout.wsIcon)
+                        sourceSize: Qt.size(Layout.wsTrayIcon, Layout.wsTrayIcon)
                         fillMode: Image.PreserveAspectFit
                     }
 
