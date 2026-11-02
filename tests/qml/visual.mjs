@@ -17,3 +17,15 @@ export function findImage(items, source) {
   }
   return null;
 }
+
+export function findVerticalDivider(items) {
+  for (const item of items) {
+    if (
+      item.visible && item.color !== undefined && item.width > 0 &&
+      item.width <= 2 && item.height >= 8
+    ) return item;
+    const nested = findVerticalDivider(item.children || []);
+    if (nested) return nested;
+  }
+  return null;
+}
