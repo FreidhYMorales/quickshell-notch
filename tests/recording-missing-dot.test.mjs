@@ -53,7 +53,7 @@ ShellRoot {
             wait(500);
             const button = root.find(root.panel.content, "󰻃");
             if (!button) { console.error("missing dot: no control"); return Qt.exit(2); }
-            mouseClick(button, button.width / 2, button.height / 2); wait(500);
+            mouseClick(button, button.width / 2, button.height / 2); wait(5600);
             if (!root.find(root.panel.content, "Notch: Recording failed")) { console.error("missing dot: failure not observed"); return Qt.exit(2); }
             if (root.red(root.idle.children)) { console.error("missing dot: red dot remains"); return Qt.exit(1); }
             console.log("missing dot: red dot hidden"); Qt.exit(0);

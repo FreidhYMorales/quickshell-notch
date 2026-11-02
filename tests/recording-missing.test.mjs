@@ -44,7 +44,7 @@ ShellRoot {
             wait(500);
             const button = root.find(root.panel.content, "󰻃");
             if (!button) { console.error("missing recorder: no control"); return Qt.exit(2); }
-            mouseClick(button, button.width / 2, button.height / 2); wait(500);
+            mouseClick(button, button.width / 2, button.height / 2); wait(5600);
             if (!root.find(root.panel.content, "Notch: Recording failed")) { console.error("missing recorder: notification absent"); return Qt.exit(1); }
             console.log("missing recorder: notification visible"); Qt.exit(0);
         }
