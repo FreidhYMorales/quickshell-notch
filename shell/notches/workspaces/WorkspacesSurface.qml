@@ -21,9 +21,9 @@ NotchSurface {
     property var reveal: Reveal.initialReveal()
     property var menuItem: null
     readonly property bool open: Reveal.isVisible(reveal)
-    // Width of the option column while a tray menu is open: the corner body
-    // inside its padding and ear, so separators can span it.
-    readonly property real menuWidth: Layout.cornerMaxWidth - 2 * Layout.wsPad - Layout.earRadius
+    // Width of the option column: the widest label plus the check mark and the
+    // side padding, capped to the notch body.
+    readonly property real menuContentWidth: Math.min(Layout.cornerMaxWidth - 2 * Layout.wsPad - Layout.earRadius, menuMeasure.implicitWidth + Layout.wsMenuGlyph + Layout.wsGap + 2 * Layout.wsMenuPad)
     readonly property var strip: Strip.stripFor({
         activeId: Workspaces.snapshot.monitors[monitorName]?.activeId ?? 1,
         windows: Workspaces.normalWindows,
@@ -33,8 +33,8 @@ NotchSurface {
         flash: reveal.flash
     })
     readonly property var size: CornerLayout.cornerShape({
-        contentWidth: Math.max(row.implicitWidth, menuItem ? menuWidth : 0),
-        contentHeight: Layout.idleHeight + menuColumn.implicitHeight,
+        contentWidth: Math.max(row.implicitWidth, menuItem ? menuContentWidth : 0),
+        contentHeight: Layout.idleHeight + menuColumn.implicitHeight + (menuItem ? Layout.wsMenuPadBottom : 0),
         pad: Layout.wsPad,
         ear: Layout.earRadius,
         maxWidth: root.implicitWidth,
@@ -232,28 +232,49 @@ NotchSurface {
             }
         }
 
+        // Hidden: measures the widest option label so the menu fits its
+        // contents instead of taking the whole corner body.
+        Column {
+            id: menuMeasure
+
+            visible: false
+            Repeater {
+                model: menuOpener.children
+                Text {
+                    required property var modelData
+                    visible: !modelData.isSeparator
+                    text: modelData.text
+                    font.family: Fonts.family
+                    font.pixelSize: Layout.wsIcon
+                }
+            }
+        }
+
         Column {
             id: menuColumn
             x: Layout.wsPad
             y: Layout.idleHeight
-            width: root.menuWidth
             Repeater {
                 model: menuOpener.children
                 Item {
                     required property var modelData
-                    width: menuColumn.width
+                    width: root.menuContentWidth
                     height: modelData.isSeparator ? Layout.wsMenuSeparator : Layout.wsMenuRow
 
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
+                        x: Layout.wsMenuPad
                         visible: modelData.isSeparator
-                        width: parent.width
+                        width: root.menuContentWidth - 2 * Layout.wsMenuPad
                         height: Layout.wsDivider
                         color: root.scheme.muted
                         opacity: Colours.dividerAlpha
                     }
 
                     Row {
+                        id: menuRow
+
+                        x: Layout.wsMenuPad
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !modelData.isSeparator
                         spacing: Layout.wsGap
