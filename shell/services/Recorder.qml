@@ -15,6 +15,21 @@ Singleton {
     property int countdown: 0
     property string outputPath: ""
 
+    signal sidecarClaimed(bool success)
+
+    function claimSidecar(source: string, target: string) {
+        if (sidecarClaim.running)
+            return;
+        sidecarClaim.command = ["ln", "--", source, target];
+        sidecarClaim.running = true;
+    }
+
+    Process {
+        id: sidecarClaim
+
+        onExited: (exitCode, exitStatus) => root.sidecarClaimed(exitCode === 0)
+    }
+
     function setRecording(value: bool) {
         privateRecording = value;
     }
