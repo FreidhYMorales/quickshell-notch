@@ -50,11 +50,12 @@ export function findHorizontalDivider(items) {
   return null;
 }
 
-export function countText(items, text) {
-  let count = 0;
-  for (const item of items) {
-    if (item.visible && item.text === text) count++;
-    count += countText(childItems(item), text);
+// Texts visible in an item's subtree, as plain strings.
+export function textsIn(item) {
+  const found = [];
+  for (const child of childItems(item)) {
+    if (child.visible && typeof child.text === "string") found.push(child.text);
+    for (const nested of textsIn(child)) found.push(nested);
   }
-  return count;
+  return found;
 }

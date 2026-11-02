@@ -2,7 +2,6 @@ import QtQuick
 import QtTest
 import Quickshell
 import Quickshell.Services.SystemTray
-import "../../shell/config"
 import "visual.mjs" as Visual
 
 ShellRoot {
@@ -24,6 +23,13 @@ ShellRoot {
     TestCase {
         name: "TrayMenuSeparator"
         when: root.target !== null
+        function marks(text, label) {
+            const found = [];
+            for (const t of Visual.textsIn(text.parent))
+                if (t !== label)
+                    found.push(t);
+            return found;
+        }
         function test_separator_and_check() {
             wait(500);
             const icon = Visual.findImage(root.target.content, SystemTray.items.values[0].icon);
@@ -47,9 +53,14 @@ ShellRoot {
                 console.error("tray menu: separator divider too short: " + divider.width);
                 return Qt.exit(1);
             }
-            const glyphs = Visual.countText(root.target.content, Strings.glyphCheck);
-            if (glyphs !== 1) {
-                console.error("tray menu: check marks shown: " + glyphs);
+            const checkedMarks = marks(checked, "Checked");
+            if (checkedMarks.length !== 1 || checkedMarks[0].length > 3) {
+                console.error("tray menu: checked option marks: " + checkedMarks.length);
+                return Qt.exit(1);
+            }
+            const uncheckedMarks = marks(unchecked, "Unchecked");
+            if (uncheckedMarks.length !== 0) {
+                console.error("tray menu: unchecked option marks: " + uncheckedMarks.length);
                 return Qt.exit(1);
             }
             console.log("tray menu: separator and check shown");
