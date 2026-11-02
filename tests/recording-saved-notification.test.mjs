@@ -22,6 +22,8 @@ def stop(*_):
     open(path, 'w').write('saved video')
     sys.exit(0)
 signal.signal(signal.SIGINT, stop)
+if '-write-first-frame-ts' in sys.argv:
+    open(path + '.ts', 'w').write('123 456\\n')
 time.sleep(15)
 `,
       { mode: 0o755 },

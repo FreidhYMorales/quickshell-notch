@@ -15,6 +15,8 @@ def stop(*_):
     open(os.environ['CAPTURE_LOG'], 'w').write('finalized')
     sys.exit(0)
 signal.signal(signal.SIGINT, stop)
+if '-write-first-frame-ts' in sys.argv:
+    open(sys.argv[sys.argv.index('-o') + 1] + '.ts', 'w').write('123 456\\n')
 time.sleep(10)
 `,
       { mode: 0o755 },
