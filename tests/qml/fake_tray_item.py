@@ -30,6 +30,8 @@ class Item(dbus.service.Object):
             "IconName": "",
             "ItemIsMenu": False,
         }
+        if os.environ.get("NOTCH_TEST_MENU") == "1":
+            properties["Menu"] = dbus.ObjectPath("/Menu")
         if os.environ.get("NOTCH_TEST_ICON") == "1":
             pixels = dbus.ByteArray(bytes([255, 0, 0, 255] * 4))
             pixmap = dbus.Struct((2, 2, pixels), signature="iiay")
