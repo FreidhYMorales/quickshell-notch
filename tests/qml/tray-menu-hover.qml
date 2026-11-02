@@ -36,19 +36,26 @@ ShellRoot {
                 console.error("tray menu: option or primary reference not shown");
                 return Qt.exit(2);
             }
-            const normal = option.color;
+            // Park the pointer on the icon: a row that appears under a still
+            // pointer can report itself hovered, and only a move clears it.
+            mouseMove(icon, 1, 1);
+            wait(300);
+            const parked = Visual.findText(root.target.content, "Open");
+            const normal = Qt.rgba(parked.color.r, parked.color.g, parked.color.b, parked.color.a);
             console.log("tray menu: normal " + normal);
             if (normal.r < 0.75 || normal.g < 0.75 || normal.b < 0.75) {
                 console.error("tray menu: option text is not light");
                 return Qt.exit(1);
             }
-            mouseMove(option, option.width / 2, option.height / 2);
-            wait(200);
-            if (Qt.colorEqual(option.color, normal)) {
+            mouseMove(parked, parked.width / 2, parked.height / 2);
+            wait(300);
+            const hovered = Visual.findText(root.target.content, "Open");
+            const accent = Visual.findText(root.target.content, "\uf303");
+            if (Qt.colorEqual(hovered.color, normal)) {
                 console.error("tray menu: hover did not change the option colour");
                 return Qt.exit(1);
             }
-            if (!Qt.colorEqual(option.color, arch.color)) {
+            if (!Qt.colorEqual(hovered.color, accent.color)) {
                 console.error("tray menu: hover is not the primary colour");
                 return Qt.exit(1);
             }
