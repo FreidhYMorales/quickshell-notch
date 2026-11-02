@@ -24,8 +24,10 @@ ShellRoot {
                 return Qt.exit(2);
             const initialY = last.mapToItem(null, 0, 0).y;
             const iconY = icon.mapToItem(null, 0, 0).y;
-            for (let i = 0; i < 40; i++)
+            for (let i = 0; i < 40; i++) {
                 mouseWheel(root.target.maskItem, 40, 100, 0, -120);
+                wait(50);
+            }
             wait(500);
             const finalY = last.mapToItem(null, 0, 0).y;
             if (finalY < iconY || finalY + last.height > root.target.size.height || finalY >= initialY || icon.mapToItem(null, 0, 0).y !== iconY) {
