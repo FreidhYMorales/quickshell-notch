@@ -38,7 +38,7 @@ test:
 qml-test:
 	node --test tests/qml/tray-runner-safety.mjs tests/qml/other-runners-safety.mjs
 	node --test tests/qml/tray-menu-fixture.mjs tests/qml/tray-menu-entry.mjs
-	node --test tests/qml/tray-menu-open.mjs tests/qml/tray-menu-size.mjs tests/qml/tray-menu-activate.mjs
+	node --test tests/qml/tray-menu-open.mjs tests/qml/tray-menu-size.mjs tests/qml/tray-menu-activate.mjs tests/qml/tray-menu-disabled.mjs
 	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs tests/qml/tray-placeholder.mjs tests/qml/tray-hover.mjs tests/qml/tray-empty.mjs tests/qml/tray-switch.mjs tests/qml/tray-activate.mjs tests/qml/tray-close.mjs tests/qml/tray-closing-priority.mjs tests/qml/tray-open-priority.mjs tests/qml/tray-divider.mjs tests/qml/tray-icon-size.mjs tests/qml/tray-image-error.mjs tests/qml/tray-image-ready.mjs tests/qml/tray-multiple.mjs
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
