@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the notch is hidden and at least one app sits in the tray, when I rest the pointer in the left corner zone, then the notch slides down showing the Arch icon, a separator and an icon for each tray app; when an icon is detectably unavailable, a generic icon is shown, and when its failure cannot be detected, Quickshell's placeholder is accepted; with no tray apps, hovering that zone opens nothing.
-- [ ] Given the tray row is open, when I switch workspace or open a window, then the row stays as it is; given the row is closed, when I switch workspace, then the workspace strip reveals exactly as it does today.
-- [ ] Given the tray row is open, when I right-click the Arch icon, then the notch switches between the workspace strip and the tray icons; when I left-click a tray icon, then that app's window comes back on screen.
+- [x] Given the notch is hidden and at least one app sits in the tray, when I rest the pointer in the left corner zone, then the notch slides down showing the Arch icon, a separator and an icon for each tray app; when an icon is detectably unavailable, a generic icon is shown, and when its failure cannot be detected, Quickshell's placeholder is accepted; with no tray apps, hovering that zone opens nothing.
+- [x] Given the tray row is open, when I switch workspace or open a window, then the row stays as it is; given the row is closed, when I switch workspace, then the workspace strip reveals exactly as it does today.
+- [x] Given the tray row is open, when I right-click the Arch icon, then the notch switches between the workspace strip and the tray icons; when I left-click a tray icon, then that app's window comes back on screen.
 
 ## Plan
 
@@ -51,3 +51,4 @@ Risk: item 6 (tray activation, the hover/priority feel and the row's fit on the 
 - L10 fallback direction (user): use normal icons first and a generic icon for detectable missing icons; accept Quickshell's placeholder as a last resort when its pixmap provider does not expose the failure. Menus and activation remain available. The committed initial-fallback test conflicts with this revised scope and remains unchanged.
 - L11 refinement: user asked to reopen story 22 with the new fallback decision. Criteria and scope updated for approval; no committed test or production code was changed during refinement.
 - L12 approval: user approved the revised story, including the generic fallback for detectable failures and Quickshell's placeholder as the accepted last resort for undetectable failures.
+- L13 build and verification: test/production pairs include `8ae7c62`/`0f13251` (pixmap), `09a3178`/`4472c92` (named icon fallback), `62e1f8b`/`8d2e71e` (hover), `5c13f32`/`b6450f0` (workspace return), `262078d`/`0b652bf` (switch), `cddba32`/`1b55ec9` (activation), `3a18d7b`/`77c8249` (exit), `e6b9237`/`fe94d68` (exit priority), `6c3cd00`/`7332824` (divider), `ba4d2fb`/`edf515c` (size), and `194ea8e`/`ad0a64e` (image-error fallback). Additional characterization and fixture commits cover empty, multiple and ambiguous tray items. `make check`: 449 logic tests, 17 QML tests, 0 failures, `smoke: config loaded`. User confirmed all manual criteria with Vesktop and the icon size with Steam; Steam did not respond to activation, which the user identifies as its normal behavior. Independent verifier: initial FAIL (image error and test coverage), correction batch, recheck PASS. Risk: item 6 (live tray and visual behavior need manual verification).
