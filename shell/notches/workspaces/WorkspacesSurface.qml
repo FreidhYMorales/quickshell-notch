@@ -238,12 +238,13 @@ NotchSurface {
                 Text {
                     required property var modelData
                     text: modelData.text
-                    color: root.scheme.primary
+                    color: modelData.enabled ? root.scheme.primary : root.scheme.muted
                     font.family: Fonts.family
                     font.pixelSize: Layout.wsIcon
 
                     MouseArea {
                         anchors.fill: parent
+                        enabled: modelData.enabled
                         onClicked: modelData.triggered()
                     }
                 }
