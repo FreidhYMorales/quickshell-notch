@@ -35,3 +35,17 @@ test("an interrupted recording is reported at startup", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("published videos and empty placeholders are not reported", () => {
+  const dir = mkdtempSync("/tmp/opencode/notch-leftovers-");
+  const recordings = join(dir, "recordings");
+  try {
+    const workspace = join(recordings, ".notch-recording-empty123");
+    mkdirSync(workspace, { recursive: true });
+    writeFileSync(join(workspace, "recording-x.mp4"), "");
+    writeFileSync(join(recordings, "recording-done-1.mp4"), "saved video");
+    assert.deepEqual(startupNotices(dir), []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
