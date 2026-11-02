@@ -288,7 +288,7 @@ Singleton {
                 root.outputPath = path;
                 root.capturePath = path;
                 reserveSidecar.command = ["sh", "-c", "set -C; : > \"$1\" && ln -- \"$1\" \"$2\"", "sh", path + ".ts", path + ".owner"];
-                reserveSidecar.running = true;
+                root.runHelper(reserveSidecar);
             }
         }
     }
@@ -366,6 +366,8 @@ Singleton {
         id: reserveSidecar
 
         onExited: (exitCode, exitStatus) => {
+            if (!root.claimHelper(reserveSidecar))
+                return;
             if (exitCode !== 0) {
                 if (root.reservationAttempts < Limits.recordingReservationAttempts)
                     Qt.callLater(root.reserveCandidate);
