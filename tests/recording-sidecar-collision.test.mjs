@@ -13,11 +13,8 @@ import { runTrayProbe } from "./qml/run-tray.mjs";
 test("an existing readiness sidecar is preserved", () => {
   const dir = mkdtempSync("/tmp/opencode/notch-sidecar-collision-");
   const recordings = join(dir, "recordings");
-  const conflict = join(recordings, "recording-CONFLICT.mp4");
-  const sentinel = `${conflict}.ts`;
   try {
     mkdirSync(recordings);
-    writeFileSync(sentinel, "existing sidecar");
     writeFileSync(
       join(dir, "mktemp"),
       `#!/usr/bin/python3
@@ -31,8 +28,11 @@ except FileNotFoundError:
     count = 0
 with open(counter, 'w') as f: f.write(str(count + 1))
 name = 'recording-CONFLICT.mp4' if count == 0 else 'recording-SAFE' + str(count) + '.mp4'
-path = os.path.join(os.environ['QS_RECORDINGS_DIR'], name)
+path = os.path.join(os.path.dirname(sys.argv[-1]), name)
 with open(path, 'x'): pass
+if count == 0:
+    with open(path + '.ts', 'x') as f: f.write('existing sidecar')
+    with open(os.environ['CONFLICT_LOG'], 'w') as f: f.write(path)
 print(path)
 `,
       { mode: 0o755 },
@@ -57,11 +57,13 @@ time.sleep(10)
       PATH: `${dir}:${process.env.PATH}`,
       QS_RECORDINGS_DIR: recordings,
       RESERVE_COUNT: join(dir, "reserve-count"),
+      CONFLICT_LOG: join(dir, "conflict.log"),
       CAPTURE_LOG: join(dir, "capture.log"),
       NOTCH_SERVICES_URL: new URL("../shell/services", import.meta.url).href,
     });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.equal(readFileSync(sentinel, "utf8"), "existing sidecar");
+    const conflict = readFileSync(join(dir, "conflict.log"), "utf8");
+    assert.equal(readFileSync(`${conflict}.ts`, "utf8"), "existing sidecar");
     const selected = readFileSync(join(dir, "capture.log"), "utf8");
     assert.notEqual(
       selected,
