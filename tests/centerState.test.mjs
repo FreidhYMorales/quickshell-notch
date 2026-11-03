@@ -671,3 +671,20 @@ test("PowerSelect: unknown actions and other keyboard states are ignored", () =>
   ]);
   assert.equal(launcher.state.global.keyboard.sub, null);
 });
+
+test("LauncherQuery: stores the typed text and selects the first result", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherQuery", text: "fi" },
+  ]);
+  assert.equal(state.global.keyboard.query, "fi");
+  assert.equal(state.global.keyboard.index, 0);
+});
+
+test("LauncherQuery: ignored while the power menu is open", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "LauncherQuery", text: "fi" },
+  ]);
+  assert.equal(state.global.keyboard.query, undefined);
+});
