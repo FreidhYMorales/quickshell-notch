@@ -7,6 +7,7 @@ import "../../logic/controlNav.mjs" as ControlNav
 import "../../logic/controlTiles.mjs" as ControlTiles
 import "../../logic/cornerLayout.mjs" as CornerLayout
 import "../../logic/format.mjs" as Format
+import "../../logic/powerMenu.mjs" as PowerMenu
 import "../../logic/workspaceStrip.mjs" as Strip
 import "../../services"
 
@@ -155,6 +156,26 @@ NotchSurface {
                             color: root.scheme.muted
                             font.family: Fonts.family
                             font.pixelSize: Fonts.small
+                        }
+                    }
+                }
+
+                // Session actions, same icons as the power menu.
+                Row {
+                    spacing: Layout.ccTileGap
+
+                    Repeater {
+                        model: PowerMenu.ACTIONS
+
+                        Text {
+                            required property string modelData
+
+                            width: Layout.ccTile
+                            horizontalAlignment: Text.AlignHCenter
+                            text: Strings.powerIcons[modelData]
+                            color: root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.control
                         }
                     }
                 }
