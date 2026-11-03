@@ -56,7 +56,7 @@ Item {
             focus: root.visible
             color: root.scheme.onSurface
             font.family: Fonts.family
-            font.pixelSize: Fonts.title
+            font.pixelSize: Fonts.launcherItem
             // Each opening starts from an empty search.
             onVisibleChanged: if (visible) {
                 clear();
@@ -95,45 +95,66 @@ Item {
         }
 
         ListView {
+            id: list
+
             width: parent.width
             height: Layout.launcherRows * Layout.launcherRowHeight
             clip: true
-            interactive: false
             model: root.results
             currentIndex: root.view.index ?? 0
+            // Keeps the selection in sight while the arrows move it.
+            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
-            delegate: Row {
+            delegate: Item {
                 id: row
 
                 required property var modelData
                 required property int index
+                readonly property bool isSelected: index === list.currentIndex
 
+                width: list.width
                 height: Layout.launcherRowHeight
-                spacing: Layout.launcherGap
 
-                Image {
+                Row {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Layout.launcherIcon
-                    height: Layout.launcherIcon
-                    sourceSize.width: Layout.launcherIcon
-                    sourceSize.height: Layout.launcherIcon
-                    source: Quickshell.iconPath(row.modelData.icon ?? "", true)
+                    spacing: Layout.launcherGap
+
+                    Image {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Layout.launcherIcon
+                        height: Layout.launcherIcon
+                        sourceSize.width: Layout.launcherIcon
+                        sourceSize.height: Layout.launcherIcon
+                        source: Quickshell.iconPath(row.modelData.icon ?? "", true)
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: row.modelData.name
+                        color: row.isSelected ? root.scheme.primary : root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.launcherItem
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Timings.animNormal
+                            }
+                        }
+                    }
                 }
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: row.modelData.name
-                    color: row.index === (root.view.index ?? 0) ? root.scheme.primary : root.scheme.onSurface
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.body
+                // Passive, so it still sees the pointer under the notch's own
+                // hover zone; hovering selects like the arrows, a click launches.
+                HoverHandler {
+                    onHoveredChanged: if (hovered)
+                        root.send({
+                            type: "LauncherSelect",
+                            index: row.index
+                        })
                 }
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: row.modelData.genericName || row.modelData.comment || ""
-                    color: root.scheme.muted
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.small
+                TapHandler {
+                    onTapped: root.launch(row.index)
                 }
             }
         }

@@ -53,6 +53,9 @@ NotchSurface {
     readonly property bool launcher: view.mode === "launcher"
 
     slotName: "c"
+    // The launcher is taller than the expanded slot; the window is masked, so
+    // the extra height is invisible until the launcher fills it.
+    minHeight: Layout.launcherHeight
     wantsKeyboard: view.keyboardFocus === "exclusive"
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
