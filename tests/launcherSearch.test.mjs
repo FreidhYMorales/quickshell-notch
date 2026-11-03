@@ -50,3 +50,12 @@ test("rankApps: ignores case; generic name and keywords match after any name mat
     ["webcam", "wireless", "chromium", "firefox"],
   );
 });
+
+test("rankApps: no app matches a query absent from names, generic names and keywords", () => {
+  const apps = [
+    app("firefox", "Firefox", "Web Browser", ["internet"]),
+    app("files", "Files", "File Manager"),
+  ];
+  assert.deepEqual(rankApps(apps, "fil").map((a) => a.id), ["files"]);
+  assert.deepEqual(rankApps(apps, "xyz"), []);
+});
