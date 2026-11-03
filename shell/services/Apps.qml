@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import QtQuick
+import "../config"
 
 // Visible desktop entries as plain records for the launcher's ranking.
 Singleton {
@@ -24,6 +25,19 @@ Singleton {
             });
         }
         return out;
+    }
+
+    function launch(id: string): void {
+        if (Flags.launchDryRun) {
+            console.log("Apps: launch " + id);
+            return;
+        }
+        const entry = DesktopEntries.byId(id);
+        if (!entry) {
+            console.warn("Apps: no desktop entry " + id);
+            return;
+        }
+        entry.execute();
     }
 
     // Desktop entries load lazily: touch them at startup.

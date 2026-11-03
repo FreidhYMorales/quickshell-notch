@@ -52,6 +52,10 @@ Singleton {
             Notifs.advance();
             return;
         }
+        if (effect.type === "app.launch") {
+            Apps.launch(effect.appId);
+            return;
+        }
         if (effect.type === "power.run") {
             Power.run(effect.action);
             return;
