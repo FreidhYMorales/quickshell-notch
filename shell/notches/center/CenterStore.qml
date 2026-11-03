@@ -36,6 +36,11 @@ Singleton {
                         flowId: polkitAgent.flow,
                         monitor: Hyprland.focusedMonitor?.name
                     });
+                else if (root.state.global.polkit)
+                    root.dispatch({
+                        type: "PolkitEnded",
+                        flowId: root.state.global.polkit.flowId
+                    });
             }
         }
     }
