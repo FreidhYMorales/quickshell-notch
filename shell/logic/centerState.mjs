@@ -122,6 +122,13 @@ const handlers = {
       keyboard: merge(keyboard, { sub: ACTIONS[to] }),
     });
   },
+  PowerSelect(state, { action }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "power" || !ACTIONS.includes(action)) {
+      return unchanged(state);
+    }
+    return setGlobal(state, { keyboard: merge(keyboard, { sub: action }) });
+  },
   // Lock and suspend fire at once and close the menu; the rest need a hold.
   PowerActivate(state, { action = null }) {
     const { keyboard } = state.global;
