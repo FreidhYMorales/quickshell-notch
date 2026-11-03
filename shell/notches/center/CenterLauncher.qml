@@ -67,7 +67,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Layout.launcherIcon
                 horizontalAlignment: Text.AlignHCenter
-                text: Strings.launcherModeIcons[root.view.sub ?? "apps"] ?? Strings.launcherModeIcons.apps
+                text: (root.view.query ?? "").startsWith(">") ? Strings.launcherModeIcons.commands : Strings.launcherModeIcons.apps
                 color: root.scheme.primary
                 font.family: Fonts.family
                 font.pixelSize: Fonts.launcherItem

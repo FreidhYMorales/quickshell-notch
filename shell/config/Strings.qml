@@ -20,7 +20,7 @@ Singleton {
     // pound for commands.
     readonly property var launcherModeIcons: ({
             apps: "\udb80\udf49",
-            commands: "\udb81\udc23"
+            commands: "#"
         })
     // Notifications subpage: the link that opens it and its chevrons.
     readonly property string seeAll: "See all"
