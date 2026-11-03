@@ -30,6 +30,7 @@ Singleton {
         },
         {
             name: "Keybinds",
+            glyph: "󰌌",
             description: "View keyboard shortcuts."
         }
     ]
