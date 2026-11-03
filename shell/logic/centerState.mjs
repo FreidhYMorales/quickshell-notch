@@ -131,6 +131,16 @@ const handlers = {
     if (keyboard?.kind !== "launcher") return unchanged(state);
     return setGlobal(state, { keyboard: merge(keyboard, { index }) });
   },
+  // The store resolves the selected (or clicked) result to `appId`; null means
+  // there are no results.
+  LauncherActivate(state, { appId }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher" || !appId) return unchanged(state);
+    return {
+      state: setGlobal(state, { keyboard: null }).state,
+      effects: [{ type: "app.launch", appId }],
+    };
+  },
   PowerOpen(state, { monitor, action = null }) {
     return openKeyboard(state, monitor, "power", action);
   },
