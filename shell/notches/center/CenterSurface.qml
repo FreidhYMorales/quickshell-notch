@@ -32,7 +32,7 @@ NotchSurface {
         },
         max: slot.width
     }) : view.mode === "polkit" ? {
-        width: Layout.polkitWidth,
+        width: root.polkitWidth,
         height: Math.max(Layout.polkitMinHeight, polkitForm.implicitHeight + 2 * Layout.polkitPad)
     } : CenterLayout.shapeFor(view.mode, {
         idle: idleW,
@@ -56,6 +56,7 @@ NotchSurface {
     readonly property bool launcher: view.mode === "launcher"
     readonly property bool polkit: view.mode === "polkit"
     readonly property var scheme: Colours.paletteFor(screen)
+    readonly property int polkitWidth: CenterStore.state.global.polkit?.flowId?.isResponseRequired === false ? Layout.polkitWideWidth : Layout.polkitWidth
     // Same tint as the notifications card, for the polkit field and idle buttons.
     readonly property color tint: {
         const p = Qt.color(scheme.primary);
@@ -145,7 +146,7 @@ NotchSurface {
         Column {
             id: polkitForm
 
-            width: Layout.polkitWidth - 2 * Layout.polkitPad
+            width: root.polkitWidth - 2 * Layout.polkitPad
             x: (parent.width - width) / 2
             anchors.top: parent.top
             anchors.topMargin: Layout.polkitPad

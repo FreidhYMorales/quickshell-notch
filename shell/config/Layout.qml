@@ -56,6 +56,8 @@ Singleton {
     // Polkit prompt in the centre notch: padded card around the action message,
     // optional error, masked field and controls. The height follows the content.
     readonly property int polkitWidth: 360
+    // Fingerprint prompts have no field, so their message gets more room.
+    readonly property int polkitWideWidth: 460
     readonly property int polkitPad: 18
     readonly property int polkitGap: 10
     // The card keeps a comfortable height even while the fingerprint reader
