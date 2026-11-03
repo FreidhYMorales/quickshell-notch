@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the app launcher is open, when I enter `>`, then it shows Wallpaper, Theme and Keybinds as commands instead of apps and replaces the search icon with `#`; removing the prefix returns to app search and its search icon.
-- [ ] Given command mode is open, when I type after `>` or move the selection with the keyboard or mouse, then the list filters, the selected command's description is shown, and an empty result shows "No matches".
-- [ ] Given a command view is not yet implemented, when I select or try to open that command, then it is clearly marked unavailable and no setup change occurs; Esc closes the launcher from command mode.
+- [x] Given the app launcher is open, when I enter `>`, then it shows Wallpaper, Theme and Keybinds as commands instead of apps and replaces the search icon with `#`; removing the prefix returns to app search and its search icon.
+- [x] Given command mode is open, when I type after `>` or move the selection with the keyboard or mouse, then the list filters, the selected command's description is shown, and an empty result shows "No matches".
+- [x] Given a command view is not yet implemented, when I select or try to open that command, then it is clearly marked unavailable and no setup change occurs; Esc closes the launcher from command mode.
 
 ## Plan
 
@@ -46,3 +46,4 @@ Risk: none
 - L9: Return checks were split and passed: search icon 077445d, app results 01e3808. User confirmed keyboard and mouse selection, descriptions and Escape manually on the retry instance.
 - L10: User requested and visually approved command glyphs, compact command rows and a list/description divider. Glyph tests/code: 7e1aaa1→23bcfa1, 6eb601a→9b51ef4, 043cc32→53901b4; rows 3287de4→435dace; divider 0dbaf27→64af4aa. The user checked the final visual layout on the glyphs instance.
 - L11: Earlier `make check` passed with launcher QML 20 passed and smoke loaded. Two final runs failed intermittently: apps-return and description-switch in the first (both passed individually afterward), launcher-view and wallpaper-glyph in the second. User reports keyboard input was captured by the probes; rerun without typing before closing. Risk: none.
+- L12: Final `make check` passed without keyboard input: launcher QML 20 passed, 0 failed; smoke config loaded. Risk: none; no high-risk verifier required. Stories 27–29 implement the unavailable command views.

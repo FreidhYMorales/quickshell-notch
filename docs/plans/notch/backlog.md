@@ -35,7 +35,7 @@
 23. [x] 8fe1e16 As a user, I want a tray icon's own menu on right click so that I can use its actions without restoring its window. Requires: #22
 24. [ ] As a user, I want tray icons with failures hidden by Quickshell to show a recognizable fallback instead of its placeholder so that I can identify those apps. Requires: #22
 25. [ ] BLOCKED (Quickshell submenu loading) As a user, I want to navigate a tray app's submenus inside the notch and return to the parent menu so that I can use nested actions without floating windows. Requires: #23
-26. [~] As a user, I want to browse and search launcher commands with a description pane so that I can understand the available setup actions. Requires: #08
+26. [x] 64af4aa As a user, I want to browse and search launcher commands with a description pane so that I can understand the available setup actions. Requires: #08
 27. [ ] As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
 28. [ ] As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
 29. [ ] As a user, I want the keybinds command view so that I can access my keybinds from the launcher. Requires: #26
