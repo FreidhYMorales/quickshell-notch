@@ -12,3 +12,4 @@ singleton Brightness Brightness.qml
 singleton Notifs Notifs.qml
 singleton OsInfo OsInfo.qml
 singleton Radios Radios.qml
+singleton Power Power.qml

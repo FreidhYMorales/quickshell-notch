@@ -12,4 +12,7 @@ Singleton {
     // Null keeps the real values.
     readonly property var batteryOverride: null
     readonly property bool smoke: Quickshell.env("NOTCH_SMOKE") === "1"
+    // Power actions are only logged, never run: smoke runs and manual tests
+    // (NOTCH_POWER_DRY_RUN=1) must not end the live session.
+    readonly property bool powerDryRun: smoke || Quickshell.env("NOTCH_POWER_DRY_RUN") === "1"
 }
