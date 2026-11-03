@@ -110,6 +110,13 @@ const handlers = {
     }
     return openKeyboard(state, monitor, "launcher", sub);
   },
+  LauncherQuery(state, { text }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher") return unchanged(state);
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { query: text, index: 0 }),
+    });
+  },
   PowerOpen(state, { monitor, action = null }) {
     return openKeyboard(state, monitor, "power", action);
   },
