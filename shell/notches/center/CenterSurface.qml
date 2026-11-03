@@ -157,11 +157,13 @@ NotchSurface {
                 text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
                 color: Colours.paletteFor(root.screen).onSurface
                 font.family: Fonts.family
+                font.pixelSize: Fonts.idleClock
             }
 
             Text {
                 id: polkitError
 
+                objectName: "polkitError"
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -169,6 +171,7 @@ NotchSurface {
                 text: root.polkit ? CenterStore.state.global.polkit.flowId.supplementaryMessage ?? "" : ""
                 color: root.polkit && CenterStore.state.global.polkit.flowId.supplementaryIsError ? Colours.critical : Colours.paletteFor(root.screen).muted
                 font.family: Fonts.family
+                font.pixelSize: Fonts.idleClock
             }
 
             Row {
@@ -194,6 +197,7 @@ NotchSurface {
                     TextInput {
                         id: polkitInput
 
+                        objectName: "polkitInput"
                         anchors.fill: parent
                         anchors.leftMargin: Layout.polkitFieldPad
                         anchors.rightMargin: Layout.polkitFieldPad
@@ -205,6 +209,7 @@ NotchSurface {
                         onAccepted: root.submitResponse()
                         color: root.scheme.onSurface
                         font.family: Fonts.family
+                        font.pixelSize: Fonts.idleClock
                     }
                 }
 
@@ -229,7 +234,7 @@ NotchSurface {
                         text: Strings.glyphClose
                         color: cancelHover.hovered ? Colours.background : root.scheme.onSurface
                         font.family: Fonts.family
-                        font.pixelSize: Fonts.body
+                        font.pixelSize: Fonts.title
 
                         Behavior on color {
                             ColorAnimation {
@@ -271,7 +276,7 @@ NotchSurface {
                         text: Strings.glyphCheck
                         color: acceptHover.hovered ? Colours.background : root.scheme.onSurface
                         font.family: Fonts.family
-                        font.pixelSize: Fonts.body
+                        font.pixelSize: Fonts.title
 
                         Behavior on color {
                             ColorAnimation {
