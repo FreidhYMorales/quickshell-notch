@@ -28,7 +28,7 @@ export function viewFor(state, name) {
   else if (monitor.hovered || monitor.pinned) mode = "expanded";
 
   const keyboardMode = mode === "launcher" || mode === "power";
-  return {
+  const view = {
     mode,
     sub: keyboardMode ? keyboard.sub : null,
     hold: mode === "power" ? keyboard.hold : null,
@@ -37,6 +37,12 @@ export function viewFor(state, name) {
     blinkDot,
     keyboardFocus: keyboardMode || mode === "polkit" ? "exclusive" : "none",
   };
+  // Only the launcher carries a query and a selected result.
+  if (mode === "launcher") {
+    view.query = keyboard.query ?? "";
+    view.index = keyboard.index ?? 0;
+  }
+  return view;
 }
 
 // The toast timer is global: a hover on any monitor pauses it everywhere.

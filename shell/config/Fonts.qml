@@ -16,6 +16,8 @@ Singleton {
     readonly property int toast: 15
     // Battery glyph and percentage beside the idle row.
     readonly property int idleSide: 15
+    // Launcher field and app names (idle clock size + 20%).
+    readonly property int launcherItem: 18
     // Power menu action icons.
     readonly property int powerIcon: 28
 }

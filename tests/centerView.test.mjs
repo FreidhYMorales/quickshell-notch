@@ -163,3 +163,16 @@ test("unreadDot: blinks while a keyboard state or polkit is open, steady after",
   const closed = reduce(launcher, { type: "Close", monitor: "A" }).state;
   assert.deepEqual(unreadDot(closed, true), { visible: true, blinking: false });
 });
+
+test("launcher: exposes the query and selection, empty and first by default", () => {
+  const open = play([{ type: "LauncherToggle", monitor: "A" }]);
+  assert.equal(viewFor(open, "A").query, "");
+  assert.equal(viewFor(open, "A").index, 0);
+  const typed = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherQuery", text: "fire" },
+    { type: "LauncherMove", step: 1, count: 3 },
+  ]);
+  assert.equal(viewFor(typed, "A").query, "fire");
+  assert.equal(viewFor(typed, "A").index, 1);
+});

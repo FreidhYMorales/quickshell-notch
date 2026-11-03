@@ -671,3 +671,97 @@ test("PowerSelect: unknown actions and other keyboard states are ignored", () =>
   ]);
   assert.equal(launcher.state.global.keyboard.sub, null);
 });
+
+test("LauncherQuery: stores the typed text and selects the first result", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherQuery", text: "fi" },
+  ]);
+  assert.equal(state.global.keyboard.query, "fi");
+  assert.equal(state.global.keyboard.index, 0);
+});
+
+test("LauncherQuery: ignored while the power menu is open", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "LauncherQuery", text: "fi" },
+  ]);
+  assert.equal(state.global.keyboard.query, undefined);
+});
+
+test("LauncherMove: moves the selection within the results", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: 1, count: 5 },
+    { type: "LauncherMove", step: 1, count: 5 },
+  ]);
+  assert.equal(state.global.keyboard.index, 2);
+});
+
+test("LauncherMove: stays on the first and last result", () => {
+  const up = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: -1, count: 3 },
+  ]);
+  assert.equal(up.state.global.keyboard.index, 0);
+  const down = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: 1, count: 3 },
+    { type: "LauncherMove", step: 1, count: 3 },
+    { type: "LauncherMove", step: 1, count: 3 },
+  ]);
+  assert.equal(down.state.global.keyboard.index, 2);
+});
+
+test("LauncherQuery: a new query brings a moved selection back to the first result", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: 1, count: 4 },
+    { type: "LauncherQuery", text: "f" },
+  ]);
+  assert.equal(state.global.keyboard.index, 0);
+});
+
+test("LauncherSelect: hovering a result selects it", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherSelect", index: 3 },
+  ]);
+  assert.equal(state.global.keyboard.index, 3);
+});
+
+test("LauncherSelect: ignored while the power menu is open", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "LauncherSelect", index: 3 },
+  ]);
+  assert.equal(state.global.keyboard.index, undefined);
+});
+
+test("LauncherActivate: launches the chosen app and closes the launcher", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherActivate", appId: "firefox.desktop" },
+  ]);
+  assert.deepEqual(effects, [{ type: "app.launch", appId: "firefox.desktop" }]);
+  assert.equal(state.global.keyboard, null);
+});
+
+test("LauncherActivate: with no results nothing launches and the launcher stays", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherQuery", text: "xyz" },
+    { type: "LauncherActivate", appId: null },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "launcher");
+});
+
+test("LauncherActivate: ignored while the power menu is open", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "LauncherActivate", appId: "firefox.desktop" },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "power");
+});

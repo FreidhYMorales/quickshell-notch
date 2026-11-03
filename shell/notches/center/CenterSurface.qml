@@ -40,16 +40,22 @@ NotchSurface {
             mark: expandedView.markExtent,
             max: slot.width
         }),
-        power: Layout.powerWidth
+        power: Layout.powerWidth,
+        launcher: Layout.launcherWidth
     }, {
         idle: Layout.idleHeight,
         expanded: Layout.expandedHeight,
-        power: Layout.powerHeight
+        power: Layout.powerHeight,
+        launcher: launcherView.implicitHeight
     })
     readonly property bool expanded: view.mode === "expanded"
     readonly property bool power: view.mode === "power"
+    readonly property bool launcher: view.mode === "launcher"
 
     slotName: "c"
+    // The launcher is taller than the expanded slot; the window is masked, so
+    // the extra height is invisible until the launcher fills it.
+    minHeight: launcherView.implicitHeight
     wantsKeyboard: view.keyboardFocus === "exclusive"
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
@@ -80,7 +86,7 @@ NotchSurface {
             id: idle
 
             anchors.fill: parent
-            visible: !root.expanded && !root.toast && !root.power
+            visible: !root.expanded && !root.toast && !root.power && !root.launcher
             screen: root.screen
             view: root.view
         }
@@ -95,6 +101,15 @@ NotchSurface {
         CenterPower {
             anchors.fill: parent
             visible: root.power
+            screen: root.screen
+            view: root.view
+        }
+
+        CenterLauncher {
+            id: launcherView
+
+            anchors.fill: parent
+            visible: root.launcher
             screen: root.screen
             view: root.view
         }

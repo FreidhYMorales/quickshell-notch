@@ -14,6 +14,14 @@ Singleton {
     // Control center notifications section; %1 = how many.
     readonly property string notificationsTitle: "Notifications (%1)"
     readonly property string noNotifications: "No notifications"
+    // Launcher line when the query matches no app.
+    readonly property string noMatches: "No matches"
+    // Launcher glyph before the field, keyed by mode: magnify for apps,
+    // pound for commands.
+    readonly property var launcherModeIcons: ({
+            apps: "\udb80\udf49",
+            commands: "\udb81\udc23"
+        })
     // Notifications subpage: the link that opens it and its chevrons.
     readonly property string seeAll: "See all"
     readonly property string glyphChevronRight: "\uf054"

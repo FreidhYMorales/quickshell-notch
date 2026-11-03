@@ -15,4 +15,7 @@ Singleton {
     // Power actions are only logged, never run: smoke runs and manual tests
     // (NOTCH_POWER_DRY_RUN=1) must not end the live session.
     readonly property bool powerDryRun: smoke || Quickshell.env("NOTCH_POWER_DRY_RUN") === "1"
+    // Launched apps are only logged, never started: smoke runs, probes and
+    // manual tests (NOTCH_LAUNCH_DRY_RUN=1).
+    readonly property bool launchDryRun: smoke || Quickshell.env("NOTCH_LAUNCH_DRY_RUN") === "1"
 }

@@ -110,6 +110,37 @@ const handlers = {
     }
     return openKeyboard(state, monitor, "launcher", sub);
   },
+  LauncherQuery(state, { text }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher") return unchanged(state);
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { query: text, index: 0 }),
+    });
+  },
+  // The store passes `count` (results shown); the reducer never sees the apps.
+  LauncherMove(state, { step, count }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher") return unchanged(state);
+    const to = Math.min(count - 1, (keyboard.index ?? 0) + step);
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { index: Math.max(0, to) }),
+    });
+  },
+  LauncherSelect(state, { index }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher") return unchanged(state);
+    return setGlobal(state, { keyboard: merge(keyboard, { index }) });
+  },
+  // The store resolves the selected (or clicked) result to `appId`; null means
+  // there are no results.
+  LauncherActivate(state, { appId }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher" || !appId) return unchanged(state);
+    return {
+      state: setGlobal(state, { keyboard: null }).state,
+      effects: [{ type: "app.launch", appId }],
+    };
+  },
   PowerOpen(state, { monitor, action = null }) {
     return openKeyboard(state, monitor, "power", action);
   },
