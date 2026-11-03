@@ -53,7 +53,7 @@ ShellRoot {
             wait(600);
 
             let input = root.field(root.surface.content);
-            let button = Visual.findText(root.surface.content, "Authenticate");
+            let button = Visual.findNamed(root.surface.content, "polkitAcceptButton");
             if (!input || !button)
                 return Qt.exit(2);
             input.insert(0, "first");
@@ -70,7 +70,7 @@ ShellRoot {
             wait(300);
 
             input = root.field(root.surface.content);
-            button = Visual.findText(root.surface.content, "Authenticate");
+            button = Visual.findNamed(root.surface.content, "polkitAcceptButton");
             if (!input || !button || !Visual.findText(root.surface.content, "Authentication failed")) {
                 console.error("polkit retry: retry prompt or failure message missing");
                 return Qt.exit(1);

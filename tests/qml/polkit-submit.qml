@@ -26,7 +26,7 @@ ShellRoot {
             const flow = { message: "Authentication required", isResponseRequired: true, submit: function(value) { root.response = value; } };
             root.center.store.dispatch({ type: "PolkitRequest", flowId: flow, monitor: screen.name });
             wait(600);
-            const input = root.field(surface.content), button = Visual.findText(surface.content, "Authenticate");
+            const input = root.field(surface.content), button = Visual.findNamed(surface.content, "polkitAcceptButton");
             if (!input || !button) return Qt.exit(2);
             input.insert(0, "sample");
             mouseClick(button, button.width / 2, button.height / 2);

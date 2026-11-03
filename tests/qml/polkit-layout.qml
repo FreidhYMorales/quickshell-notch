@@ -45,9 +45,14 @@ ShellRoot {
 
             const background = root.named(root.surface.content, "polkitBackground");
             const message = root.named(root.surface.content, "polkitMessage");
-            const button = Visual.findText(root.surface.content, "Authenticate");
-            if (!background || !message || !button) {
+            const field = root.named(root.surface.content, "polkitField");
+            const button = Visual.findNamed(root.surface.content, "polkitAcceptButton");
+            if (!background || !message || !field || !button) {
                 console.error("polkit layout: prompt parts missing");
+                return Qt.exit(1);
+            }
+            if (field.height < 24 || field.radius <= 0 || field.color.a === 0) {
+                console.error("polkit layout: input is not in a visible capsule");
                 return Qt.exit(1);
             }
             if (message.mapToItem(root.surface.content, 0, 0).y < 12) {

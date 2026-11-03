@@ -22,8 +22,16 @@ ShellRoot {
         id: check
         interval: 500
         onTriggered: {
-            if (!Visual.findText(root.target.content, "Cancel") || !Visual.findText(root.target.content, "Authenticate")) {
-                console.error("polkit controls: cancel or authenticate missing");
+            const cancel = Visual.findNamed(root.target.content, "polkitCancelButton");
+            const accept = Visual.findNamed(root.target.content, "polkitAcceptButton");
+            const cancelGlyph = Visual.findNamed(root.target.content, "polkitCancelGlyph");
+            const acceptGlyph = Visual.findNamed(root.target.content, "polkitAcceptGlyph");
+            if (!cancel || !accept || !cancelGlyph || !acceptGlyph) {
+                console.error("polkit controls: cancel or authenticate button missing");
+                return Qt.exit(1);
+            }
+            if (cancelGlyph.text === "" || acceptGlyph.text === "") {
+                console.error("polkit controls: button glyph missing");
                 return Qt.exit(1);
             }
             Qt.exit(0);

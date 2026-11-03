@@ -18,7 +18,7 @@ ShellRoot {
             const flow = { message: "Authentication required", isResponseRequired: true, cancelAuthenticationRequest: function() { root.cancelled = true; } };
             root.center.store.dispatch({ type: "PolkitRequest", flowId: flow, monitor: screen.name });
             wait(600);
-            const button = Visual.findText(surface.content, "Cancel");
+            const button = Visual.findNamed(surface.content, "polkitCancelButton");
             if (!button) return Qt.exit(2);
             mouseClick(button, button.width / 2, button.height / 2);
             wait(100);
