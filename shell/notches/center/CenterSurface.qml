@@ -64,6 +64,16 @@ NotchSurface {
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
 
+    // The one place a response leaves the notch: the accept button and Enter.
+    function submitResponse() {
+        const flow = CenterStore.state.global.polkit?.flowId;
+        if (!flow || !flow.isResponseRequired)
+            return;
+        const response = polkitInput.text;
+        polkitInput.text = "";
+        flow.submit(response);
+    }
+
     Item {
         id: shape
 
@@ -174,6 +184,7 @@ NotchSurface {
                         text = "";
                 }
                 echoMode: TextInput.Password
+                onAccepted: root.submitResponse()
                 color: Colours.paletteFor(root.screen).onSurface
                 font.family: Fonts.family
             }
@@ -201,14 +212,7 @@ NotchSurface {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: {
-                            const flow = CenterStore.state.global.polkit?.flowId;
-                            if (!flow || !flow.isResponseRequired)
-                                return;
-                            const response = polkitInput.text;
-                            polkitInput.text = "";
-                            flow.submit(response);
-                        }
+                        onClicked: root.submitResponse()
                     }
                 }
             }
