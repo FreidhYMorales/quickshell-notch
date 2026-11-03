@@ -13,9 +13,9 @@ export function expandedWidth({ hasPlayer, full, clockOnly, mark = 0, max }) {
   return Math.min((hasPlayer ? full : clockOnly) + 2 * mark, max);
 }
 
-// widths / heights: { idle, expanded }.
+// widths / heights: { idle, expanded, power }.
 export function shapeFor(mode, widths, heights) {
-  const key = mode === "expanded" ? "expanded" : "idle";
+  const key = mode === "expanded" || mode === "power" ? mode : "idle";
   return { width: widths[key], height: heights[key] };
 }
 
