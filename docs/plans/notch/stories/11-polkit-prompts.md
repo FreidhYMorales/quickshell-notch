@@ -46,3 +46,5 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - User approved submit test size exception; red cf1116f, green 4269237, focused test and `make check` passed.
 - Incoming requests are cancelled while locked (db973e9 → 3ed5130) or without a valid monitor (5c5adc4 → f8fcb1e); `make check` passed.
 - Private-bus registration test loads the real centre store but fails because the agent is not registered. Its uncommitted fixture exceeds the step size limit; awaiting direction.
+- User approved registration test size exception; red 8d340aa, green c435783, focused test and `make check` passed. Agent flow is not yet connected; do not run this partial branch as the active shell.
+- Private authority prototype successfully delivered a real authentication request to Quickshell. Offscreen has no focused monitor; test cancellation before process exit before wiring the flow.
