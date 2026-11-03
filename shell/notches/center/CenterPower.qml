@@ -21,6 +21,67 @@ Item {
         anchors.fill: parent
     }
 
+    function send(event) {
+        CenterStore.dispatch(event);
+    }
+
+    // Enter fires lock/suspend or starts a hold; its release cancels an
+    // unfinished hold. Auto-repeat never restarts anything.
+    focus: visible
+    onVisibleChanged: if (visible)
+        forceActiveFocus()
+    Keys.onPressed: event => {
+        event.accepted = true;
+        if (event.isAutoRepeat)
+            return;
+        switch (event.key) {
+        case Qt.Key_Left:
+        case Qt.Key_H:
+        case Qt.Key_Up:
+        case Qt.Key_K:
+            return send({
+                type: "PowerMove",
+                step: -1
+            });
+        case Qt.Key_Right:
+        case Qt.Key_L:
+        case Qt.Key_Down:
+        case Qt.Key_J:
+            return send({
+                type: "PowerMove",
+                step: 1
+            });
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+            return press(root.selected);
+        case Qt.Key_Escape:
+            return send({
+                type: "Close",
+                monitor: root.screen.name
+            });
+        }
+        event.accepted = false;
+    }
+    Keys.onReleased: event => {
+        if (!event.isAutoRepeat && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter))
+            send({
+                type: "HoldCancel"
+            });
+    }
+
+    function press(action) {
+        if (PowerMenu.needsHold(action))
+            send({
+                type: "HoldStart",
+                action: action
+            });
+        else
+            send({
+                type: "PowerActivate",
+                action: action
+            });
+    }
+
     Row {
         anchors.centerIn: parent
         spacing: Layout.expandedPad * 2
@@ -35,6 +96,19 @@ Item {
                 color: modelData === root.selected ? root.scheme.primary : root.scheme.muted
                 font.family: Fonts.family
                 font.pixelSize: Fonts.control
+
+                // Press and hold like Enter; releasing early cancels.
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -Layout.expandedPad
+                    onPressed: root.press(parent.modelData)
+                    onReleased: root.send({
+                        type: "HoldCancel"
+                    })
+                    onCanceled: root.send({
+                        type: "HoldCancel"
+                    })
+                }
             }
         }
     }

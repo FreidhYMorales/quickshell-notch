@@ -1,6 +1,8 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Io
 import QtQuick
 import "../../config"
 import "../../services"
@@ -8,6 +10,7 @@ import "../../logic/sideLayer.mjs" as SideLayer
 import "../../logic/centerState.mjs" as CenterState
 import "../../logic/centerView.mjs" as CenterView
 import "../../logic/notifQueue.mjs" as NotifQueue
+import "../../logic/powerMenu.mjs" as PowerMenu
 
 // The one global holder of the centre reducer state. Surfaces send events with
 // `dispatch` and read `viewFor(screenName)`; effects are executed here.
@@ -97,6 +100,38 @@ Singleton {
                 id: root.toastId
             });
             Notifs.collapse();
+        }
+    }
+
+    // Opens the power menu on the focused monitor, optionally preselecting an
+    // action (unknown names preselect nothing).
+    function openPower(action) {
+        const monitor = Hyprland.focusedMonitor?.name;
+        if (!monitor) {
+            console.warn("CenterStore: no focused monitor for the power menu");
+            return;
+        }
+        dispatch({
+            type: "PowerOpen",
+            monitor: monitor,
+            action: PowerMenu.ACTIONS.includes(action) ? action : null
+        });
+    }
+
+    // `qs -c notch ipc call power open` (Ctrl+Alt+Del) or `openAt <action>`.
+    LazyLoader {
+        active: !Flags.smoke
+
+        IpcHandler {
+            target: "power"
+
+            function open(): void {
+                root.openPower(null);
+            }
+
+            function openAt(action: string): void {
+                root.openPower(action);
+            }
         }
     }
 
