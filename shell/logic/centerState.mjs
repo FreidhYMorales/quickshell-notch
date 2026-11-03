@@ -206,7 +206,10 @@ const handlers = {
     };
   },
   PolkitRequest(state, { flowId, monitor }) {
-    if (state.global.locked || !state.monitors[monitor]) {
+    if (state.global.locked) {
+      return { state, effects: [{ type: "polkit.cancel", flowId }] };
+    }
+    if (!state.monitors[monitor]) {
       return unchanged(state);
     }
     const cleared = withHold(state, null).state;
