@@ -55,6 +55,7 @@ NotchSurface {
     readonly property bool power: view.mode === "power"
     readonly property bool launcher: view.mode === "launcher"
     readonly property bool polkit: view.mode === "polkit"
+    readonly property var scheme: Colours.paletteFor(screen)
 
     slotName: "c"
     // The launcher is taller than the expanded slot; the window is masked, so
@@ -170,33 +171,76 @@ NotchSurface {
                 font.family: Fonts.family
             }
 
-            TextInput {
-                id: polkitInput
-
-                width: parent.width / 2
-                x: (parent.width - width) / 2
-                visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
-                focus: visible
-                onVisibleChanged: {
-                    if (visible)
-                        forceActiveFocus();
-                    else
-                        text = "";
-                }
-                echoMode: TextInput.Password
-                onAccepted: root.submitResponse()
-                color: Colours.paletteFor(root.screen).onSurface
-                font.family: Fonts.family
-            }
-
             Row {
-                x: (parent.width - width) / 2
-                spacing: Layout.powerSpacing
+                id: polkitResponse
 
-                Text {
-                    text: Strings.polkitCancel
-                    color: Colours.paletteFor(root.screen).onSurface
-                    font.family: Fonts.family
+                x: (parent.width - width) / 2
+                spacing: Layout.polkitGap
+                visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
+                onVisibleChanged: {
+                    if (!visible)
+                        polkitInput.text = "";
+                }
+
+                Rectangle {
+                    id: polkitField
+
+                    objectName: "polkitField"
+                    width: Layout.polkitFieldWidth
+                    height: Layout.polkitFieldHeight
+                    radius: height / 2
+                    color: Colours.cardFor(root.screen)
+
+                    TextInput {
+                        id: polkitInput
+
+                        anchors.fill: parent
+                        anchors.leftMargin: Layout.polkitFieldPad
+                        anchors.rightMargin: Layout.polkitFieldPad
+                        verticalAlignment: TextInput.AlignVCenter
+                        focus: polkitResponse.visible
+                        onVisibleChanged: if (visible)
+                            forceActiveFocus()
+                        echoMode: TextInput.Password
+                        onAccepted: root.submitResponse()
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                    }
+                }
+
+                Rectangle {
+                    id: polkitCancel
+
+                    objectName: "polkitCancelButton"
+                    width: Layout.polkitButton
+                    height: Layout.polkitButton
+                    radius: height / 2
+                    color: cancelHover.hovered ? root.scheme.primary : Colours.cardFor(root.screen)
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Timings.animNormal
+                        }
+                    }
+
+                    Text {
+                        objectName: "polkitCancelGlyph"
+                        anchors.centerIn: parent
+                        text: Strings.glyphClose
+                        color: cancelHover.hovered ? Colours.background : root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Timings.animNormal
+                            }
+                        }
+                    }
+
+                    HoverHandler {
+                        id: cancelHover
+                    }
 
                     MouseArea {
                         anchors.fill: parent
@@ -205,10 +249,40 @@ NotchSurface {
                         })
                     }
                 }
-                Text {
-                    text: Strings.polkitAuthenticate
-                    color: Colours.paletteFor(root.screen).onSurface
-                    font.family: Fonts.family
+
+                Rectangle {
+                    id: polkitAccept
+
+                    objectName: "polkitAcceptButton"
+                    width: Layout.polkitButton
+                    height: Layout.polkitButton
+                    radius: height / 2
+                    color: acceptHover.hovered ? root.scheme.primary : Colours.cardFor(root.screen)
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Timings.animNormal
+                        }
+                    }
+
+                    Text {
+                        objectName: "polkitAcceptGlyph"
+                        anchors.centerIn: parent
+                        text: Strings.glyphCheck
+                        color: acceptHover.hovered ? Colours.background : root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Timings.animNormal
+                            }
+                        }
+                    }
+
+                    HoverHandler {
+                        id: acceptHover
+                    }
 
                     MouseArea {
                         anchors.fill: parent

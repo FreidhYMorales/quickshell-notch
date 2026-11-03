@@ -58,6 +58,10 @@ Singleton {
     readonly property int polkitWidth: 360
     readonly property int polkitPad: 16
     readonly property int polkitGap: 8
+    readonly property int polkitFieldWidth: 190
+    readonly property int polkitFieldHeight: 28
+    readonly property int polkitFieldPad: 10
+    readonly property int polkitButton: 28
 
     // App launcher in the centre notch: search row, divider, fixed list. Its
     // height follows the content, padded alike on every side.
