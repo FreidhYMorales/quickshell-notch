@@ -116,9 +116,24 @@ NotchSurface {
         }
 
         Text {
+            id: polkitMessage
+
             anchors.centerIn: parent
             visible: root.polkit
             text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
+            color: Colours.paletteFor(root.screen).onSurface
+            font.family: Fonts.family
+        }
+
+        TextInput {
+            anchors.top: polkitMessage.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width / 2
+            visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
+            focus: visible
+            onVisibleChanged: if (visible)
+                forceActiveFocus()
+            echoMode: TextInput.Password
             color: Colours.paletteFor(root.screen).onSurface
             font.family: Fonts.family
         }
