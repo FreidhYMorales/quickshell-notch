@@ -737,3 +737,31 @@ test("LauncherSelect: ignored while the power menu is open", () => {
   ]);
   assert.equal(state.global.keyboard.index, undefined);
 });
+
+test("LauncherActivate: launches the chosen app and closes the launcher", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherActivate", appId: "firefox.desktop" },
+  ]);
+  assert.deepEqual(effects, [{ type: "app.launch", appId: "firefox.desktop" }]);
+  assert.equal(state.global.keyboard, null);
+});
+
+test("LauncherActivate: with no results nothing launches and the launcher stays", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherQuery", text: "xyz" },
+    { type: "LauncherActivate", appId: null },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "launcher");
+});
+
+test("LauncherActivate: ignored while the power menu is open", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "LauncherActivate", appId: "firefox.desktop" },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "power");
+});
