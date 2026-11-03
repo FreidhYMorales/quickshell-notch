@@ -56,6 +56,11 @@ NotchSurface {
     readonly property bool launcher: view.mode === "launcher"
     readonly property bool polkit: view.mode === "polkit"
     readonly property var scheme: Colours.paletteFor(screen)
+    // Same tint as the notifications card, for the polkit field and idle buttons.
+    readonly property color tint: {
+        const p = Qt.color(scheme.primary);
+        return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
+    }
 
     slotName: "c"
     // The launcher is taller than the expanded slot; the window is masked, so
@@ -192,7 +197,7 @@ NotchSurface {
                     width: Layout.polkitFieldWidth
                     height: Layout.polkitFieldHeight
                     radius: height / 2
-                    color: Colours.cardFor(root.screen)
+                    color: root.tint
 
                     TextInput {
                         id: polkitInput
@@ -220,7 +225,7 @@ NotchSurface {
                     width: Layout.polkitButton
                     height: Layout.polkitButton
                     radius: height / 2
-                    color: cancelHover.hovered ? root.scheme.primary : Colours.cardFor(root.screen)
+                    color: cancelHover.hovered ? root.scheme.primary : root.tint
 
                     Behavior on color {
                         ColorAnimation {
@@ -262,7 +267,7 @@ NotchSurface {
                     width: Layout.polkitButton
                     height: Layout.polkitButton
                     radius: height / 2
-                    color: acceptHover.hovered ? root.scheme.primary : Colours.cardFor(root.screen)
+                    color: acceptHover.hovered ? root.scheme.primary : root.tint
 
                     Behavior on color {
                         ColorAnimation {
