@@ -126,10 +126,22 @@ NotchSurface {
             font.family: Fonts.family
         }
 
+        Text {
+            id: polkitError
+
+            anchors.top: polkitMessage.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: root.polkit && text !== ""
+            height: visible ? implicitHeight : 0
+            text: root.polkit ? CenterStore.state.global.polkit.flowId.supplementaryMessage ?? "" : ""
+            color: root.polkit && CenterStore.state.global.polkit.flowId.supplementaryIsError ? Colours.critical : Colours.paletteFor(root.screen).muted
+            font.family: Fonts.family
+        }
+
         TextInput {
             id: polkitInput
 
-            anchors.top: polkitMessage.bottom
+            anchors.top: polkitError.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width / 2
             visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
