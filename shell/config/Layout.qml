@@ -49,6 +49,7 @@ Singleton {
     readonly property int powerWidth: 360
     readonly property int powerHeight: 72
     readonly property int powerBarHeight: 3
+    readonly property int powerSpacing: 32
     // The selected action grows slightly.
     readonly property real powerSelectedScale: 1.2
 
