@@ -30,8 +30,12 @@ Singleton {
             id: polkitAgent
 
             onFlowChanged: {
-                if (polkitAgent.flow && !Hyprland.focusedMonitor?.name)
-                    polkitAgent.flow.cancelAuthenticationRequest();
+                if (polkitAgent.flow)
+                    root.dispatch({
+                        type: "PolkitRequest",
+                        flowId: polkitAgent.flow,
+                        monitor: Hyprland.focusedMonitor?.name
+                    });
             }
         }
     }
