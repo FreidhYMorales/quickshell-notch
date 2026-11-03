@@ -50,3 +50,5 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - Private authority prototype successfully delivered a real authentication request to Quickshell. Offscreen has no focused monitor; test cancellation before process exit before wiring the flow.
 - No focused monitor: red 10ca8f0, green a732f1f; focused monitor: red 7b926d1, green be6bee6; external flow end: red e5fe4af, green 58c57ec. Each focused test and `make check` passed.
 - Security: uncommitted QML integration test shows a cancelled response persists into the next request. Fixture exceeds the step size limit; awaiting direction.
+- Response clearing: red 9636c15, green 997874c. Error message: red 8078454, green 5a71eeb. Error height loop: red 595da0b, green 55fa98a.
+- QML check registration: red e95e3dd, green 3e087f2; full `make check` passed with 11 polkit QML probes. Two real-agent tests under `tests/` require Quickshell and Python D-Bus, unavailable in the current CI container. Awaiting approval to move them without changing their assertions.
