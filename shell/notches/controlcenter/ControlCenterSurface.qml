@@ -10,6 +10,7 @@ import "../../logic/format.mjs" as Format
 import "../../logic/powerMenu.mjs" as PowerMenu
 import "../../logic/workspaceStrip.mjs" as Strip
 import "../../services"
+import "../center"
 
 // Control center (top-right). Collapsed it draws nothing and only a small
 // corner hot zone takes input; resting there opens the panel, leaving the
@@ -64,10 +65,18 @@ NotchSurface {
         Notifs.markSeen();
     }
 
-    // A power row click always collapses the panel; lock and suspend run here.
+    // A power row click always collapses the panel. Lock and suspend run here;
+    // the session-ending ones open this monitor's power menu, preselected, so
+    // they still need the hold.
     function powerClicked(action) {
         collapse();
-        if (!PowerMenu.needsHold(action))
+        if (PowerMenu.needsHold(action))
+            CenterStore.dispatch({
+                type: "PowerOpen",
+                monitor: screen.name,
+                action: action
+            });
+        else
             Power.run(action);
     }
 
