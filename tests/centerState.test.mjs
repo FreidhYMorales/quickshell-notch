@@ -650,3 +650,24 @@ test("HoldStart: ignored for actions that fire at once", () => {
     assert.equal(state.global.keyboard.hold, null, action);
   }
 });
+
+test("PowerSelect: hovering an action selects it", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "PowerSelect", action: "reboot" },
+  ]);
+  assert.equal(state.global.keyboard.sub, "reboot");
+});
+
+test("PowerSelect: unknown actions and other keyboard states are ignored", () => {
+  const unknown = play([
+    { type: "PowerOpen", monitor: "A", action: "logout" },
+    { type: "PowerSelect", action: "nope" },
+  ]);
+  assert.equal(unknown.state.global.keyboard.sub, "logout");
+  const launcher = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "PowerSelect", action: "reboot" },
+  ]);
+  assert.equal(launcher.state.global.keyboard.sub, null);
+});
