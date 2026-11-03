@@ -43,3 +43,6 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - Cancel: red 7e41010; focused test passes with uncommitted implementation. Two `make check` attempts stopped at QML formatting; awaiting direction before another attempt.
 - User approved continuing; cancel green 3752128, focused test and `make check` passed.
 - Submit integration test is red and uncommitted; fixture plus runner exceed the step size limit, so approval is needed before proceeding.
+- User approved submit test size exception; red cf1116f, green 4269237, focused test and `make check` passed.
+- Incoming requests are cancelled while locked (db973e9 → 3ed5130) or without a valid monitor (5c5adc4 → f8fcb1e); `make check` passed.
+- Private-bus registration test loads the real centre store but fails because the agent is not registered. Its uncommitted fixture exceeds the step size limit; awaiting direction.
