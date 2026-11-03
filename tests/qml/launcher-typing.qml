@@ -61,8 +61,11 @@ ShellRoot {
 
         interval: 300
         onTriggered: {
+            // The probe takes the session keyboard: keys typed meanwhile land
+            // in the field too, so compare with the field, not a literal.
+            const field = root.focusedField(root.target.content);
             const query = root.center.store.viewFor(Quickshell.screens[0].name).query;
-            if (query !== "fire") {
+            if (!field || !field.text.startsWith("fire") || query !== field.text) {
                 console.error("launcher typing: store query is " + JSON.stringify(query));
                 return Qt.exit(1);
             }
