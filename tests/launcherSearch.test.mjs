@@ -36,3 +36,17 @@ test("rankApps: name prefix first, then word starts, then any in-order match", (
     ["files", "firefox", "firmware", "font", "profile"],
   );
 });
+
+test("rankApps: ignores case; generic name and keywords match after any name match", () => {
+  const apps = [
+    app("firefox", "Firefox", "Web Browser"),
+    app("files", "Files", "File Manager", ["folder"]),
+    app("chromium", "Chromium", "", ["Internet", "WWW", "web"]),
+    app("wireless", "Wireless Bench"),
+    app("webcam", "webcam viewer"),
+  ];
+  assert.deepEqual(
+    rankApps(apps, "WEB").map((a) => a.id),
+    ["webcam", "wireless", "chromium", "firefox"],
+  );
+});
