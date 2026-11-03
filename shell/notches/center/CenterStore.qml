@@ -49,6 +49,10 @@ Singleton {
             Notifs.advance();
             return;
         }
+        if (effect.type === "power.run") {
+            Power.run(effect.action);
+            return;
+        }
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));
     }
 
@@ -94,6 +98,16 @@ Singleton {
             });
             Notifs.collapse();
         }
+    }
+
+    // The power menu hold: started once per hold (repeats keep the same state,
+    // so the timer is not restarted); releasing early stops it.
+    Timer {
+        interval: Timings.holdConfirm
+        running: root.state.global.keyboard?.hold != null
+        onTriggered: root.dispatch({
+            type: "HoldComplete"
+        })
     }
 
     Connections {
