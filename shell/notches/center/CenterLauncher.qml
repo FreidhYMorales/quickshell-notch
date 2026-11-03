@@ -86,6 +86,14 @@ Item {
             }
         }
 
+        Text {
+            visible: root.results.length === 0
+            text: Strings.noMatches
+            color: root.scheme.muted
+            font.family: Fonts.family
+            font.pixelSize: Fonts.body
+        }
+
         ListView {
             width: parent.width
             height: Layout.launcherRows * Layout.launcherRowHeight
