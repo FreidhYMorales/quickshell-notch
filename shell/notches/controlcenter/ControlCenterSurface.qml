@@ -196,6 +196,8 @@ NotchSurface {
                             model: PowerMenu.ACTIONS
 
                             Text {
+                                id: powerIcon
+
                                 required property string modelData
 
                                 width: Layout.ccTile
@@ -216,6 +218,22 @@ NotchSurface {
 
                                 Behavior on scale {
                                     Anim {}
+                                }
+
+                                // Centre the drawn icon, not its narrower advance.
+                                transform: Translate {
+                                    x: PowerMenu.inkCentreOffset({
+                                        advance: ink.advanceWidth,
+                                        inkX: ink.tightBoundingRect.x,
+                                        inkWidth: ink.tightBoundingRect.width
+                                    })
+                                }
+
+                                TextMetrics {
+                                    id: ink
+
+                                    font: powerIcon.font
+                                    text: powerIcon.text
                                 }
 
                                 HoverHandler {
