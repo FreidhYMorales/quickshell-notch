@@ -688,3 +688,36 @@ test("LauncherQuery: ignored while the power menu is open", () => {
   ]);
   assert.equal(state.global.keyboard.query, undefined);
 });
+
+test("LauncherMove: moves the selection within the results", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: 1, count: 5 },
+    { type: "LauncherMove", step: 1, count: 5 },
+  ]);
+  assert.equal(state.global.keyboard.index, 2);
+});
+
+test("LauncherMove: stays on the first and last result", () => {
+  const up = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: -1, count: 3 },
+  ]);
+  assert.equal(up.state.global.keyboard.index, 0);
+  const down = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: 1, count: 3 },
+    { type: "LauncherMove", step: 1, count: 3 },
+    { type: "LauncherMove", step: 1, count: 3 },
+  ]);
+  assert.equal(down.state.global.keyboard.index, 2);
+});
+
+test("LauncherQuery: a new query brings a moved selection back to the first result", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherMove", step: 1, count: 4 },
+    { type: "LauncherQuery", text: "f" },
+  ]);
+  assert.equal(state.global.keyboard.index, 0);
+});
