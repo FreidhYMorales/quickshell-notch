@@ -36,3 +36,5 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - L1 request: Load the `flow-story` skill and follow it. 11
 - Approved the integration and manual test list; baseline `make check` passed on main before changes.
 - First integration scenario needs smaller TDD steps to stay within the step size limit; awaiting approval.
+- Message step: red test 96257b8, green implementation e91cce7; focused test and `make check` passed.
+- Input step stopped with an uncommitted failing integration test: its fixture and runner exceed the step size limit. Awaiting direction.
