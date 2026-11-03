@@ -154,6 +154,19 @@ NotchSurface {
             visible: root.polkit
 
             Text {
+                id: polkitFingerprint
+
+                objectName: "polkitFingerprintGlyph"
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired === false
+                text: Strings.glyphFingerprint
+                color: root.scheme.primary
+                font.family: Fonts.family
+                font.pixelSize: Fonts.polkitFingerprint
+            }
+
+            Text {
                 id: polkitMessage
 
                 objectName: "polkitMessage"

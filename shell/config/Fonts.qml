@@ -20,4 +20,6 @@ Singleton {
     readonly property int launcherItem: 18
     // Power menu action icons.
     readonly property int powerIcon: 28
+    // Polkit fingerprint prompt icon.
+    readonly property int polkitFingerprint: 44
 }

@@ -73,6 +73,8 @@ Singleton {
     readonly property string toastAppSeparator: ": "
     readonly property string toastWaitingPrefix: "+"
     readonly property string glyphClose: "\uf00d"
+    // Polkit fingerprint prompt icon (nf-md-fingerprint).
+    readonly property string glyphFingerprint: "\udb80\ude37"
     readonly property string glyphBell: "\uf0f3"
     // Shell-made critical toast at the battery critical limit; %1 = percentage.
     readonly property string batteryCriticalApp: "Battery"
