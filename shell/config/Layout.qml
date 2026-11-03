@@ -111,6 +111,8 @@ Singleton {
     // Round toggle buttons under the profile header.
     readonly property int ccTile: 40
     readonly property int ccTileGap: 8
+    // Power row gap: spreads the five icons so the side margins match the gaps.
+    readonly property int ccPowerGap: 13
     // Notifications section: list width, row height, icon and gaps.
     readonly property int ccListWidth: 280
     readonly property int ccRow: 30

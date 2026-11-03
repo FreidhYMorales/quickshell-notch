@@ -180,7 +180,7 @@ NotchSurface {
                 // centred in the panel.
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: Layout.ccTileGap
+                    spacing: Layout.ccPowerGap
 
                     Repeater {
                         model: PowerMenu.ACTIONS
