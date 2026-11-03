@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ACTIONS, commandFor, needsHold } from "../shell/logic/powerMenu.mjs";
+import {
+  ACTIONS,
+  commandFor,
+  inkCentreOffset,
+  needsHold,
+} from "../shell/logic/powerMenu.mjs";
 
 test("powerMenu: actions in display order", () => {
   assert.deepEqual(ACTIONS, [
@@ -35,4 +40,13 @@ test("powerMenu: each action maps to its command", () => {
 test("powerMenu: lock is a session request, unknown actions map to nothing", () => {
   assert.deepEqual(commandFor("lock"), { lock: true });
   assert.equal(commandFor("unknown"), null);
+});
+
+test("powerMenu: icons shift so their ink, not their advance, is centred", () => {
+  // ⏻ at 18px in IosevkaTerm: advance 9, ink from 0 spanning 16.
+  assert.equal(inkCentreOffset({ advance: 9, inkX: 0, inkWidth: 16 }), -3.5);
+  // 󰤄: ink starts 1px left of the origin and spans 13.
+  assert.equal(inkCentreOffset({ advance: 9, inkX: -1, inkWidth: 13 }), -1);
+  // Ink that already matches the advance needs no shift.
+  assert.equal(inkCentreOffset({ advance: 9, inkX: 0, inkWidth: 9 }), 0);
 });
