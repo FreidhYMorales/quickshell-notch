@@ -33,7 +33,7 @@ NotchSurface {
         max: slot.width
     }) : view.mode === "polkit" ? {
         width: Layout.polkitWidth,
-        height: polkitForm.implicitHeight + 2 * Layout.polkitPad
+        height: Math.max(Layout.polkitMinHeight, polkitForm.implicitHeight + 2 * Layout.polkitPad)
     } : CenterLayout.shapeFor(view.mode, {
         idle: idleW,
         expanded: CenterLayout.expandedWidth({
