@@ -25,6 +25,7 @@ Singleton {
         },
         {
             name: "Theme",
+            glyph: "󰏘",
             description: "Choose the theme."
         },
         {
