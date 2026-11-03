@@ -39,3 +39,5 @@ Risk: none
 - L2: User approved splitting story 09 into the command browser and three separate command views.
 - L3: User approved the story with the addition that command mode replaces the search icon with a command symbol; `#` is proposed, matching the existing launcher mode icon.
 - L4: User approved tests for mode and icon, filtering and empty results, selection descriptions, unavailable actions, Escape, and app regression. Existing launcher QML safety net: 4 passed. First test needs splitting into smaller TDD steps before implementation.
+- L5: User approved retrying in a separate worktree after a committed test formatting blocker. Icon 9d50a16→1b27676, command list 762f770→232fdc9, filtering feb3552→d3c1825, wallpaper description b976533→004f59c, selection c5ad5e8→ea4721f, keybinds 3f9dfe6→a5b2471; no-match regression 6ef518b passed immediately. Each completed step passed make check.
+- L6: Unavailable notice probe failed as expected but logged `Apps: launch chromium`, indicating possible live keyboard input in the exclusive-focus probe. Stopped before committing the test or changing production; use a safe dry-run approach before retrying.
