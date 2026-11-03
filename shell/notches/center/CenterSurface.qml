@@ -31,7 +31,7 @@ NotchSurface {
             expanded: Layout.toastExpandedHeight
         },
         max: slot.width
-    }) : CenterLayout.shapeFor(view.mode, {
+    }) : CenterLayout.shapeFor(view.mode === "polkit" ? "power" : view.mode, {
         idle: idleW,
         expanded: CenterLayout.expandedWidth({
             hasPlayer: Mpris.hasPlayer,
@@ -118,7 +118,8 @@ NotchSurface {
         Text {
             id: polkitMessage
 
-            anchors.centerIn: parent
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
             visible: root.polkit
             text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
             color: Colours.paletteFor(root.screen).onSurface
@@ -126,6 +127,8 @@ NotchSurface {
         }
 
         TextInput {
+            id: polkitInput
+
             anchors.top: polkitMessage.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width / 2
@@ -136,6 +139,24 @@ NotchSurface {
             echoMode: TextInput.Password
             color: Colours.paletteFor(root.screen).onSurface
             font.family: Fonts.family
+        }
+
+        Row {
+            anchors.top: polkitInput.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: Layout.powerSpacing
+            visible: root.polkit
+
+            Text {
+                text: Strings.polkitCancel
+                color: Colours.paletteFor(root.screen).onSurface
+                font.family: Fonts.family
+            }
+            Text {
+                text: Strings.polkitAuthenticate
+                color: Colours.paletteFor(root.screen).onSurface
+                font.family: Fonts.family
+            }
         }
 
         CenterExpanded {
