@@ -145,3 +145,12 @@ test("toastShape: the width never passes the slot", () => {
   const narrow = Object.assign({ expanded: true, max: 300 }, TOAST);
   assert.deepEqual(toastShape(narrow), { width: 300, height: 96 });
 });
+
+test("shapeFor gives the launcher its own size", () => {
+  const widths = Object.assign({ launcher: 520 }, W);
+  const heights = Object.assign({ launcher: 300 }, H);
+  assert.deepEqual(shapeFor("launcher", widths, heights), {
+    width: 520,
+    height: 300,
+  });
+});
