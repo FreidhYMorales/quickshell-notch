@@ -53,6 +53,14 @@ Singleton {
     // The selected action grows slightly.
     readonly property real powerSelectedScale: 1.2
 
+    // App launcher in the centre notch: search field over a fixed list.
+    readonly property int launcherWidth: 520
+    readonly property int launcherHeight: 300
+    readonly property int launcherRows: 7
+    readonly property int launcherRowHeight: 34
+    readonly property int launcherIcon: 22
+    readonly property int launcherGap: 10
+
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
     readonly property int expandedPad: 10

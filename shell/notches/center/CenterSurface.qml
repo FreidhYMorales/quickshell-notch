@@ -40,14 +40,17 @@ NotchSurface {
             mark: expandedView.markExtent,
             max: slot.width
         }),
-        power: Layout.powerWidth
+        power: Layout.powerWidth,
+        launcher: Layout.launcherWidth
     }, {
         idle: Layout.idleHeight,
         expanded: Layout.expandedHeight,
-        power: Layout.powerHeight
+        power: Layout.powerHeight,
+        launcher: Layout.launcherHeight
     })
     readonly property bool expanded: view.mode === "expanded"
     readonly property bool power: view.mode === "power"
+    readonly property bool launcher: view.mode === "launcher"
 
     slotName: "c"
     wantsKeyboard: view.keyboardFocus === "exclusive"
@@ -80,7 +83,7 @@ NotchSurface {
             id: idle
 
             anchors.fill: parent
-            visible: !root.expanded && !root.toast && !root.power
+            visible: !root.expanded && !root.toast && !root.power && !root.launcher
             screen: root.screen
             view: root.view
         }
@@ -95,6 +98,13 @@ NotchSurface {
         CenterPower {
             anchors.fill: parent
             visible: root.power
+            screen: root.screen
+            view: root.view
+        }
+
+        CenterLauncher {
+            anchors.fill: parent
+            visible: root.launcher
             screen: root.screen
             view: root.view
         }
