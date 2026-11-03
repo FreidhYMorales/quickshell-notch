@@ -53,6 +53,14 @@ Singleton {
     readonly property string batteryCriticalSummary: "Battery critical"
     readonly property string batteryCriticalBody: "%1% left. Plug in the charger."
     readonly property string batteryCriticalIcon: "battery-caution"
+    // Power menu icons, keyed by action.
+    readonly property var powerIcons: ({
+            lock: "󰌾",
+            suspend: "󰤄",
+            logout: "󰍃",
+            reboot: "󰜉",
+            poweroff: "⏻"
+        })
     // Critical notifications waiting to be dismissed (click reopens the newest).
     readonly property string criticalMark: "!"
 

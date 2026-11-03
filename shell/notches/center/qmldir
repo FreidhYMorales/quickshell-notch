@@ -5,3 +5,4 @@ CenterIdle CenterIdle.qml
 CenterMedia CenterMedia.qml
 CenterSurface CenterSurface.qml
 CenterToast CenterToast.qml
+CenterPower CenterPower.qml
