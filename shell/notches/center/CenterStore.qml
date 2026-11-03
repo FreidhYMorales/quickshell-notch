@@ -1,6 +1,8 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Io
 import QtQuick
 import "../../config"
 import "../../services"
@@ -8,6 +10,7 @@ import "../../logic/sideLayer.mjs" as SideLayer
 import "../../logic/centerState.mjs" as CenterState
 import "../../logic/centerView.mjs" as CenterView
 import "../../logic/notifQueue.mjs" as NotifQueue
+import "../../logic/powerMenu.mjs" as PowerMenu
 
 // The one global holder of the centre reducer state. Surfaces send events with
 // `dispatch` and read `viewFor(screenName)`; effects are executed here.
@@ -47,6 +50,10 @@ Singleton {
     function run(effect) {
         if (effect.type === "toast.skip" && effect.id === Notifs.current?.id) {
             Notifs.advance();
+            return;
+        }
+        if (effect.type === "power.run") {
+            Power.run(effect.action);
             return;
         }
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));
@@ -94,6 +101,48 @@ Singleton {
             });
             Notifs.collapse();
         }
+    }
+
+    // Opens the power menu on the focused monitor, optionally preselecting an
+    // action (unknown names preselect nothing).
+    function openPower(action) {
+        const monitor = Hyprland.focusedMonitor?.name;
+        if (!monitor) {
+            console.warn("CenterStore: no focused monitor for the power menu");
+            return;
+        }
+        dispatch({
+            type: "PowerOpen",
+            monitor: monitor,
+            action: PowerMenu.ACTIONS.includes(action) ? action : null
+        });
+    }
+
+    // `qs -c notch ipc call power open` (Ctrl+Alt+Del) or `openAt <action>`.
+    LazyLoader {
+        active: !Flags.smoke
+
+        IpcHandler {
+            target: "power"
+
+            function open(): void {
+                root.openPower(null);
+            }
+
+            function openAt(action: string): void {
+                root.openPower(action);
+            }
+        }
+    }
+
+    // The power menu hold: started once per hold (repeats keep the same state,
+    // so the timer is not restarted); releasing early stops it.
+    Timer {
+        interval: Timings.holdConfirm
+        running: root.state.global.keyboard?.hold != null
+        onTriggered: root.dispatch({
+            type: "HoldComplete"
+        })
     }
 
     Connections {

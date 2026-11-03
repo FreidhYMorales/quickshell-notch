@@ -555,3 +555,119 @@ test("Suppression: once DND is off again, a normal toast shows", () => {
   });
   assert.deepEqual(effects, []);
 });
+
+test("PowerMove: moves from the first action when nothing is preselected", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "PowerMove", step: 1 },
+  ]);
+  assert.equal(state.global.keyboard.sub, "suspend");
+});
+
+test("PowerMove: moves from the preselected action both ways", () => {
+  const open = { type: "PowerOpen", monitor: "A", action: "logout" };
+  const right = play([open, { type: "PowerMove", step: 1 }]);
+  assert.equal(right.state.global.keyboard.sub, "reboot");
+  const left = play([open, { type: "PowerMove", step: -1 }]);
+  assert.equal(left.state.global.keyboard.sub, "suspend");
+});
+
+test("PowerMove: stays put at either end", () => {
+  const first = play([
+    { type: "PowerOpen", monitor: "A", action: "lock" },
+    { type: "PowerMove", step: -1 },
+  ]);
+  assert.equal(first.state.global.keyboard.sub, "lock");
+  const last = play([
+    { type: "PowerOpen", monitor: "A", action: "poweroff" },
+    { type: "PowerMove", step: 1 },
+  ]);
+  assert.equal(last.state.global.keyboard.sub, "poweroff");
+});
+
+test("PowerMove: ignored while the launcher is open", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "PowerMove", step: 1 },
+  ]);
+  assert.equal(state.global.keyboard.sub, null);
+});
+
+test("PowerActivate: lock runs at once and closes the menu", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "PowerActivate" },
+  ]);
+  assert.deepEqual(effects, [{ type: "power.run", action: "lock" }]);
+  assert.equal(state.global.keyboard, null);
+});
+
+test("PowerActivate: a clicked suspend runs at once and closes the menu", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "PowerActivate", action: "suspend" },
+  ]);
+  assert.deepEqual(effects, [{ type: "power.run", action: "suspend" }]);
+  assert.equal(state.global.keyboard, null);
+});
+
+test("PowerActivate: a hold action runs nothing and keeps the menu", () => {
+  const { state, effects } = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "PowerActivate" },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "power");
+  assert.equal(state.global.keyboard.sub, "reboot");
+});
+
+test("PowerActivate: ignored while the launcher is open", () => {
+  const { state, effects } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "PowerActivate", action: "lock" },
+  ]);
+  assert.deepEqual(effects, []);
+  assert.equal(state.global.keyboard.kind, "launcher");
+});
+
+test("HoldStart: a repeated start leaves the running hold untouched", () => {
+  const first = play([
+    { type: "PowerOpen", monitor: "A", action: "reboot" },
+    { type: "HoldStart", action: "reboot" },
+  ]).state;
+  const repeat = reduce(first, { type: "HoldStart", action: "reboot" });
+  // Same state object: nothing re-binds, so the hold timer keeps its progress.
+  assert.equal(repeat.state, first);
+  assert.deepEqual(repeat.effects, []);
+});
+
+test("HoldStart: ignored for actions that fire at once", () => {
+  for (const action of ["lock", "suspend"]) {
+    const { state } = play([
+      { type: "PowerOpen", monitor: "A", action },
+      { type: "HoldStart", action },
+    ]);
+    assert.equal(state.global.keyboard.hold, null, action);
+  }
+});
+
+test("PowerSelect: hovering an action selects it", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "PowerSelect", action: "reboot" },
+  ]);
+  assert.equal(state.global.keyboard.sub, "reboot");
+});
+
+test("PowerSelect: unknown actions and other keyboard states are ignored", () => {
+  const unknown = play([
+    { type: "PowerOpen", monitor: "A", action: "logout" },
+    { type: "PowerSelect", action: "nope" },
+  ]);
+  assert.equal(unknown.state.global.keyboard.sub, "logout");
+  const launcher = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "PowerSelect", action: "reboot" },
+  ]);
+  assert.equal(launcher.state.global.keyboard.sub, null);
+});

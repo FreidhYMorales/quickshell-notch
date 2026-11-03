@@ -93,6 +93,19 @@ test("shapeFor treats any non-expanded mode as idle", () => {
   assert.deepEqual(shapeFor("hover", W, H), { width: 380, height: 32 });
 });
 
+test("shapeFor gives the power menu its own size", () => {
+  const widths = Object.assign({ power: 420 }, W);
+  const heights = Object.assign({ power: 72 }, H);
+  assert.deepEqual(shapeFor("power", widths, heights), {
+    width: 420,
+    height: 72,
+  });
+  assert.deepEqual(shapeFor("idle", widths, heights), {
+    width: 380,
+    height: 32,
+  });
+});
+
 // Content-driven widths: no fixed idle width, no gap between the row and a
 // side layer.
 test("idleBase is the row plus symmetric padding plus both ears", () => {

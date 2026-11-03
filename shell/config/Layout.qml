@@ -45,6 +45,14 @@ Singleton {
     readonly property int expandedWidth: 500
     readonly property int expandedClockWidth: 250
 
+    // Power menu in the centre notch: one row of actions over the hold bar.
+    readonly property int powerWidth: 360
+    readonly property int powerHeight: 72
+    readonly property int powerBarHeight: 3
+    readonly property int powerSpacing: 32
+    // The selected action grows slightly.
+    readonly property real powerSelectedScale: 1.2
+
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
     readonly property int expandedPad: 10

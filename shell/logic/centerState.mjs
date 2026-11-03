@@ -1,6 +1,8 @@
 // Pure reducer for the centre notch. No Qt imports, no I/O, no timers.
 // reduce(state, event) -> { state, effects }
 
+import { ACTIONS, needsHold } from "./powerMenu.mjs";
+
 const freshMonitor = () => ({
   hovered: false,
   pinned: false,
@@ -111,6 +113,33 @@ const handlers = {
   PowerOpen(state, { monitor, action = null }) {
     return openKeyboard(state, monitor, "power", action);
   },
+  PowerMove(state, { step }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "power") return unchanged(state);
+    const from = Math.max(0, ACTIONS.indexOf(keyboard.sub));
+    const to = Math.min(ACTIONS.length - 1, Math.max(0, from + step));
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: ACTIONS[to] }),
+    });
+  },
+  PowerSelect(state, { action }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "power" || !ACTIONS.includes(action)) {
+      return unchanged(state);
+    }
+    return setGlobal(state, { keyboard: merge(keyboard, { sub: action }) });
+  },
+  // Lock and suspend fire at once and close the menu; the rest need a hold.
+  PowerActivate(state, { action = null }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "power") return unchanged(state);
+    const chosen = action ?? keyboard.sub ?? ACTIONS[0];
+    if (needsHold(chosen)) return unchanged(state);
+    return {
+      state: setGlobal(state, { keyboard: null }).state,
+      effects: [{ type: "power.run", action: chosen }],
+    };
+  },
   Close(state, { monitor }) {
     return state.global.keyboard?.owner === monitor
       ? setGlobal(state, { keyboard: null })
@@ -126,10 +155,13 @@ const handlers = {
   Dnd(state, { on }) {
     return setGlobal(state, { dnd: on });
   },
+  // Key auto-repeat sends more starts: an existing hold is left untouched.
   HoldStart(state, { action }) {
-    return state.global.keyboard?.kind === "power" && !state.global.polkit
-      ? withHold(state, { action })
-      : unchanged(state);
+    const { keyboard, polkit } = state.global;
+    if (keyboard?.kind !== "power" || polkit || keyboard.hold) {
+      return unchanged(state);
+    }
+    return needsHold(action) ? withHold(state, { action }) : unchanged(state);
   },
   HoldCancel(state) {
     return withHold(state, null);

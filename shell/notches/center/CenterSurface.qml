@@ -39,12 +39,15 @@ NotchSurface {
             clockOnly: Layout.expandedClockWidth,
             mark: expandedView.markExtent,
             max: slot.width
-        })
+        }),
+        power: Layout.powerWidth
     }, {
         idle: Layout.idleHeight,
-        expanded: Layout.expandedHeight
+        expanded: Layout.expandedHeight,
+        power: Layout.powerHeight
     })
     readonly property bool expanded: view.mode === "expanded"
+    readonly property bool power: view.mode === "power"
 
     slotName: "c"
     wantsKeyboard: view.keyboardFocus === "exclusive"
@@ -60,6 +63,11 @@ NotchSurface {
         anchors.top: parent.top
         clip: true
 
+        // Keeps the zone hovered while a child (power icons) takes the hover.
+        HoverHandler {
+            id: shapeHover
+        }
+
         Behavior on width {
             Anim {}
         }
@@ -72,7 +80,7 @@ NotchSurface {
             id: idle
 
             anchors.fill: parent
-            visible: !root.expanded && !root.toast
+            visible: !root.expanded && !root.toast && !root.power
             screen: root.screen
             view: root.view
         }
@@ -84,6 +92,13 @@ NotchSurface {
             expanded: root.toast && root.view.toast.expanded
         }
 
+        CenterPower {
+            anchors.fill: parent
+            visible: root.power
+            screen: root.screen
+            view: root.view
+        }
+
         CenterExpanded {
             id: expandedView
 
@@ -93,8 +108,11 @@ NotchSurface {
         }
     }
 
+    // Below the content so the power icons get their own hover.
     NotchZone {
+        z: -1
         anchors.fill: shape
+        alsoHovered: shapeHover.hovered
         onHoverChanged: on => CenterStore.dispatch({
                 type: "Hover",
                 monitor: root.screen.name,
