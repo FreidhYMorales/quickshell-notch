@@ -16,6 +16,7 @@ Singleton {
     readonly property string noNotifications: "No notifications"
     // Launcher line when the query matches no app.
     readonly property string noMatches: "No matches"
+    readonly property string launcherUnavailable: "Not available yet"
     readonly property var launcherCommands: [
         {
             name: "Wallpaper",

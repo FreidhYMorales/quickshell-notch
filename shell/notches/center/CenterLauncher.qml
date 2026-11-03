@@ -210,6 +210,8 @@ Item {
             }
 
             Text {
+                id: description
+
                 anchors.left: list.right
                 anchors.right: parent.right
                 anchors.top: parent.top
@@ -218,6 +220,18 @@ Item {
                 text: root.results[root.view.index ?? 0]?.description ?? ""
                 wrapMode: Text.WordWrap
                 color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+
+            Text {
+                anchors.left: description.left
+                anchors.right: description.right
+                anchors.top: description.bottom
+                anchors.topMargin: Layout.launcherGap
+                visible: description.visible
+                text: Strings.launcherUnavailable
+                color: root.scheme.muted
                 font.family: Fonts.family
                 font.pixelSize: Fonts.launcherItem
             }
