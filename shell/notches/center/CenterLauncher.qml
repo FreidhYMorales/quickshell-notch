@@ -17,7 +17,7 @@ Item {
 
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
-    readonly property var results: commandMode ? Strings.launcherCommands : LauncherSearch.rankApps(Apps.list, view.query ?? "")
+    readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
     function send(event) {
         CenterStore.dispatch(event);
