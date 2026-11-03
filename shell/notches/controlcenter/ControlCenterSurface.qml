@@ -176,8 +176,10 @@ NotchSurface {
                     }
                 }
 
-                // Session actions, same icons as the power menu.
+                // Session actions, same icons and hover look as the power menu,
+                // centred in the panel.
                 Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
                     spacing: Layout.ccTileGap
 
                     Repeater {
@@ -189,9 +191,24 @@ NotchSurface {
                             width: Layout.ccTile
                             horizontalAlignment: Text.AlignHCenter
                             text: Strings.powerIcons[modelData]
-                            color: root.scheme.onSurface
+                            color: powerHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                            scale: powerHover.hovered ? Layout.powerSelectedScale : 1
                             font.family: Fonts.family
-                            font.pixelSize: Fonts.control
+                            font.pixelSize: Fonts.powerIcon
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Timings.animNormal
+                                }
+                            }
+
+                            Behavior on scale {
+                                Anim {}
+                            }
+
+                            HoverHandler {
+                                id: powerHover
+                            }
 
                             TapHandler {
                                 onTapped: root.powerClicked(parent.modelData)
