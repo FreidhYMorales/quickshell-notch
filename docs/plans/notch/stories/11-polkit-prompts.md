@@ -41,3 +41,5 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - User approved the input test size exception; red 9b6975e, green 42c8b04, focused test and `make check` passed.
 - Controls: red 4dc4f95, green 2a3d833, focused test and `make check` passed; labels are not yet fully connected.
 - Cancel: red 7e41010; focused test passes with uncommitted implementation. Two `make check` attempts stopped at QML formatting; awaiting direction before another attempt.
+- User approved continuing; cancel green 3752128, focused test and `make check` passed.
+- Submit integration test is red and uncommitted; fixture plus runner exceed the step size limit, so approval is needed before proceeding.
