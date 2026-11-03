@@ -721,3 +721,19 @@ test("LauncherQuery: a new query brings a moved selection back to the first resu
   ]);
   assert.equal(state.global.keyboard.index, 0);
 });
+
+test("LauncherSelect: hovering a result selects it", () => {
+  const { state } = play([
+    { type: "LauncherToggle", monitor: "A" },
+    { type: "LauncherSelect", index: 3 },
+  ]);
+  assert.equal(state.global.keyboard.index, 3);
+});
+
+test("LauncherSelect: ignored while the power menu is open", () => {
+  const { state } = play([
+    { type: "PowerOpen", monitor: "A" },
+    { type: "LauncherSelect", index: 3 },
+  ]);
+  assert.equal(state.global.keyboard.index, undefined);
+});
