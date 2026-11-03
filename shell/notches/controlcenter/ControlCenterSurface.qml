@@ -176,11 +176,11 @@ NotchSurface {
                     }
                 }
 
-                // Session actions, same icons and hover look as the power menu,
-                // centred in the panel.
+                // Session actions, same icons and hover look as the power menu.
+                // Tile-wide cells spread edge to edge over the list width, so
+                // the row lines up with the tiles and the notifications card.
                 Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: Layout.ccPowerGap
+                    spacing: (Layout.ccListWidth - PowerMenu.ACTIONS.length * Layout.ccTile) / (PowerMenu.ACTIONS.length - 1)
 
                     Repeater {
                         model: PowerMenu.ACTIONS
@@ -194,7 +194,7 @@ NotchSurface {
                             color: powerHover.hovered ? root.scheme.primary : root.scheme.onSurface
                             scale: powerHover.hovered ? Layout.powerSelectedScale : 1
                             font.family: Fonts.family
-                            font.pixelSize: Fonts.powerIcon
+                            font.pixelSize: Fonts.control
 
                             Behavior on color {
                                 ColorAnimation {
