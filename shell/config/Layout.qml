@@ -56,6 +56,7 @@ Singleton {
     // App launcher in the centre notch: search row, divider, fixed list. Its
     // height follows the content, padded alike on every side.
     readonly property int launcherWidth: 520
+    readonly property real launcherCommandListRatio: 0.5
     readonly property int launcherRows: 5
     readonly property int launcherRowHeight: 43
     readonly property int launcherIcon: 29

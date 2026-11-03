@@ -16,7 +16,8 @@ Item {
     property var view: ({})
 
     readonly property var scheme: Colours.paletteFor(screen)
-    readonly property var results: LauncherSearch.rankApps(Apps.list, view.query ?? "")
+    readonly property bool commandMode: (view.query ?? "").startsWith(">")
+    readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
     function send(event) {
         CenterStore.dispatch(event);
@@ -32,6 +33,8 @@ Item {
 
     // Null when there are no results: the reducer then does nothing.
     function launch(index) {
+        if (commandMode)
+            return;
         send({
             type: "LauncherActivate",
             appId: results[index]?.id ?? null
@@ -67,7 +70,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Layout.launcherIcon
                 horizontalAlignment: Text.AlignHCenter
-                text: Strings.launcherModeIcons[root.view.sub ?? "apps"] ?? Strings.launcherModeIcons.apps
+                text: (root.view.query ?? "").startsWith(">") ? Strings.launcherModeIcons.commands : Strings.launcherModeIcons.apps
                 color: root.scheme.primary
                 font.family: Fonts.family
                 font.pixelSize: Fonts.launcherItem
@@ -119,10 +122,10 @@ Item {
             opacity: Colours.dividerAlpha
         }
 
-        // Fixed height, so the notch keeps its size while "No matches" shows.
+        // Fixed per mode, so filtering does not resize the notch.
         Item {
             width: parent.width
-            height: Layout.launcherRows * Layout.launcherRowHeight
+            height: (root.commandMode ? Math.min(Layout.launcherRows, Strings.launcherCommands.length) : Layout.launcherRows) * Layout.launcherRowHeight
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -136,7 +139,10 @@ Item {
             ListView {
                 id: list
 
-                anchors.fill: parent
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                width: root.commandMode ? parent.width * Layout.launcherCommandListRatio : parent.width
                 clip: true
                 model: root.results
                 currentIndex: root.view.index ?? 0
@@ -165,11 +171,23 @@ Item {
 
                         Image {
                             anchors.verticalCenter: parent.verticalCenter
+                            visible: !root.commandMode
                             width: Layout.launcherIcon
                             height: Layout.launcherIcon
                             sourceSize.width: Layout.launcherIcon
                             sourceSize.height: Layout.launcherIcon
                             source: Quickshell.iconPath(row.modelData.icon ?? "", true)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: root.commandMode
+                            width: Layout.launcherIcon
+                            horizontalAlignment: Text.AlignHCenter
+                            text: row.modelData.glyph ?? ""
+                            color: row.isSelected ? root.scheme.primary : root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.launcherItem
                         }
 
                         Text {
@@ -201,6 +219,46 @@ Item {
                         onTapped: root.launch(row.index)
                     }
                 }
+            }
+
+            Rectangle {
+                id: commandDivider
+
+                anchors.left: list.right
+                anchors.leftMargin: Layout.launcherGap / 2
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: Layout.launcherDivider
+                visible: root.commandMode && root.results.length > 0
+                color: root.scheme.muted
+                opacity: Colours.dividerAlpha
+            }
+
+            Text {
+                id: description
+
+                anchors.left: commandDivider.right
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.leftMargin: Layout.launcherGap
+                visible: root.commandMode && root.results.length > 0
+                text: root.results[root.view.index ?? 0]?.description ?? ""
+                wrapMode: Text.WordWrap
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+
+            Text {
+                anchors.left: description.left
+                anchors.right: description.right
+                anchors.top: description.bottom
+                anchors.topMargin: Layout.launcherGap
+                visible: description.visible
+                text: Strings.launcherUnavailable
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
             }
         }
     }

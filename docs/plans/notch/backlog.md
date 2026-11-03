@@ -18,7 +18,7 @@
 06. [-] split → #22, #23
 07. [x] dfaac92 As a user, I want to start and stop screen recording from the control center and see the red dot on the notch while recording so that I know I am recording. Requires: #16
 08. [x] 6584f09 As a user, I want an app launcher that morphs out of the centre notch so that I can find and open apps from the keyboard.
-09. [ ] As a user, I want launcher commands with a description pane (wallpaper, theme, keybinds) so that I change my setup without leaving the keyboard. Requires: #08
+09. [-] split → #26, #27, #28, #29
 10. [x] 44a7656 As a user, I want a power menu (Ctrl+Alt+Del, hold to confirm) so that I can lock, suspend, log out, reboot and shut down safely.
 11. [ ] As a user, I want polkit password prompts in the centre notch so that apps can ask for admin rights.
 12. [ ] As a user, I want the notch shell to render my wallpaper (including video) and keep caffeine working so that it can replace the old shell.
@@ -35,3 +35,7 @@
 23. [x] 8fe1e16 As a user, I want a tray icon's own menu on right click so that I can use its actions without restoring its window. Requires: #22
 24. [ ] As a user, I want tray icons with failures hidden by Quickshell to show a recognizable fallback instead of its placeholder so that I can identify those apps. Requires: #22
 25. [ ] BLOCKED (Quickshell submenu loading) As a user, I want to navigate a tray app's submenus inside the notch and return to the parent menu so that I can use nested actions without floating windows. Requires: #23
+26. [x] 64af4aa As a user, I want to browse and search launcher commands with a description pane so that I can understand the available setup actions. Requires: #08
+27. [ ] As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
+28. [ ] As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
+29. [ ] As a user, I want the keybinds command view so that I can access my keybinds from the launcher. Requires: #26

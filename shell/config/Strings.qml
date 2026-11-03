@@ -16,11 +16,29 @@ Singleton {
     readonly property string noNotifications: "No notifications"
     // Launcher line when the query matches no app.
     readonly property string noMatches: "No matches"
+    readonly property string launcherUnavailable: "Not available yet"
+    readonly property var launcherCommands: [
+        {
+            name: "Wallpaper",
+            glyph: "󰸉",
+            description: "Choose the desktop wallpaper. Notch colours follow it."
+        },
+        {
+            name: "Theme",
+            glyph: "󰏘",
+            description: "Choose the theme."
+        },
+        {
+            name: "Keybinds",
+            glyph: "󰌌",
+            description: "View keyboard shortcuts."
+        }
+    ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,
     // pound for commands.
     readonly property var launcherModeIcons: ({
             apps: "\udb80\udf49",
-            commands: "\udb81\udc23"
+            commands: "#"
         })
     // Notifications subpage: the link that opens it and its chevrons.
     readonly property string seeAll: "See all"
