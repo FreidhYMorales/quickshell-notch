@@ -55,3 +55,4 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - Field and idle button tint (user: "like the notifications panel"): red 4b0d612, green b25eb73; `make check` passed. Awaiting visual check.
 - Fingerprint prompt width 360→460 (password prompt unchanged): red 56b2dbf, green 5cd3bd3; `make check` passed. User approved the field tint visually.
 - Side padding 18→36 (top unchanged): red e351cae, green 94cdaa3; `make check` passed.
+- User approved the visual result (field tint, fingerprint width, side padding).
