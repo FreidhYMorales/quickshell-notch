@@ -39,3 +39,8 @@ Risk: item 1 (logout/reboot/shutdown end the session irreversibly)
 - L1 request: /flow:story 10
 - Assumptions: IPC opens on the Hyprland-focused monitor; commands reused verbatim from the old `PowerActions`; lock is a request only until #13.
 - L2 approval constraint: never run logout, reboot, shutdown or suspend against the live session during testing; manual and automated checks must stub or intercept the commands (e.g. log instead of execute).
+- L3 build: test→code pairs 33883ab→fdc34f7, e9945d4→cb67061, d07c178→98b7102, b6ab183→0b53bee, 602f6ea→35e19bb, b9816ae→59dbf69, ea2bd2e→e74a2a0, f40f4fe→d2d47b1, 22c6c43→e90ba02, d752d83→3e636a2, 6f388f1→44a7656; manual-only 4d912c5 (keys, mouse, IPC), a2f3c97 (icon size/animation), b890462 (spacing). Step 9 split by user approval into 9a/9b/9c.
+- L4 manual check (user, NOTCH_POWER_DRY_RUN=1 + fake systemctl/hyprctl): menu, keys, hold, mouse, hover all confirmed. User asked for larger icons, hover-select with colour/scale animation and wider spacing; hover bug (NotchZone above content swallowing hover) reproduced by tests/qml/power-hover and fixed.
+- L5 evidence: make check green at 44a7656 (unit 474 pass, power probes 5/5, smoke loaded). A make check before 35e19bb failed only in flaky recording probes (recording-early-stop, recording-failure); reran green.
+- L6 verifier: PASS. Note: logout bypasses the Hypr.dispatch single-wrapper rule (suggestion, not fixed).
+- Risk: item 1 (logout/reboot/shutdown end the session irreversibly)
