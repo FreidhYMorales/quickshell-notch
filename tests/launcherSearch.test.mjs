@@ -21,3 +21,18 @@ test("rankApps: an empty query lists every app alphabetically, ignoring case", (
     ["blender", "files", "firefox", "zed"],
   );
 });
+
+test("rankApps: name prefix first, then word starts, then any in-order match", () => {
+  const apps = [
+    app("calc", "Calculator"),
+    app("profile", "Profile Editor"),
+    app("font", "Font Viewer"),
+    app("firmware", "GNOME Firmware"),
+    app("firefox", "Firefox"),
+    app("files", "Files"),
+  ];
+  assert.deepEqual(
+    rankApps(apps, "fi").map((a) => a.id),
+    ["files", "firefox", "firmware", "font", "profile"],
+  );
+});
