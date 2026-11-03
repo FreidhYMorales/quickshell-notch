@@ -93,14 +93,32 @@ Item {
                 required property string modelData
 
                 text: Strings.powerIcons[modelData]
-                color: modelData === root.selected ? root.scheme.primary : root.scheme.muted
+                readonly property bool isSelected: modelData === root.selected
+
+                color: isSelected ? root.scheme.primary : root.scheme.muted
+                scale: isSelected ? Layout.powerSelectedScale : 1
                 font.family: Fonts.family
-                font.pixelSize: Fonts.control
+                font.pixelSize: Fonts.powerIcon
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Timings.animNormal
+                    }
+                }
+
+                Behavior on scale {
+                    Anim {}
+                }
 
                 // Press and hold like Enter; releasing early cancels.
                 MouseArea {
                     anchors.fill: parent
                     anchors.margins: -Layout.expandedPad
+                    hoverEnabled: true
+                    onEntered: root.send({
+                        type: "PowerSelect",
+                        action: parent.modelData
+                    })
                     onPressed: root.press(parent.modelData)
                     onReleased: root.send({
                         type: "HoldCancel"

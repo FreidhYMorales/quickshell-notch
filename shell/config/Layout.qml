@@ -49,6 +49,8 @@ Singleton {
     readonly property int powerWidth: 360
     readonly property int powerHeight: 72
     readonly property int powerBarHeight: 3
+    // The selected action grows slightly.
+    readonly property real powerSelectedScale: 1.2
 
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
