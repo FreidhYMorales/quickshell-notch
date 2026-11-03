@@ -37,3 +37,8 @@ Risk: item 1 (a wiring slip could run logout/reboot/shutdown without the hold)
 
 - L1 request: /flow:story 18
 - Assumptions: the menu opens on the monitor whose control center was clicked (not the Hyprland-focused one); the row uses the same icons as the power menu; testing follows #10's rule: dry run only, never run real power actions against the live session.
+- L2 build: test→code pairs b548ce7→e403a4a (row), c048ff6→b2fca67 (lock/suspend), 4f85e32→634a42d (preselected menu), 9951022→d895b64→71f319f (ink centring); manual-only look commits 2e00a9b, 77a0139, f68c93c, 8b7009f.
+- L3 manual check (user, NOTCH_POWER_DRY_RUN=1 + fake binaries): asked to centre the row, add the power menu's hover colour/scale animation, align it edge to edge with tiles and the notifications card, use tile-sized glyphs, add a tinted pill, and fix the off-centre right icon (Nerd Font ink wider than advance). All approved.
+- L4 evidence: make check green at 71f319f (unit, power probes, qml-test, smoke).
+- L5 verifier: PASS. Follow-ups noted: no logout click in power-cc-hold; poweroff case does not assert owner.
+- Risk: item 1 (a wiring slip could run logout/reboot/shutdown without the hold)
