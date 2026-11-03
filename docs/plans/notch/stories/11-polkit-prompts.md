@@ -48,3 +48,5 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - Private-bus registration test loads the real centre store but fails because the agent is not registered. Its uncommitted fixture exceeds the step size limit; awaiting direction.
 - User approved registration test size exception; red 8d340aa, green c435783, focused test and `make check` passed. Agent flow is not yet connected; do not run this partial branch as the active shell.
 - Private authority prototype successfully delivered a real authentication request to Quickshell. Offscreen has no focused monitor; test cancellation before process exit before wiring the flow.
+- No focused monitor: red 10ca8f0, green a732f1f; focused monitor: red 7b926d1, green be6bee6; external flow end: red e5fe4af, green 58c57ec. Each focused test and `make check` passed.
+- Security: uncommitted QML integration test shows a cancelled response persists into the next request. Fixture exceeds the step size limit; awaiting direction.
