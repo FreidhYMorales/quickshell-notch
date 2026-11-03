@@ -26,7 +26,8 @@ Singleton {
             description: "Choose the theme."
         },
         {
-            name: "Keybinds"
+            name: "Keybinds",
+            description: "View keyboard shortcuts."
         }
     ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,
