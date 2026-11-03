@@ -84,7 +84,7 @@ Item {
 
     Row {
         anchors.centerIn: parent
-        spacing: Layout.expandedPad * 2
+        spacing: Layout.powerSpacing
 
         Repeater {
             model: PowerMenu.ACTIONS
@@ -110,15 +110,21 @@ Item {
                     Anim {}
                 }
 
+                // Passive, so it still sees the pointer under the notch's
+                // own hover zone; hovering selects like the arrow keys.
+                HoverHandler {
+                    margin: Layout.expandedPad
+                    onHoveredChanged: if (hovered)
+                        root.send({
+                            type: "PowerSelect",
+                            action: parent.modelData
+                        })
+                }
+
                 // Press and hold like Enter; releasing early cancels.
                 MouseArea {
                     anchors.fill: parent
                     anchors.margins: -Layout.expandedPad
-                    hoverEnabled: true
-                    onEntered: root.send({
-                        type: "PowerSelect",
-                        action: parent.modelData
-                    })
                     onPressed: root.press(parent.modelData)
                     onReleased: root.send({
                         type: "HoldCancel"

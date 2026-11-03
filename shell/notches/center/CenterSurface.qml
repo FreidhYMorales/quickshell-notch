@@ -63,6 +63,11 @@ NotchSurface {
         anchors.top: parent.top
         clip: true
 
+        // Keeps the zone hovered while a child (power icons) takes the hover.
+        HoverHandler {
+            id: shapeHover
+        }
+
         Behavior on width {
             Anim {}
         }
@@ -103,8 +108,11 @@ NotchSurface {
         }
     }
 
+    // Below the content so the power icons get their own hover.
     NotchZone {
+        z: -1
         anchors.fill: shape
+        alsoHovered: shapeHover.hovered
         onHoverChanged: on => CenterStore.dispatch({
                 type: "Hover",
                 monitor: root.screen.name,
