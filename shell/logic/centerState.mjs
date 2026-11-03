@@ -117,6 +117,15 @@ const handlers = {
       keyboard: merge(keyboard, { query: text, index: 0 }),
     });
   },
+  // The store passes `count` (results shown); the reducer never sees the apps.
+  LauncherMove(state, { step, count }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher") return unchanged(state);
+    const to = Math.min(count - 1, (keyboard.index ?? 0) + step);
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { index: Math.max(0, to) }),
+    });
+  },
   PowerOpen(state, { monitor, action = null }) {
     return openKeyboard(state, monitor, "power", action);
   },
