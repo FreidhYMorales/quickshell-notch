@@ -38,123 +38,168 @@ Item {
         });
     }
 
+    // The same padding on every side of the content (inside the ears).
+    implicitHeight: column.implicitHeight + 2 * Layout.launcherPad
+
     NotchEarShape {
         anchors.fill: parent
     }
 
     Column {
-        anchors.fill: parent
-        anchors.leftMargin: Layout.earRadius + Layout.expandedPad
-        anchors.rightMargin: Layout.earRadius + Layout.expandedPad
-        anchors.topMargin: Layout.expandedPad
+        id: column
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.leftMargin: Layout.earRadius + Layout.launcherPad
+        anchors.rightMargin: Layout.earRadius + Layout.launcherPad
+        anchors.topMargin: Layout.launcherPad
         spacing: Layout.launcherGap
 
-        TextInput {
-            id: field
-
+        // Search glyph (by launcher mode) before the field.
+        Row {
             width: parent.width
-            focus: root.visible
-            color: root.scheme.onSurface
-            font.family: Fonts.family
-            font.pixelSize: Fonts.launcherItem
-            // Each opening starts from an empty search.
-            onVisibleChanged: if (visible) {
-                clear();
-                forceActiveFocus();
+            spacing: Layout.launcherGap
+
+            Text {
+                id: glyph
+
+                anchors.verticalCenter: parent.verticalCenter
+                width: Layout.launcherIcon
+                horizontalAlignment: Text.AlignHCenter
+                text: Strings.launcherModeIcons[root.view.sub ?? "apps"] ?? Strings.launcherModeIcons.apps
+                color: root.scheme.primary
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
             }
-            onTextChanged: root.send({
-                type: "LauncherQuery",
-                text: text
-            })
-            Keys.onPressed: event => {
-                event.accepted = true;
-                switch (event.key) {
-                case Qt.Key_Up:
-                    return root.move(-1);
-                case Qt.Key_Down:
-                    return root.move(1);
-                case Qt.Key_Return:
-                case Qt.Key_Enter:
-                    return root.launch(root.view.index ?? 0);
-                case Qt.Key_Escape:
-                    return root.send({
-                        type: "Close",
-                        monitor: root.screen.name
-                    });
+
+            TextInput {
+                id: field
+
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - glyph.width - parent.spacing
+                focus: root.visible
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+                // Each opening starts from an empty search.
+                onVisibleChanged: if (visible) {
+                    clear();
+                    forceActiveFocus();
                 }
-                event.accepted = false;
+                onTextChanged: root.send({
+                    type: "LauncherQuery",
+                    text: text
+                })
+                Keys.onPressed: event => {
+                    event.accepted = true;
+                    switch (event.key) {
+                    case Qt.Key_Up:
+                        return root.move(-1);
+                    case Qt.Key_Down:
+                        return root.move(1);
+                    case Qt.Key_Return:
+                    case Qt.Key_Enter:
+                        return root.launch(root.view.index ?? 0);
+                    case Qt.Key_Escape:
+                        return root.send({
+                            type: "Close",
+                            monitor: root.screen.name
+                        });
+                    }
+                    event.accepted = false;
+                }
             }
         }
 
-        Text {
-            visible: root.results.length === 0
-            text: Strings.noMatches
+        Rectangle {
+            width: parent.width
+            height: Layout.launcherDivider
             color: root.scheme.muted
-            font.family: Fonts.family
-            font.pixelSize: Fonts.body
+            opacity: Colours.dividerAlpha
         }
 
-        ListView {
-            id: list
-
+        // Fixed height, so the notch keeps its size while "No matches" shows.
+        Item {
             width: parent.width
             height: Layout.launcherRows * Layout.launcherRowHeight
-            clip: true
-            model: root.results
-            currentIndex: root.view.index ?? 0
-            // Keeps the selection in sight while the arrows move it.
-            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
-            delegate: Item {
-                id: row
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.results.length === 0
+                text: Strings.noMatches
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
 
-                required property var modelData
-                required property int index
-                readonly property bool isSelected: index === list.currentIndex
+            ListView {
+                id: list
 
-                width: list.width
-                height: Layout.launcherRowHeight
+                anchors.fill: parent
+                clip: true
+                model: root.results
+                currentIndex: root.view.index ?? 0
+                // Keeps the selection in sight while the arrows move it.
+                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Layout.launcherGap
+                delegate: Item {
+                    id: row
 
-                    Image {
+                    required property var modelData
+                    required property int index
+                    readonly property bool isSelected: index === list.currentIndex
+
+                    width: list.width
+                    height: Layout.launcherRowHeight
+
+                    Row {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Layout.launcherIcon
-                        height: Layout.launcherIcon
-                        sourceSize.width: Layout.launcherIcon
-                        sourceSize.height: Layout.launcherIcon
-                        source: Quickshell.iconPath(row.modelData.icon ?? "", true)
-                    }
+                        spacing: Layout.launcherGap
+                        transformOrigin: Item.Left
+                        scale: row.isSelected ? Layout.launcherSelectedScale : 1
 
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: row.modelData.name
-                        color: row.isSelected ? root.scheme.primary : root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.launcherItem
+                        Behavior on scale {
+                            Anim {}
+                        }
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Timings.animNormal
+                        Image {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Layout.launcherIcon
+                            height: Layout.launcherIcon
+                            sourceSize.width: Layout.launcherIcon
+                            sourceSize.height: Layout.launcherIcon
+                            source: Quickshell.iconPath(row.modelData.icon ?? "", true)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: row.modelData.name
+                            color: row.isSelected ? root.scheme.primary : root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.launcherItem
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Timings.animNormal
+                                }
                             }
                         }
                     }
-                }
 
-                // Passive, so it still sees the pointer under the notch's own
-                // hover zone; hovering selects like the arrows, a click launches.
-                HoverHandler {
-                    onHoveredChanged: if (hovered)
-                        root.send({
-                            type: "LauncherSelect",
-                            index: row.index
-                        })
-                }
+                    // Passive, so it still sees the pointer under the notch's own
+                    // hover zone; hovering selects like the arrows, a click launches.
+                    HoverHandler {
+                        onHoveredChanged: if (hovered)
+                            root.send({
+                                type: "LauncherSelect",
+                                index: row.index
+                            })
+                    }
 
-                TapHandler {
-                    onTapped: root.launch(row.index)
+                    TapHandler {
+                        onTapped: root.launch(row.index)
+                    }
                 }
             }
         }
