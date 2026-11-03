@@ -176,42 +176,55 @@ NotchSurface {
                     }
                 }
 
-                // Session actions, same icons and hover look as the power menu.
-                // Tile-wide cells spread edge to edge over the list width, so
-                // the row lines up with the tiles and the notifications card.
-                Row {
-                    spacing: (Layout.ccListWidth - PowerMenu.ACTIONS.length * Layout.ccTile) / (PowerMenu.ACTIONS.length - 1)
+                // Session actions, same icons and hover look as the power menu,
+                // on a pill tinted like the notifications card. Tile-wide cells
+                // spread edge to edge, so the icons line up with the tiles.
+                Rectangle {
+                    width: Layout.ccListWidth
+                    height: Layout.ccTile
+                    radius: height / 2
+                    color: {
+                        const p = Qt.color(root.scheme.primary);
+                        return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
+                    }
 
-                    Repeater {
-                        model: PowerMenu.ACTIONS
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: (Layout.ccListWidth - PowerMenu.ACTIONS.length * Layout.ccTile) / (PowerMenu.ACTIONS.length - 1)
 
-                        Text {
-                            required property string modelData
+                        Repeater {
+                            model: PowerMenu.ACTIONS
 
-                            width: Layout.ccTile
-                            horizontalAlignment: Text.AlignHCenter
-                            text: Strings.powerIcons[modelData]
-                            color: powerHover.hovered ? root.scheme.primary : root.scheme.onSurface
-                            scale: powerHover.hovered ? Layout.powerSelectedScale : 1
-                            font.family: Fonts.family
-                            font.pixelSize: Fonts.control
+                            Text {
+                                required property string modelData
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Timings.animNormal
+                                width: Layout.ccTile
+                                height: Layout.ccTile
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                text: Strings.powerIcons[modelData]
+                                color: powerHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                                scale: powerHover.hovered ? Layout.powerSelectedScale : 1
+                                font.family: Fonts.family
+                                font.pixelSize: Fonts.control
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Timings.animNormal
+                                    }
                                 }
-                            }
 
-                            Behavior on scale {
-                                Anim {}
-                            }
+                                Behavior on scale {
+                                    Anim {}
+                                }
 
-                            HoverHandler {
-                                id: powerHover
-                            }
+                                HoverHandler {
+                                    id: powerHover
+                                }
 
-                            TapHandler {
-                                onTapped: root.powerClicked(parent.modelData)
+                                TapHandler {
+                                    onTapped: root.powerClicked(parent.modelData)
+                                }
                             }
                         }
                     }
