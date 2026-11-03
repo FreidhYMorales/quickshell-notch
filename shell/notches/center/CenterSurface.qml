@@ -134,8 +134,12 @@ NotchSurface {
             width: parent.width / 2
             visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
             focus: visible
-            onVisibleChanged: if (visible)
-                forceActiveFocus()
+            onVisibleChanged: {
+                if (visible)
+                    forceActiveFocus();
+                else
+                    text = "";
+            }
             echoMode: TextInput.Password
             color: Colours.paletteFor(root.screen).onSurface
             font.family: Fonts.family
