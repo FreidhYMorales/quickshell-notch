@@ -38,3 +38,6 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - First integration scenario needs smaller TDD steps to stay within the step size limit; awaiting approval.
 - Message step: red test 96257b8, green implementation e91cce7; focused test and `make check` passed.
 - Input step stopped with an uncommitted failing integration test: its fixture and runner exceed the step size limit. Awaiting direction.
+- User approved the input test size exception; red 9b6975e, green 42c8b04, focused test and `make check` passed.
+- Controls: red 4dc4f95, green 2a3d833, focused test and `make check` passed; labels are not yet fully connected.
+- Cancel: red 7e41010; focused test passes with uncommitted implementation. Two `make check` attempts stopped at QML formatting; awaiting direction before another attempt.
