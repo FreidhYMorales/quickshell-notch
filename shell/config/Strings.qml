@@ -18,7 +18,8 @@ Singleton {
     readonly property string noMatches: "No matches"
     readonly property var launcherCommands: [
         {
-            name: "Wallpaper"
+            name: "Wallpaper",
+            description: "Choose the desktop wallpaper. Notch colours follow it."
         },
         {
             name: "Theme"

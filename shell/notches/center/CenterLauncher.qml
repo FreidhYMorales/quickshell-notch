@@ -139,7 +139,10 @@ Item {
             ListView {
                 id: list
 
-                anchors.fill: parent
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                width: root.commandMode ? parent.width * Layout.launcherCommandListRatio : parent.width
                 clip: true
                 model: root.results
                 currentIndex: root.view.index ?? 0
@@ -204,6 +207,19 @@ Item {
                         onTapped: root.launch(row.index)
                     }
                 }
+            }
+
+            Text {
+                anchors.left: list.right
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.leftMargin: Layout.launcherGap
+                visible: root.commandMode && root.results.length > 0
+                text: root.results[root.view.index ?? 0]?.description ?? ""
+                wrapMode: Text.WordWrap
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
             }
         }
     }
