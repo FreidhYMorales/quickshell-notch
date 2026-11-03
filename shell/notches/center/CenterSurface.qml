@@ -31,7 +31,10 @@ NotchSurface {
             expanded: Layout.toastExpandedHeight
         },
         max: slot.width
-    }) : CenterLayout.shapeFor(view.mode === "polkit" ? "power" : view.mode, {
+    }) : view.mode === "polkit" ? {
+        width: Layout.polkitWidth,
+        height: polkitForm.implicitHeight + 2 * Layout.polkitPad
+    } : CenterLayout.shapeFor(view.mode, {
         idle: idleW,
         expanded: CenterLayout.expandedWidth({
             hasPlayer: Mpris.hasPlayer,
@@ -56,7 +59,7 @@ NotchSurface {
     slotName: "c"
     // The launcher is taller than the expanded slot; the window is masked, so
     // the extra height is invisible until the launcher fills it.
-    minHeight: launcherView.implicitHeight
+    minHeight: Math.max(launcherView.implicitHeight, root.polkit ? root.size.height : 0)
     wantsKeyboard: view.keyboardFocus === "exclusive"
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
@@ -115,80 +118,97 @@ NotchSurface {
             view: root.view
         }
 
-        Text {
-            id: polkitMessage
+        // Polkit draws no mode content of its own, so the card is drawn here and
+        // the form keeps its own padding inside it.
+        NotchEarShape {
+            objectName: "polkitBackground"
+            anchors.fill: parent
+            visible: root.polkit
+        }
 
+        Column {
+            id: polkitForm
+
+            width: Layout.polkitWidth - 2 * Layout.polkitPad
+            x: (parent.width - width) / 2
             anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: root.polkit
-            text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
-            color: Colours.paletteFor(root.screen).onSurface
-            font.family: Fonts.family
-        }
-
-        Text {
-            id: polkitError
-
-            anchors.top: polkitMessage.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: root.polkit && text !== ""
-            text: root.polkit ? CenterStore.state.global.polkit.flowId.supplementaryMessage ?? "" : ""
-            color: root.polkit && CenterStore.state.global.polkit.flowId.supplementaryIsError ? Colours.critical : Colours.paletteFor(root.screen).muted
-            font.family: Fonts.family
-        }
-
-        TextInput {
-            id: polkitInput
-
-            anchors.top: polkitMessage.bottom
-            anchors.topMargin: polkitError.visible ? polkitError.implicitHeight : 0
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width / 2
-            visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
-            focus: visible
-            onVisibleChanged: {
-                if (visible)
-                    forceActiveFocus();
-                else
-                    text = "";
-            }
-            echoMode: TextInput.Password
-            color: Colours.paletteFor(root.screen).onSurface
-            font.family: Fonts.family
-        }
-
-        Row {
-            anchors.top: polkitInput.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Layout.powerSpacing
+            anchors.topMargin: Layout.polkitPad
+            spacing: Layout.polkitGap
             visible: root.polkit
 
             Text {
-                text: Strings.polkitCancel
+                id: polkitMessage
+
+                objectName: "polkitMessage"
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
                 color: Colours.paletteFor(root.screen).onSurface
                 font.family: Fonts.family
+            }
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: CenterStore.dispatch({
-                        type: "PolkitCancel"
-                    })
+            Text {
+                id: polkitError
+
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                visible: text !== ""
+                text: root.polkit ? CenterStore.state.global.polkit.flowId.supplementaryMessage ?? "" : ""
+                color: root.polkit && CenterStore.state.global.polkit.flowId.supplementaryIsError ? Colours.critical : Colours.paletteFor(root.screen).muted
+                font.family: Fonts.family
+            }
+
+            TextInput {
+                id: polkitInput
+
+                width: parent.width / 2
+                x: (parent.width - width) / 2
+                visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
+                focus: visible
+                onVisibleChanged: {
+                    if (visible)
+                        forceActiveFocus();
+                    else
+                        text = "";
                 }
-            }
-            Text {
-                text: Strings.polkitAuthenticate
+                echoMode: TextInput.Password
                 color: Colours.paletteFor(root.screen).onSurface
                 font.family: Fonts.family
+            }
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        const flow = CenterStore.state.global.polkit?.flowId;
-                        if (!flow || !flow.isResponseRequired)
-                            return;
-                        const response = polkitInput.text;
-                        polkitInput.text = "";
-                        flow.submit(response);
+            Row {
+                x: (parent.width - width) / 2
+                spacing: Layout.powerSpacing
+
+                Text {
+                    text: Strings.polkitCancel
+                    color: Colours.paletteFor(root.screen).onSurface
+                    font.family: Fonts.family
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: CenterStore.dispatch({
+                            type: "PolkitCancel"
+                        })
+                    }
+                }
+                Text {
+                    text: Strings.polkitAuthenticate
+                    color: Colours.paletteFor(root.screen).onSurface
+                    font.family: Fonts.family
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            const flow = CenterStore.state.global.polkit?.flowId;
+                            if (!flow || !flow.isResponseRequired)
+                                return;
+                            const response = polkitInput.text;
+                            polkitInput.text = "";
+                            flow.submit(response);
+                        }
                     }
                 }
             }

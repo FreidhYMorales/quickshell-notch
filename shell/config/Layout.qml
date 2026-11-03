@@ -53,6 +53,12 @@ Singleton {
     // The selected action grows slightly.
     readonly property real powerSelectedScale: 1.2
 
+    // Polkit prompt in the centre notch: padded card around the action message,
+    // optional error, masked field and controls. The height follows the content.
+    readonly property int polkitWidth: 360
+    readonly property int polkitPad: 16
+    readonly property int polkitGap: 8
+
     // App launcher in the centre notch: search row, divider, fixed list. Its
     // height follows the content, padded alike on every side.
     readonly property int launcherWidth: 520
