@@ -20,6 +20,7 @@ Singleton {
     readonly property var launcherCommands: [
         {
             name: "Wallpaper",
+            glyph: "󰸉",
             description: "Choose the desktop wallpaper. Notch colours follow it."
         },
         {

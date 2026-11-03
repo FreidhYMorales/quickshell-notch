@@ -171,11 +171,23 @@ Item {
 
                         Image {
                             anchors.verticalCenter: parent.verticalCenter
+                            visible: !root.commandMode
                             width: Layout.launcherIcon
                             height: Layout.launcherIcon
                             sourceSize.width: Layout.launcherIcon
                             sourceSize.height: Layout.launcherIcon
                             source: Quickshell.iconPath(row.modelData.icon ?? "", true)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: root.commandMode
+                            width: Layout.launcherIcon
+                            horizontalAlignment: Text.AlignHCenter
+                            text: row.modelData.glyph ?? ""
+                            color: row.isSelected ? root.scheme.primary : root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.launcherItem
                         }
 
                         Text {
