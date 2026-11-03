@@ -23,11 +23,29 @@ const tier = (name, query) => {
   return inOrder(text, query) ? 2 : -1;
 };
 
+// Generic name and keywords only count on a prefix or word start (scattered
+// in-order hits there are noise) and rank after every name match.
+const FALLBACK = 3;
+const fallbackMatch = (app, query) => {
+  const texts = [app.genericName ?? ""].concat(app.keywords ?? []);
+  for (const text of texts) {
+    const t = tier(text, query);
+    if (t === 0 || t === 1) return true;
+  }
+  return false;
+};
+
+const rank = (app, query) => {
+  const t = tier(app.name, query);
+  if (t >= 0) return t;
+  return fallbackMatch(app, query) ? FALLBACK : -1;
+};
+
 export function rankApps(apps, query) {
   const q = query.toLowerCase();
   const ranked = [];
   for (const app of apps) {
-    const t = tier(app.name, q);
+    const t = rank(app, q);
     if (t >= 0) ranked.push({ app, t });
   }
   ranked.sort((a, b) => a.t - b.t || byName(a.app, b.app));
