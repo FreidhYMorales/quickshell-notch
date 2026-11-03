@@ -105,6 +105,18 @@ Singleton {
 
     // Opens the power menu on the focused monitor, optionally preselecting an
     // action (unknown names preselect nothing).
+    function toggleLauncher() {
+        const monitor = Hyprland.focusedMonitor?.name;
+        if (!monitor) {
+            console.warn("CenterStore: no focused monitor for the launcher");
+            return;
+        }
+        dispatch({
+            type: "LauncherToggle",
+            monitor: monitor
+        });
+    }
+
     function openPower(action) {
         const monitor = Hyprland.focusedMonitor?.name;
         if (!monitor) {
@@ -116,6 +128,19 @@ Singleton {
             monitor: monitor,
             action: PowerMenu.ACTIONS.includes(action) ? action : null
         });
+    }
+
+    // `qs -c notch ipc call launcher toggle` (the launcher keybind).
+    LazyLoader {
+        active: !Flags.smoke
+
+        IpcHandler {
+            target: "launcher"
+
+            function toggle(): void {
+                root.toggleLauncher();
+            }
+        }
     }
 
     // `qs -c notch ipc call power open` (Ctrl+Alt+Del) or `openAt <action>`.

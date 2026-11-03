@@ -18,6 +18,26 @@ Item {
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property var results: LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
+    function send(event) {
+        CenterStore.dispatch(event);
+    }
+
+    function move(step) {
+        send({
+            type: "LauncherMove",
+            step: step,
+            count: results.length
+        });
+    }
+
+    // Null when there are no results: the reducer then does nothing.
+    function launch(index) {
+        send({
+            type: "LauncherActivate",
+            appId: results[index]?.id ?? null
+        });
+    }
+
     NotchEarShape {
         anchors.fill: parent
     }
@@ -37,8 +57,33 @@ Item {
             color: root.scheme.onSurface
             font.family: Fonts.family
             font.pixelSize: Fonts.title
-            onVisibleChanged: if (visible)
-                forceActiveFocus()
+            // Each opening starts from an empty search.
+            onVisibleChanged: if (visible) {
+                clear();
+                forceActiveFocus();
+            }
+            onTextChanged: root.send({
+                type: "LauncherQuery",
+                text: text
+            })
+            Keys.onPressed: event => {
+                event.accepted = true;
+                switch (event.key) {
+                case Qt.Key_Up:
+                    return root.move(-1);
+                case Qt.Key_Down:
+                    return root.move(1);
+                case Qt.Key_Return:
+                case Qt.Key_Enter:
+                    return root.launch(root.view.index ?? 0);
+                case Qt.Key_Escape:
+                    return root.send({
+                        type: "Close",
+                        monitor: root.screen.name
+                    });
+                }
+                event.accepted = false;
+            }
         }
 
         ListView {
