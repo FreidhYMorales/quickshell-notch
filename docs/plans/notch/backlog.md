@@ -17,7 +17,7 @@
 05. [-] split → #20, #21
 06. [-] split → #22, #23
 07. [x] dfaac92 As a user, I want to start and stop screen recording from the control center and see the red dot on the notch while recording so that I know I am recording. Requires: #16
-08. [ ] As a user, I want an app launcher that morphs out of the centre notch so that I can find and open apps from the keyboard.
+08. [~] As a user, I want an app launcher that morphs out of the centre notch so that I can find and open apps from the keyboard.
 09. [ ] As a user, I want launcher commands with a description pane (wallpaper, theme, keybinds) so that I change my setup without leaving the keyboard. Requires: #08
 10. [x] 44a7656 As a user, I want a power menu (Ctrl+Alt+Del, hold to confirm) so that I can lock, suspend, log out, reboot and shut down safely.
 11. [ ] As a user, I want polkit password prompts in the centre notch so that apps can ask for admin rights.
