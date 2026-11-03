@@ -22,7 +22,8 @@ Singleton {
             description: "Choose the desktop wallpaper. Notch colours follow it."
         },
         {
-            name: "Theme"
+            name: "Theme",
+            description: "Choose the theme."
         },
         {
             name: "Keybinds"
