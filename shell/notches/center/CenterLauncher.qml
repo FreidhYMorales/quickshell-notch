@@ -122,10 +122,10 @@ Item {
             opacity: Colours.dividerAlpha
         }
 
-        // Fixed height, so the notch keeps its size while "No matches" shows.
+        // Fixed per mode, so filtering does not resize the notch.
         Item {
             width: parent.width
-            height: Layout.launcherRows * Layout.launcherRowHeight
+            height: (root.commandMode ? Math.min(Layout.launcherRows, Strings.launcherCommands.length) : Layout.launcherRows) * Layout.launcherRowHeight
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
