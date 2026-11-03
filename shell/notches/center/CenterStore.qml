@@ -26,7 +26,14 @@ Singleton {
     LazyLoader {
         active: !Flags.smoke
 
-        PolkitAgent {}
+        PolkitAgent {
+            id: polkitAgent
+
+            onFlowChanged: {
+                if (polkitAgent.flow && !Hyprland.focusedMonitor?.name)
+                    polkitAgent.flow.cancelAuthenticationRequest();
+            }
+        }
     }
 
     // What the idle notch shows in its side slots: low > media > battery.
