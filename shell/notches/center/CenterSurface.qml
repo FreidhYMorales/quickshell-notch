@@ -163,6 +163,18 @@ NotchSurface {
                 text: Strings.polkitAuthenticate
                 color: Colours.paletteFor(root.screen).onSurface
                 font.family: Fonts.family
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        const flow = CenterStore.state.global.polkit?.flowId;
+                        if (!flow || !flow.isResponseRequired)
+                            return;
+                        const response = polkitInput.text;
+                        polkitInput.text = "";
+                        flow.submit(response);
+                    }
+                }
             }
         }
 
