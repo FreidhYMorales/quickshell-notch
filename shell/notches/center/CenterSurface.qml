@@ -151,6 +151,13 @@ NotchSurface {
                 text: Strings.polkitCancel
                 color: Colours.paletteFor(root.screen).onSurface
                 font.family: Fonts.family
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: CenterStore.dispatch({
+                        type: "PolkitCancel"
+                    })
+                }
             }
             Text {
                 text: Strings.polkitAuthenticate

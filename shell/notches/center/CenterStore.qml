@@ -60,6 +60,10 @@ Singleton {
             Power.run(effect.action);
             return;
         }
+        if (effect.type === "polkit.cancel") {
+            effect.flowId.cancelAuthenticationRequest();
+            return;
+        }
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));
     }
 
