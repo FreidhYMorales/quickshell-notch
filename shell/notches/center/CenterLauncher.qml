@@ -221,10 +221,23 @@ Item {
                 }
             }
 
+            Rectangle {
+                id: commandDivider
+
+                anchors.left: list.right
+                anchors.leftMargin: Layout.launcherGap / 2
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: Layout.launcherDivider
+                visible: root.commandMode && root.results.length > 0
+                color: root.scheme.muted
+                opacity: Colours.dividerAlpha
+            }
+
             Text {
                 id: description
 
-                anchors.left: list.right
+                anchors.left: commandDivider.right
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.leftMargin: Layout.launcherGap
