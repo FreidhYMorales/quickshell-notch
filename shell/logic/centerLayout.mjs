@@ -13,9 +13,11 @@ export function expandedWidth({ hasPlayer, full, clockOnly, mark = 0, max }) {
   return Math.min((hasPlayer ? full : clockOnly) + 2 * mark, max);
 }
 
-// widths / heights: { idle, expanded, power }.
+// widths / heights: { idle, expanded, power, launcher }.
+const SIZED_MODES = ["expanded", "power", "launcher"];
+
 export function shapeFor(mode, widths, heights) {
-  const key = mode === "expanded" || mode === "power" ? mode : "idle";
+  const key = SIZED_MODES.includes(mode) ? mode : "idle";
   return { width: widths[key], height: heights[key] };
 }
 
