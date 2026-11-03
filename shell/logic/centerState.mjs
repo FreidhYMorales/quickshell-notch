@@ -126,6 +126,11 @@ const handlers = {
       keyboard: merge(keyboard, { index: Math.max(0, to) }),
     });
   },
+  LauncherSelect(state, { index }) {
+    const { keyboard } = state.global;
+    if (keyboard?.kind !== "launcher") return unchanged(state);
+    return setGlobal(state, { keyboard: merge(keyboard, { index }) });
+  },
   PowerOpen(state, { monitor, action = null }) {
     return openKeyboard(state, monitor, "power", action);
   },
