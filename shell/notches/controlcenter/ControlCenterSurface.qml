@@ -64,6 +64,13 @@ NotchSurface {
         Notifs.markSeen();
     }
 
+    // A power row click always collapses the panel; lock and suspend run here.
+    function powerClicked(action) {
+        collapse();
+        if (!PowerMenu.needsHold(action))
+            Power.run(action);
+    }
+
     // Collapsing keeps the view, so the slide-out still shows what the user
     // was on; a fresh open resets it to the root.
     function collapse() {
@@ -176,6 +183,10 @@ NotchSurface {
                             color: root.scheme.onSurface
                             font.family: Fonts.family
                             font.pixelSize: Fonts.control
+
+                            TapHandler {
+                                onTapped: root.powerClicked(parent.modelData)
+                            }
                         }
                     }
                 }
