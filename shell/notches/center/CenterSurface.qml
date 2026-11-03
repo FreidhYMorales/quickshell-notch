@@ -51,6 +51,7 @@ NotchSurface {
     readonly property bool expanded: view.mode === "expanded"
     readonly property bool power: view.mode === "power"
     readonly property bool launcher: view.mode === "launcher"
+    readonly property bool polkit: view.mode === "polkit"
 
     slotName: "c"
     // The launcher is taller than the expanded slot; the window is masked, so
@@ -86,7 +87,7 @@ NotchSurface {
             id: idle
 
             anchors.fill: parent
-            visible: !root.expanded && !root.toast && !root.power && !root.launcher
+            visible: !root.expanded && !root.toast && !root.power && !root.launcher && !root.polkit
             screen: root.screen
             view: root.view
         }
@@ -112,6 +113,14 @@ NotchSurface {
             visible: root.launcher
             screen: root.screen
             view: root.view
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: root.polkit
+            text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
+            color: Colours.paletteFor(root.screen).onSurface
+            font.family: Fonts.family
         }
 
         CenterExpanded {
