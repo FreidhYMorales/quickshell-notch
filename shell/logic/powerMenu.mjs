@@ -22,3 +22,10 @@ const COMMANDS = {
 export function commandFor(action) {
   return COMMANDS[action] ?? null;
 }
+
+// Nerd Font icons draw wider than their monospace advance, so Qt's centring
+// (by advance) pushes them right. The x shift that centres the ink instead.
+export function inkCentreOffset({ advance, inkX, inkWidth }) {
+  // `+ 0` turns -0 into 0.
+  return advance / 2 - (inkX + inkWidth / 2) + 0;
+}

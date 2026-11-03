@@ -7,8 +7,10 @@ import "../../logic/controlNav.mjs" as ControlNav
 import "../../logic/controlTiles.mjs" as ControlTiles
 import "../../logic/cornerLayout.mjs" as CornerLayout
 import "../../logic/format.mjs" as Format
+import "../../logic/powerMenu.mjs" as PowerMenu
 import "../../logic/workspaceStrip.mjs" as Strip
 import "../../services"
+import "../center"
 
 // Control center (top-right). Collapsed it draws nothing and only a small
 // corner hot zone takes input; resting there opens the panel, leaving the
@@ -61,6 +63,21 @@ NotchSurface {
     function showNotifications() {
         view = ControlNav.openSubpage();
         Notifs.markSeen();
+    }
+
+    // A power row click always collapses the panel. Lock and suspend run here;
+    // the session-ending ones open this monitor's power menu, preselected, so
+    // they still need the hold.
+    function powerClicked(action) {
+        collapse();
+        if (PowerMenu.needsHold(action))
+            CenterStore.dispatch({
+                type: "PowerOpen",
+                monitor: screen.name,
+                action: action
+            });
+        else
+            Power.run(action);
     }
 
     // Collapsing keeps the view, so the slide-out still shows what the user
@@ -155,6 +172,78 @@ NotchSurface {
                             color: root.scheme.muted
                             font.family: Fonts.family
                             font.pixelSize: Fonts.small
+                        }
+                    }
+                }
+
+                // Session actions, same icons and hover look as the power menu,
+                // on a pill tinted like the notifications card. Tile-wide cells
+                // spread edge to edge, so the icons line up with the tiles.
+                Rectangle {
+                    width: Layout.ccListWidth
+                    height: Layout.ccTile
+                    radius: height / 2
+                    color: {
+                        const p = Qt.color(root.scheme.primary);
+                        return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
+                    }
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: (Layout.ccListWidth - PowerMenu.ACTIONS.length * Layout.ccTile) / (PowerMenu.ACTIONS.length - 1)
+
+                        Repeater {
+                            model: PowerMenu.ACTIONS
+
+                            Text {
+                                id: powerIcon
+
+                                required property string modelData
+
+                                width: Layout.ccTile
+                                height: Layout.ccTile
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                text: Strings.powerIcons[modelData]
+                                color: powerHover.hovered ? root.scheme.primary : root.scheme.onSurface
+                                scale: powerHover.hovered ? Layout.powerSelectedScale : 1
+                                font.family: Fonts.family
+                                font.pixelSize: Fonts.control
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Timings.animNormal
+                                    }
+                                }
+
+                                Behavior on scale {
+                                    Anim {}
+                                }
+
+                                // Centre the drawn icon, not its narrower advance.
+                                transform: Translate {
+                                    x: PowerMenu.inkCentreOffset({
+                                        advance: ink.advanceWidth,
+                                        inkX: ink.tightBoundingRect.x,
+                                        inkWidth: ink.tightBoundingRect.width
+                                    })
+                                }
+
+                                TextMetrics {
+                                    id: ink
+
+                                    font: powerIcon.font
+                                    text: powerIcon.text
+                                }
+
+                                HoverHandler {
+                                    id: powerHover
+                                }
+
+                                TapHandler {
+                                    onTapped: root.powerClicked(parent.modelData)
+                                }
+                            }
                         }
                     }
                 }
