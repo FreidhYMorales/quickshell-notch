@@ -146,7 +146,7 @@ NotchSurface {
         Column {
             id: polkitForm
 
-            width: root.polkitWidth - 2 * Layout.polkitPad
+            width: root.polkitWidth - 2 * Layout.polkitSidePad
             x: (parent.width - width) / 2
             anchors.top: parent.top
             anchors.topMargin: Layout.polkitPad

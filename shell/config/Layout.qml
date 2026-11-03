@@ -59,6 +59,8 @@ Singleton {
     // Fingerprint prompts have no field, so their message gets more room.
     readonly property int polkitWideWidth: 460
     readonly property int polkitPad: 18
+    // Side padding: the ears take earRadius, so the text needs more room there.
+    readonly property int polkitSidePad: 36
     readonly property int polkitGap: 10
     // The card keeps a comfortable height even while the fingerprint reader
     // waits, so an automatic prompt is not easy to miss.
