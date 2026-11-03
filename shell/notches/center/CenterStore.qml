@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Services.Polkit
 import QtQuick
 import "../../config"
 import "../../services"
@@ -21,6 +22,12 @@ Singleton {
     property var state: CenterState.initialState(screenNames())
     // Id of the notification the reducer currently shows as a toast (null: none).
     property var toastId: null
+
+    LazyLoader {
+        active: !Flags.smoke
+
+        PolkitAgent {}
+    }
 
     // What the idle notch shows in its side slots: low > media > battery.
     readonly property string sideLayer: SideLayer.sideLayer(Battery.layer, Mpris.playing)
