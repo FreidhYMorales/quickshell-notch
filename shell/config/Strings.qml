@@ -16,6 +16,17 @@ Singleton {
     readonly property string noNotifications: "No notifications"
     // Launcher line when the query matches no app.
     readonly property string noMatches: "No matches"
+    readonly property var launcherCommands: [
+        {
+            name: "Wallpaper"
+        },
+        {
+            name: "Theme"
+        },
+        {
+            name: "Keybinds"
+        }
+    ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,
     // pound for commands.
     readonly property var launcherModeIcons: ({
