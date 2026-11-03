@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import Quickshell
+import "../../shell/config"
 import "visual.mjs" as Visual
 
 ShellRoot {
@@ -37,7 +38,9 @@ ShellRoot {
                 type: "PolkitRequest",
                 flowId: {
                     message: "Authentication is needed to run `/usr/bin/true' as the super user",
-                    isResponseRequired: true
+                    isResponseRequired: true,
+                    supplementaryMessage: "Authentication failed",
+                    supplementaryIsError: true
                 },
                 monitor: screen.name
             });
@@ -46,9 +49,15 @@ ShellRoot {
             const background = root.named(root.surface.content, "polkitBackground");
             const message = root.named(root.surface.content, "polkitMessage");
             const field = root.named(root.surface.content, "polkitField");
+            const input = root.named(root.surface.content, "polkitInput");
+            const error = root.named(root.surface.content, "polkitError");
             const button = Visual.findNamed(root.surface.content, "polkitAcceptButton");
-            if (!background || !message || !field || !button) {
+            if (!background || !message || !field || !input || !error || !button) {
                 console.error("polkit layout: prompt parts missing");
+                return Qt.exit(1);
+            }
+            if (message.font.pixelSize !== Fonts.idleClock || input.font.pixelSize !== Fonts.idleClock || error.font.pixelSize !== Fonts.idleClock) {
+                console.error("polkit layout: prompt text does not match the idle clock size");
                 return Qt.exit(1);
             }
             if (field.height < 24 || field.radius <= 0 || field.color.a === 0) {
