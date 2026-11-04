@@ -13,7 +13,7 @@ Scope {
     id: root
 
     LockPam {
-        id: auth
+        id: sharedAuth
 
         fingerprintEnabled: LockSecurity.fingerprintEnabled(notchSecurity.loaded ? notchSecurity.text() : null, oldSecurity.loaded ? oldSecurity.text() : null)
         onUnlocked: lock.locked = false
@@ -50,9 +50,9 @@ Scope {
         onLockedChanged: {
             Session.setLocked(locked);
             if (locked)
-                auth.listen();
+                sharedAuth.listen();
             else
-                auth.stop();
+                sharedAuth.stop();
         }
 
         WlSessionLockSurface {
@@ -61,7 +61,7 @@ Scope {
             color: Colours.background
 
             Image {
-                readonly property string path: Wallpapers.pathFor(surface.screen.name)
+                readonly property string path: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
 
                 anchors.fill: parent
                 source: path === "" ? "" : "file://" + path
@@ -75,7 +75,8 @@ Scope {
 
             LockContent {
                 anchors.fill: parent
-                auth: auth
+                // Not `auth: auth`: inside LockContent that name is its own property.
+                auth: sharedAuth
                 screen: surface.screen
             }
         }
