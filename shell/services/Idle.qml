@@ -2,12 +2,14 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import QtQuick
 import "../config"
 import "../logic/idleState.mjs" as IdleState
 
 // Idle timeouts (minutes), kept in the notch's own state dir. On first run
 // the old shell's idle.json is imported once; its file is only read.
+// Two idle watchers lock and then suspend; caffeine's inhibitor pauses both.
 Singleton {
     id: root
 
@@ -18,6 +20,29 @@ Singleton {
     property var timeouts: IdleState.parseIdle(null)
     // true once the notch state on disk holds the current timeouts.
     property bool saved: false
+    readonly property var delays: IdleState.idleDelays(timeouts)
+
+    // Enabled only once the timeouts are settled: a watcher created with the
+    // default timeout and changed a moment later could never fire (old shell).
+    IdleMonitor {
+        enabled: !Flags.smoke && root.saved && root.delays.lockSec !== null
+        timeout: root.delays.lockSec ?? 0
+        respectInhibitors: true
+        onIsIdleChanged: {
+            if (isIdle)
+                Session.requestLock();
+        }
+    }
+
+    IdleMonitor {
+        enabled: !Flags.smoke && root.saved && root.delays.suspendSec !== null
+        timeout: root.delays.suspendSec ?? 0
+        respectInhibitors: true
+        onIsIdleChanged: {
+            if (isIdle)
+                Power.run("suspend");
+        }
+    }
 
     function readText(path: string): var {
         reader.path = path;

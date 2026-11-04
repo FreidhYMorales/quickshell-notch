@@ -1,4 +1,5 @@
 //@ pragma IconTheme yamis-mono
+import QtQuick
 import Quickshell
 import "components"
 import "notches/center"
@@ -7,10 +8,14 @@ import "notches/osd"
 import "notches/workspaces"
 import "config"
 import "lock"
+import "services"
 
 // One Scope per monitor: spacer plus the top-row surfaces. The centre notch
 // (slot c) arrives in the next change.
 Scope {
+    // Singletons load on first use; the idle chain has no other user.
+    Component.onCompleted: Idle.saved
+
     LazyLoader {
         active: !Flags.smoke
 
