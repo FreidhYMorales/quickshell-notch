@@ -22,3 +22,9 @@ const VIDEO = /\.(avi|mp4|mov|mkv|m4v|webm)$/i;
 export function isVideoPath(path) {
   return VIDEO.test(path ?? "");
 }
+
+// A video wallpaper pauses while the session is locked (the lock surface may
+// play its own video).
+export function videoShouldPlay(path, locked) {
+  return isVideoPath(path) && !locked;
+}

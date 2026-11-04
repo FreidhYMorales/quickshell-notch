@@ -14,6 +14,7 @@ PanelWindow {
     readonly property string path: Wallpapers.pathFor(screen.name)
     readonly property bool isVideo: WallpaperState.isVideoPath(path)
     readonly property url source: path === "" ? "" : "file://" + path
+    readonly property bool playing: WallpaperState.videoShouldPlay(path, Session.locked)
 
     anchors {
         top: true
@@ -43,16 +44,20 @@ PanelWindow {
     }
 
     Video {
+        id: video
+
         anchors.fill: parent
         visible: root.isVideo
         source: root.isVideo ? root.source : ""
-        autoPlay: true
+        autoPlay: root.playing
         loops: MediaPlayer.Infinite
         muted: true
         fillMode: VideoOutput.PreserveAspectCrop
         opacity: hasVideo ? 1 : 0
         onErrorOccurred: (error, errorString) => console.warn("WallpaperSurface: cannot play " + root.path + ": " + errorString)
     }
+
+    onPlayingChanged: playing ? video.play() : video.pause()
 
     // Caffeine: this surface is always mapped, so the inhibitor holds from
     // the moment it is enabled.
