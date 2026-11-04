@@ -42,3 +42,5 @@
 30. [~] As a user, I want to lock my session from the notch shell and unlock it with my password so that my session stays protected.
 31. [ ] As a user, I want an idle chain (screensaver and lock together, then suspend) with my old timeouts so that an unattended session locks and sleeps on its own. Requires: #30, #12
 32. [ ] As a user, I want every suspend to lock the notch session first so that my session is already protected when it resumes. Requires: #30
+33. [ ] As a user, I want a lock screen redesigned in the notch style so that my lock matches my shell and no longer depends on the SDDM theme. Requires: #30
+33. [ ] As a user, I want a lock screen redesigned in the notch style so that my lock matches my shell and no longer depends on the SDDM theme. Requires: #30

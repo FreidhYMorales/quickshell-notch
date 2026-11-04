@@ -6,22 +6,22 @@
 
 ## Acceptance criteria
 
-- [ ] Given an unlocked session, when I call `qs -c notch ipc call lock lock` or choose lock in the power menu or the control center power row, then every monitor shows the lock screen (the old lock, with its current theme config), any open notch state closes (a pending polkit prompt is cancelled) and a playing video wallpaper pauses.
+- [ ] Given an unlocked session, when I call `qs -c notch ipc call lock lock` or choose lock in the power menu or the control center power row, then every monitor shows a minimal lock screen (clock, password field, fingerprint state and errors over the wallpaper), any open notch state closes (a pending polkit prompt is cancelled) and a playing video wallpaper pauses.
 - [ ] Given the session is locked, when I enter my correct password (or my fingerprint, as in the old lock), then the lock screen goes away, I am back in my session and the video wallpaper resumes; a wrong password shows an error and the session stays locked.
 
 ## Plan
 
-- Port the old lock module and its transitive deps (LockConfig, LockLayouts, LockLanguages, Security, OsInfo, avatar, vkeyboard assets) with `Paths` tokens instead of the hardcoded `quickshell/deadlock` path; `Style.*` inside the lock stays exempt from the tokens rule.
+- A minimal lock screen of our own (no port of the old SDDM-derived lock): a per-monitor session lock surface with the wallpaper, a clock, a masked password field, the fingerprint state and the last error, using the shell tokens.
 - Adapter: the lock listens to `Session.lockRequested` (already fired by the power actions) and is the only writer of `Session.locked`; the existing centre reducer and wallpaper surface already react to it.
 - IPC target `lock` (`lock`) for keybinds and the sleep hook; skipped under `Flags.smoke`, like the lock surface itself.
-- Unlock reuses the existing PAM services `quickshell-password` and `quickshell-fprint` unchanged.
+- Fingerprint on/off is read (read-only) from the notch state `security.json`, falling back to the old shell's one; unlock reuses the existing PAM services `quickshell-password` and `quickshell-fprint` unchanged.
 
 ## Out of scope
 
 - The idle chain (screensaver, lock and suspend timeouts, `lockFromIdle`, grace latch) (#31).
 - The root-owned sleep hook and lock-before-suspend (#32).
-- Hyprland keybinds, `QML_IMPORT_PATH` env for the virtual keyboard, exec and rollback (#14).
-- Restyling the lock in the notch style (plan: LATER).
+- Hyprland keybinds, exec and rollback (#14).
+- The full notch-style lock redesign (#33): themes, avatar, virtual keyboard, layout selector, power menu inside the lock, animations.
 
 ## Suggestions (your call)
 
@@ -36,4 +36,6 @@ Risk: item 2, 3, 6 (PAM unlock; `lock` IPC target consumed by keybinds and the s
 
 - L1 request: /flow:story 13
 - L2 split: #13 needed 4+ criteria (lock/unlock, idle chain, lock before suspend) → #30, #31, #32. #14 still says `Requires: #13`, which now means all three.
-- L3 assumptions: the lock is ported as is (its config files, themes and avatar are read from where the old one reads them, read-only); the virtual keyboard works once #14 sets `QML_IMPORT_PATH`; this story also closes #12's pending manual check (video pause on lock).
+- L3 assumptions: this story also closes #12's pending manual check (video pause on lock).
+- L4 build: unlock first by user request (password and fingerprint proven before any real lock): red→green c35ef73→6efb1b2, 7442e83→3c6184f, 86681aa→7c12f1e, 3ac01ff→a804851; lock IPC 4319db4→9f0c139; smoke guard 8fced0e (green at once: the IPC LazyLoader already covered it).
+- L5 scope change (user approved): instead of porting the old SDDM "silent" lock (about 2600 lines plus themes) only to redesign it later, this story builds a minimal lock of our own on top of `LockPam`; the full notch-style redesign moves to #33 (needs a mini-plan first). Lost until #33: virtual keyboard, layout selector, lock power menu, themes.
