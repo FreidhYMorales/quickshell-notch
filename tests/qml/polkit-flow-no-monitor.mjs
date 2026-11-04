@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const authority = `
-import os, subprocess, sys
+import os, pwd, subprocess, sys
 import dbus, dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
@@ -21,7 +21,7 @@ class Authority(dbus.service.Object):
         print('PRIVATE_AGENT_REGISTERED', flush=True)
         def request():
             agent = bus.get_object(sender, path, introspect=False)
-            identities = [('unix-user', {'uid': dbus.UInt32(os.getuid(), variant_level=1)})]
+            identities = [('unix-user', {'uid': dbus.UInt32(pwd.getpwnam('nobody').pw_uid, variant_level=1)})]
             agent.BeginAuthentication('test.action', 'Private test request', '', {}, 'private-cookie', identities,
                 dbus_interface='org.freedesktop.PolicyKit1.AuthenticationAgent', signature='sssa{ss}sa(sa{sv})',
                 reply_handler=lambda: print('UNEXPECTED_SUCCESS', flush=True),
