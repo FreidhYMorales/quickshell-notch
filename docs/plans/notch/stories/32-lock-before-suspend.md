@@ -6,7 +6,7 @@
 
 ## Acceptance criteria
 
-- [ ] Given a Quickshell shell with a lock target is running unlocked (the notch shell started with `qs -p` or `qs -c notch`, or the old shell after a rollback), when the system suspends for any reason (lid, idle chain, power menu, `systemctl suspend`), then the session is already locked when it resumes.
+- [ ] Given the notch shell is running unlocked (started with `qs -p` or, after the cutover, `qs -c notch`), when the system suspends for any reason (lid, idle chain, power menu, `systemctl suspend`), then the session is already locked when it resumes.
 - [ ] Given no running shell has a lock target, or the one that does never answers, when the system suspends, then the suspend still goes ahead within a few seconds.
 
 ## Plan
