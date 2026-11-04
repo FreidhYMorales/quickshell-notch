@@ -15,6 +15,17 @@ export function findText(items, text) {
   return null;
 }
 
+// Finds a visible item by its objectName, for controls that show a glyph
+// instead of a label.
+export function findNamed(items, name) {
+  for (const item of items) {
+    if (item.visible && item.objectName === name) return item;
+    const nested = findNamed(childItems(item), name);
+    if (nested) return nested;
+  }
+  return null;
+}
+
 export function findImage(items, source) {
   for (const item of items) {
     if (item.visible && item.source && String(item.source) === source) {

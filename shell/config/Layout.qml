@@ -53,6 +53,25 @@ Singleton {
     // The selected action grows slightly.
     readonly property real powerSelectedScale: 1.2
 
+    // Polkit prompt in the centre notch: padded card around the action message,
+    // optional error, masked field and controls. The height follows the content.
+    readonly property int polkitWidth: 360
+    // Fingerprint prompts have no field, so their message gets more room.
+    readonly property int polkitWideWidth: 560
+    readonly property int polkitPad: 18
+    // Side padding: the ears take earRadius, so the text needs more room there.
+    readonly property int polkitSidePad: 36
+    readonly property int polkitGap: 10
+    // The card keeps a comfortable height even while the fingerprint reader
+    // waits, so an automatic prompt is not easy to miss.
+    readonly property int polkitMinHeight: 150
+    readonly property int polkitFieldWidth: 190
+    readonly property int polkitFieldHeight: 28
+    readonly property int polkitFieldPad: 10
+    readonly property int polkitButton: 28
+    // Thickness of the fingerprint scan line.
+    readonly property int polkitScanLine: 2
+
     // App launcher in the centre notch: search row, divider, fixed list. Its
     // height follows the content, padded alike on every side.
     readonly property int launcherWidth: 520

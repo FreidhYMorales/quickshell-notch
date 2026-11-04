@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Services.Polkit
 import QtQuick
 import "../../config"
 import "../../services"
@@ -21,6 +22,28 @@ Singleton {
     property var state: CenterState.initialState(screenNames())
     // Id of the notification the reducer currently shows as a toast (null: none).
     property var toastId: null
+
+    LazyLoader {
+        active: !Flags.smoke
+
+        PolkitAgent {
+            id: polkitAgent
+
+            onFlowChanged: {
+                if (polkitAgent.flow)
+                    root.dispatch({
+                        type: "PolkitRequest",
+                        flowId: polkitAgent.flow,
+                        monitor: Hyprland.focusedMonitor?.name
+                    });
+                else if (root.state.global.polkit)
+                    root.dispatch({
+                        type: "PolkitEnded",
+                        flowId: root.state.global.polkit.flowId
+                    });
+            }
+        }
+    }
 
     // What the idle notch shows in its side slots: low > media > battery.
     readonly property string sideLayer: SideLayer.sideLayer(Battery.layer, Mpris.playing)
@@ -58,6 +81,10 @@ Singleton {
         }
         if (effect.type === "power.run") {
             Power.run(effect.action);
+            return;
+        }
+        if (effect.type === "polkit.cancel") {
+            effect.flowId.cancelAuthenticationRequest();
             return;
         }
         console.log("CenterStore: effect (no service yet): " + JSON.stringify(effect));

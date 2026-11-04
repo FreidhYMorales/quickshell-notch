@@ -31,7 +31,10 @@ NotchSurface {
             expanded: Layout.toastExpandedHeight
         },
         max: slot.width
-    }) : CenterLayout.shapeFor(view.mode, {
+    }) : view.mode === "polkit" ? {
+        width: root.polkitWidth,
+        height: Math.max(Layout.polkitMinHeight, polkitForm.implicitHeight + 2 * Layout.polkitPad)
+    } : CenterLayout.shapeFor(view.mode, {
         idle: idleW,
         expanded: CenterLayout.expandedWidth({
             hasPlayer: Mpris.hasPlayer,
@@ -51,14 +54,78 @@ NotchSurface {
     readonly property bool expanded: view.mode === "expanded"
     readonly property bool power: view.mode === "power"
     readonly property bool launcher: view.mode === "launcher"
+    readonly property bool polkit: view.mode === "polkit"
+    readonly property var scheme: Colours.paletteFor(screen)
+    // The current polkit request wants typed input (false: fingerprint and the like).
+    readonly property bool polkitNeedsResponse: polkit && CenterStore.state.global.polkit.flowId.isResponseRequired === true
+    readonly property int polkitWidth: CenterStore.state.global.polkit?.flowId?.isResponseRequired === false ? Layout.polkitWideWidth : Layout.polkitWidth
+    // Same tint as the notifications card, for the polkit field and idle buttons.
+    readonly property color tint: {
+        const p = Qt.color(scheme.primary);
+        return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
+    }
 
     slotName: "c"
     // The launcher is taller than the expanded slot; the window is masked, so
     // the extra height is invisible until the launcher fills it.
-    minHeight: launcherView.implicitHeight
+    minHeight: Math.max(launcherView.implicitHeight, root.polkit ? root.size.height : 0)
     wantsKeyboard: view.keyboardFocus === "exclusive"
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
+
+    // Round glyph button of the polkit prompt (cancel / authenticate).
+    component PolkitButton: Rectangle {
+        id: button
+
+        property string glyph
+        property string glyphName
+        signal activated
+
+        width: Layout.polkitButton
+        height: Layout.polkitButton
+        radius: height / 2
+        color: hover.hovered ? root.scheme.primary : root.tint
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Timings.animNormal
+            }
+        }
+
+        Text {
+            objectName: button.glyphName
+            anchors.centerIn: parent
+            text: button.glyph
+            color: hover.hovered ? Colours.background : root.scheme.onSurface
+            font.family: Fonts.family
+            font.pixelSize: Fonts.title
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Timings.animNormal
+                }
+            }
+        }
+
+        HoverHandler {
+            id: hover
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: button.activated()
+        }
+    }
+
+    // The one place a response leaves the notch: the accept button and Enter.
+    function submitResponse() {
+        const flow = CenterStore.state.global.polkit?.flowId;
+        if (!flow || !flow.isResponseRequired)
+            return;
+        const response = polkitInput.text;
+        polkitInput.text = "";
+        flow.submit(response);
+    }
 
     Item {
         id: shape
@@ -86,7 +153,7 @@ NotchSurface {
             id: idle
 
             anchors.fill: parent
-            visible: !root.expanded && !root.toast && !root.power && !root.launcher
+            visible: !root.expanded && !root.toast && !root.power && !root.launcher && !root.polkit
             screen: root.screen
             view: root.view
         }
@@ -112,6 +179,185 @@ NotchSurface {
             visible: root.launcher
             screen: root.screen
             view: root.view
+        }
+
+        // Polkit draws no mode content of its own, so the card is drawn here and
+        // the form keeps its own padding inside it.
+        NotchEarShape {
+            objectName: "polkitBackground"
+            anchors.fill: parent
+            visible: root.polkit
+        }
+
+        Column {
+            id: polkitForm
+
+            // Escape cancels in both modes: the field passes it up, and the
+            // fingerprint block holds focus when there is no field.
+            Keys.onEscapePressed: CenterStore.dispatch({
+                type: "PolkitCancel"
+            })
+            width: root.polkitWidth - 2 * Layout.polkitSidePad
+            x: (parent.width - width) / 2
+            anchors.top: parent.top
+            anchors.topMargin: Layout.polkitPad
+            spacing: Layout.polkitGap
+            visible: root.polkit
+
+            Text {
+                id: polkitMessage
+
+                objectName: "polkitMessage"
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
+                color: Colours.paletteFor(root.screen).onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.idleClock
+            }
+
+            // Fingerprint icon with a line sweeping over it while the reader waits.
+            Item {
+                width: parent.width
+                focus: visible
+                height: polkitFingerprint.implicitHeight
+                visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired === false
+
+                Text {
+                    id: polkitFingerprint
+
+                    objectName: "polkitFingerprintGlyph"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Strings.glyphFingerprint
+                    color: root.scheme.primary
+                    opacity: Colours.dimAlpha
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.polkitFingerprint
+                }
+
+                Rectangle {
+                    id: polkitScan
+
+                    objectName: "polkitFingerprintScan"
+                    x: polkitFingerprint.x
+                    width: polkitFingerprint.implicitWidth
+                    height: Layout.polkitScanLine
+                    radius: height / 2
+                    color: root.scheme.primary
+
+                    SequentialAnimation on y {
+                        running: polkitScan.visible
+                        loops: Animation.Infinite
+
+                        NumberAnimation {
+                            from: 0
+                            to: polkitFingerprint.implicitHeight - Layout.polkitScanLine
+                            duration: Timings.polkitScan
+                            easing.type: Easing.InOutSine
+                        }
+                        NumberAnimation {
+                            from: polkitFingerprint.implicitHeight - Layout.polkitScanLine
+                            to: 0
+                            duration: Timings.polkitScan
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
+            }
+
+            // The hint (or error) line; a fingerprint prompt has its cancel here.
+            Row {
+                x: (parent.width - width) / 2
+                spacing: Layout.polkitGap
+                visible: root.polkit && (polkitError.text !== "" || !root.polkitNeedsResponse)
+
+                Text {
+                    id: polkitError
+
+                    objectName: "polkitError"
+                    width: Math.min(implicitWidth, polkitForm.width - (root.polkit && !root.polkitNeedsResponse ? Layout.polkitButton + Layout.polkitGap : 0))
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    visible: text !== ""
+                    text: root.polkit ? CenterStore.state.global.polkit.flowId.supplementaryMessage ?? "" : ""
+                    color: root.polkit && CenterStore.state.global.polkit.flowId.supplementaryIsError ? Colours.critical : Colours.paletteFor(root.screen).muted
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.idleClock
+                }
+
+                PolkitButton {
+                    id: polkitHintCancel
+                    visible: root.polkit && !root.polkitNeedsResponse
+                    anchors.verticalCenter: parent.verticalCenter
+                    objectName: "polkitCancelButton"
+                    glyphName: "polkitCancelGlyph"
+                    glyph: Strings.glyphClose
+                    onActivated: CenterStore.dispatch({
+                        type: "PolkitCancel"
+                    })
+                }
+            }
+
+            Row {
+                id: polkitResponse
+
+                x: (parent.width - width) / 2
+                spacing: Layout.polkitGap
+                visible: root.polkitNeedsResponse
+
+                Rectangle {
+                    id: polkitField
+
+                    visible: root.polkitNeedsResponse
+                    onVisibleChanged: {
+                        if (!visible)
+                            polkitInput.text = "";
+                    }
+                    objectName: "polkitField"
+                    width: Layout.polkitFieldWidth
+                    height: Layout.polkitFieldHeight
+                    radius: height / 2
+                    color: root.tint
+
+                    TextInput {
+                        id: polkitInput
+
+                        objectName: "polkitInput"
+                        anchors.fill: parent
+                        anchors.leftMargin: Layout.polkitFieldPad
+                        anchors.rightMargin: Layout.polkitFieldPad
+                        verticalAlignment: TextInput.AlignVCenter
+                        focus: root.polkitNeedsResponse
+                        onVisibleChanged: if (visible)
+                            forceActiveFocus()
+                        echoMode: TextInput.Password
+                        onAccepted: root.submitResponse()
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.idleClock
+                    }
+                }
+
+                PolkitButton {
+                    id: polkitCancel
+                    objectName: "polkitCancelButton"
+                    glyphName: "polkitCancelGlyph"
+                    glyph: Strings.glyphClose
+                    onActivated: CenterStore.dispatch({
+                        type: "PolkitCancel"
+                    })
+                }
+
+                PolkitButton {
+                    id: polkitAccept
+                    objectName: "polkitAcceptButton"
+                    glyphName: "polkitAcceptGlyph"
+                    glyph: Strings.glyphCheck
+                    onActivated: root.submitResponse()
+                }
+            }
         }
 
         CenterExpanded {

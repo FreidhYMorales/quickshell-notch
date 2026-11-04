@@ -207,7 +207,7 @@ const handlers = {
   },
   PolkitRequest(state, { flowId, monitor }) {
     if (state.global.locked || !state.monitors[monitor]) {
-      return unchanged(state);
+      return { state, effects: [{ type: "polkit.cancel", flowId }] };
     }
     const cleared = withHold(state, null).state;
     return setGlobal(cleared, { polkit: { flowId, owner: monitor } });
