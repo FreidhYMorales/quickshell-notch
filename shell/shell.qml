@@ -18,6 +18,14 @@ Scope {
 
             required property var modelData
 
+            LazyLoader {
+                active: !Flags.smoke
+
+                WallpaperSurface {
+                    screen: perScreen.modelData
+                }
+            }
+
             SpacerSurface {
                 screen: perScreen.modelData
             }
