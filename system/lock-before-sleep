@@ -3,3 +3,26 @@
 # (chmod 755) to /usr/lib/systemd/system-sleep/lock-before-sleep; see
 # docs/development.md. Only the "pre" call locks; resume needs nothing.
 [[ "$1" == "pre" ]] || exit 0
+
+# Runs as root for every suspend, whatever triggered it (lid, idle chain,
+# power menu, a bare `systemctl suspend`); logind waits for "pre" to return,
+# so the lock is ordered before the screen goes dark. Same shape as the old
+# shell's hook, but it asks every running shell with a `lock` IPC target
+# (see /usr/local/lib/quickshell-notch/lock-sessions) instead of one config.
+USER_NAME="deadlock"
+USER_ID=$(id -u "$USER_NAME") || exit 0
+RUNTIME_DIR="/run/user/$USER_ID"
+WAYLAND_SOCK=$(find "$RUNTIME_DIR" -maxdepth 1 -name 'wayland-*' ! -name '*.lock' -printf '%f\n' 2>/dev/null | head -1)
+
+[[ -n "$WAYLAND_SOCK" ]] || exit 0
+
+# runuser, not sudo -u: sudo's hostname lookup can hang right as the network
+# goes down for suspend. `timeout` keeps a hung IPC call from blocking logind
+# (screen freeze instead of sleep, seen live with the old hook).
+timeout 3 runuser -u "$USER_NAME" -- env \
+    XDG_RUNTIME_DIR="$RUNTIME_DIR" \
+    WAYLAND_DISPLAY="$WAYLAND_SOCK" \
+    /usr/local/lib/quickshell-notch/lock-sessions
+
+# Gives the lock surface a moment to draw before the machine sleeps.
+sleep 1
