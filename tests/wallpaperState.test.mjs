@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   isVideoPath,
   shouldImport,
+  videoShouldPlay,
   wallpaperFor,
 } from "../shell/logic/wallpaperState.mjs";
 
@@ -43,4 +44,16 @@ test("video wallpapers are recognised by extension, in any case", () => {
 test("image wallpapers are not videos", () => {
   assert.equal(isVideoPath("/w/arch.png"), false);
   assert.equal(isVideoPath("/w/mp4.jpg"), false);
+});
+
+test("a video wallpaper plays while the session is unlocked", () => {
+  assert.equal(videoShouldPlay("/w/loop.mp4", false), true);
+});
+
+test("a video wallpaper pauses while the session is locked", () => {
+  assert.equal(videoShouldPlay("/w/loop.mp4", true), false);
+});
+
+test("an image wallpaper never plays", () => {
+  assert.equal(videoShouldPlay("/w/arch.png", false), false);
 });
