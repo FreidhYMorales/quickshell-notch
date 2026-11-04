@@ -153,6 +153,19 @@ NotchSurface {
             spacing: Layout.polkitGap
             visible: root.polkit
 
+            Text {
+                id: polkitMessage
+
+                objectName: "polkitMessage"
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
+                color: Colours.paletteFor(root.screen).onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.idleClock
+            }
+
             // Fingerprint icon with a line sweeping over it while the reader waits.
             Item {
                 width: parent.width
@@ -199,19 +212,6 @@ NotchSurface {
                         }
                     }
                 }
-            }
-
-            Text {
-                id: polkitMessage
-
-                objectName: "polkitMessage"
-                width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                text: root.polkit ? CenterStore.state.global.polkit.flowId.message : ""
-                color: Colours.paletteFor(root.screen).onSurface
-                font.family: Fonts.family
-                font.pixelSize: Fonts.idleClock
             }
 
             Text {
