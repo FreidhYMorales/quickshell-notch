@@ -16,3 +16,9 @@ export function shouldImport(perScreen, fallback) {
   }
   return true;
 }
+
+const VIDEO = /\.(avi|mp4|mov|mkv|m4v|webm)$/i;
+
+export function isVideoPath(path) {
+  return VIDEO.test(path ?? "");
+}
