@@ -21,7 +21,7 @@
 09. [-] split → #26, #27, #28, #29
 10. [x] 44a7656 As a user, I want a power menu (Ctrl+Alt+Del, hold to confirm) so that I can lock, suspend, log out, reboot and shut down safely.
 11. [x] c2461fb As a user, I want polkit password prompts in the centre notch so that apps can ask for admin rights.
-12. [ ] As a user, I want the notch shell to render my wallpaper (including video) and keep caffeine working so that it can replace the old shell.
+12. [~] As a user, I want the notch shell to render my wallpaper (including video) and keep caffeine working so that it can replace the old shell.
 13. [ ] As a user, I want the lock screen, including locking before suspend, to work from the notch shell so that my session stays protected.
 14. [ ] As a user, I want Hyprland to start the notch shell with my keybinds remapped and a rollback so that it becomes my daily shell. Requires: #08, #10, #12, #13
 15. [ ] As a user, I want polished animations (charging glow, low-battery pulse, workspace fly, expanded cross-fade, OLED pixel shift) so that the notch feels alive.
