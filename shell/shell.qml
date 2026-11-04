@@ -6,10 +6,17 @@ import "notches/controlcenter"
 import "notches/osd"
 import "notches/workspaces"
 import "config"
+import "lock"
 
 // One Scope per monitor: spacer plus the top-row surfaces. The centre notch
 // (slot c) arrives in the next change.
 Scope {
+    LazyLoader {
+        active: !Flags.smoke
+
+        Lock {}
+    }
+
     Variants {
         model: Quickshell.screens
 

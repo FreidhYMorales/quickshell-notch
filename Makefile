@@ -46,6 +46,8 @@ qml-test:
 	node --test tests/qml/recording-*.mjs
 	node --test tests/qml/power-*.mjs
 	node --test tests/qml/wallpaper-*.mjs tests/qml/caffeine-*.mjs
+	# Serial: lock screen probes take the keyboard.
+	node --test --test-concurrency=1 tests/qml/lock-*.mjs
 	# Serial: polkit probes can take the exclusive keyboard.
 	node --test --test-concurrency=1 tests/qml/polkit-*.mjs
 	# Serial: each launcher probe takes the exclusive keyboard.

@@ -22,4 +22,6 @@ Singleton {
     readonly property int powerIcon: 28
     // Polkit fingerprint prompt icon.
     readonly property int polkitFingerprint: 44
+    // Lock screen clock.
+    readonly property int lockClock: 72
 }

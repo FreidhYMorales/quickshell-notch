@@ -68,6 +68,11 @@ Singleton {
     readonly property int polkitFieldWidth: 190
     readonly property int polkitFieldHeight: 28
     readonly property int polkitFieldPad: 10
+    // Minimal lock screen: password field and spacing between its rows.
+    readonly property int lockFieldWidth: 280
+    readonly property int lockFieldHeight: 36
+    readonly property int lockFieldPad: 14
+    readonly property int lockGap: 16
     readonly property int polkitButton: 28
     // Thickness of the fingerprint scan line.
     readonly property int polkitScanLine: 2

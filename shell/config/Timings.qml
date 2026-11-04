@@ -12,6 +12,9 @@ Singleton {
     readonly property int holdConfirm: 1000
     // One sweep of the polkit fingerprint scan line.
     readonly property int polkitScan: 1200
+    // Pause before the lock fingerprint listener restarts after a failed
+    // scan, so fprintd has released the device.
+    readonly property int lockFingerprintRetry: 300
     // How long a notification toast shows (paused while hovered).
     readonly property int toast: 5000
     // Workspace events within this window become one snapshot.
