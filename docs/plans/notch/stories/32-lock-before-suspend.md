@@ -7,7 +7,7 @@
 ## Acceptance criteria
 
 - [ ] Given the notch shell is running unlocked (started with `qs -p` or, after the cutover, `qs -c notch`), when the system suspends for any reason (lid, idle chain, power menu, `systemctl suspend`), then the session is already locked when it resumes.
-- [ ] Given no running shell has a lock target, or the one that does never answers, when the system suspends, then the suspend still goes ahead within a few seconds.
+- [ ] Given no notch shell is running, or it never confirms the lock, when the system suspends, then the suspend still goes ahead within a few seconds.
 
 ## Plan
 
