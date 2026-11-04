@@ -78,22 +78,16 @@ qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C 
 | Format | `make fmt` |
 | Full quality gate | `make check` |
 
-## Lock before suspend (sleep hook)
+## Lock before suspend
 
-Every suspend (lid, idle chain, power menu, `systemctl suspend`) locks each
-running Quickshell instance that has a `lock` IPC target, so it works with
-`qs -p shell/shell.qml`, after the cutover and after a rollback. Install it
-yourself (root-owned, not writable by your user); it replaces the old hook:
-
-```bash
-sudo install -D -o root -g root -m 755 system/lock-sessions /usr/local/lib/quickshell-notch/lock-sessions
-sudo install -o root -g root -m 755 system/lock-before-sleep /usr/lib/systemd/system-sleep/lock-before-sleep
-```
-
-Rollback to the old shell's hook:
+The notch shell locks itself before every suspend: it holds a logind sleep
+inhibitor in delay mode and locks on `PrepareForSleep`. No root hook is
+needed. A `system-sleep` hook cannot do it: systemd >= 256 freezes
+`user.slice` before running those hooks, so the shell can no longer answer.
+If you installed the earlier hook from this repo, remove it:
 
 ```bash
-sudo install -o root -g root -m 755 ~/Mio/Configuraciones/system/systemd/system-sleep/lock-before-sleep /usr/lib/systemd/system-sleep/lock-before-sleep
+sudo rm -r /usr/local/lib/quickshell-notch /usr/lib/systemd/system-sleep/lock-before-sleep
 ```
 
 ## Troubleshooting
