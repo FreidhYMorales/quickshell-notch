@@ -11,10 +11,11 @@
 
 ## Plan
 
-- A user-side lock step in this repo: list the running Quickshell instances, and ask each one that exposes the `lock` target to lock, by its pid; instances without the target (probes, smoke runs) are skipped. Tested with a fake `qs` on the PATH.
-- The root sleep hook keeps its current shape (on "pre" only: find the user's runtime dir and Wayland socket, run the lock step as the user under a short timeout, then wait a moment) and calls the new lock step instead of the default config.
-- Both files ship in this repo with a documented install step (sudo, run by the user): root-owned, not writable by the user, replacing today's hook.
-- Verified once with a real `systemctl suspend` while the notch shell runs.
+- The notch shell itself locks before sleep (no root hook): it holds a logind sleep inhibitor in delay mode and watches logind's PrepareForSleep signal; logind sends it before freezing user processes and waits (up to its delay limit) for delay inhibitors.
+- On PrepareForSleep(true) it requests the lock and releases the inhibitor once the compositor confirms the lock (or at once if already locked); on PrepareForSleep(false) it takes the inhibitor again.
+- The decisions (which signal line means what, when to lock, hold or release) live in pure logic with tests; the watcher and the inhibitor are two event-driven processes from glib2 and systemd, never a poll. Under smoke neither runs.
+- The repo's root hook and its user-side step are removed; the docs tell the user how to uninstall them (or restore the old hook).
+- Verified with a real `systemctl suspend` while the notch shell runs, and once with no shell running.
 
 ## Out of scope
 
@@ -24,17 +25,18 @@
 
 ## Suggestions (your call)
 
-- Keep the 3 s timeout and the trailing 1 s wait of today's hook: its comments document a hung IPC call freezing the screen instead of sleeping, and logind ordering the lock before the screen goes dark.
+- Release the inhibitor on the compositor's lock confirmation rather than on a timer, so the lock is drawn before the screen goes dark; logind's own delay limit (`InhibitDelayMaxSec`, 5 s by default) bounds a shell that never confirms.
 
 ## Size
 
 normal
-Risk: item 2, 5, 6 (root hook running commands as the user; system install of a sleep hook; real suspend only verifiable manually)
+Risk: item 4, 6 (ordering between logind's sleep, the lock and the inhibitor release; real suspend only verifiable manually)
 
 ## Log
 
 - L1 request: /flow:story 32
 - L2 decision (user): option A: lock every running Quickshell instance that has a `lock` target (found with `qs list --all`, addressed with `qs ipc --pid`) instead of the plan's `qs -c notch` with a fallback to the default config, because `-c notch` only exists after the cutover (#14).
 - L3 assumptions: the user runs the sudo install; I never run sudo. The hook still targets the single user `deadlock`, as today's hook does.
-- L4 build: red→green 5b1b… see git log: lock-sessions (all shells with a lock target), guard (no shell), hung shell in parallel with per-call timeouts, hook post exits; hook pre branch + install docs a6faca8 (no automated red: needs root).
+- L4 build (superseded by L6): lock-sessions (all shells with a lock target), guard (no shell), hung shell in parallel with per-call timeouts, hook post exits; hook pre branch + install docs a6faca8 (no automated red: needs root).
 - L5 manual finding (stop, design decision needed): installed and ran `systemctl suspend` with the notch running: suspends but does not lock. Journal: systemd 262 logs "Successfully froze unit 'user.slice'" before the sleep hook runs, so every Quickshell instance is frozen and the hook's IPC calls time out (runuser ends after ~2 s). Any system-sleep hook that talks to a user process is broken by this freeze (systemd >= 256), the old shell's hook included.
+- L6 decision (user): option A: the notch shell locks on logind's PrepareForSleep under a delay inhibitor; the root hook approach (and its tests) is dropped; the old shell's hook was broken by the same freeze. Criteria now name the notch shell only (the old shell after a rollback is out of reach without a hook).
