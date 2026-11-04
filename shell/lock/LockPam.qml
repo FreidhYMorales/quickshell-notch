@@ -18,6 +18,8 @@ Scope {
     property string pendingPassword: ""
     // Last failed attempt, shown by the lock UI; cleared on a new attempt.
     property string error: ""
+    // listening | error
+    property string fingerprintState: "listening"
 
     signal unlocked
 
@@ -49,8 +51,27 @@ Scope {
         }
 
         onCompleted: result => {
-            if (result === PamResult.Success)
+            if (result === PamResult.Success) {
                 root.unlocked();
+            } else {
+                root.fingerprintState = "error";
+                fingerprintRetry.restart();
+            }
+        }
+    }
+
+    // A fresh conversation per scan; start() returns false while fprintd still
+    // holds the previous claim, so keep retrying until it starts.
+    Timer {
+        id: fingerprintRetry
+
+        interval: Timings.lockFingerprintRetry
+        onTriggered: {
+            if (!root.fingerprintEnabled)
+                return;
+            root.fingerprintState = "listening";
+            if (!fingerprintPam.start())
+                restart();
         }
     }
 
