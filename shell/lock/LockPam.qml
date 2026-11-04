@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pam
+import "../config"
 
 // Lock screen authentication, without any UI: the typed password goes to a
 // fresh PAM conversation per attempt. Tests point configDirectory at a
@@ -15,6 +16,8 @@ Scope {
     property string user: Quickshell.env("USER") || Quickshell.env("LOGNAME") || ""
 
     property string pendingPassword: ""
+    // Last failed attempt, shown by the lock UI; cleared on a new attempt.
+    property string error: ""
 
     signal unlocked
 
@@ -22,6 +25,7 @@ Scope {
         if (password.length === 0 || passwordPam.active)
             return;
         root.pendingPassword = password;
+        root.error = "";
         passwordPam.start();
     }
 
@@ -42,6 +46,8 @@ Scope {
         onCompleted: result => {
             if (result === PamResult.Success)
                 root.unlocked();
+            else
+                root.error = Strings.lockLoginFailed;
         }
     }
 }

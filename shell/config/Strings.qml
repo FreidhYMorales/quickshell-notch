@@ -9,6 +9,8 @@ Singleton {
     readonly property string volume: "Volume"
     readonly property string controlCenter: "Control center"
     readonly property string center: "Notch"
+    // Lock screen authentication.
+    readonly property string lockLoginFailed: "Login failed"
     // Control center profile: "up 3h 12m".
     readonly property string uptimePrefix: "up "
     // Control center notifications section; %1 = how many.
