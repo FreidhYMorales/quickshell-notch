@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given an application requests polkit authentication, when the request arrives, then the centre notch on the focused monitor takes exclusive keyboard focus and shows the action message, the requested input, and Cancel/Authenticate controls above other centre states; any power confirmation in progress is cancelled.
-- [ ] Given an authentication prompt, when I submit a response, then it is sent to the requesting authentication flow, secret input is masked and never logged or persisted, and success closes the prompt while failure is shown without granting access and permits any retry offered by the flow.
-- [ ] Given an active authentication request, when I cancel it, the session locks, or its monitor is removed, then the prompt closes and the request is cancelled without authorizing the action; if the flow ends externally, the prompt closes and the previous state returns, while locking or monitor removal closes the affected keyboard state.
+- [x] Given an application requests polkit authentication, when the request arrives, then the centre notch on the focused monitor takes exclusive keyboard focus and shows the action message, the requested input, and Cancel/Authenticate controls above other centre states; any power confirmation in progress is cancelled.
+- [x] Given an authentication prompt, when I submit a response, then it is sent to the requesting authentication flow, secret input is masked and never logged or persisted, and success closes the prompt while failure is shown without granting access and permits any retry offered by the flow.
+- [x] Given an active authentication request, when I cancel it, the session locks, or its monitor is removed, then the prompt closes and the request is cancelled without authorizing the action; if the flow ends externally, the prompt closes and the previous state returns, while locking or monitor removal closes the affected keyboard state.
 
 ## Plan
 
@@ -61,3 +61,4 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - Faillock lockout: real-flow probes ran system PAM as the developer, so each cancelled probe was a failed login and three locked the account for 10 min (correct passwords then failed and the flow restarted at fingerprint). Guard red 8dbb08d, green ab74b46 (probes authenticate as `nobody`); `make check` passed with an empty faillock tally. Two runs before it failed once each in polkit-enter and polkit-submit (real input; both pass alone), not caused by this change.
 - Verifier (fresh, read-only): C2 and C3 pass; C1 gap: fingerprint prompts had no Cancel or Escape while holding exclusive keyboard. User approved the fix. Fingerprint cancel: red b5b9a35, green 8229b7d. Escape: red e3e066c, green 7821f2d; password Escape regression 14da179 passed immediately. `make check` passed. Low findings left open: flow switch without null may carry typed text; identity guard is a literal string match; no automated log check for secrets.
 - Fingerprint cancel beside the hint (user: below looked unnatural): red 21c5c11, green c2461fb. Buttons share an inline PolkitButton; fingerprint width 460→560 so the hint fits one line; `polkitNeedsResponse` replaces reading child visibility (effective-visibility cycle). `make check` passed. Note: cancelling a real prompt makes PAM fall through to pam_unix with a failed conversation, which pam_faillock counts (seen 21:36); system PAM behaviour, not the notch.
+- Closed: user approved the final layout; all three criteria met (C1 gap fixed after verifier). Merged to main.
