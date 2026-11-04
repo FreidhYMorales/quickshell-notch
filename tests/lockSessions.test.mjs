@@ -53,3 +53,9 @@ test("locks every running shell that has a lock target, and only those", () => {
     "ipc --pid 22 call lock lock",
   ]);
 });
+
+test("with no shell running it exits cleanly and calls nothing", () => {
+  const { result, calls } = runLockSessions({ FAKE_QS_INSTANCES: "" });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(calls, []);
+});
