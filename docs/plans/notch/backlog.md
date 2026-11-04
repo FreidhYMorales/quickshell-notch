@@ -22,7 +22,7 @@
 10. [x] 44a7656 As a user, I want a power menu (Ctrl+Alt+Del, hold to confirm) so that I can lock, suspend, log out, reboot and shut down safely.
 11. [x] c2461fb As a user, I want polkit password prompts in the centre notch so that apps can ask for admin rights.
 12. [x] 00e135c As a user, I want the notch shell to render my wallpaper (including video) and keep caffeine working so that it can replace the old shell.
-13. [ ] As a user, I want the lock screen, including locking before suspend, to work from the notch shell so that my session stays protected.
+13. [-] split → #30, #31, #32
 14. [ ] As a user, I want Hyprland to start the notch shell with my keybinds remapped and a rollback so that it becomes my daily shell. Requires: #08, #10, #12, #13
 15. [ ] As a user, I want polished animations (charging glow, low-battery pulse, workspace fly, expanded cross-fade, OLED pixel shift) so that the notch feels alive.
 16. [x] f3fb555 As a user, I want a hover control center in the top-right with my profile (avatar, name, uptime) so that I have a home for system controls in the notch. Requires: #02
@@ -39,3 +39,6 @@
 27. [ ] As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
 28. [ ] As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
 29. [ ] As a user, I want the keybinds command view so that I can access my keybinds from the launcher. Requires: #26
+30. [~] As a user, I want to lock my session from the notch shell and unlock it with my password so that my session stays protected.
+31. [ ] As a user, I want an idle chain (screensaver and lock together, then suspend) with my old timeouts so that an unattended session locks and sleeps on its own. Requires: #30, #12
+32. [ ] As a user, I want every suspend to lock the notch session first so that my session is already protected when it resumes. Requires: #30
