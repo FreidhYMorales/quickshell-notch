@@ -59,3 +59,13 @@ test("with no shell running it exits cleanly and calls nothing", () => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.deepEqual(calls, []);
 });
+
+test("a shell that never answers does not stop the others or hold the suspend", () => {
+  const { result, calls, ms } = runLockSessions({
+    FAKE_QS_INSTANCES: "11:lock 22:lock",
+    FAKE_QS_HANG: "11",
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.ok(calls.includes("ipc --pid 22 call lock lock"), calls.join("\n"));
+  assert.ok(ms < 3000, "took " + ms + " ms");
+});
