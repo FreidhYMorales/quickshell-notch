@@ -29,6 +29,31 @@ Scope {
         passwordPam.start();
     }
 
+    // Starts the fingerprint listener when enabled; it runs beside the
+    // password, and whichever succeeds first unlocks.
+    function listen() {
+        if (root.fingerprintEnabled && !fingerprintPam.active)
+            fingerprintPam.start();
+    }
+
+    PamContext {
+        id: fingerprintPam
+
+        configDirectory: root.configDirectory
+        config: root.fingerprintConfig
+        user: root.user
+
+        onResponseRequiredChanged: {
+            if (responseRequired)
+                respond("");
+        }
+
+        onCompleted: result => {
+            if (result === PamResult.Success)
+                root.unlocked();
+        }
+    }
+
     PamContext {
         id: passwordPam
 
