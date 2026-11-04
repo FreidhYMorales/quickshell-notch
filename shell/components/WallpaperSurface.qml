@@ -53,4 +53,11 @@ PanelWindow {
         opacity: hasVideo ? 1 : 0
         onErrorOccurred: (error, errorString) => console.warn("WallpaperSurface: cannot play " + root.path + ": " + errorString)
     }
+
+    // Caffeine: this surface is always mapped, so the inhibitor holds from
+    // the moment it is enabled.
+    IdleInhibitor {
+        enabled: Caffeine.enabled
+        window: root
+    }
 }
