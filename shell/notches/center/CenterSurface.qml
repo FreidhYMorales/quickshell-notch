@@ -146,6 +146,11 @@ NotchSurface {
         Column {
             id: polkitForm
 
+            // Escape cancels in both modes: the field passes it up, and the
+            // fingerprint block holds focus when there is no field.
+            Keys.onEscapePressed: CenterStore.dispatch({
+                type: "PolkitCancel"
+            })
             width: root.polkitWidth - 2 * Layout.polkitSidePad
             x: (parent.width - width) / 2
             anchors.top: parent.top
@@ -169,6 +174,7 @@ NotchSurface {
             // Fingerprint icon with a line sweeping over it while the reader waits.
             Item {
                 width: parent.width
+                focus: visible
                 height: polkitFingerprint.implicitHeight
                 visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired === false
 
