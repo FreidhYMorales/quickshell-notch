@@ -56,3 +56,4 @@ Risk: item 2, 5 (authentication and secrets; runtime polkit agent registration)
 - Fingerprint prompt width 360→460 (password prompt unchanged): red 56b2dbf, green 5cd3bd3; `make check` passed. User approved the field tint visually.
 - Side padding 18→36 (top unchanged): red e351cae, green 94cdaa3; `make check` passed.
 - User approved the visual result (field tint, fingerprint width, side padding).
+- Fingerprint icon: red b22a512, green 9cd0e69. Scan line: red b2e2b11, green 0f70792 (first `make check` hit a timeout in polkit-flow-ended.mjs; the test passed 3/3 alone and the full rerun passed). Password regression 79036b7 passed immediately. Awaiting visual check.
