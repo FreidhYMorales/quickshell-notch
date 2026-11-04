@@ -1,6 +1,8 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Io
+import "../config"
 
 // The only contract through which lock requests and lock state reach the shell.
 Singleton {
@@ -19,5 +21,18 @@ Singleton {
 
     function setLocked(value: bool) {
         privateLocked = value;
+    }
+
+    // `qs -c notch ipc call lock lock`: keybinds and the sleep hook.
+    LazyLoader {
+        active: !Flags.smoke
+
+        IpcHandler {
+            target: "lock"
+
+            function lock(): void {
+                root.requestLock();
+            }
+        }
     }
 }
