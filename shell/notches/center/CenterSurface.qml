@@ -233,15 +233,18 @@ NotchSurface {
 
                 x: (parent.width - width) / 2
                 spacing: Layout.polkitGap
-                visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
-                onVisibleChanged: {
-                    if (!visible)
-                        polkitInput.text = "";
-                }
+                // Cancel is always offered; the field and Authenticate only when a
+                // response is required (a fingerprint prompt has neither).
+                visible: root.polkit
 
                 Rectangle {
                     id: polkitField
 
+                    visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
+                    onVisibleChanged: {
+                        if (!visible)
+                            polkitInput.text = "";
+                    }
                     objectName: "polkitField"
                     width: Layout.polkitFieldWidth
                     height: Layout.polkitFieldHeight
@@ -256,7 +259,7 @@ NotchSurface {
                         anchors.leftMargin: Layout.polkitFieldPad
                         anchors.rightMargin: Layout.polkitFieldPad
                         verticalAlignment: TextInput.AlignVCenter
-                        focus: polkitResponse.visible
+                        focus: polkitField.visible
                         onVisibleChanged: if (visible)
                             forceActiveFocus()
                         echoMode: TextInput.Password
@@ -312,6 +315,7 @@ NotchSurface {
                 Rectangle {
                     id: polkitAccept
 
+                    visible: polkitField.visible
                     objectName: "polkitAcceptButton"
                     width: Layout.polkitButton
                     height: Layout.polkitButton
