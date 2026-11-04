@@ -54,6 +54,8 @@ Scope {
             else
                 sharedAuth.stop();
         }
+        // The compositor's confirmation; the sleep lock waits for it.
+        onSecureChanged: Session.setSecure(secure)
 
         WlSessionLockSurface {
             id: surface
