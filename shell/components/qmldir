@@ -10,3 +10,4 @@ NotifIcon NotifIcon.qml
 Slider Slider.qml
 SpacerSurface SpacerSurface.qml
 Visualizer Visualizer.qml
+WallpaperSurface WallpaperSurface.qml
