@@ -56,6 +56,8 @@ NotchSurface {
     readonly property bool launcher: view.mode === "launcher"
     readonly property bool polkit: view.mode === "polkit"
     readonly property var scheme: Colours.paletteFor(screen)
+    // The current polkit request wants typed input (false: fingerprint and the like).
+    readonly property bool polkitNeedsResponse: polkit && CenterStore.state.global.polkit.flowId.isResponseRequired === true
     readonly property int polkitWidth: CenterStore.state.global.polkit?.flowId?.isResponseRequired === false ? Layout.polkitWideWidth : Layout.polkitWidth
     // Same tint as the notifications card, for the polkit field and idle buttons.
     readonly property color tint: {
@@ -70,6 +72,50 @@ NotchSurface {
     wantsKeyboard: view.keyboardFocus === "exclusive"
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
+
+    // Round glyph button of the polkit prompt (cancel / authenticate).
+    component PolkitButton: Rectangle {
+        id: button
+
+        property string glyph
+        property string glyphName
+        signal activated
+
+        width: Layout.polkitButton
+        height: Layout.polkitButton
+        radius: height / 2
+        color: hover.hovered ? root.scheme.primary : root.tint
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Timings.animNormal
+            }
+        }
+
+        Text {
+            objectName: button.glyphName
+            anchors.centerIn: parent
+            text: button.glyph
+            color: hover.hovered ? Colours.background : root.scheme.onSurface
+            font.family: Fonts.family
+            font.pixelSize: Fonts.title
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Timings.animNormal
+                }
+            }
+        }
+
+        HoverHandler {
+            id: hover
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: button.activated()
+        }
+    }
 
     // The one place a response leaves the notch: the accept button and Enter.
     function submitResponse() {
@@ -220,18 +266,38 @@ NotchSurface {
                 }
             }
 
-            Text {
-                id: polkitError
+            // The hint (or error) line; a fingerprint prompt has its cancel here.
+            Row {
+                x: (parent.width - width) / 2
+                spacing: Layout.polkitGap
+                visible: root.polkit && (polkitError.text !== "" || !root.polkitNeedsResponse)
 
-                objectName: "polkitError"
-                width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-                visible: text !== ""
-                text: root.polkit ? CenterStore.state.global.polkit.flowId.supplementaryMessage ?? "" : ""
-                color: root.polkit && CenterStore.state.global.polkit.flowId.supplementaryIsError ? Colours.critical : Colours.paletteFor(root.screen).muted
-                font.family: Fonts.family
-                font.pixelSize: Fonts.idleClock
+                Text {
+                    id: polkitError
+
+                    objectName: "polkitError"
+                    width: Math.min(implicitWidth, polkitForm.width - (root.polkit && !root.polkitNeedsResponse ? Layout.polkitButton + Layout.polkitGap : 0))
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    visible: text !== ""
+                    text: root.polkit ? CenterStore.state.global.polkit.flowId.supplementaryMessage ?? "" : ""
+                    color: root.polkit && CenterStore.state.global.polkit.flowId.supplementaryIsError ? Colours.critical : Colours.paletteFor(root.screen).muted
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.idleClock
+                }
+
+                PolkitButton {
+                    id: polkitHintCancel
+                    visible: root.polkit && !root.polkitNeedsResponse
+                    anchors.verticalCenter: parent.verticalCenter
+                    objectName: "polkitCancelButton"
+                    glyphName: "polkitCancelGlyph"
+                    glyph: Strings.glyphClose
+                    onActivated: CenterStore.dispatch({
+                        type: "PolkitCancel"
+                    })
+                }
             }
 
             Row {
@@ -239,14 +305,12 @@ NotchSurface {
 
                 x: (parent.width - width) / 2
                 spacing: Layout.polkitGap
-                // Cancel is always offered; the field and Authenticate only when a
-                // response is required (a fingerprint prompt has neither).
-                visible: root.polkit
+                visible: root.polkitNeedsResponse
 
                 Rectangle {
                     id: polkitField
 
-                    visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired
+                    visible: root.polkitNeedsResponse
                     onVisibleChanged: {
                         if (!visible)
                             polkitInput.text = "";
@@ -265,7 +329,7 @@ NotchSurface {
                         anchors.leftMargin: Layout.polkitFieldPad
                         anchors.rightMargin: Layout.polkitFieldPad
                         verticalAlignment: TextInput.AlignVCenter
-                        focus: polkitField.visible
+                        focus: root.polkitNeedsResponse
                         onVisibleChanged: if (visible)
                             forceActiveFocus()
                         echoMode: TextInput.Password
@@ -276,87 +340,22 @@ NotchSurface {
                     }
                 }
 
-                Rectangle {
+                PolkitButton {
                     id: polkitCancel
-
                     objectName: "polkitCancelButton"
-                    width: Layout.polkitButton
-                    height: Layout.polkitButton
-                    radius: height / 2
-                    color: cancelHover.hovered ? root.scheme.primary : root.tint
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Timings.animNormal
-                        }
-                    }
-
-                    Text {
-                        objectName: "polkitCancelGlyph"
-                        anchors.centerIn: parent
-                        text: Strings.glyphClose
-                        color: cancelHover.hovered ? Colours.background : root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.title
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Timings.animNormal
-                            }
-                        }
-                    }
-
-                    HoverHandler {
-                        id: cancelHover
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: CenterStore.dispatch({
-                            type: "PolkitCancel"
-                        })
-                    }
+                    glyphName: "polkitCancelGlyph"
+                    glyph: Strings.glyphClose
+                    onActivated: CenterStore.dispatch({
+                        type: "PolkitCancel"
+                    })
                 }
 
-                Rectangle {
+                PolkitButton {
                     id: polkitAccept
-
-                    visible: polkitField.visible
                     objectName: "polkitAcceptButton"
-                    width: Layout.polkitButton
-                    height: Layout.polkitButton
-                    radius: height / 2
-                    color: acceptHover.hovered ? root.scheme.primary : root.tint
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Timings.animNormal
-                        }
-                    }
-
-                    Text {
-                        objectName: "polkitAcceptGlyph"
-                        anchors.centerIn: parent
-                        text: Strings.glyphCheck
-                        color: acceptHover.hovered ? Colours.background : root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.title
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Timings.animNormal
-                            }
-                        }
-                    }
-
-                    HoverHandler {
-                        id: acceptHover
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: root.submitResponse()
-                    }
+                    glyphName: "polkitAcceptGlyph"
+                    glyph: Strings.glyphCheck
+                    onActivated: root.submitResponse()
                 }
             }
         }

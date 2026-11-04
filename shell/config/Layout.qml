@@ -57,7 +57,7 @@ Singleton {
     // optional error, masked field and controls. The height follows the content.
     readonly property int polkitWidth: 360
     // Fingerprint prompts have no field, so their message gets more room.
-    readonly property int polkitWideWidth: 460
+    readonly property int polkitWideWidth: 560
     readonly property int polkitPad: 18
     // Side padding: the ears take earRadius, so the text needs more room there.
     readonly property int polkitSidePad: 36
