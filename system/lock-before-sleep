@@ -1,0 +1,5 @@
+#!/bin/bash
+# systemd-logind system-sleep hook for the notch shell. Installed root-owned
+# (chmod 755) to /usr/lib/systemd/system-sleep/lock-before-sleep; see
+# docs/development.md. Only the "pre" call locks; resume needs nothing.
+[[ "$1" == "pre" ]] || exit 0
