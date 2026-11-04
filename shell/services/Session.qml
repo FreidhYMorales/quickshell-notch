@@ -15,6 +15,14 @@ Singleton {
     readonly property bool locked: privateLocked
     property bool privateLocked: false
 
+    // true once the compositor confirms the session lock (written by the lock).
+    readonly property bool secure: privateSecure
+    property bool privateSecure: false
+
+    function setSecure(value: bool) {
+        privateSecure = value;
+    }
+
     function requestLock() {
         lockRequested();
     }
