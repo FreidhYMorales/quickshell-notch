@@ -37,3 +37,5 @@ Risk: item 3, 6 (new `caffeine` IPC target that keybinds consume; wallpaper/vide
 
 - L1 request: /flow:story 12
 - L2 assumptions: caffeine is reachable by IPC only in this story (the tile comes with #19); a missing or unreadable wallpaper file leaves the surface transparent (hyprpaper shows) and logs a `console.warn`.
+- L3 evidence: test/feat pairs 15daf85→9a8992d, d8270ae→aecbb2e, 2934948→e424bef, 9472fa5→ded8f46, 2ec1c8f→45c787b, 5d0c0de→253825c, c86baa5→00e135c. `make check` exit 0 (506 unit tests pass, 0 fail; new probes wallpaper-import, wallpaper-surface, caffeine-ipc pass; `smoke: config loaded`). Manual: wallpaper visible per monitor (user confirmed); caffeine verified with a Quickshell IdleMonitor (respectInhibitors, 20 s): on → never idle in 35 s, off → idle at 20 s. Pending: video pause on lock (wiring untested until #13 provides real lock state; decision covered by `videoShouldPlay` unit tests). Verifier: PASS.
+- Risk: item 3, 6 (new `caffeine` IPC target that keybinds consume; wallpaper/video rendering and idle inhibition only verifiable manually)
