@@ -69,6 +69,8 @@ Singleton {
     readonly property int polkitFieldHeight: 28
     readonly property int polkitFieldPad: 10
     readonly property int polkitButton: 28
+    // Thickness of the fingerprint scan line.
+    readonly property int polkitScanLine: 2
 
     // App launcher in the centre notch: search row, divider, fixed list. Its
     // height follows the content, padded alike on every side.

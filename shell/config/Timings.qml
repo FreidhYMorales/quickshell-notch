@@ -10,6 +10,8 @@ Singleton {
     readonly property int ccLeave: 1200
     readonly property int reveal: 1500
     readonly property int holdConfirm: 1000
+    // One sweep of the polkit fingerprint scan line.
+    readonly property int polkitScan: 1200
     // How long a notification toast shows (paused while hovered).
     readonly property int toast: 5000
     // Workspace events within this window become one snapshot.

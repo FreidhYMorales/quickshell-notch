@@ -153,17 +153,52 @@ NotchSurface {
             spacing: Layout.polkitGap
             visible: root.polkit
 
-            Text {
-                id: polkitFingerprint
-
-                objectName: "polkitFingerprintGlyph"
+            // Fingerprint icon with a line sweeping over it while the reader waits.
+            Item {
                 width: parent.width
-                horizontalAlignment: Text.AlignHCenter
+                height: polkitFingerprint.implicitHeight
                 visible: root.polkit && CenterStore.state.global.polkit.flowId.isResponseRequired === false
-                text: Strings.glyphFingerprint
-                color: root.scheme.primary
-                font.family: Fonts.family
-                font.pixelSize: Fonts.polkitFingerprint
+
+                Text {
+                    id: polkitFingerprint
+
+                    objectName: "polkitFingerprintGlyph"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Strings.glyphFingerprint
+                    color: root.scheme.primary
+                    opacity: Colours.dimAlpha
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.polkitFingerprint
+                }
+
+                Rectangle {
+                    id: polkitScan
+
+                    objectName: "polkitFingerprintScan"
+                    x: polkitFingerprint.x
+                    width: polkitFingerprint.implicitWidth
+                    height: Layout.polkitScanLine
+                    radius: height / 2
+                    color: root.scheme.primary
+
+                    SequentialAnimation on y {
+                        running: polkitScan.visible
+                        loops: Animation.Infinite
+
+                        NumberAnimation {
+                            from: 0
+                            to: polkitFingerprint.implicitHeight - Layout.polkitScanLine
+                            duration: Timings.polkitScan
+                            easing.type: Easing.InOutSine
+                        }
+                        NumberAnimation {
+                            from: polkitFingerprint.implicitHeight - Layout.polkitScanLine
+                            to: 0
+                            duration: Timings.polkitScan
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
             }
 
             Text {
