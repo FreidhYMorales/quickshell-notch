@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { shouldImport, wallpaperFor } from "../shell/logic/wallpaperState.mjs";
+import {
+  isVideoPath,
+  shouldImport,
+  wallpaperFor,
+} from "../shell/logic/wallpaperState.mjs";
 
 test("a screen listed in the per-screen state gets its own wallpaper", () => {
   const perScreen = { "DP-1": "/w/video.mp4", "eDP-1": "/w/arch.png" };
@@ -28,4 +32,15 @@ test("a notch state with a default wallpaper keeps it", () => {
 
 test("a notch state with per-screen wallpapers keeps them", () => {
   assert.equal(shouldImport({ "DP-1": "/w/video.mp4" }, ""), false);
+});
+
+test("video wallpapers are recognised by extension, in any case", () => {
+  assert.equal(isVideoPath("/w/loop.mp4"), true);
+  assert.equal(isVideoPath("/w/loop.WEBM"), true);
+  assert.equal(isVideoPath("/w/loop.mkv"), true);
+});
+
+test("image wallpapers are not videos", () => {
+  assert.equal(isVideoPath("/w/arch.png"), false);
+  assert.equal(isVideoPath("/w/mp4.jpg"), false);
 });
