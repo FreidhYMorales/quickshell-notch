@@ -31,6 +31,18 @@ Scope {
         passwordPam.start();
     }
 
+    // Ends any running conversation once the session is unlocked, so the
+    // fingerprint reader is released.
+    function stop() {
+        fingerprintRetry.stop();
+        if (fingerprintPam.active)
+            fingerprintPam.abort();
+        if (passwordPam.active)
+            passwordPam.abort();
+        root.pendingPassword = "";
+        root.error = "";
+    }
+
     // Starts the fingerprint listener when enabled; it runs beside the
     // password, and whichever succeeds first unlocks.
     function listen() {
