@@ -16,3 +16,4 @@ singleton Power Power.qml
 singleton Apps Apps.qml
 singleton Wallpapers Wallpapers.qml
 singleton Caffeine Caffeine.qml
+singleton Idle Idle.qml
