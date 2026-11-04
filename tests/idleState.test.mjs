@@ -47,3 +47,10 @@ test("a missing or broken idle state uses the defaults 3/5/15", () => {
   assert.deepEqual(parseIdle(null), defaults);
   assert.deepEqual(parseIdle("not json"), defaults);
 });
+
+test("a zero lock timeout turns the lock off even with screensaver minutes", () => {
+  assert.deepEqual(
+    idleDelays({ screensaver: 3, lock: 0, suspend: 15 }),
+    { lockSec: null, suspendSec: 1080 },
+  );
+});
