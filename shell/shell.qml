@@ -13,8 +13,12 @@ import "services"
 // One Scope per monitor: spacer plus the top-row surfaces. The centre notch
 // (slot c) arrives in the next change.
 Scope {
-    // Singletons load on first use; the idle chain has no other user.
-    Component.onCompleted: Idle.saved
+    // Singletons load on first use; the idle chain and the sleep lock have no
+    // other user.
+    Component.onCompleted: {
+        Idle.saved;
+        SleepLock.inhibit;
+    }
 
     LazyLoader {
         active: !Flags.smoke

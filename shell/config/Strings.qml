@@ -11,6 +11,8 @@ Singleton {
     readonly property string center: "Notch"
     // Lock screen authentication.
     readonly property string lockLoginFailed: "Login failed"
+    // Shown by `systemd-inhibit --list` for the notch's sleep inhibitor.
+    readonly property string sleepInhibitReason: "Lock the session before sleep"
     // Control center profile: "up 3h 12m".
     readonly property string uptimePrefix: "up "
     // Control center notifications section; %1 = how many.

@@ -78,6 +78,18 @@ qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C 
 | Format | `make fmt` |
 | Full quality gate | `make check` |
 
+## Lock before suspend
+
+The notch shell locks itself before every suspend: it holds a logind sleep
+inhibitor in delay mode and locks on `PrepareForSleep`. No root hook is
+needed. A `system-sleep` hook cannot do it: systemd >= 256 freezes
+`user.slice` before running those hooks, so the shell can no longer answer.
+If you installed the earlier hook from this repo, remove it:
+
+```bash
+sudo rm -r /usr/local/lib/quickshell-notch /usr/lib/systemd/system-sleep/lock-before-sleep
+```
+
 ## Troubleshooting
 
 | Symptom | OS | Fix |
