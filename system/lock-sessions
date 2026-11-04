@@ -1,0 +1,10 @@
+#!/bin/bash
+# Runs as the session user from the root sleep hook: asks every running
+# Quickshell instance that exposes the `lock` IPC target to lock. Instances
+# without it (probes, smoke runs) are skipped.
+for pid in $(qs list --all | awk '/Process ID:/ { print $3 }'); do
+  if qs ipc --pid "$pid" show | grep -qx 'target lock'; then
+    qs ipc --pid "$pid" call lock lock
+  fi
+done
+exit 0
