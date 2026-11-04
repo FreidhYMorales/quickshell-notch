@@ -14,3 +14,4 @@ singleton OsInfo OsInfo.qml
 singleton Radios Radios.qml
 singleton Power Power.qml
 singleton Apps Apps.qml
+singleton Wallpapers Wallpapers.qml
