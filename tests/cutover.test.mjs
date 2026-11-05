@@ -143,6 +143,25 @@ test("cutover refuses to run without the deployed notch config", () => {
   }
 });
 
+test("a second cutover keeps the original backups", () => {
+  const f = fixture();
+  try {
+    assert.equal(run(f, "cutover").status, 0);
+    assert.equal(run(f, "cutover").status, 0);
+    assert.equal(read(f.state, "keybinds.lua"), KEYBINDS);
+    assert.equal(read(f.state, "execs.lua"), EXECS);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS_AFTER);
+    assert.deepEqual(readFileSync(f.qsLog, "utf8").trim().split("\n"), [
+      "kill",
+      "-c notch -d",
+      "kill",
+      "-c notch -d",
+    ]);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
 test("cutover kills the running shells, remaps the keybinds and starts the notch", () => {
   const f = fixture();
   try {
