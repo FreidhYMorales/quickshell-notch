@@ -23,7 +23,7 @@
 11. [x] c2461fb As a user, I want polkit password prompts in the centre notch so that apps can ask for admin rights.
 12. [x] 00e135c As a user, I want the notch shell to render my wallpaper (including video) and keep caffeine working so that it can replace the old shell.
 13. [-] split → #30, #31, #32
-14. [ ] As a user, I want Hyprland to start the notch shell with my keybinds remapped and a rollback so that it becomes my daily shell. Requires: #08, #10, #12, #13
+14. [~] As a user, I want Hyprland to start the notch shell with my keybinds remapped and a rollback so that it becomes my daily shell. Requires: #08, #10, #12, #13
 15. [ ] As a user, I want polished animations (charging glow, low-battery pulse, workspace fly, expanded cross-fade, OLED pixel shift) so that the notch feels alive.
 16. [x] f3fb555 As a user, I want a hover control center in the top-right with my profile (avatar, name, uptime) so that I have a home for system controls in the notch. Requires: #02
 17. [x] c683110 As a user, I want toggle tiles for WiFi, Bluetooth and DND in the control center so that I switch them without leaving my work. Requires: #16
