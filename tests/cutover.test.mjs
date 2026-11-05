@@ -129,6 +129,7 @@ function run(f, subcommand) {
 }
 
 const read = (...parts) => readFileSync(join(...parts), "utf8");
+const qsCalls = (f) => readFileSync(f.qsLog, "utf8").trim().split("\n");
 
 test("cutover refuses to run without the deployed notch config", () => {
   const f = fixture({ notchConfig: false });
@@ -157,6 +158,24 @@ test("a second cutover keeps the original backups", () => {
       "kill",
       "-c notch -d",
     ]);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
+test("rollback restores the original files, starts the old shell and repeats as a no-op", () => {
+  const f = fixture();
+  try {
+    assert.equal(run(f, "cutover").status, 0);
+    const result = run(f, "rollback");
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+    assert.equal(read(f.hypr, "deadlock", "execs.lua"), EXECS);
+    assert.deepEqual(qsCalls(f), ["kill", "-c notch -d", "kill", "-d"]);
+    const again = run(f, "rollback");
+    assert.equal(again.status, 0, again.stdout + again.stderr);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+    assert.deepEqual(qsCalls(f), ["kill", "-c notch -d", "kill", "-d"]);
   } finally {
     rmSync(f.dir, { recursive: true, force: true });
   }
