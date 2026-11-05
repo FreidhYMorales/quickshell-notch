@@ -15,6 +15,14 @@ export function openSubpage() {
   return NOTIFICATIONS;
 }
 
+// Keybind entry points: `qs -c notch ipc call controlcenter open|notifications`.
+// Unknown commands are ignored instead of opening some view by accident.
+export function commandView(command) {
+  if (command === "open") return ROOT;
+  if (command === "notifications") return NOTIFICATIONS;
+  return null;
+}
+
 export function back() {
   return ROOT;
 }
