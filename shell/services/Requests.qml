@@ -13,10 +13,13 @@ Singleton {
     id: root
 
     signal controlCenter(string view, string monitor)
+    signal expanded(string monitor)
 
     // A keybind can arrive before the compositor has listed its monitors
-    // (right after login). Hold the view until it does instead of dropping it.
+    // (right after login). Hold the request until it does instead of dropping
+    // it.
     property string pendingView: ""
+    property bool pendingExpanded: false
 
     // `focusedMonitor` only follows focus events and can stay empty while the
     // monitor list already knows the answer.
@@ -31,14 +34,19 @@ Singleton {
     }
 
     function flush(): void {
-        if (!pendingView)
+        if (!pendingView && !pendingExpanded)
             return;
         const monitor = focusedMonitor();
         if (!monitor)
             return;
         const view = pendingView;
+        const expand = pendingExpanded;
         pendingView = "";
-        root.controlCenter(view, monitor);
+        pendingExpanded = false;
+        if (view)
+            root.controlCenter(view, monitor);
+        if (expand)
+            root.expanded(monitor);
     }
 
     // `qs -c notch ipc call controlcenter open|notifications`.
@@ -49,6 +57,12 @@ Singleton {
             return;
         }
         pendingView = view;
+        flush();
+    }
+
+    // `qs -c notch ipc call expanded toggle`.
+    function toggleExpanded(): void {
+        pendingExpanded = true;
         flush();
     }
 
@@ -63,7 +77,7 @@ Singleton {
     Timer {
         interval: 100
         repeat: true
-        running: root.pendingView !== ""
+        running: root.pendingView !== "" || root.pendingExpanded
 
         onTriggered: root.flush()
     }
@@ -80,6 +94,18 @@ Singleton {
 
             function notifications(): void {
                 root.openControlCenter("notifications");
+            }
+        }
+    }
+
+    LazyLoader {
+        active: !Flags.smoke
+
+        IpcHandler {
+            target: "expanded"
+
+            function toggle(): void {
+                root.toggleExpanded();
             }
         }
     }

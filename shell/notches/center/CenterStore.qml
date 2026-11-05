@@ -245,6 +245,19 @@ Singleton {
         target: Session
     }
 
+    // `qs -c notch ipc call expanded toggle` (Super+Alt+C): the reducer owns
+    // the pinned flag.
+    Connections {
+        function onExpanded(monitor) {
+            root.dispatch({
+                type: "ExpandedToggle",
+                monitor: monitor
+            });
+        }
+
+        target: Requests
+    }
+
     // The battery's one-shot critical event becomes a critical toast.
     function postBatteryCritical() {
         Notifs.post(Strings.batteryCriticalApp, Strings.batteryCriticalSummary, Strings.batteryCriticalBody.arg(Battery.percentage), Strings.batteryCriticalIcon);
