@@ -61,6 +61,16 @@ stop_shells() {
     sleep 0.5
 }
 
+restore_old() {
+    if [[ -e "$STATE_DIR/keybinds.lua" ]]; then
+        cp -p "$STATE_DIR/keybinds.lua" "$KEYBINDS"
+    fi
+    if [[ -e "$STATE_DIR/execs.lua" ]]; then
+        cp -p "$STATE_DIR/execs.lua" "$EXECS"
+    fi
+    rm -f "$STATE_DIR/keybinds.lua" "$STATE_DIR/execs.lua"
+}
+
 case "${1:-}" in
 cutover)
     preflight_notch
@@ -70,6 +80,13 @@ cutover)
     "$QS" -c notch -d
     ;;
 rollback)
+    if [[ ! -e "$STATE_DIR/keybinds.lua" ]] && [[ ! -e "$STATE_DIR/execs.lua" ]]; then
+        echo "notch-cutover: nothing to roll back"
+        exit 0
+    fi
+    stop_shells
+    restore_old
+    "$QS" -d
     ;;
 *)
     die "usage: notch-cutover.sh cutover|rollback"
