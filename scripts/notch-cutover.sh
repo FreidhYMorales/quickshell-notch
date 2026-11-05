@@ -36,8 +36,8 @@ preflight_notch() {
 # with already-rewritten files.
 backup() {
     mkdir -p "$STATE_DIR"
-    cp -p "$KEYBINDS" "$STATE_DIR/keybinds.lua"
-    cp -p "$EXECS" "$STATE_DIR/execs.lua"
+    [[ -e "$STATE_DIR/keybinds.lua" ]] || cp -p "$KEYBINDS" "$STATE_DIR/keybinds.lua"
+    [[ -e "$STATE_DIR/execs.lua" ]] || cp -p "$EXECS" "$STATE_DIR/execs.lua"
 }
 
 rewrite_notch() {
