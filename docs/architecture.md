@@ -15,7 +15,7 @@
 | Hosting / budget | n/a: local desktop shell; source on GitHub |
 | Required capabilities | Hyprland IPC + Lua dispatch bridge (`hl.dsp.*`; plain `Hyprland.dispatch` does not work on this build), Pipewire, Mpris, notifications server, polkit agent, udev brightness, matugen colours |
 | Target platforms | Arch Linux + Hyprland, Wayland only, all monitors (laptop OLED + externals) |
-| Distribution | Own git repo on GitHub; `shell/` symlinked to `~/.config/quickshell/notch` and run with `qs -c notch` ([ADR 0001](adr/0001-separate-repo-and-symlink.md)). Later included in the dotfiles repo as a submodule or stow package |
+| Distribution | Own git repo on GitHub, included in the dotfiles repo as a submodule at `quickshell/.config/quickshell/notch` and run with `qs -c notch`; the old bar stays beside it as the named config `default` until it is retired ([ADR 0001](adr/0001-separate-repo-and-symlink.md)) |
 | Dev environments | Arch Linux only (maintainer's machine); setup in [development.md](development.md) |
 
 Host verified: Quickshell 0.3.2 (AUR `quickshell-git`), Qt 6.12, Node 26, deno 2.9, matugen 4.2.
@@ -35,7 +35,7 @@ Hybrid layered layout ([ADR 0002](adr/0002-hybrid-layout-pure-logic.md)): data (
 
 ```
 .
-├── shell/                  # runtime config; symlinked to ~/.config/quickshell/notch
+├── shell/                  # source; deployed as ~/.config/quickshell/notch (dotfiles submodule)
 │   ├── shell.qml           # entry: Variants over screens -> Scope -> notch surfaces
 │   ├── config/             # singleton tokens: Fonts, Timings, Colours, Layout, Strings
 │   ├── services/           # data singletons: Battery, Audio, Notifs, Mpris, Hypr, SysInfo, Time, Brightness, ...
@@ -108,7 +108,7 @@ Strict TDD: write the failing test first for every `logic/` change. `qmltestrunn
   5. Smoke: `make smoke` = `timeout 10 qs -p shell/shell.qml` with output captured; fail if the log contains `ERROR` or a load error (exit code 124 from timeout is the expected success path).
 - Make targets: `check`, `fmt` (writes: `qmlformat -i`, `deno fmt`), `fmt-check`, `lint`, `test`, `smoke`.
 - CI (GitHub Actions) on push and PR: `node --test tests/`, `deno fmt --check` + `deno lint`, qmlformat check. qmllint with Quickshell types and the smoke test run only locally (they would need `quickshell-git` built and a Wayland session).
-- Deploy target: local only. The symlink makes `main` live after `qs -c notch` restarts.
+- Deploy target: local only. The dotfiles submodule pins a commit; `main` becomes live after a `git submodule update --remote` and a notch restart.
 
 ## Observability & errors
 
