@@ -87,6 +87,22 @@ NotchSurface {
         open = false;
     }
 
+    // Keybind entry: open on this monitor only, and only the notifications
+    // subpage clears the unread dot.
+    Connections {
+        target: Requests
+
+        function onControlCenter(view, monitor) {
+            if (monitor !== root.screen.name)
+                return;
+            if (view === ControlNav.NOTIFICATIONS)
+                root.showNotifications();
+            else
+                root.view = view;
+            root.open = true;
+        }
+    }
+
     slotName: "tr"
     Behavior on progress {
         Anim {}
