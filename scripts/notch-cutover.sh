@@ -55,9 +55,19 @@ rewrite_notch() {
 }
 
 # Never leave the old bar and the notch running together: they fight over the
-# notification D-Bus name, the polkit agent and idle locking.
+# notification D-Bus name, the polkit agent and idle locking. `qs kill` alone
+# only picks one instance of the config it resolves, so a bar launched before
+# the dotfiles move (another config path) or a dev `qs -p` would survive it.
+# Kill every live instance by pid instead.
+running_pids() {
+    "$QS" list --all 2>/dev/null | awk '/Process ID:/ { print $3 }'
+}
+
 stop_shells() {
-    "$QS" kill >/dev/null 2>&1 || true
+    local pid
+    for pid in $(running_pids); do
+        "$QS" kill --pid "$pid" >/dev/null 2>&1 || true
+    done
     sleep 0.5
 }
 
