@@ -63,8 +63,11 @@ Singleton {
     }
 
     function dispatch(event) {
+        const wasWallpaper = state.global.keyboard?.kind === "launcher" && state.global.keyboard?.sub === "wallpaper";
         const result = CenterState.reduce(state, event);
         state = result.state;
+        if (wasWallpaper && !(state.global.keyboard?.kind === "launcher" && state.global.keyboard?.sub === "wallpaper"))
+            Wallpapers.cancel();
         for (let i = 0; i < result.effects.length; i++)
             run(result.effects[i]);
     }
