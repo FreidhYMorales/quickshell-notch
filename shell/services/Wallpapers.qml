@@ -35,21 +35,30 @@ Singleton {
 
     function begin(screen: string) {
         selection = WallpaperPicker.beginPreview(entries, WallpaperState.wallpaperFor(perScreen, fallback, screen));
-        preview = selection.index < 0 ? null : { screen: screen, path: selection.preview };
+        preview = selection.index < 0 ? null : {
+            screen: screen,
+            path: selection.preview
+        };
     }
 
     function move(step: int, screen: string) {
         if (!selection)
             return;
         selection = WallpaperPicker.movePreview(selection, step);
-        preview = selection.index < 0 ? null : { screen: screen, path: selection.preview };
+        preview = selection.index < 0 ? null : {
+            screen: screen,
+            path: selection.preview
+        };
     }
 
     function select(index: int, screen: string) {
         if (!selection || index < 0 || index >= selection.entries.length)
             return;
         selection = WallpaperPicker.movePreview(selection, index - selection.index);
-        preview = { screen: screen, path: selection.preview };
+        preview = {
+            screen: screen,
+            path: selection.preview
+        };
     }
 
     function cancel() {
@@ -76,10 +85,10 @@ Singleton {
         folder: "file://" + root.directory
         nameFilters: ["*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.webp", "*.WEBP", "*.bmp", "*.BMP", "*.mp4", "*.MP4", "*.webm", "*.WEBM", "*.mkv", "*.MKV", "*.mov", "*.MOV", "*.avi", "*.AVI", "*.m4v", "*.M4V"]
         showDirs: false
-        onStatusChanged: if (status === FolderListModel.Ready) root.refreshCatalog()
+        onStatusChanged: if (status === FolderListModel.Ready)
+            root.refreshCatalog()
         onCountChanged: root.refreshCatalog()
     }
-
 
     function pathFor(screen: string): string {
         return WallpaperState.previewFor(perScreen, fallback, screen, preview) ?? "";
