@@ -314,3 +314,18 @@ test("cutover fails cleanly and keeps the autostart when it does not match", () 
     rmSync(f.dir, { recursive: true, force: true });
   }
 });
+
+test("a cutover retried after a failed run keeps the fixed files as the rollback target", () => {
+  const drifted = KEYBINDS.replace("dashboard toggle", "dashboard open");
+  const f = fixture({ keybinds: drifted });
+  try {
+    assert.equal(run(f, "cutover").status, 1);
+    writeFileSync(join(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+    assert.equal(run(f, "cutover").status, 0);
+    assert.equal(run(f, "rollback").status, 0);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+    assert.equal(read(f.hypr, "deadlock", "execs.lua"), EXECS);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
