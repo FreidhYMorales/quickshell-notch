@@ -68,27 +68,35 @@ qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C 
 ## Cutover and rollback
 
 The notch becomes the daily shell through the dotfiles repo, never by editing
-this checkout into `~/.config/quickshell`:
+this checkout into `~/.config/quickshell`. The cutover expects this layout in
+the dotfiles quickshell package (a one-off migration, made by hand in that
+repo):
 
-- The dotfiles quickshell package holds the old config at
-  `.config/quickshell/default/` and this repo as a submodule at
-  `.config/quickshell/notch/`. Quickshell ignores subdirectories when
-  `shell.qml` sits at the top of `~/.config/quickshell`, which is why the old
-  config moved into `default/`; bare `qs` still runs it by name.
-- `./deploy.sh quickshell` stows the package and initialises the submodule, so
-  a fresh clone plus deploy gives `qs -c notch` with no manual link.
+- `.config/quickshell/default/` — the old bar, moved there. Quickshell treats
+  `<config dir>/quickshell/shell.qml` as `default` and ignores subdirectories,
+  so the old config must move into a named folder; bare `qs` still runs it by
+  name and the rollback target keeps working.
+- `.config/quickshell/notch/` — this repo as a git submodule.
+
+`deploy.sh quickshell` must initialise submodules before stowing, so a fresh
+clone plus deploy gives `qs -c notch` with no manual link. Until that migration
+lands, `scripts/notch-cutover.sh cutover` refuses to run.
 
 ```bash
-scripts/notch-cutover.sh cutover    # stop both shells, remap the Hyprland
-                                    # files, start the notch
+scripts/notch-cutover.sh cutover    # stop every Quickshell instance, remap the
+                                    # Hyprland files, start the notch
 scripts/notch-cutover.sh rollback   # restore the backups, start the old bar
 ```
 
-The script keeps the originals in `~/.local/state/quickshell-notch/cutover/`
-and never overwrites that first backup. Both shells are stopped first: they
-would otherwise fight over the notification D-Bus name, the polkit agent and
-idle locking. Lock-before-suspend needs no root hook: the notch shell locks
-itself on logind's `PrepareForSleep` (see below).
+`qs kill` only reaches one instance of the config it resolves, so the script
+kills every live instance by pid and refuses to finish with anything but one
+running. It keeps the originals in
+`~/.local/state/quickshell-notch/cutover/` and never overwrites that first
+backup; when the Hyprland lines do not match what it knows, it restores them
+and stops instead of leaving half a remap. Both shells never run together: they
+would fight over the notification D-Bus name, the polkit agent and idle
+locking. Lock-before-suspend needs no root hook: the notch shell locks itself
+on logind's `PrepareForSleep` (see below).
 
 ## Daily commands
 
