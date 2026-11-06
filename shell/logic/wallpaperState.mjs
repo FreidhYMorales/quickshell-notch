@@ -28,3 +28,15 @@ export function isVideoPath(path) {
 export function videoShouldPlay(path, locked) {
   return isVideoPath(path) && !locked;
 }
+
+export function previewFor(perScreen, fallback, screen, preview) {
+  if (preview && preview.screen === screen) return preview.path;
+  return wallpaperFor(perScreen, fallback, screen);
+}
+
+export function commitFor(perScreen, fallback, screen, path) {
+  const next = Object.assign({}, perScreen);
+  if (screen) next[screen] = path;
+  else return { perScreen: next, fallback: path };
+  return { perScreen: next, fallback };
+}
