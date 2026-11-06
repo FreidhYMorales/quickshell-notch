@@ -6,6 +6,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import "../config"
 import "../logic/controlNav.mjs" as ControlNav
+import "../logic/requestQueue.mjs" as RequestQueue
 
 // External requests from Hyprland keybinds and the power button. A request
 // names an intent; which surface reacts to it is decided by the listener.
@@ -16,10 +17,9 @@ Singleton {
     signal expanded(string monitor)
 
     // A keybind can arrive before the compositor has listed its monitors
-    // (right after login). Hold the request until it does instead of dropping
-    // it.
-    property string pendingView: ""
-    property bool pendingExpanded: false
+    // (right after login). Hold every request until it does instead of
+    // dropping it, keeping order and repeats.
+    property var pending: []
 
     // `focusedMonitor` only follows focus events and can stay empty while the
     // monitor list already knows the answer.
@@ -34,19 +34,23 @@ Singleton {
     }
 
     function flush(): void {
-        if (!pendingView && !pendingExpanded)
-            return;
         const monitor = focusedMonitor();
-        if (!monitor)
+        const taken = RequestQueue.take(pending, monitor);
+        if (!taken.ready.length)
             return;
-        const view = pendingView;
-        const expand = pendingExpanded;
-        pendingView = "";
-        pendingExpanded = false;
-        if (view)
-            root.controlCenter(view, monitor);
-        if (expand)
-            root.expanded(monitor);
+        pending = taken.rest;
+        for (let i = 0; i < taken.ready.length; i++) {
+            const request = taken.ready[i];
+            if (request.kind === "controlcenter")
+                root.controlCenter(request.view, monitor);
+            else
+                root.expanded(monitor);
+        }
+    }
+
+    function request(intent): void {
+        pending = RequestQueue.enqueue(pending, intent);
+        flush();
     }
 
     // `qs -c notch ipc call controlcenter open|notifications`.
@@ -56,14 +60,17 @@ Singleton {
             console.warn("Requests: unknown control center command: " + command);
             return;
         }
-        pendingView = view;
-        flush();
+        request({
+            kind: "controlcenter",
+            view: view
+        });
     }
 
     // `qs -c notch ipc call expanded toggle`.
     function toggleExpanded(): void {
-        pendingExpanded = true;
-        flush();
+        request({
+            kind: "expanded"
+        });
     }
 
     Connections {
@@ -77,7 +84,7 @@ Singleton {
     Timer {
         interval: 100
         repeat: true
-        running: root.pendingView !== "" || root.pendingExpanded
+        running: root.pending.length > 0
 
         onTriggered: root.flush()
     }
