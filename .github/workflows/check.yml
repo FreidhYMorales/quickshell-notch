@@ -44,6 +44,7 @@ jobs:
           export XDG_RUNTIME_DIR=/tmp/notch-ci-runtime
           mkdir -p "$XDG_RUNTIME_DIR"
           chmod 700 "$XDG_RUNTIME_DIR"
+          mkdir -p /tmp/opencode
           dbus-run-session -- sh -ec '
             weston --backend=headless --socket=notch-ci --idle-time=0 --log=/tmp/notch-weston.log &
             compositor=$!
