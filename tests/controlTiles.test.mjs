@@ -23,3 +23,14 @@ test("tilesFor: no Bluetooth adapter hides the Bluetooth tile", () => {
     { id: "dnd", on: false },
   ]);
 });
+
+test("tilesFor: the profile and caffeine tiles come after DND", () => {
+  const ids = tilesFor({
+    wifi: true,
+    bt: false,
+    dnd: true,
+    profile: "performance",
+    caffeine: true,
+  }).map((tile) => tile.id);
+  assert.deepEqual(ids, ["wifi", "bt", "dnd", "profile", "caffeine"]);
+});
