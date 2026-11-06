@@ -61,15 +61,50 @@ cd quickshell-notch
 # no .env: this project has no secrets
 make check                                   # must pass before you change anything
 qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C to stop
-# No symlink until cutover: ~/.config/quickshell is a stow link into the dotfiles
-# repo, so a `notch` link there would land in that repo (ADR 0001 update).
+# The live config is the dotfiles submodule at ~/.config/quickshell/notch;
+# see "Cutover and rollback" before touching it.
 ```
+
+## Cutover and rollback
+
+The notch becomes the daily shell through the dotfiles repo, never by editing
+this checkout into `~/.config/quickshell`. The cutover expects this layout in
+the dotfiles quickshell package (a one-off migration, made by hand in that
+repo):
+
+- `.config/quickshell/default/` — the old bar, moved there. Quickshell treats
+  `<config dir>/quickshell/shell.qml` as `default` and ignores subdirectories,
+  so the old config must move into a named folder; bare `qs` still runs it by
+  name and the rollback target keeps working.
+- `.config/quickshell/notch/` — this repo as a git submodule.
+
+`deploy.sh quickshell` must initialise submodules before stowing, so a fresh
+clone plus deploy gives `qs -c notch` with no manual link. Until that migration
+lands, `scripts/notch-cutover.sh cutover` refuses to run.
+
+```bash
+scripts/notch-cutover.sh cutover    # stop every Quickshell instance, remap the
+                                    # Hyprland files, start the notch
+scripts/notch-cutover.sh rollback   # restore the backups, start the old bar
+```
+
+`qs kill` only reaches one instance of the config it resolves, so the script
+kills every live instance by pid and refuses to finish with anything but one
+running. It keeps the originals in
+`~/.local/state/quickshell-notch/cutover/` and never overwrites that first
+backup; when the Hyprland lines do not match what it knows, it restores them
+and stops instead of leaving half a remap. Both shells never run together: they
+would fight over the notification D-Bus name, the polkit agent and idle
+locking. Lock-before-suspend needs no root hook: the notch shell locks itself
+on logind's `PrepareForSleep` (see below).
 
 ## Daily commands
 
 | Task | Command |
 |---|---|
-| Run the app (until cutover) | `qs -p shell/shell.qml` |
+| Run the app from the checkout | `qs -p shell/shell.qml` |
+| Run the live shell (after cutover) | `qs -c notch` |
+| Cut over / roll back | `scripts/notch-cutover.sh cutover` / `rollback` |
 | See every slot | set `showPlaceholders: true` in `shell/config/Flags.qml` (do not commit) |
 | Tests | `make test` (`node --test tests/`) |
 | QML runtime tests | `make qml-test` (isolated tray fixture and `qs`) |
@@ -99,4 +134,4 @@ sudo rm -r /usr/local/lib/quickshell-notch /usr/lib/systemd/system-sleep/lock-be
 | Clicks across the top strip are swallowed | Arch | The surface lacks `mask: Region { item: ... }` |
 | Dispatch has no effect | Arch | Use the `hl.dsp.*` Lua bridge, not `Hyprland.dispatch` |
 | Brightness OSD never appears | Arch | Needs a device in `/sys/class/backlight` and `brightnessctl` on PATH; the log shows `Brightness: no usable backlight` |
-| `qs -c notch` says config not found | Arch | Expected before cutover: use `qs -p shell/shell.qml` |
+| `qs -c notch` says config not found | Arch | Run the dotfiles deploy: it initialises the notch submodule and stows it as `~/.config/quickshell/notch` |

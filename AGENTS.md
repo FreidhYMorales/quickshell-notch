@@ -14,7 +14,7 @@ QML + Quickshell 0.3 (Qt 6.12), JavaScript ES modules (`.mjs`) for pure logic, m
 ## Folder map
 
 ```
-shell/                 runtime config (symlinked to ~/.config/quickshell/notch; run `qs -c notch`)
+shell/                 runtime config (deployed as ~/.config/quickshell/notch via the dotfiles submodule; run `qs -c notch`)
   shell.qml            entry: Variants -> Scope -> PanelWindow per monitor
   config/              tokens: font (once), timings, colours, reserveSpace, Strings
   services/            data singletons (Battery, Audio, Notifs, Mpris, Hypr, SysInfo, ...)

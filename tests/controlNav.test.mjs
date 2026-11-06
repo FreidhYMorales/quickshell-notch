@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   back,
   closeOnLeave,
+  commandView,
   initialView,
   openSubpage,
   panelHeight,
@@ -20,6 +21,12 @@ test("openSubpage shows the notifications view and back returns to the root", ()
 test("closeOnLeave collapses at once on the root and waits on a subpage", () => {
   assert.equal(closeOnLeave("root"), "now");
   assert.equal(closeOnLeave("notifications"), "wait");
+});
+
+test("commandView maps the control center IPC commands and ignores unknown ones", () => {
+  assert.equal(commandView("open"), "root");
+  assert.equal(commandView("notifications"), "notifications");
+  assert.equal(commandView("toggle"), null);
 });
 
 test("panelHeight never shrinks below the root around a subpage", () => {
