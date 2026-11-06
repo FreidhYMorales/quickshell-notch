@@ -90,6 +90,9 @@ const FAKE_QS = `#!/usr/bin/env bash
 printf '%s\\n' "$*" >> "$QS_LOG"
 case "$1" in
 list)
+    if [[ "\${QS_LIST_FAILS:-}" == "1" ]]; then
+        exit 3
+    fi
     while read -r pid config; do
         printf 'Instance i%s:\\n  Process ID: %s\\n  Config path: %s\\n' "$pid" "$pid" "$config"
     done < "$QS_STATE"
@@ -325,6 +328,23 @@ test("a cutover retried after a failed run keeps the fixed files as the rollback
     assert.equal(run(f, "rollback").status, 0);
     assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
     assert.equal(read(f.hypr, "deadlock", "execs.lua"), EXECS);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
+test("cutover refuses to run when it cannot list the running instances", () => {
+  const f = fixture();
+  try {
+    const result = run(f, "cutover", {
+      QS_LIST_FAILS: "1",
+      WAIT_STEPS: "1",
+      WAIT_INTERVAL: "0",
+    });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /cannot list/);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+    assert.deepEqual(running(f), []);
   } finally {
     rmSync(f.dir, { recursive: true, force: true });
   }
