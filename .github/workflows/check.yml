@@ -45,7 +45,9 @@ jobs:
           mkdir -p "$XDG_RUNTIME_DIR"
           chmod 700 "$XDG_RUNTIME_DIR"
           mkdir -p /tmp/opencode
-          dbus-run-session -- sh -ec '
+          chown builder:builder "$XDG_RUNTIME_DIR" /tmp/opencode
+          runuser -u builder -- dbus-run-session -- sh -ec '
+            export XDG_RUNTIME_DIR=/tmp/notch-ci-runtime
             export AQ_NO_KMS_REQUIREMENT=1
             export LIBGL_ALWAYS_SOFTWARE=1
             export WLR_NO_HARDWARE_CURSORS=1
