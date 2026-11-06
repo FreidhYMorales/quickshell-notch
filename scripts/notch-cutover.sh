@@ -20,9 +20,17 @@ STATE_DIR="${STATE_DIR:-$HOME/.local/state/quickshell-notch/cutover}"
 QS="${QS:-qs}"
 WAIT_STEPS="${WAIT_STEPS:-50}"
 WAIT_INTERVAL="${WAIT_INTERVAL:-0.2}"
+RUN_DIR=""
 
 KEYBINDS="$HYPR_DIR/deadlock/keybinds.lua"
 EXECS="$HYPR_DIR/deadlock/execs.lua"
+
+cleanup() {
+    if [[ -n "$RUN_DIR" ]]; then
+        rm -rf "$RUN_DIR"
+    fi
+}
+trap cleanup EXIT
 
 die() {
     echo "notch-cutover: $*" >&2
@@ -36,12 +44,18 @@ preflight_notch() {
     [[ -f "$EXECS" ]] || die "autostart not found at $EXECS"
 }
 
-# The first cutover keeps the originals; a second run must not overwrite them
-# with already-rewritten files.
-backup() {
+# Snapshot the files for this run. A cutover that fails must restore this
+# snapshot, and only a verified run may promote it to the permanent backup: a
+# drifted file saved as "the originals" would poison a later rollback.
+snapshot() {
+    cp -p "$KEYBINDS" "$RUN_DIR/keybinds.lua"
+    cp -p "$EXECS" "$RUN_DIR/execs.lua"
+}
+
+keep_backup() {
     mkdir -p "$STATE_DIR"
-    [[ -e "$STATE_DIR/keybinds.lua" ]] || cp -p "$KEYBINDS" "$STATE_DIR/keybinds.lua"
-    [[ -e "$STATE_DIR/execs.lua" ]] || cp -p "$EXECS" "$STATE_DIR/execs.lua"
+    [[ -e "$STATE_DIR/keybinds.lua" ]] || cp -p "$RUN_DIR/keybinds.lua" "$STATE_DIR/keybinds.lua"
+    [[ -e "$STATE_DIR/execs.lua" ]] || cp -p "$RUN_DIR/execs.lua" "$STATE_DIR/execs.lua"
 }
 
 rewrite_notch() {
@@ -92,16 +106,17 @@ stop_shells() {
 }
 
 restore_originals() {
-    if [[ -e "$STATE_DIR/keybinds.lua" ]]; then
-        cp -p "$STATE_DIR/keybinds.lua" "$KEYBINDS"
+    local src="$1"
+    if [[ -e "$src/keybinds.lua" ]]; then
+        cp -p "$src/keybinds.lua" "$KEYBINDS"
     fi
-    if [[ -e "$STATE_DIR/execs.lua" ]]; then
-        cp -p "$STATE_DIR/execs.lua" "$EXECS"
+    if [[ -e "$src/execs.lua" ]]; then
+        cp -p "$src/execs.lua" "$EXECS"
     fi
 }
 
 restore_old() {
-    restore_originals
+    restore_originals "$STATE_DIR"
     rm -f "$STATE_DIR/keybinds.lua" "$STATE_DIR/execs.lua"
 }
 
@@ -119,11 +134,11 @@ keybinds_remapped() {
 
 verify_rewrite() {
     grep -q 'local quickshell = "qs -c notch"' "$EXECS" || {
-        restore_originals
+        restore_originals "$RUN_DIR"
         die "autostart not remapped in $EXECS (unexpected content; originals restored)"
     }
     if ! keybinds_remapped; then
-        restore_originals
+        restore_originals "$RUN_DIR"
         die "keybinds not remapped in $KEYBINDS (unexpected content; originals restored)"
     fi
 }
@@ -132,9 +147,13 @@ case "${1:-}" in
 cutover)
     preflight_notch
     stop_shells
-    backup
+    RUN_DIR="$(mktemp -d)"
+    snapshot
     rewrite_notch
     verify_rewrite
+    keep_backup
+    rm -rf "$RUN_DIR"
+    RUN_DIR=""
     "$QS" -c notch -d
     wait_for_count 1 ||
         die "expected one Quickshell instance after the cutover, found $(instance_count): $(running_pids | tr '\n' ' ')"
