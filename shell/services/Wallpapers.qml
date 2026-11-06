@@ -29,7 +29,7 @@ Singleton {
     function refreshCatalog() {
         const paths = [];
         for (let i = 0; i < files.count; i++)
-            paths.push(files.get(i, "filePath"));
+            paths.push(files.get(i, "filePath").toString().replace("file://", ""));
         entries = WallpaperPicker.catalogEntries(paths);
     }
 
@@ -43,6 +43,13 @@ Singleton {
             return;
         selection = WallpaperPicker.movePreview(selection, step);
         preview = selection.index < 0 ? null : { screen: screen, path: selection.preview };
+    }
+
+    function select(index: int, screen: string) {
+        if (!selection || index < 0 || index >= selection.entries.length)
+            return;
+        selection = WallpaperPicker.movePreview(selection, index - selection.index);
+        preview = { screen: screen, path: selection.preview };
     }
 
     function cancel() {
