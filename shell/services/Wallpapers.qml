@@ -29,7 +29,7 @@ Singleton {
     function refreshCatalog() {
         const paths = [];
         for (let i = 0; i < files.count; i++)
-            paths.push(files.get(i, "filePath").toString().replace("file://", ""));
+            paths.push(decodeURIComponent(files.get(i, "filePath").toString().replace("file://", "")));
         entries = WallpaperPicker.catalogEntries(paths);
     }
 
