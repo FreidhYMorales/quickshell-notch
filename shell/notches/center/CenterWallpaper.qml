@@ -12,7 +12,7 @@ Item {
     readonly property var session: Wallpapers.selection
     readonly property int currentIndex: session?.index ?? -1
 
-    signal back()
+    signal back
 
     implicitHeight: Layout.wallpaperViewHeight
 
