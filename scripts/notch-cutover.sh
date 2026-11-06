@@ -91,14 +91,41 @@ stop_shells() {
         die "another Quickshell instance is still running: $(running_pids | tr '\n' ' ')"
 }
 
-restore_old() {
+restore_originals() {
     if [[ -e "$STATE_DIR/keybinds.lua" ]]; then
         cp -p "$STATE_DIR/keybinds.lua" "$KEYBINDS"
     fi
     if [[ -e "$STATE_DIR/execs.lua" ]]; then
         cp -p "$STATE_DIR/execs.lua" "$EXECS"
     fi
+}
+
+restore_old() {
+    restore_originals
     rm -f "$STATE_DIR/keybinds.lua" "$STATE_DIR/execs.lua"
+}
+
+# perl -pi exits 0 when nothing matches, so a drift in the dotfiles would
+# "succeed" with the old commands still in place and every keybind dead. Check
+# the result and put the originals back instead.
+keybinds_remapped() {
+    grep -q 'qsIpc .. " controlcenter open"' "$KEYBINDS" &&
+        grep -q 'qsIpc .. " controlcenter notifications"' "$KEYBINDS" &&
+        grep -q 'qsIpc .. " expanded toggle"' "$KEYBINDS" &&
+        grep -q 'qsIpc .. " power open"' "$KEYBINDS" &&
+        grep -q '"qs -c notch ipc call lock lock"' "$KEYBINDS" &&
+        ! grep -qE 'dashboard toggle|notifications toggle|calendar toggle|powermenu toggle|qs ipc call' "$KEYBINDS"
+}
+
+verify_rewrite() {
+    grep -q 'local quickshell = "qs -c notch"' "$EXECS" || {
+        restore_originals
+        die "autostart not remapped in $EXECS (unexpected content; originals restored)"
+    }
+    if ! keybinds_remapped; then
+        restore_originals
+        die "keybinds not remapped in $KEYBINDS (unexpected content; originals restored)"
+    fi
 }
 
 case "${1:-}" in
@@ -107,6 +134,7 @@ cutover)
     stop_shells
     backup
     rewrite_notch
+    verify_rewrite
     "$QS" -c notch -d
     wait_for_count 1 ||
         die "expected one Quickshell instance after the cutover, found $(instance_count): $(running_pids | tr '\n' ' ')"
