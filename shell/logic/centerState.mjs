@@ -112,16 +112,18 @@ const handlers = {
   },
   WallpaperOpen(state) {
     const keyboard = state.global.keyboard;
-    if (keyboard?.kind !== "launcher" || keyboard.sub === "wallpaper")
+    if (keyboard?.kind !== "launcher" || keyboard.sub === "wallpaper") {
       return unchanged(state);
+    }
     return setGlobal(state, {
       keyboard: merge(keyboard, { sub: "wallpaper" }),
     });
   },
   WallpaperBack(state) {
     const keyboard = state.global.keyboard;
-    if (keyboard?.kind !== "launcher" || keyboard.sub !== "wallpaper")
+    if (keyboard?.kind !== "launcher" || keyboard.sub !== "wallpaper") {
       return unchanged(state);
+    }
     return setGlobal(state, {
       keyboard: merge(keyboard, { sub: null }),
     });
