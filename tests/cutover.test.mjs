@@ -82,14 +82,45 @@ keybind("CTRL + ALT + DELETE", exec(qsIpc .. " power open"), descrip("Open Power
 keybind("XF86PowerOff", exec("qs -c notch ipc call lock lock"), { description = "Power button: lock screen" })
 `;
 
+// A `qs` that keeps the list of live instances in a file, like the real one
+// keeps them in its run dir: `list --all` prints them, `kill --pid` drops one
+// and a launch adds one. Tests seed instances to model the old bar, a dev
+// `qs -p` run or a stray instance that refuses to die.
+const FAKE_QS = `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "$QS_LOG"
+case "$1" in
+list)
+    while read -r pid config; do
+        printf 'Instance i%s:\\n  Process ID: %s\\n  Config path: %s\\n' "$pid" "$pid" "$config"
+    done < "$QS_STATE"
+    ;;
+kill)
+    if [[ -z "\${QS_IGNORE_KILL:-}" ]]; then
+        grep -v "^$3 " "$QS_STATE" >"$QS_STATE.tmp" || true
+        mv "$QS_STATE.tmp" "$QS_STATE"
+    fi
+    ;;
+*)
+    next=$(cat "$QS_NEXT")
+    echo $((next + 1)) >"$QS_NEXT"
+    if [[ "$1" == "-c" && "$2" == "notch" ]]; then
+        config="$NOTCH_CONFIG_DIR/shell.qml"
+    else
+        config="$QS_DEFAULT_CONFIG"
+    fi
+    printf '%s %s\\n' "$next" "$config" >>"$QS_STATE"
+    ;;
+esac
+`;
+
 // A throwaway mirror of the real layout: Hyprland config, the deployed
-// Quickshell config dirs, a state dir and a `qs` that only records its calls.
-function fixture({ notchConfig = true } = {}) {
+// Quickshell config dirs, a state dir and the fake `qs` above.
+function fixture({ notchConfig = true, keybinds = KEYBINDS } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "cutover-"));
   const hypr = join(dir, "hypr");
   mkdirSync(join(hypr, "deadlock"), { recursive: true });
   writeFileSync(join(hypr, "deadlock", "execs.lua"), EXECS);
-  writeFileSync(join(hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+  writeFileSync(join(hypr, "deadlock", "keybinds.lua"), keybinds);
   const config = join(dir, "config", "quickshell");
   if (notchConfig) {
     mkdirSync(join(config, "notch"), { recursive: true });
@@ -98,16 +129,21 @@ function fixture({ notchConfig = true } = {}) {
   const bin = join(dir, "bin");
   mkdirSync(bin, { recursive: true });
   const qsLog = join(dir, "qs.log");
-  writeFileSync(
-    join(bin, "qs"),
-    `#!/usr/bin/env bash\nprintf '%s\\n' "$*" >> "${qsLog}"\n`,
-  );
+  const instances = join(dir, "instances");
+  const next = join(dir, "next");
+  writeFileSync(instances, "");
+  writeFileSync(next, "1000\n");
+  writeFileSync(join(bin, "qs"), FAKE_QS);
   chmodSync(join(bin, "qs"), 0o755);
   return {
     dir,
     hypr,
     config,
     qsLog,
+    instances,
+    notchConfig: join(config, "notch", "shell.qml"),
+    defaultConfig: join(config, "default", "shell.qml"),
+    strayConfig: join(dir, "dev", "shell.qml"),
     state: join(dir, "state"),
     env: {
       HOME: dir,
@@ -116,6 +152,10 @@ function fixture({ notchConfig = true } = {}) {
       NOTCH_CONFIG_DIR: join(config, "notch"),
       STATE_DIR: join(dir, "state"),
       QS: join(bin, "qs"),
+      QS_LOG: qsLog,
+      QS_STATE: instances,
+      QS_NEXT: next,
+      QS_DEFAULT_CONFIG: join(config, "default", "shell.qml"),
     },
   };
 }
@@ -129,7 +169,18 @@ function run(f, subcommand) {
 }
 
 const read = (...parts) => readFileSync(join(...parts), "utf8");
-const qsCalls = (f) => readFileSync(f.qsLog, "utf8").trim().split("\n");
+const running = (f) =>
+  read(f.instances)
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.split(" ")[1]);
+
+function seed(f, configs) {
+  writeFileSync(
+    f.instances,
+    configs.map((config, i) => `${2000 + i} ${config}`).join("\n") + "\n",
+  );
+}
 
 test("cutover refuses to run without the deployed notch config", () => {
   const f = fixture({ notchConfig: false });
@@ -144,6 +195,22 @@ test("cutover refuses to run without the deployed notch config", () => {
   }
 });
 
+test("cutover stops the old bar and every other instance before starting the notch", () => {
+  const f = fixture();
+  try {
+    seed(f, [join(f.config, "shell.qml"), f.strayConfig]);
+    const result = run(f, "cutover");
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.deepEqual(running(f), [f.notchConfig]);
+    assert.equal(read(f.hypr, "deadlock", "execs.lua"), EXECS_AFTER);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS_AFTER);
+    assert.equal(read(f.state, "execs.lua"), EXECS);
+    assert.equal(read(f.state, "keybinds.lua"), KEYBINDS);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
 test("a second cutover keeps the original backups", () => {
   const f = fixture();
   try {
@@ -152,18 +219,13 @@ test("a second cutover keeps the original backups", () => {
     assert.equal(read(f.state, "keybinds.lua"), KEYBINDS);
     assert.equal(read(f.state, "execs.lua"), EXECS);
     assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS_AFTER);
-    assert.deepEqual(readFileSync(f.qsLog, "utf8").trim().split("\n"), [
-      "kill",
-      "-c notch -d",
-      "kill",
-      "-c notch -d",
-    ]);
+    assert.deepEqual(running(f), [f.notchConfig]);
   } finally {
     rmSync(f.dir, { recursive: true, force: true });
   }
 });
 
-test("rollback restores the original files, starts the old shell and repeats as a no-op", () => {
+test("rollback restores the files, swaps to the old bar and repeats as a no-op", () => {
   const f = fixture();
   try {
     assert.equal(run(f, "cutover").status, 0);
@@ -171,29 +233,11 @@ test("rollback restores the original files, starts the old shell and repeats as 
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
     assert.equal(read(f.hypr, "deadlock", "execs.lua"), EXECS);
-    assert.deepEqual(qsCalls(f), ["kill", "-c notch -d", "kill", "-d"]);
+    assert.deepEqual(running(f), [f.defaultConfig]);
     const again = run(f, "rollback");
     assert.equal(again.status, 0, again.stdout + again.stderr);
     assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
-    assert.deepEqual(qsCalls(f), ["kill", "-c notch -d", "kill", "-d"]);
-  } finally {
-    rmSync(f.dir, { recursive: true, force: true });
-  }
-});
-
-test("cutover kills the running shells, remaps the keybinds and starts the notch", () => {
-  const f = fixture();
-  try {
-    const result = run(f, "cutover");
-    assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.equal(read(f.hypr, "deadlock", "execs.lua"), EXECS_AFTER);
-    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS_AFTER);
-    assert.equal(read(f.state, "execs.lua"), EXECS);
-    assert.equal(read(f.state, "keybinds.lua"), KEYBINDS);
-    assert.deepEqual(readFileSync(f.qsLog, "utf8").trim().split("\n"), [
-      "kill",
-      "-c notch -d",
-    ]);
+    assert.deepEqual(running(f), [f.defaultConfig]);
   } finally {
     rmSync(f.dir, { recursive: true, force: true });
   }
