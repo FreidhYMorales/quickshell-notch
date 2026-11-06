@@ -81,6 +81,13 @@ running_pids() {
     "$QS" list --all 2>/dev/null | awk '/Process ID:/ { print $3 }' || true
 }
 
+# `running_pids` hides its own failure, so check the instance list before
+# trusting "zero instances": a broken `qs` must not read as "nothing running".
+instances_ok() {
+    "$QS" list --all >/dev/null 2>&1 ||
+        die "cannot list the running Quickshell instances with $QS"
+}
+
 instance_count() {
     running_pids | wc -l
 }
@@ -146,6 +153,7 @@ verify_rewrite() {
 case "${1:-}" in
 cutover)
     preflight_notch
+    instances_ok
     stop_shells
     RUN_DIR="$(mktemp -d)"
     snapshot
@@ -163,6 +171,7 @@ rollback)
         echo "notch-cutover: nothing to roll back"
         exit 0
     fi
+    instances_ok
     stop_shells
     restore_old
     "$QS" -d
