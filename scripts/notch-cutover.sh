@@ -9,6 +9,8 @@
 #   NOTCH_CONFIG_DIR  deployed notch config (default ~/.config/quickshell/notch)
 #   STATE_DIR         backups (default ~/.local/state/quickshell-notch/cutover)
 #   QS                quickshell binary (default qs)
+#   WAIT_STEPS        instance checks before giving up (default 50)
+#   WAIT_INTERVAL     seconds between checks (default 0.2)
 
 set -euo pipefail
 
@@ -16,6 +18,8 @@ HYPR_DIR="${HYPR_DIR:-$HOME/.config/hypr}"
 NOTCH_CONFIG_DIR="${NOTCH_CONFIG_DIR:-$HOME/.config/quickshell/notch}"
 STATE_DIR="${STATE_DIR:-$HOME/.local/state/quickshell-notch/cutover}"
 QS="${QS:-qs}"
+WAIT_STEPS="${WAIT_STEPS:-50}"
+WAIT_INTERVAL="${WAIT_INTERVAL:-0.2}"
 
 KEYBINDS="$HYPR_DIR/deadlock/keybinds.lua"
 EXECS="$HYPR_DIR/deadlock/execs.lua"
@@ -60,7 +64,22 @@ rewrite_notch() {
 # the dotfiles move (another config path) or a dev `qs -p` would survive it.
 # Kill every live instance by pid instead.
 running_pids() {
-    "$QS" list --all 2>/dev/null | awk '/Process ID:/ { print $3 }'
+    "$QS" list --all 2>/dev/null | awk '/Process ID:/ { print $3 }' || true
+}
+
+instance_count() {
+    running_pids | wc -l
+}
+
+# The new shell registers a moment after it is launched and a killed one takes
+# a moment to disappear, so poll instead of sleeping a fixed time.
+wait_for_count() {
+    local want="$1" step
+    for ((step = 0; step < WAIT_STEPS; step++)); do
+        [[ "$(instance_count)" -eq "$want" ]] && return 0
+        sleep "$WAIT_INTERVAL"
+    done
+    return 1
 }
 
 stop_shells() {
@@ -68,7 +87,8 @@ stop_shells() {
     for pid in $(running_pids); do
         "$QS" kill --pid "$pid" >/dev/null 2>&1 || true
     done
-    sleep 0.5
+    wait_for_count 0 ||
+        die "another Quickshell instance is still running: $(running_pids | tr '\n' ' ')"
 }
 
 restore_old() {
@@ -88,6 +108,8 @@ cutover)
     backup
     rewrite_notch
     "$QS" -c notch -d
+    wait_for_count 1 ||
+        die "expected one Quickshell instance after the cutover, found $(instance_count): $(running_pids | tr '\n' ' ')"
     ;;
 rollback)
     if [[ ! -e "$STATE_DIR/keybinds.lua" ]] && [[ ! -e "$STATE_DIR/execs.lua" ]]; then
@@ -97,6 +119,8 @@ rollback)
     stop_shells
     restore_old
     "$QS" -d
+    wait_for_count 1 ||
+        die "expected one Quickshell instance after the rollback, found $(instance_count): $(running_pids | tr '\n' ' ')"
     ;;
 *)
     die "usage: notch-cutover.sh cutover|rollback"
