@@ -3,6 +3,8 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import Qt.labs.folderlistmodel
+import "../logic/wallpaperPicker.mjs" as WallpaperPicker
 import "../config"
 import "../logic/wallpaperState.mjs" as WallpaperState
 
@@ -19,9 +21,61 @@ Singleton {
     property var perScreen: ({})
     // true once the notch state on disk holds the current values.
     property bool saved: false
+    readonly property string directory: Quickshell.env("QS_WALLPAPER_DIR") || (Quickshell.env("HOME") + "/Pictures/Wallpaper")
+    property var entries: []
+    property var preview: null
+    property var selection: null
+
+    function refreshCatalog() {
+        const paths = [];
+        for (let i = 0; i < files.count; i++)
+            paths.push(files.get(i, "filePath"));
+        entries = WallpaperPicker.catalogEntries(paths);
+    }
+
+    function begin(screen: string) {
+        selection = WallpaperPicker.beginPreview(entries, WallpaperState.wallpaperFor(perScreen, fallback, screen));
+        preview = selection.index < 0 ? null : { screen: screen, path: selection.preview };
+    }
+
+    function move(step: int, screen: string) {
+        if (!selection)
+            return;
+        selection = WallpaperPicker.movePreview(selection, step);
+        preview = selection.index < 0 ? null : { screen: screen, path: selection.preview };
+    }
+
+    function cancel() {
+        preview = null;
+        selection = null;
+    }
+
+    function commit(screen: string) {
+        if (!selection)
+            return;
+        const path = WallpaperPicker.commitPreview(selection);
+        if (!path)
+            return;
+        const next = WallpaperState.commitFor(perScreen, fallback, screen, path);
+        fallback = next.fallback;
+        perScreen = next.perScreen;
+        cancel();
+        saved = false;
+        mkdir.running = true;
+    }
+
+    FolderListModel {
+        id: files
+        folder: "file://" + root.directory
+        nameFilters: ["*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.webp", "*.WEBP", "*.bmp", "*.BMP", "*.mp4", "*.MP4", "*.webm", "*.WEBM", "*.mkv", "*.MKV", "*.mov", "*.MOV", "*.avi", "*.AVI", "*.m4v", "*.M4V"]
+        showDirs: false
+        onStatusChanged: if (status === FolderListModel.Ready) root.refreshCatalog()
+        onCountChanged: root.refreshCatalog()
+    }
+
 
     function pathFor(screen: string): string {
-        return WallpaperState.wallpaperFor(perScreen, fallback, screen) ?? "";
+        return WallpaperState.previewFor(perScreen, fallback, screen, preview) ?? "";
     }
 
     function readText(path: string): string {
