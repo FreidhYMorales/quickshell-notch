@@ -118,11 +118,13 @@ esac
 
 // A throwaway mirror of the real layout: Hyprland config, the deployed
 // Quickshell config dirs, a state dir and the fake `qs` above.
-function fixture({ notchConfig = true, keybinds = KEYBINDS } = {}) {
+function fixture(
+  { notchConfig = true, keybinds = KEYBINDS, execs = EXECS } = {},
+) {
   const dir = mkdtempSync(join(tmpdir(), "cutover-"));
   const hypr = join(dir, "hypr");
   mkdirSync(join(hypr, "deadlock"), { recursive: true });
-  writeFileSync(join(hypr, "deadlock", "execs.lua"), EXECS);
+  writeFileSync(join(hypr, "deadlock", "execs.lua"), execs);
   writeFileSync(join(hypr, "deadlock", "keybinds.lua"), keybinds);
   const config = join(dir, "config", "quickshell");
   if (notchConfig) {
@@ -275,6 +277,39 @@ test("cutover refuses to finish when a second instance appears", () => {
     assert.equal(result.status, 1, result.stdout + result.stderr);
     assert.match(result.stderr, /one Quickshell instance/);
     assert.equal(running(f).length, 2);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
+test("cutover fails cleanly and keeps the keybinds when they do not match", () => {
+  const drifted = KEYBINDS.replace("dashboard toggle", "dashboard open");
+  const f = fixture({ keybinds: drifted });
+  try {
+    const result = run(f, "cutover");
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /keybinds not remapped/);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), drifted);
+    assert.equal(read(f.hypr, "deadlock", "execs.lua"), EXECS);
+    assert.deepEqual(running(f), []);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
+test("cutover fails cleanly and keeps the autostart when it does not match", () => {
+  const drifted = EXECS.replace(
+    'local quickshell = "quickshell"',
+    'local quickshell = "qs"',
+  );
+  const f = fixture({ execs: drifted });
+  try {
+    const result = run(f, "cutover");
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /autostart not remapped/);
+    assert.equal(read(f.hypr, "deadlock", "execs.lua"), drifted);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+    assert.deepEqual(running(f), []);
   } finally {
     rmSync(f.dir, { recursive: true, force: true });
   }
