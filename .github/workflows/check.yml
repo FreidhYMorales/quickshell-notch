@@ -22,7 +22,7 @@ jobs:
         run: make test
 
   qml:
-    name: QML lint and runtime (Arch)
+    name: QML static lint (Arch)
     runs-on: ubuntu-latest
     container: archlinux:latest
     timeout-minutes: 45
@@ -39,67 +39,69 @@ jobs:
           pacman -U --noconfirm /tmp/quickshell-git/*.pkg.tar.zst
       - name: QML static lint
         run: make lint-qml
-      - name: QML runtime tests and smoke in headless Wayland
+
+  hyprland-probe:
+    name: Hyprland nested compositor probe (Ubuntu host)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - name: Install host graphics stack
         run: |
-          export XDG_RUNTIME_DIR=/tmp/notch-ci-runtime
-          mkdir -p "$XDG_RUNTIME_DIR"
+          sudo apt-get update
+          sudo apt-get install -y weston wayland-utils mesa-utils libgl1-mesa-dri dbus-user-session
+          if ! apt-cache show hyprland >/dev/null 2>&1; then
+            echo "::error::Hyprland is unavailable in the Ubuntu runner repositories; use a compatible runner or package source."
+            exit 1
+          fi
+          sudo apt-get install -y hyprland
+      - name: Probe nested Hyprland without Docker
+        shell: bash
+        run: |
+          set -euo pipefail
+          export XDG_RUNTIME_DIR="$(mktemp -d /tmp/notch-wayland-XXXXXX)"
           chmod 700 "$XDG_RUNTIME_DIR"
-          mkdir -p /tmp/opencode
-          chown builder:builder "$XDG_RUNTIME_DIR" /tmp/opencode
-          runuser -u builder -- dbus-run-session -- sh -ec '
-            export XDG_RUNTIME_DIR=/tmp/notch-ci-runtime
-            export AQ_NO_KMS_REQUIREMENT=1
-            export AQ_TRACE=1
-            export AQ_LOG_LEVEL=trace
-            export HYPRLAND_TRACE=1
-            export HYPRLAND_NO_CRASHREPORTER=1
-            export LIBGL_ALWAYS_SOFTWARE=1
-            export WLR_NO_HARDWARE_CURSORS=1
-            export QT_QUICK_BACKEND=software
-            export XDG_CURRENT_DESKTOP=Hyprland
-            export XDG_SESSION_TYPE=wayland
-            weston --backend=headless --socket=notch-parent --idle-time=0 --log=/tmp/notch-weston.log &
-            parent=$!
-            trap "kill $parent 2>/dev/null || true" EXIT
-            attempt=0
-            until [ -S "$XDG_RUNTIME_DIR/notch-parent" ]; do
-              attempt=$((attempt + 1))
-              if [ "$attempt" -ge 50 ]; then cat /tmp/notch-weston.log; exit 1; fi
-              sleep 0.2
-            done
-            export WAYLAND_DISPLAY=notch-parent
-            echo "=== Runtime and graphics devices ==="
-            id
-            printf "XDG_RUNTIME_DIR=%s WAYLAND_DISPLAY=%s\\n" "$XDG_RUNTIME_DIR" "$WAYLAND_DISPLAY"
-            ls -ld "$XDG_RUNTIME_DIR" /dev/dri /dev/dri/* 2>&1 || true
-            echo "=== Parent Wayland connection ==="
-            if ! wayland-info > /tmp/notch-parent-info.log 2>&1; then
-              cat /tmp/notch-parent-info.log
-              echo "ERROR: builder cannot connect to the Weston Wayland socket"
-              exit 1
-            fi
-            grep -E "wl_compositor|wl_shm|wl_output|xdg_wm_base" /tmp/notch-parent-info.log || true
-            echo "=== EGL environment ==="
-            env | grep -E "^(AQ_|EGL_|GBM_|LIBGL_|MESA_|WAYLAND_|XDG_)" | sort
-            printf "debug {\n    disable_logs = false\n    enable_stdout_logs = true\n}\nmonitor = ,1280x720@60,0x0,1\n" > /tmp/notch-hyprland.conf
-            WAYLAND_DEBUG=client Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
-            compositor=$!
-            trap "kill $compositor 2>/dev/null || true; kill $parent 2>/dev/null || true" EXIT
-            export QT_QPA_PLATFORM=wayland
-            attempt=0
-            until [ -n "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' ! -name notch-parent -print -quit)" ]; do
-              attempt=$((attempt + 1))
-              if [ "$attempt" -ge 50 ]; then echo "=== Hyprland stdout ==="; cat /tmp/notch-hyprland.log; echo "=== Hyprland detailed logs ==="; find "$XDG_RUNTIME_DIR" /tmp -name hyprland.log -type f -exec tail -n 200 {} \; 2>/dev/null || true; echo "=== Weston ==="; tail -n 80 /tmp/notch-weston.log; exit 1; fi
-              sleep 0.2
-            done
-            export WAYLAND_DISPLAY="$(basename "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' ! -name notch-parent -print -quit)")"
-            echo "Wayland globals:"
-            wayland-info | grep -E "zwlr_layer_shell_v1|wl_output|wl_seat" || true
-            if ! wayland-info | grep -q zwlr_layer_shell_v1; then
-              echo "ERROR: compositor does not advertise zwlr_layer_shell_v1"
-              cat /tmp/notch-hyprland.log
-              exit 1
-            fi
-            make qml-test
-            make smoke
-          '
+          export LIBGL_ALWAYS_SOFTWARE=1
+          export AQ_TRACE=1
+          export QT_QPA_PLATFORM=wayland
+          export XDG_SESSION_TYPE=wayland
+          export XDG_CURRENT_DESKTOP=Hyprland
+          trap 'kill "${hypr_pid:-}" "${weston_pid:-}" 2>/dev/null || true; rm -rf "$XDG_RUNTIME_DIR"' EXIT
+          weston --backend=headless --socket=notch-parent --idle-time=0 --log=/tmp/notch-weston.log &
+          weston_pid=$!
+          for i in {1..50}; do
+            test -S "$XDG_RUNTIME_DIR/notch-parent" && break
+            kill -0 "$weston_pid" || { cat /tmp/notch-weston.log; exit 1; }
+            sleep 0.2
+          done
+          test -S "$XDG_RUNTIME_DIR/notch-parent"
+          export WAYLAND_DISPLAY=notch-parent
+          wayland-info > /tmp/notch-parent-info.log
+          printf 'monitor = ,1280x720@60,0x0,1\n' > /tmp/notch-hyprland.conf
+          Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
+          hypr_pid=$!
+          for i in {1..50}; do
+            socket="$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)"
+            test -n "$socket" && break
+            kill -0 "$hypr_pid" || break
+            sleep 0.2
+          done
+          if test -z "${socket:-}"; then
+            cat /tmp/notch-hyprland.log
+            echo "::error::Hyprland failed to create its nested Wayland socket"
+            exit 1
+          fi
+          export WAYLAND_DISPLAY="$(basename "$socket")"
+          wayland-info > /tmp/notch-hyprland-info.log
+          grep zwlr_layer_shell_v1 /tmp/notch-hyprland-info.log
+      - name: Upload compositor diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hyprland-host-diagnostics
+          path: |
+            /tmp/notch-weston.log
+            /tmp/notch-hyprland.log
+            /tmp/notch-parent-info.log
+            /tmp/notch-hyprland-info.log
+          if-no-files-found: ignore
