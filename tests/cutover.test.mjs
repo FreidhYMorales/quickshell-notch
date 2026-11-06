@@ -109,6 +109,9 @@ kill)
         config="$QS_DEFAULT_CONFIG"
     fi
     printf '%s %s\\n' "$next" "$config" >>"$QS_STATE"
+    if [[ "$1" == "-c" && "\${QS_DOUBLE_START:-}" == "1" ]]; then
+        printf '%s %s\\n' "$((next + 1))" "$QS_STRAY_CONFIG" >>"$QS_STATE"
+    fi
     ;;
 esac
 `;
@@ -160,10 +163,10 @@ function fixture({ notchConfig = true, keybinds = KEYBINDS } = {}) {
   };
 }
 
-function run(f, subcommand) {
+function run(f, subcommand, extraEnv = {}) {
   return spawnSync("bash", [script, subcommand], {
     encoding: "utf8",
-    env: Object.assign({}, process.env, f.env),
+    env: Object.assign({}, process.env, f.env, extraEnv),
     timeout: 10000,
   });
 }
@@ -238,6 +241,40 @@ test("rollback restores the files, swaps to the old bar and repeats as a no-op",
     assert.equal(again.status, 0, again.stdout + again.stderr);
     assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
     assert.deepEqual(running(f), [f.defaultConfig]);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
+test("cutover refuses to start while another instance is still running", () => {
+  const f = fixture();
+  try {
+    seed(f, [join(f.config, "shell.qml")]);
+    const result = run(f, "cutover", {
+      QS_IGNORE_KILL: "1",
+      WAIT_STEPS: "1",
+      WAIT_INTERVAL: "0",
+    });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /still running/);
+    assert.equal(read(f.hypr, "deadlock", "keybinds.lua"), KEYBINDS);
+    assert.deepEqual(running(f), [join(f.config, "shell.qml")]);
+  } finally {
+    rmSync(f.dir, { recursive: true, force: true });
+  }
+});
+
+test("cutover refuses to finish when a second instance appears", () => {
+  const f = fixture();
+  try {
+    const result = run(f, "cutover", {
+      QS_DOUBLE_START: "1",
+      WAIT_STEPS: "1",
+      WAIT_INTERVAL: "0",
+    });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /one Quickshell instance/);
+    assert.equal(running(f).length, 2);
   } finally {
     rmSync(f.dir, { recursive: true, force: true });
   }
