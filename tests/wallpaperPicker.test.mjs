@@ -1,16 +1,11 @@
-import { test   beginPreview,
-  cancelPreview,
-  catalogEntries,
-  commitPreview,
-  movePreview,
-} from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  catalogEntries,
   beginPreview,
-  movePreview,
   cancelPreview,
+  catalogEntries,
   commitPreview,
+  movePreview,
 } from "../shell/logic/wallpaperPicker.mjs";
 
 test("catalog keeps supported image and video paths in stable name order", () => {
