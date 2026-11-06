@@ -57,3 +57,20 @@ test("a video wallpaper pauses while the session is locked", () => {
 test("an image wallpaper never plays", () => {
   assert.equal(videoShouldPlay("/w/arch.png", false), false);
 });
+
+test("a temporary preview overrides only its target monitor", async () => {
+  const { previewFor } = await import("../shell/logic/wallpaperState.mjs");
+  const overrides = { "DP-1": "/w/dp.png" };
+  assert.equal(previewFor(overrides, "/w/base.png", "DP-1", { screen: "DP-1", path: "/w/new.png" }), "/w/new.png");
+  assert.equal(previewFor(overrides, "/w/base.png", "eDP-1", { screen: "DP-1", path: "/w/new.png" }), "/w/base.png");
+});
+
+test("committing to a monitor preserves other overrides", async () => {
+  const { commitFor } = await import("../shell/logic/wallpaperState.mjs");
+  const original = { "DP-1": "/w/old.png", "HDMI-A-1": "/w/other.png" };
+  const next = commitFor(original, "/w/default.png", "DP-1", "/w/new.png");
+  assert.equal(next.perScreen["DP-1"], "/w/new.png");
+  assert.equal(next.perScreen["HDMI-A-1"], "/w/other.png");
+  assert.equal(next.fallback, "/w/default.png");
+  assert.equal(original["DP-1"], "/w/old.png");
+});
