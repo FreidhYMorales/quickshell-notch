@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Install QML and runtime dependencies
         run: |
-          pacman -Syu --noconfirm --needed base-devel git sudo qt6-declarative qt6-multimedia qt6-svg qt6-wayland nodejs deno make findutils diffutils dbus python python-dbus python-gobject sway wayland wayland-utils mesa
+          pacman -Syu --noconfirm --needed base-devel git sudo qt6-declarative qt6-multimedia qt6-svg qt6-wayland nodejs deno make findutils diffutils dbus python python-dbus python-gobject hyprland wayland wayland-utils mesa
           useradd -m -G wheel builder
           printf 'builder ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/builder
       - uses: actions/checkout@v4
@@ -46,28 +46,29 @@ jobs:
           chmod 700 "$XDG_RUNTIME_DIR"
           mkdir -p /tmp/opencode
           dbus-run-session -- sh -ec '
-            export WLR_BACKENDS=headless
-            export WLR_HEADLESS_OUTPUTS=1
-            export WLR_LIBINPUT_NO_DEVICES=1
-            export WLR_RENDERER=pixman
+            export AQ_NO_KMS_REQUIREMENT=1
+            export LIBGL_ALWAYS_SOFTWARE=1
+            export WLR_NO_HARDWARE_CURSORS=1
             export QT_QUICK_BACKEND=software
-            printf "output HEADLESS-1 resolution 1280x720\\n" > /tmp/notch-sway.conf
-            sway -c /tmp/notch-sway.conf --debug > /tmp/notch-sway.log 2>&1 &
+            export XDG_CURRENT_DESKTOP=Hyprland
+            export XDG_SESSION_TYPE=wayland
+            printf "monitor = HEADLESS-0,1280x720@60,0x0,1\\n" > /tmp/notch-hyprland.conf
+            Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
             compositor=$!
             trap "kill $compositor 2>/dev/null || true" EXIT
             export QT_QPA_PLATFORM=wayland
-            export WAYLAND_DISPLAY=wayland-1
             attempt=0
-            until [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; do
+            until [ -n "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)" ]; do
               attempt=$((attempt + 1))
-              if [ "$attempt" -ge 50 ]; then cat /tmp/notch-sway.log; exit 1; fi
+              if [ "$attempt" -ge 50 ]; then cat /tmp/notch-hyprland.log; exit 1; fi
               sleep 0.2
             done
+            export WAYLAND_DISPLAY="$(basename "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)")"
             echo "Wayland globals:"
             wayland-info | grep -E "zwlr_layer_shell_v1|wl_output|wl_seat" || true
             if ! wayland-info | grep -q zwlr_layer_shell_v1; then
               echo "ERROR: compositor does not advertise zwlr_layer_shell_v1"
-              cat /tmp/notch-sway.log
+              cat /tmp/notch-hyprland.log
               exit 1
             fi
             make qml-test
