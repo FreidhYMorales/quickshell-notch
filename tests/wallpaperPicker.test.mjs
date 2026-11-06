@@ -1,4 +1,9 @@
-import { test } from "node:test";
+import { test   beginPreview,
+  cancelPreview,
+  catalogEntries,
+  commitPreview,
+  movePreview,
+} from "node:test";
 import assert from "node:assert/strict";
 import {
   catalogEntries,
@@ -9,11 +14,14 @@ import {
 } from "../shell/logic/wallpaperPicker.mjs";
 
 test("catalog keeps supported image and video paths in stable name order", () => {
-  assert.deepEqual(catalogEntries(["/w/z.mp4", "/w/a.PNG", "/w/no.txt", "/w/b.webp"]), [
-    { path: "/w/a.PNG", name: "a.PNG", video: false },
-    { path: "/w/b.webp", name: "b.webp", video: false },
-    { path: "/w/z.mp4", name: "z.mp4", video: true },
-  ]);
+  assert.deepEqual(
+    catalogEntries(["/w/z.mp4", "/w/a.PNG", "/w/no.txt", "/w/b.webp"]),
+    [
+      { path: "/w/a.PNG", name: "a.PNG", video: false },
+      { path: "/w/b.webp", name: "b.webp", video: false },
+      { path: "/w/z.mp4", name: "z.mp4", video: true },
+    ],
+  );
 });
 
 test("empty catalog cannot produce a preview or commit", () => {
@@ -49,7 +57,10 @@ test("cancel restores original and commit returns selected path", () => {
 });
 
 test("missing current wallpaper starts at first available entry", () => {
-  const session = beginPreview(catalogEntries(["/w/b.png", "/w/a.png"]), "/w/old.png");
+  const session = beginPreview(
+    catalogEntries(["/w/b.png", "/w/a.png"]),
+    "/w/old.png",
+  );
   assert.equal(session.preview, "/w/a.png");
   assert.equal(cancelPreview(session), "/w/old.png");
 });
