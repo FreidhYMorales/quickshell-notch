@@ -16,6 +16,7 @@ Item {
     property var view: ({})
 
     readonly property var scheme: Colours.paletteFor(screen)
+    readonly property bool wallpaperMode: view.sub === "wallpaper"
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
     readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
@@ -33,8 +34,13 @@ Item {
 
     // Null when there are no results: the reducer then does nothing.
     function launch(index) {
-        if (commandMode)
+        if (commandMode) {
+            if (results[index]?.name === Strings.wallpaperTitle) {
+                Wallpapers.begin(screen.name);
+                send({ type: "WallpaperOpen" });
+            }
             return;
+        }
         send({
             type: "LauncherActivate",
             appId: results[index]?.id ?? null
@@ -42,14 +48,27 @@ Item {
     }
 
     // The same padding on every side of the content (inside the ears).
-    implicitHeight: column.implicitHeight + 2 * Layout.launcherPad
+    implicitHeight: (wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
 
     NotchEarShape {
         anchors.fill: parent
     }
 
+    CenterWallpaper {
+        id: wallpaperView
+        visible: root.wallpaperMode
+        screen: root.screen
+        x: Layout.earRadius + Layout.launcherPad
+        y: Layout.launcherPad
+        width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
+        focus: root.wallpaperMode
+        onVisibleChanged: if (visible) forceActiveFocus()
+        onBack: root.send({ type: "WallpaperBack" })
+    }
+
     Column {
         id: column
+        visible: !root.wallpaperMode
 
         anchors.left: parent.left
         anchors.right: parent.right
