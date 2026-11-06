@@ -41,20 +41,17 @@ jobs:
         run: make lint-qml
 
   hyprland-probe:
-    name: Hyprland nested compositor probe (Ubuntu host)
-    runs-on: ubuntu-latest
+    name: Hyprland nested compositor probe (Ubuntu 26.04 host)
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     continue-on-error: true
     steps:
       - name: Install host graphics stack
         run: |
+          sudo add-apt-repository -y universe
           sudo apt-get update
-          sudo apt-get install -y weston wayland-utils mesa-utils libgl1-mesa-dri dbus-user-session
-          if ! apt-cache show hyprland >/dev/null 2>&1; then
-            echo "::error::Hyprland is unavailable in the Ubuntu runner repositories; use a compatible runner or package source."
-            exit 1
-          fi
-          sudo apt-get install -y hyprland
+          apt-cache policy hyprland
+          sudo apt-get install -y weston wayland-utils mesa-utils libgl1-mesa-dri dbus-user-session hyprland
       - name: Probe nested Hyprland without Docker
         shell: bash
         run: |
