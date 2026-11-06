@@ -61,8 +61,20 @@ test("an image wallpaper never plays", () => {
 test("a temporary preview overrides only its target monitor", async () => {
   const { previewFor } = await import("../shell/logic/wallpaperState.mjs");
   const overrides = { "DP-1": "/w/dp.png" };
-  assert.equal(previewFor(overrides, "/w/base.png", "DP-1", { screen: "DP-1", path: "/w/new.png" }), "/w/new.png");
-  assert.equal(previewFor(overrides, "/w/base.png", "eDP-1", { screen: "DP-1", path: "/w/new.png" }), "/w/base.png");
+  assert.equal(
+    previewFor(overrides, "/w/base.png", "DP-1", {
+      screen: "DP-1",
+      path: "/w/new.png",
+    }),
+    "/w/new.png",
+  );
+  assert.equal(
+    previewFor(overrides, "/w/base.png", "eDP-1", {
+      screen: "DP-1",
+      path: "/w/new.png",
+    }),
+    "/w/base.png",
+  );
 });
 
 test("committing to a monitor preserves other overrides", async () => {
