@@ -50,6 +50,7 @@ jobs:
             export XDG_RUNTIME_DIR=/tmp/notch-ci-runtime
             export AQ_NO_KMS_REQUIREMENT=1
             export AQ_TRACE=1
+            export AQ_LOG_LEVEL=trace
             export HYPRLAND_TRACE=1
             export HYPRLAND_NO_CRASHREPORTER=1
             export LIBGL_ALWAYS_SOFTWARE=1
@@ -67,18 +68,18 @@ jobs:
               sleep 0.2
             done
             export WAYLAND_DISPLAY=notch-parent
-            printf "monitor = ,1280x720@60,0x0,1\\n" > /tmp/notch-hyprland.conf
+            printf "debug {\n    disable_logs = false\n    enable_stdout_logs = true\n}\nmonitor = ,1280x720@60,0x0,1\n" > /tmp/notch-hyprland.conf
             Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
             compositor=$!
             trap "kill $compositor 2>/dev/null || true; kill $parent 2>/dev/null || true" EXIT
             export QT_QPA_PLATFORM=wayland
             attempt=0
-            until [ -n "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print ! -name notch-parent -quit)" ]; do
+            until [ -n "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' ! -name notch-parent -print -quit)" ]; do
               attempt=$((attempt + 1))
-              if [ "$attempt" -ge 50 ]; then cat /tmp/notch-hyprland.log; find "$XDG_RUNTIME_DIR/hypr" -name hyprland.log -exec tail -n 120 {} \; 2>/dev/null || true; exit 1; fi
+              if [ "$attempt" -ge 50 ]; then echo "=== Hyprland stdout ==="; cat /tmp/notch-hyprland.log; echo "=== Hyprland detailed logs ==="; find "$XDG_RUNTIME_DIR/hypr" -name hyprland.log -exec tail -n 200 {} \; 2>/dev/null || true; echo "=== Weston ==="; tail -n 80 /tmp/notch-weston.log; exit 1; fi
               sleep 0.2
             done
-            export WAYLAND_DISPLAY="$(basename "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print ! -name notch-parent -quit)")"
+            export WAYLAND_DISPLAY="$(basename "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' ! -name notch-parent -print -quit)")"
             echo "Wayland globals:"
             wayland-info | grep -E "zwlr_layer_shell_v1|wl_output|wl_seat" || true
             if ! wayland-info | grep -q zwlr_layer_shell_v1; then
