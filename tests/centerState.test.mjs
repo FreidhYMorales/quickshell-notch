@@ -783,5 +783,8 @@ test("wallpaper subview cannot open without the launcher", () => {
 test("closing a wallpaper launcher clears its keyboard owner", () => {
   const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
   const wallpaper = reduce(opened, { type: "WallpaperOpen" }).state;
-  assert.equal(reduce(wallpaper, { type: "Close", monitor: "A" }).state.global.keyboard, null);
+  assert.equal(
+    reduce(wallpaper, { type: "Close", monitor: "A" }).state.global.keyboard,
+    null,
+  );
 });
