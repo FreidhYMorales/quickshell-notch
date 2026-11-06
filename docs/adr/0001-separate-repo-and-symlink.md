@@ -30,9 +30,14 @@ This folder is its own git repo, pushed to GitHub. The runtime config lives in `
 
 ## Update 2026-11-05
 
-Cutover decided (story 14). Quickshell registers `<config dir>/quickshell/shell.qml` as `default` and then ignores every subdirectory, so the decided layout in the dotfiles quickshell package is:
+Cutover decided (story 14). Quickshell registers `<config dir>/quickshell/shell.qml` as `default` and then ignores every subdirectory, so the dotfiles quickshell package is laid out as:
 
-- `.config/quickshell/default/` — the old bar, moved there with `git mv` (manual migration in the dotfiles repo, pending until the first cutover); bare `qs` still runs it, so its keybinds and the rollback keep working untouched.
-- `.config/quickshell/notch/` — this repo as a git submodule, run with `qs -c notch`.
+- `.config/quickshell/default/` — the old bar, moved there with `git mv`; bare `qs` still runs it, so its keybinds and the rollback keep working untouched.
+- `.config/quickshell/notch-repo/` — this repo as a git submodule.
+- `.config/quickshell/notch/` — a committed relative symlink to `notch-repo/shell`, so `qs -c notch` finds `notch/shell.qml`.
+
+The symlink points at the `shell/` directory, not at `shell.qml`: a symlinked entry file resolves its relative imports against the link's directory and fails to load, while a symlinked directory works. This is the "symlink" half of this ADR, now committed instead of set up by hand.
+
+Migration applied in the dotfiles repo on 2026-11-05 (checkpoint `9be4dd0`, layout `9ad43ef`).
 
 `deploy.sh` initialises submodules before stowing, so a fresh clone plus deploy yields both configs and nothing machine-specific is committed. `scripts/notch-cutover.sh cutover|rollback` edits the Hyprland autostart/keybinds and swaps the running instance: it stops every live instance by pid (`qs kill` only reaches one config), refuses to finish with more than one, and restores the original Hyprland files when they do not match instead of leaving half a remap. Backups live under the notch state dir. The old bar is temporary: once the notch configuration is complete it stays and the old config is removed in a later story.

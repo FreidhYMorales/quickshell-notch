@@ -61,26 +61,30 @@ cd quickshell-notch
 # no .env: this project has no secrets
 make check                                   # must pass before you change anything
 qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C to stop
-# The live config is the dotfiles submodule at ~/.config/quickshell/notch;
-# see "Cutover and rollback" before touching it.
+# The live config is the dotfiles submodule, symlinked as
+# ~/.config/quickshell/notch; see "Cutover and rollback" before touching it.
 ```
 
 ## Cutover and rollback
 
 The notch becomes the daily shell through the dotfiles repo, never by editing
-this checkout into `~/.config/quickshell`. The cutover expects this layout in
-the dotfiles quickshell package (a one-off migration, made by hand in that
-repo):
+this checkout into `~/.config/quickshell`. The dotfiles quickshell package has
+this layout:
 
-- `.config/quickshell/default/` — the old bar, moved there. Quickshell treats
-  `<config dir>/quickshell/shell.qml` as `default` and ignores subdirectories,
-  so the old config must move into a named folder; bare `qs` still runs it by
-  name and the rollback target keeps working.
-- `.config/quickshell/notch/` — this repo as a git submodule.
+- `.config/quickshell/default/` — the old bar, moved there in one go.
+  Quickshell treats `<config dir>/quickshell/shell.qml` as `default` and then
+  ignores every subdirectory, so the old config cannot stay at the top level;
+  bare `qs` still runs it by name and the rollback target keeps working.
+- `.config/quickshell/notch-repo/` — this repo as a git submodule.
+- `.config/quickshell/notch` — a committed relative symlink to
+  `notch-repo/shell`. It points at the directory, not at `shell.qml`: a
+  symlinked entry file resolves its relative imports against the link's
+  directory and fails to load, a symlinked directory works.
 
-`deploy.sh quickshell` must initialise submodules before stowing, so a fresh
-clone plus deploy gives `qs -c notch` with no manual link. Until that migration
-lands, `scripts/notch-cutover.sh cutover` refuses to run.
+`deploy.sh quickshell` initialises submodules before stowing, so a fresh clone
+plus deploy gives `qs -c notch` with no manual link.
+`scripts/notch-cutover.sh cutover` refuses to run while
+`~/.config/quickshell/notch/shell.qml` is missing.
 
 ```bash
 scripts/notch-cutover.sh cutover    # stop every Quickshell instance, remap the
@@ -134,4 +138,4 @@ sudo rm -r /usr/local/lib/quickshell-notch /usr/lib/systemd/system-sleep/lock-be
 | Clicks across the top strip are swallowed | Arch | The surface lacks `mask: Region { item: ... }` |
 | Dispatch has no effect | Arch | Use the `hl.dsp.*` Lua bridge, not `Hyprland.dispatch` |
 | Brightness OSD never appears | Arch | Needs a device in `/sys/class/backlight` and `brightnessctl` on PATH; the log shows `Brightness: no usable backlight` |
-| `qs -c notch` says config not found | Arch | Run the dotfiles deploy: it initialises the notch submodule and stows it as `~/.config/quickshell/notch` |
+| `qs -c notch` says config not found | Arch | Run the dotfiles deploy: it initialises the notch submodule and stows the package, so `~/.config/quickshell/notch` (a symlink to `notch-repo/shell`) resolves |
