@@ -37,7 +37,9 @@ Item {
         if (commandMode) {
             if (results[index]?.name === Strings.wallpaperTitle) {
                 Wallpapers.begin(screen.name);
-                send({ type: "WallpaperOpen" });
+                send({
+                    type: "WallpaperOpen"
+                });
             }
             return;
         }
@@ -62,8 +64,11 @@ Item {
         y: Layout.launcherPad
         width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
         focus: root.wallpaperMode
-        onVisibleChanged: if (visible) forceActiveFocus()
-        onBack: root.send({ type: "WallpaperBack" })
+        onVisibleChanged: if (visible)
+            forceActiveFocus()
+        onBack: root.send({
+            type: "WallpaperBack"
+        })
     }
 
     Column {
