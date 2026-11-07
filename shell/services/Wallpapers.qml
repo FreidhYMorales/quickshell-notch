@@ -31,6 +31,13 @@ Singleton {
         for (let i = 0; i < files.count; i++)
             paths.push(decodeURIComponent(files.get(i, "filePath").toString().replace("file://", "")));
         entries = WallpaperPicker.catalogEntries(paths);
+        if (selection) {
+            selection = WallpaperPicker.refreshPreview(selection, entries);
+            preview = selection.index < 0 ? null : {
+                screen: preview?.screen ?? "",
+                path: selection.preview
+            };
+        }
     }
 
     function begin(screen: string) {
