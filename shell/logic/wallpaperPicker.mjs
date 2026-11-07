@@ -6,8 +6,10 @@ const VIDEO = /\.(avi|mp4|mov|mkv|m4v|webm)$/i;
 
 export function catalogEntries(paths) {
   const entries = [];
+  const seen = new Set();
   for (const path of paths ?? []) {
-    if (typeof path !== "string" || !SUPPORTED.test(path)) continue;
+    if (typeof path !== "string" || !SUPPORTED.test(path) || seen.has(path)) continue;
+    seen.add(path);
     entries.push({
       path,
       name: path.slice(path.lastIndexOf("/") + 1),
@@ -17,7 +19,8 @@ export function catalogEntries(paths) {
   entries.sort((a, b) => {
     const first = a.name.toLowerCase();
     const second = b.name.toLowerCase();
-    return first < second ? -1 : first > second ? 1 : 0;
+    if (first !== second) return first < second ? -1 : 1;
+    return a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
   });
   return entries;
 }
