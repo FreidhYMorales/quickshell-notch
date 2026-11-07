@@ -16,7 +16,7 @@ ShellRoot {
             const screen = Quickshell.screens[0];
             root.target = component.createObject(null, { screen: screen });
             root.center.store.dispatch({ type: "LauncherToggle", monitor: screen.name });
-            root.center.store.dispatch({ type: "LauncherQuery", text: ">wall" });
+            root.center.store.dispatch({ type: "LauncherQuery", text: ">theme" });
             check.start();
         }
     }
