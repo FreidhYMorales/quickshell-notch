@@ -54,6 +54,7 @@ Scope {
                 active: !Flags.smoke
 
                 QuickWallpaperSurface {
+                    monitorName: perScreen.modelData.name
                     screen: perScreen.modelData
                 }
             }
