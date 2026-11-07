@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtMultimedia
 import Quickshell
 import Quickshell.Wayland
@@ -151,7 +152,7 @@ PanelWindow {
 
             readonly property real cardHeight: Math.min(height - 38, 208)
             readonly property real cardWidth: cardHeight * 0.68
-            readonly property real step: Math.min(cardWidth * 1.18, width / 5.1)
+            readonly property real step: Math.min(cardWidth * 0.76, width / 6.5)
 
             Repeater {
                 model: 5
@@ -170,7 +171,7 @@ PanelWindow {
                     x: coverflow.width / 2 - width / 2 + offset * coverflow.step
                     y: selected ? 0 : Math.abs(offset) * 12 + 10
                     z: 3 - Math.abs(offset)
-                    rotation: offset * -8
+                    rotation: offset * 9
                     scale: selected ? 1 : (Math.abs(offset) === 1 ? 0.86 : 0.72)
                     opacity: entry ? (Math.abs(offset) === 2 ? 0.65 : 1) : 0
 
@@ -202,6 +203,20 @@ PanelWindow {
                             source: card.entry && !card.entry.video ? "file://" + card.entry.path : ""
                             asynchronous: true
                             fillMode: Image.PreserveAspectCrop
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                maskEnabled: true
+                                maskSource: thumbnailMask
+                            }
+                        }
+
+                        Rectangle {
+                            id: thumbnailMask
+                            anchors.fill: parent
+                            anchors.margins: 4
+                            radius: Math.max(0, Layout.cardRadius - 4)
+                            visible: false
+                            layer.enabled: true
                         }
 
                         Column {
