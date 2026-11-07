@@ -47,3 +47,34 @@ test("tilesFor: the profile tile is lit only when the profile is not balanced", 
   assert.equal(profileOn("balanced"), false);
   assert.equal(profileOn("performance"), true);
 });
+
+test("tilesFor: no power profile backend hides the profile tile", () => {
+  assert.deepEqual(
+    tilesFor({
+      wifi: true,
+      bt: false,
+      dnd: true,
+      profile: null,
+      caffeine: false,
+    }),
+    [
+      { id: "wifi", on: true },
+      { id: "bt", on: false },
+      { id: "dnd", on: true },
+      { id: "caffeine", on: false },
+    ],
+  );
+});
+
+test("tilesFor: the caffeine tile follows the flag", () => {
+  const caffeineOn = (value) =>
+    tilesFor({
+      wifi: null,
+      bt: null,
+      dnd: null,
+      profile: null,
+      caffeine: value,
+    }).find((tile) => tile.id === "caffeine").on;
+  assert.equal(caffeineOn(true), true);
+  assert.equal(caffeineOn(false), false);
+});
