@@ -22,12 +22,14 @@ PanelWindow {
     property date currentTime: new Date()
     readonly property var scheme: Colours.paletteFor(screen)
 
-    function wrappedIndex(offset) {
-        const entries = session?.entries;
-        const count = entries?.length ?? 0;
-        if (count === 0 || currentIndex < 0)
-            return -1;
-        return ((currentIndex + offset) % count + count) % count;
+    function circularOffset(index) {
+        const count = Wallpapers.entries.length;
+        if (!count || currentIndex < 0)
+            return 1000;
+        let distance = ((index - currentIndex) % count + count) % count;
+        if (distance > count / 2)
+            distance -= count;
+        return distance;
     }
 
     anchors {
@@ -155,16 +157,28 @@ PanelWindow {
             readonly property real step: Math.min(cardWidth * 0.76, width / 6.5)
 
             Repeater {
-                model: 5
+                model: Wallpapers.entries
 
                 delegate: Item {
                     id: card
 
                     required property int index
-                    readonly property int offset: index - 2
-                    readonly property int entryIndex: root.wrappedIndex(offset)
-                    readonly property var entry: entryIndex < 0 ? null : root.session.entries[entryIndex]
+                    readonly property int offset: root.circularOffset(index)
+                    readonly property int entryIndex: index
+                    readonly property var entry: Wallpapers.entries[index]
+                    readonly property bool nearby: Math.abs(offset) <= 2
                     readonly property bool selected: offset === 0
+                    // Once visited, retain the source and decoded frame.
+                    property bool thumbnailLoaded: false
+                    onNearbyChanged: {
+                        if (nearby)
+                            thumbnailLoaded = true;
+                    }
+                    Component.onCompleted: {
+                        if (nearby)
+                            thumbnailLoaded = true;
+                    }
+                    visible: nearby
 
                     width: coverflow.cardWidth
                     height: coverflow.cardHeight
@@ -173,7 +187,7 @@ PanelWindow {
                     z: 3 - Math.abs(offset)
                     rotation: offset * 9
                     scale: selected ? 1 : (Math.abs(offset) === 1 ? 0.86 : 0.72)
-                    opacity: entry ? (Math.abs(offset) === 2 ? 0.65 : 1) : 0
+                    opacity: nearby ? (Math.abs(offset) === 2 ? 0.65 : 1) : 0
 
                     Behavior on x {
                         NumberAnimation { duration: Timings.animNormal; easing.type: Easing.OutCubic }
@@ -200,7 +214,7 @@ PanelWindow {
                             anchors.fill: parent
                             anchors.margins: 4
                             visible: card.entry && !card.entry.video
-                            source: card.entry && !card.entry.video ? "file://" + card.entry.path : ""
+                            source: card.thumbnailLoaded && card.entry && !card.entry.video ? "file://" + card.entry.path : ""
                             asynchronous: true
                             fillMode: Image.PreserveAspectCrop
                             layer.enabled: true
@@ -225,12 +239,12 @@ PanelWindow {
                             anchors.fill: parent
                             anchors.margins: 4
                             visible: card.entry?.video ?? false
-                            source: visible ? "file://" + card.entry.path : ""
+                            source: card.thumbnailLoaded && card.entry?.video ? "file://" + card.entry.path : ""
                             autoPlay: false
                             muted: true
                             fillMode: VideoOutput.PreserveAspectCrop
                             onSourceChanged: {
-                                if (visible && source.toString() !== "")
+                                if (card.thumbnailLoaded && source.toString() !== "")
                                     play();
                             }
                             onVisibleChanged: {
