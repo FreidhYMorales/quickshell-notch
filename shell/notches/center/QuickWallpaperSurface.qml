@@ -219,10 +219,41 @@ PanelWindow {
                             layer.enabled: true
                         }
 
+                        // Hold a decoded video frame; only the fullscreen preview loops.
+                        Video {
+                            id: videoThumbnail
+                            anchors.fill: parent
+                            anchors.margins: 4
+                            visible: card.entry?.video ?? false
+                            source: visible ? "file://" + card.entry.path : ""
+                            autoPlay: false
+                            muted: true
+                            fillMode: VideoOutput.PreserveAspectCrop
+                            onSourceChanged: {
+                                if (visible && source.toString() !== "")
+                                    play();
+                            }
+                            onVisibleChanged: {
+                                if (visible && source.toString() !== "")
+                                    play();
+                                else
+                                    stop();
+                            }
+                            onPositionChanged: {
+                                if (position >= 250 && playbackState === MediaPlayer.PlayingState)
+                                    pause();
+                            }
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                maskEnabled: true
+                                maskSource: thumbnailMask
+                            }
+                        }
+
                         Column {
                             anchors.centerIn: parent
                             spacing: 8
-                            visible: card.entry?.video ?? false
+                            visible: (card.entry?.video ?? false) && !videoThumbnail.hasVideo
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -232,7 +263,7 @@ PanelWindow {
                             }
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: "VIDEO"
+                                text: "CARGANDO"
                                 font.family: Fonts.family
                                 font.pixelSize: 12
                                 color: "white"
