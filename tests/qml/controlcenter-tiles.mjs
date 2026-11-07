@@ -7,7 +7,7 @@ const probe = fileURLToPath(
   new URL("./controlcenter-tiles.qml", import.meta.url),
 );
 
-test("the control center shows the caffeine tile off and hides the profile tile without a backend", () => {
+test("the control center hides the profile tile without a backend and the caffeine tile lights on click", () => {
   const result = spawnSync("qs", ["-p", probe], {
     encoding: "utf8",
     timeout: 15000,
@@ -25,5 +25,8 @@ test("the control center shows the caffeine tile off and hides the profile tile 
   });
   const output = result.stdout + result.stderr;
   assert.equal(result.status, 0, output);
-  assert.match(output, /cc tiles: caffeine off, profile hidden, caffeine lit/);
+  assert.match(
+    output,
+    /cc tiles: caffeine click lights the tile, profile glyph follows the backend/,
+  );
 });

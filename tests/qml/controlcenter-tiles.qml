@@ -2,15 +2,17 @@ import QtQuick
 import Quickshell
 import "visual.mjs" as Visual
 
-// Opens the control center under smoke and checks the two new tiles: the
-// caffeine tile is shown off and lights when enabled, and the profile tile is
-// hidden while no backend has answered.
+// Opens the control center under smoke and drives the two new tiles: clicking
+// the caffeine tile lights it and enables the service, and the profile tile
+// appears with the active profile's glyph and lit state once the backend has
+// answered.
 ShellRoot {
     id: root
 
     property var target: null
     property var offColor: null
-    property var services: Qt.createQmlObject('import QtQuick; import "' + Quickshell.env("NOTCH_SERVICES_URL") + '" as Services; QtObject { property var caffeine: Services.Caffeine }', root)
+    property var litColor: null
+    property var services: Qt.createQmlObject('import QtQuick; import "' + Quickshell.env("NOTCH_SERVICES_URL") + '" as Services; QtObject { property var caffeine: Services.Caffeine; property var powerProfile: Services.PowerProfile }', root)
 
     Timer {
         interval: 500
@@ -45,7 +47,7 @@ ShellRoot {
                 }
             }
             root.offColor = caffeine.color;
-            root.services.caffeine.enabled = true;
+            caffeine.parent.toggled();
             second.start();
         }
     }
@@ -55,12 +57,36 @@ ShellRoot {
 
         interval: 300
         onTriggered: {
+            if (root.services.caffeine.enabled !== true) {
+                console.error("cc tiles: click did not toggle caffeine");
+                return Qt.exit(1);
+            }
             const caffeine = Visual.findText(root.target.content, "󰅶");
             if (!caffeine || String(caffeine.color) === String(root.offColor)) {
                 console.error("cc tiles: caffeine tile did not light");
                 return Qt.exit(1);
             }
-            console.log("cc tiles: caffeine off, profile hidden, caffeine lit");
+            root.litColor = caffeine.color;
+            root.services.powerProfile.current = "power-saver";
+            third.start();
+        }
+    }
+
+    Timer {
+        id: third
+
+        interval: 300
+        onTriggered: {
+            const leaf = Visual.findText(root.target.content, "󰌪");
+            if (!leaf) {
+                console.error("cc tiles: profile tile missing after the backend answered");
+                return Qt.exit(1);
+            }
+            if (String(leaf.color) !== String(root.litColor)) {
+                console.error("cc tiles: profile tile is not lit for power-saver");
+                return Qt.exit(1);
+            }
+            console.log("cc tiles: caffeine click lights the tile, profile glyph follows the backend");
             Qt.exit(0);
         }
     }
