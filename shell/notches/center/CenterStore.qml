@@ -24,6 +24,15 @@ Singleton {
     // Id of the notification the reducer currently shows as a toast (null: none).
     property var toastId: null
     property var quickWallpaper: QuickWallpaper.initialQuickWallpaper()
+    property var idleNotchWidths: ({})
+
+    function setIdleNotchWidth(monitor, width) {
+        if (!monitor || width <= 0 || idleNotchWidths[monitor] === width)
+            return;
+        const next = Object.assign({}, idleNotchWidths);
+        next[monitor] = width;
+        idleNotchWidths = next;
+    }
 
     LazyLoader {
         active: !Flags.smoke
