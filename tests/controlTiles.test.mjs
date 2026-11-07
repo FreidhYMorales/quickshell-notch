@@ -34,3 +34,16 @@ test("tilesFor: the profile and caffeine tiles come after DND", () => {
   }).map((tile) => tile.id);
   assert.deepEqual(ids, ["wifi", "bt", "dnd", "profile", "caffeine"]);
 });
+
+test("tilesFor: the profile tile is lit only when the profile is not balanced", () => {
+  const profileOn = (profile) =>
+    tilesFor({
+      wifi: null,
+      bt: null,
+      dnd: null,
+      profile: profile,
+      caffeine: null,
+    }).find((tile) => tile.id === "profile").on;
+  assert.equal(profileOn("balanced"), false);
+  assert.equal(profileOn("performance"), true);
+});
