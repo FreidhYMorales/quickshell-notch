@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  initialSaveQueue,
-  enqueueSave,
-  startSave,
   advanceSave,
+  enqueueSave,
   failSave,
+  initialSaveQueue,
+  startSave,
 } from "../shell/logic/wallpaperSave.mjs";
 
 test("writes the same snapshot through both files", () => {
@@ -26,11 +26,17 @@ test("new edits wait for active snapshot then flush", () => {
   let queue = startSave(enqueueSave(initialSaveQueue(), "/w/one.png", {}));
   queue = enqueueSave(queue, "/w/two.png", { "DP-1": "/w/two.png" });
   assert.equal(startSave(queue).active.fallback, "/w/one.png");
-  queue = advanceSave(advanceSave(advanceSave(queue, "mkdir"), "default"), "screens");
+  queue = advanceSave(
+    advanceSave(advanceSave(queue, "mkdir"), "default"),
+    "screens",
+  );
   assert.equal(queue.saved, false);
   queue = startSave(queue);
   assert.equal(queue.active.fallback, "/w/two.png");
-  queue = advanceSave(advanceSave(advanceSave(queue, "mkdir"), "default"), "screens");
+  queue = advanceSave(
+    advanceSave(advanceSave(queue, "mkdir"), "default"),
+    "screens",
+  );
   assert.equal(queue.saved, true);
 });
 
