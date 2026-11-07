@@ -27,6 +27,12 @@
 - [ ] Given an unavailable file, video decoder failure, missing thumbnail or empty directory, when displayed, then the picker degrades gracefully without losing keyboard escape.
 - [ ] Given I close the selector, when the exit animation finishes, then the notch's previous content, focus behavior and click-through outside its mask are restored.
 
+## Readiness
+
+- Story #27 is locally verified; reuse its Wallpapers service and pure selection logic.
+- This story is ready to begin but has no fullscreen implementation yet.
+- Develop separately, starting with state-transition tests and an IPC entry point; do not merge PR #26 without review.
+
 ## Architecture and phases
 
 1. Specify/test pure selection state, wraparound, preview/commit/cancel, screen targeting and transition states in shell/logic.
