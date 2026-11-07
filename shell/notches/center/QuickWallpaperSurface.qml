@@ -1,4 +1,5 @@
 import QtQuick
+import QtMultimedia
 import Quickshell
 import Quickshell.Wayland
 import "../../config"
@@ -8,11 +9,13 @@ import "../../services"
 PanelWindow {
     id: root
 
-    readonly property bool active: CenterStore.quickWallpaper.phase === "open"
+    readonly property bool pickerOpen: CenterStore.quickWallpaper.phase === "open"
         && CenterStore.quickWallpaper.monitor === screen.name
     readonly property var session: Wallpapers.selection
     readonly property int currentIndex: session?.index ?? -1
     readonly property string previewPath: session?.preview ?? ""
+    readonly property bool previewVideo: /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(previewPath)
+    property date currentTime: new Date()
     readonly property var scheme: Colours.paletteFor(screen)
 
     anchors {
@@ -21,17 +24,24 @@ PanelWindow {
         left: true
         right: true
     }
-    visible: active
+    visible: pickerOpen
     color: Colours.background
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "notch-quick-wallpaper"
-    WlrLayershell.keyboardFocus: active ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: pickerOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    Timer {
+        interval: 1000
+        running: root.pickerOpen
+        repeat: true
+        onTriggered: root.currentTime = new Date()
+    }
 
     Item {
         id: content
         anchors.fill: parent
-        focus: root.active
+        focus: root.pickerOpen
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
                 Wallpapers.move(-1, root.screen.name);
@@ -51,10 +61,27 @@ PanelWindow {
 
         Image {
             anchors.fill: parent
-            source: root.previewPath && !/\\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(root.previewPath)
+            visible: !root.previewVideo
+            source: root.previewPath && !root.previewVideo
                 ? "file://" + root.previewPath : ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
+            onStatusChanged: {
+                if (status === Image.Error)
+                    console.warn("QuickWallpaper: cannot load image " + root.previewPath);
+            }
+        }
+
+        Video {
+            id: videoPreview
+            anchors.fill: parent
+            visible: root.previewVideo
+            source: root.previewVideo ? "file://" + root.previewPath : ""
+            autoPlay: root.pickerOpen && root.previewVideo
+            loops: MediaPlayer.Infinite
+            muted: true
+            fillMode: VideoOutput.PreserveAspectCrop
+            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: cannot play video " + root.previewPath + ": " + errorString)
         }
 
         Rectangle {
@@ -70,7 +97,7 @@ PanelWindow {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Qt.formatTime(new Date(), "hh:mm")
+                text: Qt.formatTime(root.currentTime, "hh:mm")
                 color: "white"
                 font.family: Fonts.family
                 font.pixelSize: 64
@@ -78,7 +105,7 @@ PanelWindow {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Qt.formatDate(new Date(), "dddd, d MMMM yyyy")
+                text: Qt.formatDate(root.currentTime, "dddd, d MMMM yyyy")
                 color: "white"
                 font.family: Fonts.family
                 font.pixelSize: 22
