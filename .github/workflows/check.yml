@@ -68,7 +68,7 @@ jobs:
           export QT_QPA_PLATFORM=wayland
           export XDG_SESSION_TYPE=wayland
           export XDG_CURRENT_DESKTOP=Hyprland
-          trap 'kill "${hypr_pid:-}" "${weston_pid:-}" 2>/dev/null || true' EXIT
+          trap 'kill "${hypr_pid:-}" "${sway_pid:-}" 2>/dev/null || true' EXIT
           echo "=== Graphics environment ==="
           env | grep -E '^(AQ_|EGL_|GBM_|GALLIUM_|LIBGL_|MESA_|WAYLAND_|XDG_)' | sort
           ls -la /dev/dri 2>&1 || true
@@ -84,8 +84,9 @@ jobs:
             kill -0 "$weston_pid" || { cat /tmp/notch-sway.log; exit 1; }
             sleep 0.2
           done
-          test -S "$XDG_RUNTIME_DIR/notch-parent" || { cat /tmp/notch-sway.log; exit 1; }
-          export WAYLAND_DISPLAY=notch-parent
+          parent_socket="$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)"
+          test -n "$parent_socket" || { cat /tmp/notch-sway.log; exit 1; }
+          export WAYLAND_DISPLAY="$(basename "$parent_socket")"
           wayland-info > /tmp/notch-parent-info.log
           grep -E 'wl_compositor|wl_shm|wl_output|zwp_linux_dmabuf_v1' /tmp/notch-parent-info.log || true
           printf 'monitor = ,1280x720@60,0x0,1\n' > /tmp/notch-hyprland.conf
@@ -120,7 +121,7 @@ jobs:
         with:
           name: hyprland-host-diagnostics
           path: |
-            /tmp/notch-weston.log
+            /tmp/notch-sway.log
             /tmp/notch-hyprland.log
             /tmp/notch-parent-info.log
             /tmp/notch-hyprland-info.log
