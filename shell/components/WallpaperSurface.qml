@@ -49,7 +49,15 @@ PanelWindow {
         anchors.fill: parent
         visible: root.isVideo
         source: root.isVideo ? root.source : ""
-        autoPlay: root.playing
+        autoPlay: false
+        // A video-to-video wallpaper switch keeps root.playing true, so
+        // onPlayingChanged alone cannot start the newly selected source.
+        onSourceChanged: {
+            if (root.playing && root.isVideo)
+                play();
+            else
+                stop();
+        }
         loops: MediaPlayer.Infinite
         muted: true
         fillMode: VideoOutput.PreserveAspectCrop
@@ -57,7 +65,12 @@ PanelWindow {
         onErrorOccurred: (error, errorString) => console.warn("WallpaperSurface: cannot play " + root.path + ": " + errorString)
     }
 
-    onPlayingChanged: playing ? video.play() : video.pause()
+    onPlayingChanged: {
+        if (playing)
+            video.play();
+        else
+            video.pause();
+    }
 
     // Caffeine: this surface is always mapped, so the inhibitor holds from
     // the moment it is enabled.
