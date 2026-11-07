@@ -30,7 +30,7 @@ export function videoShouldPlay(path, locked) {
 }
 
 export function previewFor(perScreen, fallback, screen, preview) {
-  if (preview && preview.screen === screen) return preview.path;
+  if (preview && (preview.screen === screen || preview.screen === "")) return preview.path;
   return wallpaperFor(perScreen, fallback, screen);
 }
 
