@@ -18,15 +18,34 @@ PanelWindow {
     readonly property bool pickerOpen: pickerPhase === "open"
     readonly property bool pickerVisible: pickerPhase !== "closed"
     property real reveal: 0
+    property bool waitingForFirstFrame: false
+
+    function startReveal() {
+        if (pickerPhase !== "opening" || !waitingForFirstFrame)
+            return;
+        waitingForFirstFrame = false;
+        frameWait.stop();
+        revealAnimation.to = 1;
+        revealAnimation.restart();
+    }
     onPickerPhaseChanged: {
         if (pickerPhase === "opening") {
             reveal = 0;
-            revealAnimation.to = 1;
-            revealAnimation.restart();
+            waitingForFirstFrame = previewVideo;
+            if (waitingForFirstFrame)
+                frameWait.restart();
+            else {
+                revealAnimation.to = 1;
+                revealAnimation.restart();
+            }
         } else if (pickerPhase === "closing") {
+            waitingForFirstFrame = false;
+            frameWait.stop();
             revealAnimation.to = 0;
             revealAnimation.restart();
         } else if (pickerPhase === "closed") {
+            waitingForFirstFrame = false;
+            frameWait.stop();
             revealAnimation.stop();
             reveal = 0;
         }
@@ -73,6 +92,13 @@ PanelWindow {
             else if (root.pickerPhase === "closing")
                 CenterStore.finishQuickWallpaperClosing();
         }
+    }
+
+    Timer {
+        id: frameWait
+        interval: 1500
+        repeat: false
+        onTriggered: root.startReveal()
     }
 
     // Keep playback alive during the opening and closing reveal, not only
@@ -140,26 +166,31 @@ PanelWindow {
             }
         }
 
-        Video {
+        MediaPlayer {
             id: videoPreview
-            anchors.fill: parent
-            visible: root.previewVideo
             source: root.previewVideo ? "file://" + root.previewPath : ""
-            autoPlay: false
+            videoOutput: previewOutput
+            loops: MediaPlayer.Infinite
+            audioOutput: AudioOutput { muted: true }
             onSourceChanged: {
                 if (root.pickerVisible && root.previewVideo)
                     play();
             }
-            onVisibleChanged: {
-                if (visible && root.pickerVisible)
-                    play();
-                else
-                    stop();
-            }
-            loops: MediaPlayer.Infinite
-            muted: true
-            fillMode: VideoOutput.PreserveAspectCrop
             onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: cannot play video " + root.previewPath + ": " + errorString)
+        }
+
+        VideoOutput {
+            id: previewOutput
+            anchors.fill: parent
+            visible: root.previewVideo
+            fillMode: VideoOutput.PreserveAspectCrop
+        }
+
+        Connections {
+            target: previewOutput.videoSink
+            function onVideoFrameChanged(frame) {
+                root.startReveal();
+            }
         }
 
         Rectangle {
