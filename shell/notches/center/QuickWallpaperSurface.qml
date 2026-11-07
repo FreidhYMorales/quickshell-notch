@@ -13,11 +13,27 @@ PanelWindow {
     // Do not derive visibility from PanelWindow.screen: its assignment depends
     // on mapping, which creates a binding cycle when the window is hidden.
     required property string monitorName
-    readonly property bool pickerOpen: CenterStore.quickWallpaper.phase === "open"
-        && CenterStore.quickWallpaper.monitor === monitorName
+    readonly property string pickerPhase: CenterStore.quickWallpaper.monitor === monitorName
+        ? CenterStore.quickWallpaper.phase : "closed"
+    readonly property bool pickerOpen: pickerPhase === "open"
+    readonly property bool pickerVisible: pickerPhase !== "closed"
+    property real reveal: 0
+    onPickerPhaseChanged: {
+        if (pickerPhase === "opening") {
+            reveal = 0;
+            revealAnimation.to = 1;
+            revealAnimation.restart();
+        } else if (pickerPhase === "closing") {
+            revealAnimation.to = 0;
+            revealAnimation.restart();
+        } else if (pickerPhase === "closed") {
+            revealAnimation.stop();
+            reveal = 0;
+        }
+    }
     readonly property var session: Wallpapers.selection
     readonly property int currentIndex: session?.index ?? -1
-    readonly property string previewPath: session?.preview ?? ""
+    readonly property string previewPath: session?.preview ?? (pickerVisible ? Wallpapers.pathFor(monitorName) : "")
     readonly property bool previewVideo: /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(previewPath)
     property date currentTime: new Date()
     readonly property var scheme: Colours.paletteFor(screen)
@@ -38,12 +54,26 @@ PanelWindow {
         left: true
         right: true
     }
-    visible: pickerOpen
-    color: Colours.background
+    visible: pickerVisible
+    color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "notch-quick-wallpaper"
     WlrLayershell.keyboardFocus: pickerOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    NumberAnimation {
+        id: revealAnimation
+        target: root
+        property: "reveal"
+        duration: Timings.animSlow
+        easing.type: Easing.InOutCubic
+        onFinished: {
+            if (root.pickerPhase === "opening")
+                CenterStore.finishQuickWallpaperOpening();
+            else if (root.pickerPhase === "closing")
+                CenterStore.finishQuickWallpaperClosing();
+        }
+    }
 
     onPickerOpenChanged: {
         if (pickerOpen && previewVideo)
@@ -59,9 +89,24 @@ PanelWindow {
         onTriggered: root.currentTime = new Date()
     }
 
+    Rectangle {
+        id: revealFrame
+        readonly property real notchWidth: Math.min(Layout.centerMaxWidth, root.width * 0.5)
+        readonly property real notchHeight: Layout.idleHeight
+        width: notchWidth + (root.width - notchWidth) * root.reveal
+        height: notchHeight + (root.height - notchHeight) * root.reveal
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        radius: Layout.cardRadius * (1 - root.reveal)
+        color: Colours.background
+        clip: true
+
     Item {
         id: content
-        anchors.fill: parent
+        width: root.width
+        height: root.height
+        x: -revealFrame.x
+        y: 0
         focus: root.pickerOpen
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
@@ -300,11 +345,11 @@ PanelWindow {
                 anchors.bottom: parent.bottom
                 text: root.currentIndex < 0 ? Strings.wallpaperEmpty
                     : (root.currentIndex + 1) + " / " + root.session.entries.length
-                        + "   ·   ← → navegar   ·   Enter aplicar   ·   Esc cancelar"
                 color: "white"
                 font.family: Fonts.family
                 font.pixelSize: 12
             }
         }
+    }
     }
 }
