@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Shapes
+import "../../logic/earGeometry.mjs" as EarGeometry
 import QtMultimedia
 import Quickshell
 import Quickshell.Wayland
@@ -117,17 +119,44 @@ PanelWindow {
         onTriggered: root.currentTime = new Date()
     }
 
+    // Use the same ear geometry as the idle notch for the entire morph.
+    Shape {
+        id: revealMask
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        width: revealFrame.width
+        height: revealFrame.height
+        visible: false
+        layer.enabled: true
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            fillColor: "white"
+            strokeWidth: -1
+            PathSvg {
+                path: EarGeometry.notchPath(revealMask.width, revealMask.height,
+                    Layout.earRadius, Layout.cornerRadius)
+            }
+        }
+    }
+
     Rectangle {
         id: revealFrame
-        readonly property real notchWidth: Math.min(Layout.cornerWidth, root.width * 0.5)
+        readonly property real notchWidth: Math.min(root.width,
+            CenterStore.idleNotchWidths[root.monitorName] ?? Layout.cornerWidth)
         readonly property real notchHeight: Layout.idleHeight
         width: notchWidth + (root.width - notchWidth) * root.reveal
         height: notchHeight + (root.height - notchHeight) * root.reveal
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        radius: Layout.cardRadius * (1 - root.reveal)
+        radius: 0
         color: Colours.background
         clip: true
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: revealMask
+        }
 
     Item {
         id: content
