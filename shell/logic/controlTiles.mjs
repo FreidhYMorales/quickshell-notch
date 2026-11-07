@@ -1,7 +1,7 @@
 // Control center toggle tiles, in display order. A null state means the
 // backend is missing, so its tile is not shown.
 
-const ORDER = ["wifi", "bt", "dnd"];
+const ORDER = ["wifi", "bt", "dnd", "profile", "caffeine"];
 
 /** tilesFor({ wifi, bt, dnd }) -> [{ id, on }] */
 export function tilesFor(state) {
