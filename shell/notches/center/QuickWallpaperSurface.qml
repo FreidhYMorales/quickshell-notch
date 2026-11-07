@@ -183,7 +183,8 @@ PanelWindow {
                     width: coverflow.cardWidth
                     height: coverflow.cardHeight
                     x: coverflow.width / 2 - width / 2 + offset * coverflow.step
-                    y: selected ? 0 : Math.abs(offset) * 12 + 10
+                    // Lower the outer cards so the fan follows one shared lower arc.
+                    y: selected ? 0 : (Math.abs(offset) === 1 ? 20 : 66)
                     z: 3 - Math.abs(offset)
                     rotation: offset * 9
                     scale: selected ? 1 : (Math.abs(offset) === 1 ? 0.86 : 0.72)
@@ -284,25 +285,7 @@ PanelWindow {
                             }
                         }
 
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            height: 32
-                            color: "#99000000"
 
-                            Text {
-                                anchors.fill: parent
-                                anchors.margins: 7
-                                verticalAlignment: Text.AlignVCenter
-                                horizontalAlignment: Text.AlignHCenter
-                                elide: Text.ElideMiddle
-                                text: card.entry?.name ?? ""
-                                color: "white"
-                                font.family: Fonts.family
-                                font.pixelSize: 11
-                            }
-                        }
                     }
 
                     TapHandler {
