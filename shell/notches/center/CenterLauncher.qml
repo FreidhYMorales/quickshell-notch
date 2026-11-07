@@ -69,6 +69,10 @@ Item {
         onBack: root.send({
             type: "WallpaperBack"
         })
+        onApplied: root.send({
+            type: "Close",
+            monitor: root.screen.name
+        })
     }
 
     Column {
