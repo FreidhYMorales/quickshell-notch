@@ -74,7 +74,7 @@ Singleton {
     }
 
     function commit(screen: string) {
-        if (!selection)
+        if (!selection || !selection.entries.length)
             return;
         const path = WallpaperPicker.commitPreview(selection);
         if (!path)
@@ -114,7 +114,7 @@ Singleton {
         let perScreen = {};
         if (json) {
             try {
-                perScreen = JSON.parse(json) ?? {};
+                perScreen = WallpaperState.normalizePerScreen(JSON.parse(json));
             } catch (e) {
                 console.warn("Wallpapers: unreadable state in " + dir + ": " + e);
             }
@@ -160,8 +160,10 @@ Singleton {
 
         command: ["mkdir", "-p", root.notchDir]
         onExited: code => {
-            if (code !== 0)
+            if (code !== 0) {
+                root.saved = false;
                 return console.warn("Wallpapers: cannot create " + root.notchDir);
+            }
             defaultWriter.setText(root.fallback);
         }
     }
@@ -173,7 +175,10 @@ Singleton {
         blockLoading: true
         printErrors: false
         onSaved: screensWriter.setText(JSON.stringify(root.perScreen))
-        onSaveFailed: console.warn("Wallpapers: cannot save " + path)
+        onSaveFailed: {
+            root.saved = false;
+            console.warn("Wallpapers: cannot save " + path);
+        }
     }
 
     FileView {
