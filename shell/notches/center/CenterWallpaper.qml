@@ -112,7 +112,12 @@ Item {
                                 id: thumbnail
                                 anchors.fill: parent
                                 anchors.margins: Layout.wallpaperCardPad
-                                visible: false
+                                visible: card.entry && !card.entry.video
+                                layer.enabled: true
+                                layer.effect: MultiEffect {
+                                    maskEnabled: true
+                                    maskSource: maskShape
+                                }
                                 source: card.entry && !card.entry.video
                                     ? "file://" + card.entry.path : ""
                                 asynchronous: true
@@ -124,14 +129,7 @@ Item {
                                 anchors.fill: thumbnail
                                 radius: Math.max(0, Layout.cardRadius - Layout.wallpaperCardPad)
                                 visible: false
-                            }
-
-                            MultiEffect {
-                                anchors.fill: thumbnail
-                                source: thumbnail
-                                maskEnabled: true
-                                maskSource: maskShape
-                                visible: card.entry && !card.entry.video
+                                layer.enabled: true
                             }
 
                             Text {
@@ -150,26 +148,7 @@ Item {
                     }
                 }
             }
-
         }
 
-        Text {
-            width: parent.width
-            text: root.session?.entries[root.currentIndex]?.name ?? Strings.wallpaperEmpty
-            color: root.scheme.onSurface
-            elide: Text.ElideMiddle
-            horizontalAlignment: Text.AlignHCenter
-            font.family: Fonts.family
-            font.pixelSize: Fonts.launcherItem
-        }
-
-        Text {
-            width: parent.width
-            text: Strings.wallpaperHint
-            color: root.scheme.muted
-            horizontalAlignment: Text.AlignHCenter
-            font.family: Fonts.family
-            font.pixelSize: Fonts.launcherItem
-        }
     }
 }
