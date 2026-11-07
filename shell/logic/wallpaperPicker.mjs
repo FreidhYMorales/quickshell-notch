@@ -8,7 +8,9 @@ export function catalogEntries(paths) {
   const entries = [];
   const seen = new Set();
   for (const path of paths ?? []) {
-    if (typeof path !== "string" || !SUPPORTED.test(path) || seen.has(path)) continue;
+    if (typeof path !== "string" || !SUPPORTED.test(path) || seen.has(path)) {
+      continue;
+    }
     seen.add(path);
     entries.push({
       path,
