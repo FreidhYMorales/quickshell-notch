@@ -30,7 +30,9 @@ export function videoShouldPlay(path, locked) {
 }
 
 export function previewFor(perScreen, fallback, screen, preview) {
-  if (preview && (preview.screen === screen || preview.screen === "")) return preview.path;
+  if (preview && (preview.screen === screen || preview.screen === "")) {
+    return preview.path;
+  }
   return wallpaperFor(perScreen, fallback, screen);
 }
 
@@ -47,8 +49,12 @@ export function normalizePerScreen(value) {
   const clean = {};
   if (!value || typeof value !== "object" || Array.isArray(value)) return clean;
   for (const name of Object.keys(value)) {
-    if (name === "__proto__" || name === "constructor" || name === "prototype") continue;
-    if (typeof value[name] === "string" && value[name].trim()) clean[name] = value[name];
+    if (
+      name === "__proto__" || name === "constructor" || name === "prototype"
+    ) continue;
+    if (typeof value[name] === "string" && value[name].trim()) {
+      clean[name] = value[name];
+    }
   }
   return clean;
 }
