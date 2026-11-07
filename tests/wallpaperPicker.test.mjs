@@ -73,15 +73,24 @@ test("catalog removes duplicate paths and sorts equal names deterministically", 
 });
 
 test("catalog refresh preserves the selected path across reorder", () => {
-  const start = beginPreview(catalogEntries(["/w/b.png", "/w/c.png"]), "/w/b.png");
+  const start = beginPreview(
+    catalogEntries(["/w/b.png", "/w/c.png"]),
+    "/w/b.png",
+  );
   const selected = movePreview(start, 1);
-  const refreshed = refreshPreview(selected, catalogEntries(["/w/a.png", "/w/c.png", "/w/b.png"]));
+  const refreshed = refreshPreview(
+    selected,
+    catalogEntries(["/w/a.png", "/w/c.png", "/w/b.png"]),
+  );
   assert.equal(refreshed.preview, "/w/c.png");
   assert.equal(refreshed.original, "/w/b.png");
 });
 
 test("catalog refresh falls back safely when selected file disappears", () => {
-  const start = movePreview(beginPreview(catalogEntries(["/w/a.png", "/w/b.png"]), "/w/a.png"), 1);
+  const start = movePreview(
+    beginPreview(catalogEntries(["/w/a.png", "/w/b.png"]), "/w/a.png"),
+    1,
+  );
   const restored = refreshPreview(start, catalogEntries(["/w/a.png"]));
   assert.equal(restored.preview, "/w/a.png");
   const empty = refreshPreview(restored, []);
