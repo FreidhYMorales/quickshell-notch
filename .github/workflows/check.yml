@@ -41,7 +41,7 @@ jobs:
         run: make lint-qml
 
   hyprland-probe:
-    name: Hyprland nested compositor probe (Ubuntu 26.04 host)
+    name: Hyprland nested on KWin virtual (Ubuntu 26.04 host)
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     continue-on-error: true
@@ -51,7 +51,7 @@ jobs:
           sudo add-apt-repository -y universe
           sudo apt-get update
           apt-cache policy hyprland
-          sudo apt-get install -y sway wayland-utils mesa-utils libgl1-mesa-dri dbus-user-session hyprland
+          sudo apt-get install -y kwin-wayland kwin-common libkscreen-bin wayland-utils mesa-utils libgl1-mesa-dri dbus-user-session hyprland
       - name: Probe nested Hyprland with explicit Wayland backend
         shell: bash
         run: |
@@ -62,39 +62,36 @@ jobs:
           export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
           export GALLIUM_DRIVER=llvmpipe
           export AQ_BACKEND=wayland
-          # Avoid inheriting wlroots-only settings in the nested Aquamarine compositor.
+          # KWin virtual parent avoids the Sway xdg_wm_base v5 negotiation mismatch.
           export AQ_TRACE=1
           export AQ_LOG_LEVEL=trace
           export HYPRLAND_NO_CRASHREPORTER=1
           export QT_QPA_PLATFORM=wayland
           export XDG_SESSION_TYPE=wayland
           export XDG_CURRENT_DESKTOP=Hyprland
-          trap 'kill "${hypr_pid:-}" "${sway_pid:-}" 2>/dev/null || true' EXIT
+          trap 'kill "${hypr_pid:-}" "${kwin_pid:-}" 2>/dev/null || true' EXIT
           echo "=== Graphics environment ==="
           env | grep -E '^(AQ_|EGL_|GBM_|GALLIUM_|LIBGL_|MESA_|WAYLAND_|XDG_)' | sort
           ls -la /dev/dri 2>&1 || true
-          echo "=== Sway headless parent ==="
-          export WLR_BACKENDS=headless
-          export WLR_RENDERER=pixman
-          export WLR_LIBINPUT_NO_DEVICES=1
-          printf 'output * resolution 1280x720\n' > /tmp/notch-sway.conf
-          sway --unsupported-gpu --config /tmp/notch-sway.conf --debug > /tmp/notch-sway.log 2>&1 &
-          sway_pid=$!
+          echo "=== KWin virtual parent ==="
+          ls -la /dev/dri/renderD* 2>&1 || true
+          kwin_wayland --virtual --width 1280 --height 720 --socket notch-parent --no-lockscreen > /tmp/notch-kwin.log 2>&1 &
+          kwin_pid=$!
           for i in {1..50}; do
             test -n "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)" && break
-            kill -0 "$sway_pid" || { cat /tmp/notch-sway.log; exit 1; }
+            kill -0 "$kwin_pid" || { cat /tmp/notch-kwin.log; exit 1; }
             sleep 0.2
           done
           parent_socket="$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)"
-          test -n "$parent_socket" || { cat /tmp/notch-sway.log; exit 1; }
+          test -n "$parent_socket" || { cat /tmp/notch-kwin.log; exit 1; }
           export WAYLAND_DISPLAY="$(basename "$parent_socket")"
           wayland-info > /tmp/notch-parent-info.log
           grep -E 'wl_compositor|xdg_wm_base|wl_shm|wl_output|zwp_linux_dmabuf_v1' /tmp/notch-parent-info.log || true
           printf 'monitor = ,1280x720@60,0x0,1\n' > /tmp/notch-hyprland.conf
           echo "Parent protocol advertisements:"
-          grep -E "interface: .(wl_compositor|xdg_wm_base)" /tmp/notch-parent-info.log || true
+          grep -E "interface: .(wl_compositor|xdg_wm_base|wl_seat)" /tmp/notch-parent-info.log || true
           echo "=== Hyprland launch ==="
-          env -u WLR_BACKENDS -u WLR_RENDERER -u WLR_LIBINPUT_NO_DEVICES WAYLAND_DEBUG=client Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
+          WAYLAND_DEBUG=client Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
           hypr_pid=$!
           socket=""
           for i in {1..50}; do
@@ -110,8 +107,8 @@ jobs:
             tail -n 200 /tmp/notch-hyprland.log
             echo "=== Hyprland runtime logs ==="
             find "$XDG_RUNTIME_DIR" -type f -name hyprland.log -exec tail -n 200 {} \; || true
-            echo "=== Sway parent log ==="
-            tail -n 100 /tmp/notch-sway.log
+            echo "=== KWin parent log ==="
+            tail -n 100 /tmp/notch-kwin.log
             echo "::error::Hyprland failed to create its nested Wayland socket"
             exit 1
           fi
@@ -124,7 +121,7 @@ jobs:
         with:
           name: hyprland-host-diagnostics
           path: |
-            /tmp/notch-sway.log
+            /tmp/notch-kwin.log
             /tmp/notch-hyprland.log
             /tmp/notch-parent-info.log
             /tmp/notch-hyprland-info.log
