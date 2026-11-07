@@ -78,12 +78,12 @@ jobs:
           kwin_wayland --virtual --width 1280 --height 720 --socket notch-parent --no-lockscreen > /tmp/notch-kwin.log 2>&1 &
           kwin_pid=$!
           for i in {1..50}; do
-            test -n "$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)" && break
+            test -S "$XDG_RUNTIME_DIR/notch-parent" && break
             kill -0 "$kwin_pid" || { cat /tmp/notch-kwin.log; exit 1; }
             sleep 0.2
           done
-          parent_socket="$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)"
-          test -n "$parent_socket" || { cat /tmp/notch-kwin.log; exit 1; }
+          parent_socket="$XDG_RUNTIME_DIR/notch-parent"
+          test -S "$parent_socket" || { cat /tmp/notch-kwin.log; exit 1; }
           export WAYLAND_DISPLAY="$(basename "$parent_socket")"
           wayland-info > /tmp/notch-parent-info.log
           grep -E 'wl_compositor|xdg_wm_base|wl_shm|wl_output|zwp_linux_dmabuf_v1' /tmp/notch-parent-info.log || true
