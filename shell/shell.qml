@@ -50,6 +50,14 @@ Scope {
                 screen: perScreen.modelData
             }
 
+            LazyLoader {
+                active: !Flags.smoke
+
+                QuickWallpaperSurface {
+                    screen: perScreen.modelData
+                }
+            }
+
             WorkspacesSurface {
                 screen: perScreen.modelData
             }
