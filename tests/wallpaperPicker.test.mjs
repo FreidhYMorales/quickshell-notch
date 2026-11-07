@@ -59,3 +59,14 @@ test("missing current wallpaper starts at first available entry", () => {
   assert.equal(session.preview, "/w/a.png");
   assert.equal(cancelPreview(session), "/w/old.png");
 });
+
+test("catalog removes duplicate paths and sorts equal names deterministically", () => {
+  assert.deepEqual(
+    catalogEntries(["/z/a.png", "/b/a.png", "/z/a.png", "/b/A.png"]),
+    [
+      { path: "/b/A.png", name: "A.png", video: false },
+      { path: "/b/a.png", name: "a.png", video: false },
+      { path: "/z/a.png", name: "a.png", video: false },
+    ],
+  );
+});
