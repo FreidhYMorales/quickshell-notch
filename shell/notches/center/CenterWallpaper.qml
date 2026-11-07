@@ -21,6 +21,8 @@ Item {
     }
 
     function confirm() {
+        if (root.currentIndex < 0)
+            return;
         Wallpapers.commit(screen.name);
         back();
     }
