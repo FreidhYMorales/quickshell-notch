@@ -9,8 +9,11 @@ import "../../services"
 PanelWindow {
     id: root
 
+    // Do not derive visibility from PanelWindow.screen: its assignment depends
+    // on mapping, which creates a binding cycle when the window is hidden.
+    required property string monitorName
     readonly property bool pickerOpen: CenterStore.quickWallpaper.phase === "open"
-        && CenterStore.quickWallpaper.monitor === screen.name
+        && CenterStore.quickWallpaper.monitor === monitorName
     readonly property var session: Wallpapers.selection
     readonly property int currentIndex: session?.index ?? -1
     readonly property string previewPath: session?.preview ?? ""
@@ -31,6 +34,13 @@ PanelWindow {
     WlrLayershell.namespace: "notch-quick-wallpaper"
     WlrLayershell.keyboardFocus: pickerOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
+    onPickerOpenChanged: {
+        if (pickerOpen && previewVideo)
+            videoPreview.play();
+        else
+            videoPreview.stop();
+    }
+
     Timer {
         interval: 1000
         running: root.pickerOpen
@@ -44,10 +54,10 @@ PanelWindow {
         focus: root.pickerOpen
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
-                Wallpapers.move(-1, root.screen.name);
+                Wallpapers.move(-1, root.monitorName);
                 event.accepted = true;
             } else if (event.key === Qt.Key_Right || event.key === Qt.Key_L) {
-                Wallpapers.move(1, root.screen.name);
+                Wallpapers.move(1, root.monitorName);
                 event.accepted = true;
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 CenterStore.applyQuickWallpaper();
@@ -77,7 +87,17 @@ PanelWindow {
             anchors.fill: parent
             visible: root.previewVideo
             source: root.previewVideo ? "file://" + root.previewPath : ""
-            autoPlay: root.pickerOpen && root.previewVideo
+            autoPlay: false
+            onSourceChanged: {
+                if (root.pickerOpen && root.previewVideo)
+                    play();
+            }
+            onVisibleChanged: {
+                if (visible && root.pickerOpen)
+                    play();
+                else
+                    stop();
+            }
             loops: MediaPlayer.Infinite
             muted: true
             fillMode: VideoOutput.PreserveAspectCrop
