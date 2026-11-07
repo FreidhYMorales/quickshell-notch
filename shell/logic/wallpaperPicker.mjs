@@ -53,3 +53,15 @@ export function cancelPreview(session) {
 export function commitPreview(session) {
   return session.index < 0 ? null : session.preview;
 }
+
+// A live folder update must not leave a selection pointing at a removed file.
+// Preserve the highlighted path if it still exists; otherwise prefer the
+// committed wallpaper, then the first available entry.
+export function refreshPreview(session, entries) {
+  if (!session) return null;
+  const preferred = entries.some((entry) => entry.path === session.preview)
+    ? session.preview
+    : session.original;
+  const next = beginPreview(entries, preferred);
+  return Object.assign({}, next, { original: session.original });
+}
