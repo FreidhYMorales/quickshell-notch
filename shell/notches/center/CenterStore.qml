@@ -196,7 +196,17 @@ Singleton {
         }
     }
 
-    // Quick Wallpaper is a separate surface, not a launcher subview.
+    // Keep the overlay mounted through both animation phases.
+    function finishQuickWallpaperOpening() {
+        if (quickWallpaper.phase === "opening")
+            quickWallpaper = QuickWallpaper.quickWallpaperOpened(quickWallpaper);
+    }
+
+    function finishQuickWallpaperClosing() {
+        if (quickWallpaper.phase === "closing")
+            quickWallpaper = QuickWallpaper.quickWallpaperClosed(quickWallpaper);
+    }
+
     function toggleQuickWallpaper() {
         if (quickWallpaper.phase !== "closed") {
             cancelQuickWallpaper();
@@ -208,21 +218,21 @@ Singleton {
             return;
         }
         Wallpapers.begin(monitor);
-        quickWallpaper = QuickWallpaper.quickWallpaperOpened(QuickWallpaper.openQuickWallpaper(quickWallpaper, monitor));
+        quickWallpaper = QuickWallpaper.openQuickWallpaper(quickWallpaper, monitor);
     }
 
     function cancelQuickWallpaper() {
-        if (quickWallpaper.phase === "closed")
+        if (quickWallpaper.phase === "closed" || quickWallpaper.phase === "closing")
             return;
         Wallpapers.cancel();
-        quickWallpaper = QuickWallpaper.quickWallpaperClosed(QuickWallpaper.closeQuickWallpaper(quickWallpaper));
+        quickWallpaper = QuickWallpaper.closeQuickWallpaper(quickWallpaper);
     }
 
     function applyQuickWallpaper() {
         if (quickWallpaper.phase !== "open")
             return;
         Wallpapers.commit(quickWallpaper.monitor);
-        quickWallpaper = QuickWallpaper.quickWallpaperClosed(QuickWallpaper.closeQuickWallpaper(quickWallpaper));
+        quickWallpaper = QuickWallpaper.closeQuickWallpaper(quickWallpaper);
     }
 
     // Hyprland bind: qs ipc call quickWallpaper toggle
