@@ -27,7 +27,9 @@ test("invalid monitor does not open a fullscreen picker", () => {
 });
 
 test("closing preserves monitor during exit and resets after completion", () => {
-  const opened = quickWallpaperOpened(openQuickWallpaper(initialQuickWallpaper(), "DP-1"));
+  const opened = quickWallpaperOpened(
+    openQuickWallpaper(initialQuickWallpaper(), "DP-1"),
+  );
   const closing = closeQuickWallpaper(opened);
   assert.deepEqual(closing, { phase: "closing", monitor: "DP-1" });
   assert.equal(quickWallpaperVisible(closing), true);
