@@ -7,6 +7,7 @@ import Qt.labs.folderlistmodel
 import "../logic/wallpaperPicker.mjs" as WallpaperPicker
 import "../config"
 import "../logic/wallpaperState.mjs" as WallpaperState
+import "../logic/wallpaperSave.mjs" as WallpaperSave
 
 // Per-monitor wallpaper paths, kept in the notch's own state dir. On first
 // run the old shell's state is imported once; its files are only read.
@@ -21,6 +22,7 @@ Singleton {
     property var perScreen: ({})
     // true once the notch state on disk holds the current values.
     property bool saved: false
+    property var saveQueue: WallpaperSave.initialSaveQueue()
     readonly property string directory: Quickshell.env("QS_WALLPAPER_DIR") || (Quickshell.env("HOME") + "/Pictures/Wallpaper")
     property var entries: []
     property var preview: null
@@ -83,8 +85,7 @@ Singleton {
         fallback = next.fallback;
         perScreen = next.perScreen;
         cancel();
-        saved = false;
-        mkdir.running = true;
+        requestSave();
     }
 
     FolderListModel {
@@ -140,7 +141,32 @@ Singleton {
             console.warn("Wallpapers: no saved wallpaper");
             return;
         }
+        requestSave();
+    }
+
+    function requestSave() {
+        saveQueue = WallpaperSave.enqueueSave(saveQueue, fallback, perScreen);
+        saved = false;
+        startSave();
+    }
+
+    function startSave() {
+        const next = WallpaperSave.startSave(saveQueue);
+        if (next === saveQueue)
+            return;
+        saveQueue = next;
         mkdir.running = true;
+    }
+
+    function retrySave() {
+        if (saveQueue.phase === "idle")
+            startSave();
+    }
+
+    function failSave(reason: string) {
+        console.warn("Wallpapers: save failed (" + reason + "); retry is available");
+        saveQueue = WallpaperSave.failSave(saveQueue);
+        saved = false;
     }
 
     Component.onCompleted: {
@@ -157,37 +183,47 @@ Singleton {
 
     Process {
         id: mkdir
-
         command: ["mkdir", "-p", root.notchDir]
         onExited: code => {
+            if (root.saveQueue.phase !== "mkdir")
+                return;
             if (code !== 0) {
-                root.saved = false;
-                return console.warn("Wallpapers: cannot create " + root.notchDir);
+                root.failSave("mkdir");
+                return;
             }
-            defaultWriter.setText(root.fallback);
+            const snapshot = root.saveQueue.active;
+            root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "mkdir");
+            defaultWriter.setText(snapshot.fallback);
         }
     }
 
     FileView {
         id: defaultWriter
-
         path: root.notchDir + "/wallpaper.txt"
         blockLoading: true
         printErrors: false
-        onSaved: screensWriter.setText(JSON.stringify(root.perScreen))
-        onSaveFailed: {
-            root.saved = false;
-            console.warn("Wallpapers: cannot save " + path);
+        onSaved: {
+            if (root.saveQueue.phase !== "default")
+                return;
+            const snapshot = root.saveQueue.active;
+            root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "default");
+            screensWriter.setText(JSON.stringify(snapshot.perScreen));
         }
+        onSaveFailed: root.failSave("default wallpaper")
     }
 
     FileView {
         id: screensWriter
-
         path: root.notchDir + "/wallpaper-screens.json"
         blockLoading: true
         printErrors: false
-        onSaved: root.saved = true
-        onSaveFailed: console.warn("Wallpapers: cannot save " + path)
+        onSaved: {
+            if (root.saveQueue.phase !== "screens")
+                return;
+            root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "screens");
+            root.saved = root.saveQueue.saved;
+            root.startSave();
+        }
+        onSaveFailed: root.failSave("per-screen wallpapers")
     }
 }
