@@ -278,7 +278,7 @@ Item {
                 anchors.right: description.right
                 anchors.top: description.bottom
                 anchors.topMargin: Layout.launcherGap
-                visible: description.visible
+                visible: description.visible && root.results[root.view.index ?? 0]?.name !== Strings.wallpaperTitle
                 text: Strings.launcherUnavailable
                 color: root.scheme.muted
                 font.family: Fonts.family
