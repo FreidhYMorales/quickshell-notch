@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   isVideoPath,
+  normalizePerScreen,
   shouldImport,
   videoShouldPlay,
   wallpaperFor,
@@ -94,4 +95,17 @@ test("a global temporary preview applies across monitors without changing commit
   assert.equal(previewFor(overrides, "/w/base.png", "DP-1", preview), "/w/temporary.png");
   assert.equal(previewFor(overrides, "/w/base.png", "eDP-1", preview), "/w/temporary.png");
   assert.equal(previewFor(overrides, "/w/base.png", "DP-1", null), "/w/dp.png");
+});
+
+test("malformed monitor state is normalized before use", () => {
+  assert.deepEqual(normalizePerScreen(null), {});
+  assert.deepEqual(normalizePerScreen(["/w/a.png"]), {});
+  assert.deepEqual(normalizePerScreen("invalid"), {});
+  assert.deepEqual(normalizePerScreen({ "DP-1": "/w/a.png", "eDP-1": 12, "HDMI-1": "" }), { "DP-1": "/w/a.png" });
+});
+
+test("monitor state excludes dangerous inherited keys", () => {
+  const value = JSON.parse('{"__proto__":"/w/evil.png","constructor":"/w/b.png","DP-1":"/w/ok.png"}');
+  assert.deepEqual(normalizePerScreen(value), { "DP-1": "/w/ok.png" });
+  assert.equal(shouldImport(null, ""), true);
 });
