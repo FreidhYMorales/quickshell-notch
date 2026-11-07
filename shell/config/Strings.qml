@@ -54,8 +54,8 @@ Singleton {
     readonly property string glyphDnd: "\udb80\udc9b"
     // Power profile tile: one glyph per profile, plus the caffeine tile.
     readonly property var profileGlyphs: ({
-            performance: "󰓕",
-            balanced: "󰗑",
+            performance: "󰓅",
+            balanced: "󰚀",
             "power-saver": "󰌪"
         })
     readonly property string glyphCaffeine: "󰅶"
