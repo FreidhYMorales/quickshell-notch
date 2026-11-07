@@ -12,6 +12,7 @@ import "../../logic/centerState.mjs" as CenterState
 import "../../logic/centerView.mjs" as CenterView
 import "../../logic/notifQueue.mjs" as NotifQueue
 import "../../logic/powerMenu.mjs" as PowerMenu
+import "../../logic/quickWallpaper.mjs" as QuickWallpaper
 
 // The one global holder of the centre reducer state. Surfaces send events with
 // `dispatch` and read `viewFor(screenName)`; effects are executed here.
@@ -22,6 +23,7 @@ Singleton {
     property var state: CenterState.initialState(screenNames())
     // Id of the notification the reducer currently shows as a toast (null: none).
     property var toastId: null
+    property var quickWallpaper: QuickWallpaper.initialQuickWallpaper()
 
     LazyLoader {
         active: !Flags.smoke
@@ -194,6 +196,48 @@ Singleton {
         }
     }
 
+    // Quick Wallpaper is a separate surface, not a launcher subview.
+    function toggleQuickWallpaper() {
+        if (quickWallpaper.phase !== "closed") {
+            cancelQuickWallpaper();
+            return;
+        }
+        const monitor = Hyprland.focusedMonitor?.name;
+        if (!monitor || Session.locked || state.global.keyboard) {
+            console.warn("CenterStore: Quick Wallpaper unavailable while another keyboard view is active");
+            return;
+        }
+        Wallpapers.begin(monitor);
+        quickWallpaper = QuickWallpaper.quickWallpaperOpened(QuickWallpaper.openQuickWallpaper(quickWallpaper, monitor));
+    }
+
+    function cancelQuickWallpaper() {
+        if (quickWallpaper.phase === "closed")
+            return;
+        Wallpapers.cancel();
+        quickWallpaper = QuickWallpaper.quickWallpaperClosed(QuickWallpaper.closeQuickWallpaper(quickWallpaper));
+    }
+
+    function applyQuickWallpaper() {
+        if (quickWallpaper.phase !== "open")
+            return;
+        Wallpapers.commit(quickWallpaper.monitor);
+        quickWallpaper = QuickWallpaper.quickWallpaperClosed(QuickWallpaper.closeQuickWallpaper(quickWallpaper));
+    }
+
+    // Hyprland bind: qs ipc call quickWallpaper toggle
+    LazyLoader {
+        active: !Flags.smoke
+
+        IpcHandler {
+            target: "quickWallpaper"
+
+            function toggle(): void {
+                root.toggleQuickWallpaper();
+            }
+        }
+    }
+
     // The power menu hold: started once per hold (repeats keep the same state,
     // so the timer is not restarted); releasing early stops it.
     Timer {
@@ -243,6 +287,8 @@ Singleton {
                 type: "Locked",
                 on: Session.locked
             });
+            if (Session.locked)
+                root.cancelQuickWallpaper();
         }
 
         target: Session
