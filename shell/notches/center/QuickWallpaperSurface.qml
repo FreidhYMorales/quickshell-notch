@@ -75,8 +75,10 @@ PanelWindow {
         }
     }
 
-    onPickerOpenChanged: {
-        if (pickerOpen && previewVideo)
+    // Keep playback alive during the opening and closing reveal, not only
+    // while the picker accepts keyboard input.
+    onPickerVisibleChanged: {
+        if (pickerVisible && previewVideo)
             videoPreview.play();
         else
             videoPreview.stop();
@@ -145,11 +147,11 @@ PanelWindow {
             source: root.previewVideo ? "file://" + root.previewPath : ""
             autoPlay: false
             onSourceChanged: {
-                if (root.pickerOpen && root.previewVideo)
+                if (root.pickerVisible && root.previewVideo)
                     play();
             }
             onVisibleChanged: {
-                if (visible && root.pickerOpen)
+                if (visible && root.pickerVisible)
                     play();
                 else
                     stop();
