@@ -52,39 +52,56 @@ jobs:
           sudo apt-get update
           apt-cache policy hyprland
           sudo apt-get install -y weston wayland-utils mesa-utils libgl1-mesa-dri dbus-user-session hyprland
-      - name: Probe nested Hyprland without Docker
+      - name: Probe nested Hyprland with explicit Wayland backend
         shell: bash
         run: |
           set -euo pipefail
           export XDG_RUNTIME_DIR="$(mktemp -d /tmp/notch-wayland-XXXXXX)"
           chmod 700 "$XDG_RUNTIME_DIR"
           export LIBGL_ALWAYS_SOFTWARE=1
+          export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
+          export GALLIUM_DRIVER=llvmpipe
+          export AQ_BACKEND=wayland
           export AQ_TRACE=1
+          export AQ_LOG_LEVEL=trace
+          export HYPRLAND_NO_CRASHREPORTER=1
           export QT_QPA_PLATFORM=wayland
           export XDG_SESSION_TYPE=wayland
           export XDG_CURRENT_DESKTOP=Hyprland
-          trap 'kill "${hypr_pid:-}" "${weston_pid:-}" 2>/dev/null || true; rm -rf "$XDG_RUNTIME_DIR"' EXIT
-          weston --backend=headless --socket=notch-parent --idle-time=0 --log=/tmp/notch-weston.log &
+          trap 'kill "${hypr_pid:-}" "${weston_pid:-}" 2>/dev/null || true' EXIT
+          echo "=== Graphics environment ==="
+          env | grep -E '^(AQ_|EGL_|GBM_|GALLIUM_|LIBGL_|MESA_|WAYLAND_|XDG_)' | sort
+          ls -la /dev/dri 2>&1 || true
+          echo "=== Weston parent ==="
+          weston --backend=headless --renderer=gl --socket=notch-parent --idle-time=0 --log=/tmp/notch-weston.log &
           weston_pid=$!
           for i in {1..50}; do
             test -S "$XDG_RUNTIME_DIR/notch-parent" && break
             kill -0 "$weston_pid" || { cat /tmp/notch-weston.log; exit 1; }
             sleep 0.2
           done
-          test -S "$XDG_RUNTIME_DIR/notch-parent"
+          test -S "$XDG_RUNTIME_DIR/notch-parent" || { cat /tmp/notch-weston.log; exit 1; }
           export WAYLAND_DISPLAY=notch-parent
           wayland-info > /tmp/notch-parent-info.log
+          grep -E 'wl_compositor|wl_shm|wl_output|zwp_linux_dmabuf_v1' /tmp/notch-parent-info.log || true
           printf 'monitor = ,1280x720@60,0x0,1\n' > /tmp/notch-hyprland.conf
-          Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
+          echo "=== Hyprland launch ==="
+          WAYLAND_DEBUG=client Hyprland --config /tmp/notch-hyprland.conf > /tmp/notch-hyprland.log 2>&1 &
           hypr_pid=$!
+          socket=""
           for i in {1..50}; do
             socket="$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)"
             test -n "$socket" && break
             kill -0 "$hypr_pid" || break
             sleep 0.2
           done
-          if test -z "${socket:-}"; then
-            cat /tmp/notch-hyprland.log
+          if test -z "$socket"; then
+            echo "=== Hyprland stdout ==="
+            tail -n 200 /tmp/notch-hyprland.log
+            echo "=== Hyprland runtime logs ==="
+            find "$XDG_RUNTIME_DIR" -type f -name hyprland.log -exec tail -n 200 {} \; || true
+            echo "=== Weston log ==="
+            tail -n 100 /tmp/notch-weston.log
             echo "::error::Hyprland failed to create its nested Wayland socket"
             exit 1
           fi
@@ -101,4 +118,5 @@ jobs:
             /tmp/notch-hyprland.log
             /tmp/notch-parent-info.log
             /tmp/notch-hyprland-info.log
+            /tmp/notch-hyprland.conf
           if-no-files-found: ignore
