@@ -56,6 +56,13 @@ Singleton {
     readonly property string glyphWifi: "\udb81\udda9"
     readonly property string glyphBluetooth: "\udb80\udcaf"
     readonly property string glyphDnd: "\udb80\udc9b"
+    // Power profile tile: one glyph per profile, plus the caffeine tile.
+    readonly property var profileGlyphs: ({
+            performance: "󰓅",
+            balanced: "󰚀",
+            "power-saver": "󰌪"
+        })
+    readonly property string glyphCaffeine: "󰅶"
     readonly property string glyphRecording: "󰻃"
     readonly property string glyphStop: "\uf04d"
     readonly property string recordingFailed: "Recording failed"

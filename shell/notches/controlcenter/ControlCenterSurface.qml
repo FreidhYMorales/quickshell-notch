@@ -36,7 +36,9 @@ NotchSurface {
     readonly property var tiles: ControlTiles.tilesFor({
         wifi: Radios.wifi,
         bt: Radios.bt,
-        dnd: Notifs.dnd
+        dnd: Notifs.dnd,
+        profile: PowerProfile.current,
+        caffeine: Caffeine.enabled
     })
     // Per tile id: glyph, left click and right click.
     readonly property var tileInfo: ({
@@ -54,9 +56,24 @@ NotchSurface {
                 glyph: Strings.glyphDnd,
                 toggle: Notifs.toggleDnd,
                 detail: () => root.showNotifications()
+            },
+            profile: {
+                glyph: Strings.profileGlyphs[PowerProfile.current] ?? Strings.profileGlyphs.balanced,
+                toggle: PowerProfile.cycle,
+                detail: () => {}
+            },
+            caffeine: {
+                glyph: Strings.glyphCaffeine,
+                toggle: Caffeine.toggle,
+                detail: () => {}
             }
         })
     readonly property var body: CornerLayout.cornerBody(size, Layout.earRadius, "topRight")
+
+    // Re-read the profile when the panel opens: a change made elsewhere shows
+    // up without a watcher process.
+    onOpenChanged: if (open)
+        PowerProfile.refresh()
 
     // Both entries ("See all" and the DND right click) open the subpage, and
     // only opening it clears the unread dot.
