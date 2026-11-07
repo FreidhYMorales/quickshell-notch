@@ -119,7 +119,18 @@ PanelWindow {
         onTriggered: root.currentTime = new Date()
     }
 
-    // Use the same ear geometry as the idle notch for the entire morph.
+    // The widening panel pushes its ears outward; their concavity fades
+    // smoothly as the preview reaches fullscreen (and returns on closing).
+    readonly property real earMorph: {
+        const t = Math.max(0, Math.min(1, (reveal - 0.45) / 0.55));
+        return t * t * (3 - 2 * t);
+    }
+    readonly property real cornerMorph: {
+        const t = Math.max(0, Math.min(1, (reveal - 0.20) / 0.80));
+        return t * t * (3 - 2 * t);
+    }
+
+    // Match the idle notch first, then flatten to a fullscreen rectangle.
     Shape {
         id: revealMask
         anchors.horizontalCenter: parent.horizontalCenter
@@ -135,7 +146,8 @@ PanelWindow {
             strokeWidth: -1
             PathSvg {
                 path: EarGeometry.notchPath(revealMask.width, revealMask.height,
-                    Layout.earRadius, Layout.cornerRadius)
+                    Layout.earRadius * (1 - root.earMorph),
+                    Layout.cornerRadius * (1 - root.cornerMorph))
             }
         }
     }
