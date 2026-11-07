@@ -86,3 +86,12 @@ test("committing to a monitor preserves other overrides", async () => {
   assert.equal(next.fallback, "/w/default.png");
   assert.equal(original["DP-1"], "/w/old.png");
 });
+
+test("a global temporary preview applies across monitors without changing committed state", async () => {
+  const { previewFor } = await import("../shell/logic/wallpaperState.mjs");
+  const overrides = { "DP-1": "/w/dp.png" };
+  const preview = { screen: "", path: "/w/temporary.png" };
+  assert.equal(previewFor(overrides, "/w/base.png", "DP-1", preview), "/w/temporary.png");
+  assert.equal(previewFor(overrides, "/w/base.png", "eDP-1", preview), "/w/temporary.png");
+  assert.equal(previewFor(overrides, "/w/base.png", "DP-1", null), "/w/dp.png");
+});
