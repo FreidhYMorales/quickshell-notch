@@ -13,6 +13,14 @@ Item {
     readonly property var session: Wallpapers.selection
     readonly property int currentIndex: session?.index ?? -1
 
+    function wrappedIndex(offset) {
+        const entries = root.session?.entries;
+        const count = entries?.length ?? 0;
+        const selected = root.currentIndex;
+        if (count === 0 || selected < 0) return -1;
+        return ((selected + offset) % count + count) % count;
+    }
+
     signal back
     signal applied
 
@@ -89,10 +97,8 @@ Item {
                     delegate: Item {
                         id: card
                         required property int index
-                        readonly property int count: root.session?.entries.length ?? 0
                         readonly property int offset: index - 1
-                        readonly property int entryIndex: count > 0
-                            ? ((root.currentIndex + offset) % count + count) % count : -1
+                        readonly property int entryIndex: root.wrappedIndex(offset)
                         readonly property var entry: entryIndex >= 0
                             ? root.session.entries[entryIndex] : null
                         readonly property bool selected: offset === 0
