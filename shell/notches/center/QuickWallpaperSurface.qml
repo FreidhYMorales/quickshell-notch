@@ -5,7 +5,7 @@ import Quickshell.Wayland
 import "../../config"
 import "../../services"
 
-// First functional fullscreen increment. Coverflow and notch morph follow.
+// Fullscreen picker with a bounded five-slot coverflow. Notch morph follows.
 PanelWindow {
     id: root
 
@@ -20,6 +20,14 @@ PanelWindow {
     readonly property bool previewVideo: /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(previewPath)
     property date currentTime: new Date()
     readonly property var scheme: Colours.paletteFor(screen)
+
+    function wrappedIndex(offset) {
+        const entries = session?.entries;
+        const count = entries?.length ?? 0;
+        if (count === 0 || currentIndex < 0)
+            return -1;
+        return ((currentIndex + offset) % count + count) % count;
+    }
 
     anchors {
         top: true
@@ -132,26 +140,127 @@ PanelWindow {
             }
         }
 
-        Rectangle {
+        Item {
+            id: coverflow
+
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 24
-            width: Math.min(parent.width - 48, 760)
-            height: Math.min(parent.height / 3 - 24, 220)
-            radius: Layout.cardRadius
-            color: "#bb111111"
+            anchors.bottomMargin: Math.max(20, parent.height * 0.045)
+            width: Math.min(parent.width - 32, 840)
+            height: Math.min(parent.height / 3, 250)
+
+            readonly property real cardHeight: Math.min(height - 38, 208)
+            readonly property real cardWidth: cardHeight * 0.68
+            readonly property real step: Math.min(cardWidth * 1.18, width / 5.1)
+
+            Repeater {
+                model: 5
+
+                delegate: Item {
+                    id: card
+
+                    required property int index
+                    readonly property int offset: index - 2
+                    readonly property int entryIndex: root.wrappedIndex(offset)
+                    readonly property var entry: entryIndex < 0 ? null : root.session.entries[entryIndex]
+                    readonly property bool selected: offset === 0
+
+                    width: coverflow.cardWidth
+                    height: coverflow.cardHeight
+                    x: coverflow.width / 2 - width / 2 + offset * coverflow.step
+                    y: selected ? 0 : Math.abs(offset) * 12 + 10
+                    z: 3 - Math.abs(offset)
+                    rotation: offset * -8
+                    scale: selected ? 1 : (Math.abs(offset) === 1 ? 0.86 : 0.72)
+                    opacity: entry ? (Math.abs(offset) === 2 ? 0.65 : 1) : 0
+
+                    Behavior on x {
+                        NumberAnimation { duration: Timings.animNormal; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on y {
+                        NumberAnimation { duration: Timings.animNormal; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on scale {
+                        NumberAnimation { duration: Timings.animNormal; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on rotation {
+                        NumberAnimation { duration: Timings.animNormal; easing.type: Easing.OutCubic }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Layout.cardRadius
+                        color: "#dd181818"
+                        border.width: card.selected ? 3 : 1
+                        border.color: card.selected ? root.scheme.primary : "#88ffffff"
+                        clip: true
+
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: 4
+                            visible: card.entry && !card.entry.video
+                            source: card.entry && !card.entry.video ? "file://" + card.entry.path : ""
+                            asynchronous: true
+                            fillMode: Image.PreserveAspectCrop
+                        }
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 8
+                            visible: card.entry?.video ?? false
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "▶"
+                                font.pixelSize: 32
+                                color: "white"
+                            }
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "VIDEO"
+                                font.family: Fonts.family
+                                font.pixelSize: 12
+                                color: "white"
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            height: 32
+                            color: "#99000000"
+
+                            Text {
+                                anchors.fill: parent
+                                anchors.margins: 7
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideMiddle
+                                text: card.entry?.name ?? ""
+                                color: "white"
+                                font.family: Fonts.family
+                                font.pixelSize: 11
+                            }
+                        }
+                    }
+
+                    TapHandler {
+                        enabled: card.entry !== null
+                        onTapped: Wallpapers.select(card.entryIndex, root.monitorName)
+                    }
+                }
+            }
 
             Text {
-                anchors.centerIn: parent
-                width: parent.width - 32
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideMiddle
-                color: "white"
-                font.family: Fonts.family
-                font.pixelSize: Fonts.launcherItem
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
                 text: root.currentIndex < 0 ? Strings.wallpaperEmpty
                     : (root.currentIndex + 1) + " / " + root.session.entries.length
-                        + "   " + root.previewPath.split("/").pop()
+                        + "   ·   ← → navegar   ·   Enter aplicar   ·   Esc cancelar"
+                color: "white"
+                font.family: Fonts.family
+                font.pixelSize: 12
             }
         }
     }
