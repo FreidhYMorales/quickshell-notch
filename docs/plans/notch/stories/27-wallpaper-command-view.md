@@ -6,14 +6,14 @@
 
 ## Acceptance criteria
 
-- [ ] Given the launcher is in command mode, when I activate Wallpaper, then a dedicated wallpaper view opens; Theme and Keybinds remain unavailable until their own stories.
-- [ ] Given a configured wallpaper directory, when the view opens, then supported image and video files are catalogued with thumbnails, current selection and a usable empty/error state. The default directory and optional override follow the existing wallpaper configuration conventions.
-- [ ] Given wallpapers are available, when I navigate the horizontal carousel by keyboard or pointer, then the highlighted wallpaper is previewed without persisting the choice.
-- [ ] Given I confirm, when I apply the selection, then the intended monitor or global wallpaper is saved in the notch's own state and its background updates; any configured palette refresh occurs only on commit.
-- [ ] Given I cancel or close, when I leave without confirming, then the previously committed wallpaper remains effective.
-- [ ] Given multiple monitors, when I select a target, then the change respects the existing default/per-monitor fallback model without unexpectedly replacing other monitor overrides.
-- [ ] Given an invalid path, unreadable file, unsupported video or missing thumbnail tool, when it is encountered, then the view degrades gracefully without crashing the shell.
-- [ ] Given app search or another launcher command, when I return from wallpaper mode, then existing launcher navigation and state remain intact.
+- [x] Given the launcher is in command mode, when I activate Wallpaper, then a dedicated wallpaper view opens; Theme and Keybinds remain unavailable until their own stories.
+- [x] Given a configured wallpaper directory, when the view opens, then supported image and video files are catalogued with thumbnails, current selection and a usable empty/error state. The default directory and optional override follow the existing wallpaper configuration conventions.
+- [x] Given wallpapers are available, when I navigate the horizontal carousel by keyboard or pointer, then the highlighted wallpaper is previewed without persisting the choice.
+- [x] Given I confirm, when I apply the selection, then the intended monitor or global wallpaper is saved in the notch's own state and its background updates; any configured palette refresh occurs only on commit.
+- [x] Given I cancel or close, when I leave without confirming, then the previously committed wallpaper remains effective.
+- [x] Given multiple monitors, when I select a target, then the change respects the existing default/per-monitor fallback model without unexpectedly replacing other monitor overrides.
+- [x] Given an invalid path, unreadable file, unsupported video or missing thumbnail tool, when it is encountered, then the view degrades gracefully without crashing the shell.
+- [x] Given app search or another launcher command, when I return from wallpaper mode, then existing launcher navigation and state remain intact.
 
 ## Design and plan
 
@@ -41,6 +41,12 @@
 ## Risk and rollback
 
 Risk: medium (persistent wallpaper state, per-monitor behavior and video playback). Keep all changes on a feature branch, preserve existing state format, and roll back the launcher entry/preview binding independently if necessary.
+
+## Verification
+
+- Maintainer confirmed make check passed and runtime was clean on Arch/Hyprland.
+- Confirmed launcher wallpaper selection, circular navigation, rounded thumbnails, Enter apply/close, Escape cancel, and wallpaper persistence.
+- Implementation is in PR #26; not merged into main. Story #34 remains separate.
 
 ## Log
 
