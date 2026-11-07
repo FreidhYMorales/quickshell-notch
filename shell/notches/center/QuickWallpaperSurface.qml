@@ -119,7 +119,7 @@ PanelWindow {
 
     Rectangle {
         id: revealFrame
-        readonly property real notchWidth: Math.min(Layout.centerMaxWidth, root.width * 0.5)
+        readonly property real notchWidth: Math.min(Layout.cornerWidth, root.width * 0.5)
         readonly property real notchHeight: Layout.idleHeight
         width: notchWidth + (root.width - notchWidth) * root.reveal
         height: notchHeight + (root.height - notchHeight) * root.reveal
