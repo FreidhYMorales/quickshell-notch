@@ -12,12 +12,12 @@ export function openQuickWallpaper(state, monitor) {
 
 export function quickWallpaperOpened(state) {
   if (state.phase !== "opening") return state;
-  return { ...state, phase: "open" };
+  return { phase: "open", monitor: state.monitor };
 }
 
 export function closeQuickWallpaper(state) {
   if (state.phase === "closed" || state.phase === "closing") return state;
-  return { ...state, phase: "closing" };
+  return { phase: "closing", monitor: state.monitor };
 }
 
 export function quickWallpaperClosed(state) {
