@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=Notch Lock
+Description=Minimal notch-inspired SDDM theme (Story 33)
+Author=quickshell-notch contributors
+License=MIT
+Type=sddm-theme
+Version=0.1
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=translations
+Theme-Id=notch-lock
+Theme-API=2.0
