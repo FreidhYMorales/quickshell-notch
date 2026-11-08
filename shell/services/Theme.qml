@@ -26,6 +26,8 @@ Singleton {
     // true once the app pipeline and the queued monitor palettes are done.
     property bool applied: true
     property var palettes: ({})
+    // One dry-run palette per scheme mode for the launcher previews.
+    property var previews: ({})
 
     property bool appDone: true
     property bool paletteBusy: false

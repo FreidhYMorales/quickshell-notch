@@ -22,6 +22,21 @@ Singleton {
     readonly property string wallpaperEmpty: "No wallpapers found"
     readonly property string wallpaperVideo: "Video"
     readonly property string wallpaperHint: "← → Browse · Enter Apply · Esc Back"
+    readonly property string themeTitle: "Theme"
+    readonly property string themeHint: "Click a scheme · Esc Back"
+    readonly property string themeActiveMark: "✓"
+    // Friendly names for the nine matugen scheme types, keyed by id.
+    readonly property var themeModeNames: ({
+            "scheme-tonal-spot": "Default",
+            "scheme-monochrome": "Mono",
+            "scheme-vibrant": "Vibrant",
+            "scheme-expressive": "Expressive",
+            "scheme-fidelity": "Fidelity",
+            "scheme-content": "Content",
+            "scheme-neutral": "Neutral",
+            "scheme-rainbow": "Rainbow",
+            "scheme-fruit-salad": "Fruit Salad"
+        })
     // Launcher line when the query matches no app.
     readonly property string noMatches: "No matches"
     readonly property string launcherUnavailable: "Not available yet"

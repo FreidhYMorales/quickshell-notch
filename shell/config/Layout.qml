@@ -95,6 +95,10 @@ Singleton {
     readonly property int wallpaperCardHeight: 170
     readonly property int wallpaperCardPad: 3
 
+    readonly property int themeViewHeight: 420
+    readonly property int themeRowHeight: 36
+    readonly property int themePreview: 18
+
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
     readonly property int expandedPad: 10

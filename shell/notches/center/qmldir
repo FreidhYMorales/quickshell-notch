@@ -8,4 +8,5 @@ CenterToast CenterToast.qml
 CenterPower CenterPower.qml
 CenterLauncher CenterLauncher.qml
 CenterWallpaper CenterWallpaper.qml
+CenterTheme CenterTheme.qml
 QuickWallpaperSurface QuickWallpaperSurface.qml
