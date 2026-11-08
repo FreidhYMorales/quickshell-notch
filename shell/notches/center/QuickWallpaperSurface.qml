@@ -8,7 +8,7 @@ import Quickshell.Wayland
 import "../../config"
 import "../../services"
 
-// Fullscreen picker with a bounded five-slot coverflow. Notch morph follows.
+// Fullscreen picker with a five-card coverflow. Notch morph follows.
 PanelWindow {
     id: root
 
@@ -361,12 +361,11 @@ PanelWindow {
                     readonly property int entryIndex: index
                     readonly property var entry: Wallpapers.entries[index]
                     readonly property bool nearby: Math.abs(offset) <= 2
-                    readonly property bool inPreloadWindow: nearby
                     readonly property bool selected: offset === 0
-                    // Once visited, retain the source and decoded frame.
+                    // Keep posters for cards already visited during this session.
                     property bool thumbnailLoaded: false
-                    onInPreloadWindowChanged: {
-                        if (inPreloadWindow)
+                    onNearbyChanged: {
+                        if (nearby)
                             thumbnailLoaded = true;
                     }
                     Component.onCompleted: {
