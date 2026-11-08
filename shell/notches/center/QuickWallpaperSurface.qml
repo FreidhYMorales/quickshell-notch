@@ -37,8 +37,13 @@ PanelWindow {
     }
 
     function schedulePlayback() {
-        if (pickerVisible && previewVideo && previewPath !== "")
-            playbackDelay.restart();
+        if (!pickerVisible || !previewVideo || previewPath === "")
+            return;
+        // The already-selected desktop wallpaper should start decoding as
+        // soon as the picker opens. Navigation still gets a short debounce.
+        playbackDelay.interval = pickerPhase === "opening"
+            && previewPath === Wallpapers.pathFor(monitorName) ? 1 : 320;
+        playbackDelay.restart();
     }
 
     onPreviewPathChanged: resetPlayback()
@@ -148,9 +153,9 @@ PanelWindow {
     // Keep playback alive during the opening and closing reveal, not only
     // while the picker accepts keyboard input.
     onPickerVisibleChanged: {
-        if (pickerVisible && previewVideo) {
+        if (pickerVisible) {
             videoFrameReady = false;
-            playbackDelay.restart();
+            Qt.callLater(schedulePlayback);
         } else {
             playbackDelay.stop();
             videoPreview.stop();
