@@ -364,14 +364,16 @@ PanelWindow {
                     readonly property bool selected: offset === 0
                     // Keep posters for cards already visited during this session.
                     property bool thumbnailLoaded: false
-                    onNearbyChanged: {
-                        if (nearby)
-                            thumbnailLoaded = true;
+                    function loadThumbnail() {
+                        if (!nearby || !entry)
+                            return;
+                        thumbnailLoaded = true;
+                        if (entry.video)
+                            Wallpapers.requestThumbnail(entry.path);
                     }
-                    Component.onCompleted: {
-                        if (nearby)
-                            thumbnailLoaded = true;
-                    }
+                    onNearbyChanged: loadThumbnail()
+                    onEntryChanged: loadThumbnail()
+                    Component.onCompleted: loadThumbnail()
                     visible: nearby
 
                     width: coverflow.cardWidth
@@ -435,7 +437,9 @@ PanelWindow {
                             anchors.margins: 4
                             visible: card.entry?.video ?? false
                             source: card.thumbnailLoaded && card.entry?.video
-                                ? Wallpapers.thumbnailFor(card.entry.path) : ""
+                                && Wallpapers.thumbnailReady[card.entry.path]
+                                ? "file://" + Wallpapers.thumbnailDir + "/"
+                                    + Wallpapers.thumbnailReady[card.entry.path] : ""
                             asynchronous: true
                             fillMode: Image.PreserveAspectCrop
                             layer.enabled: true
