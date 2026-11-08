@@ -45,3 +45,34 @@ test("out-of-order transition completion is ignored", () => {
   assert.equal(quickWallpaperOpened(closing), closing);
   assert.equal(closeQuickWallpaper(closing), closing);
 });
+
+
+test("opening and closing remain visible but never accept input", () => {
+  const opening = openQuickWallpaper(initialQuickWallpaper(), "eDP-1");
+  const closing = closeQuickWallpaper(opening);
+  assert.equal(quickWallpaperVisible(opening), true);
+  assert.equal(quickWallpaperInteractive(opening), false);
+  assert.equal(quickWallpaperVisible(closing), true);
+  assert.equal(quickWallpaperInteractive(closing), false);
+  assert.deepEqual(quickWallpaperClosed(closing), initialQuickWallpaper());
+});
+
+test("reopening after a complete close targets the new monitor", () => {
+  const first = quickWallpaperOpened(
+    openQuickWallpaper(initialQuickWallpaper(), "eDP-1"),
+  );
+  const closed = quickWallpaperClosed(closeQuickWallpaper(first));
+  const second = openQuickWallpaper(closed, "HDMI-A-1");
+  assert.deepEqual(second, { phase: "opening", monitor: "HDMI-A-1" });
+  assert.deepEqual(quickWallpaperOpened(second), {
+    phase: "open",
+    monitor: "HDMI-A-1",
+  });
+});
+
+test("closing an already closed picker is a no-op", () => {
+  const closed = initialQuickWallpaper();
+  assert.equal(closeQuickWallpaper(closed), closed);
+  assert.equal(quickWallpaperVisible(closed), false);
+  assert.equal(quickWallpaperInteractive(closed), false);
+});
