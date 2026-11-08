@@ -493,13 +493,21 @@ Item {
             }
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
             contentItem: Item {
-                Text {
+                Canvas {
                     anchors.centerIn: parent
-                    text: "‹"
-                    color: "white"
-                    font.pixelSize: 24
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                    width: 24
+                    height: 24
+                    onPaint: {
+                        const ctx = getContext("2d");
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.lineWidth = 2.4;
+                        ctx.lineCap = "round";
+                        ctx.lineJoin = "round";
+                        ctx.beginPath();
+                        ctx.moveTo(15, 5); ctx.lineTo(8, 12); ctx.lineTo(15, 19);
+                        ctx.stroke();
+                    }
                 }
             }
         }
@@ -511,13 +519,21 @@ Item {
             onClicked: sddm.powerOff()
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
             contentItem: Item {
-                Text {
+                Canvas {
                     anchors.centerIn: parent
-                    text: "⏻"
-                    color: "white"
-                    font.pixelSize: 20
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                    width: 24
+                    height: 24
+                    onPaint: {
+                        const ctx = getContext("2d");
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.lineWidth = 2.4;
+                        ctx.lineCap = "round";
+                        ctx.lineJoin = "round";
+                        ctx.beginPath();
+                        ctx.arc(12, 12, 9, -Math.PI * 0.72, Math.PI * 0.72, true); ctx.moveTo(12, 1); ctx.lineTo(12, 12);
+                        ctx.stroke();
+                    }
                 }
             }
         }
@@ -529,13 +545,21 @@ Item {
             onClicked: sddm.reboot()
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
             contentItem: Item {
-                Text {
+                Canvas {
                     anchors.centerIn: parent
-                    text: "↻"
-                    color: "white"
-                    font.pixelSize: 21
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                    width: 24
+                    height: 24
+                    onPaint: {
+                        const ctx = getContext("2d");
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.lineWidth = 2.4;
+                        ctx.lineCap = "round";
+                        ctx.lineJoin = "round";
+                        ctx.beginPath();
+                        ctx.arc(12, 12, 9, -Math.PI * 0.65, Math.PI * 0.68, false); ctx.moveTo(20, 4); ctx.lineTo(21, 11); ctx.lineTo(14, 10);
+                        ctx.stroke();
+                    }
                 }
             }
         }
