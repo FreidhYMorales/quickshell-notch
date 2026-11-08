@@ -17,6 +17,7 @@ Item {
 
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property bool wallpaperMode: view.sub === "wallpaper"
+    readonly property bool themeMode: view.sub === "theme"
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
     readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
@@ -35,7 +36,10 @@ Item {
     // Null when there are no results: the reducer then does nothing.
     function launch(index) {
         if (commandMode) {
-            if (results[index]?.name === Strings.wallpaperTitle) {
+            if (results[index]?.name === Strings.themeTitle) {
+                Theme.begin();
+                send({ type: "ThemeOpen" });
+            } else if (results[index]?.name === Strings.wallpaperTitle) {
                 Wallpapers.begin(screen.name);
                 send({
                     type: "WallpaperOpen"
@@ -50,7 +54,7 @@ Item {
     }
 
     // The same padding on every side of the content (inside the ears).
-    implicitHeight: (wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
+    implicitHeight: (wallpaperMode ? wallpaperView.implicitHeight : themeMode ? themeView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
 
     NotchEarShape {
         anchors.fill: parent
@@ -75,9 +79,20 @@ Item {
         })
     }
 
+    CenterTheme {
+        id: themeView
+        visible: root.themeMode
+        screen: root.screen
+        x: Layout.earRadius + Layout.launcherPad
+        y: Layout.launcherPad
+        width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
+        onBack: root.send({ type: "ThemeBack" })
+        onApplied: root.send({ type: "Close", monitor: root.screen.name })
+    }
+
     Column {
         id: column
-        visible: !root.wallpaperMode
+        visible: !root.wallpaperMode && !root.themeMode
 
         anchors.left: parent.left
         anchors.right: parent.right
@@ -282,7 +297,7 @@ Item {
                 anchors.right: description.right
                 anchors.top: description.bottom
                 anchors.topMargin: Layout.launcherGap
-                visible: description.visible && root.results[root.view.index ?? 0]?.name !== Strings.wallpaperTitle
+                visible: description.visible && root.results[root.view.index ?? 0]?.name !== Strings.wallpaperTitle && root.results[root.view.index ?? 0]?.name !== Strings.themeTitle
                 text: Strings.launcherUnavailable
                 color: root.scheme.muted
                 font.family: Fonts.family
