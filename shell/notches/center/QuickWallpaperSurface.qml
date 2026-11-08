@@ -26,13 +26,25 @@ PanelWindow {
     // Navigation updates the poster immediately; decoding starts only after
     // the selection remains unchanged for a short moment.
     property string playbackPath: ""
-    onPreviewPathChanged: {
+    function resetPlayback() {
         videoFrameReady = false;
         playbackDelay.stop();
         videoPreview.stop();
         playbackPath = "";
-        if (pickerVisible && previewVideo)
+        // Defer until previewPath, previewVideo and pickerVisible bindings
+        // have all settled after a selection/type change.
+        Qt.callLater(schedulePlayback);
+    }
+
+    function schedulePlayback() {
+        if (pickerVisible && previewVideo && previewPath !== "")
             playbackDelay.restart();
+    }
+
+    onPreviewPathChanged: resetPlayback()
+    onPreviewVideoChanged: {
+        if (previewVideo)
+            Qt.callLater(schedulePlayback);
     }
 
     Timer {
@@ -40,8 +52,14 @@ PanelWindow {
         interval: 320
         repeat: false
         onTriggered: {
-            if (root.pickerVisible && root.previewVideo) {
+            if (root.pickerVisible && root.previewVideo && root.previewPath !== "") {
                 root.playbackPath = root.previewPath;
+                // Let the MediaPlayer source binding settle before play().
+                Qt.callLater(() => {
+                    if (root.pickerVisible && root.playbackPath === root.previewPath
+                            && root.playbackPath !== "")
+                        videoPreview.play();
+                });
             }
         }
     }
