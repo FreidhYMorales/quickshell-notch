@@ -70,7 +70,7 @@ Item {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Qt.formatDate(new Date(), Qt.locale("es_GT"), "dddd, d MMMM yyyy")
+                text: { const minute = Time.minutes; return Qt.formatDate(new Date(), Qt.locale("es_GT"), "dddd, d MMMM yyyy"); }
                 color: root.scheme.onSurface
                 font.family: Fonts.family
                 font.pixelSize: 23
