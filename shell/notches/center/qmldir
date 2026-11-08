@@ -9,3 +9,4 @@ CenterPower CenterPower.qml
 CenterLauncher CenterLauncher.qml
 CenterWallpaper CenterWallpaper.qml
 QuickWallpaperSurface QuickWallpaperSurface.qml
+CenterTheme CenterTheme.qml
