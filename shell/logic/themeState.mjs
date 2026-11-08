@@ -22,7 +22,7 @@ export function parseTheme(text) {
   try {
     return normalizeTheme(JSON.parse(text));
   } catch (_error) {
-    return { ...DEFAULT_THEME };
+    return Object.assign({}, DEFAULT_THEME);
   }
 }
 
