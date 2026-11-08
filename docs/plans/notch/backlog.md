@@ -37,7 +37,7 @@
 25. [ ] BLOCKED (Quickshell submenu loading) As a user, I want to navigate a tray app's submenus inside the notch and return to the parent menu so that I can use nested actions without floating windows. Requires: #23
 26. [x] 64af4aa As a user, I want to browse and search launcher commands with a description pane so that I can understand the available setup actions. Requires: #08
 27. [x] IMPLEMENTED AND LOCALLY VERIFIED (wallpaper command view present in main; earlier PR #26 status not independently verified) As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
-28. [ ] As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
+28. [~] As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
 29. [ ] As a user, I want the keybinds command view so that I can access my keybinds from the launcher. Requires: #26
 30. [x] 5b49c55 As a user, I want to lock my session from the notch shell and unlock it with my password so that my session stays protected.
 31. [x] 11498fb As a user, I want an idle chain (screensaver and lock together, then suspend) with my old timeouts so that an unattended session locks and sleeps on its own. Requires: #30, #12
@@ -49,6 +49,7 @@
 37. [ ] As a user, I want the webapp command view in the launcher so that I can install a website as a desktop web app. Requires: #26
 38. [ ] As a user, I want a month view in the expanded notch calendar with week/month scrolling and a jump back to today so that I can look beyond the current week. Requires: —
 39. [ ] As a user, I want a glow pulse when a notification arrives so that I notice it without being interrupted. Requires: #01
+40. [ ] As a user, I want a Light/Dark switch in the theme view that re-themes my apps without changing the notch so that I get the old view's light mode while the notch keeps its black look. Requires: #28
 
 ## Wallpaper work status
 
@@ -56,5 +57,5 @@
 - #34: fullscreen Quick Wallpaper picker implemented and merged into `main` via PR #27 (squash commit `1c7a44e`). The maintainer confirmed that both CI jobs passed and that local image/video preview, transitions and persistence worked.
 - #34 validation limitations: multi-monitor behavior was not tested because a second monitor was unavailable. Other unconfirmed manual edge cases (Escape/persistence, lock/session interactions, focus and click-through restoration, missing files and decoder failures) are not marked as passed; issues discovered later can be handled in follow-up stories.
 - The unreliable nested Hyprland compositor CI probe was removed. Functional validation was performed on the maintainer's own environment, not through that hosted compositor probe.
-- Remaining open stories: #15, #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #28, #29, #33, #35, #36, #37, #38 and #39.
+- Remaining open stories: #15, #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #28, #29, #33, #35, #36, #37, #38, #39 and #40.
 - #35-#39 cover plan SHOULD items that had no backlog entry: the screensaver, security and webapp command views (plan line 335), the calendar month view (line 337) and the notification glow pulse (line 338).
