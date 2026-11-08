@@ -17,6 +17,26 @@ PanelWindow {
     property bool transitioning: false
     property real fade: 1
     property bool initialized: false
+    readonly property bool previewing: Wallpapers.preview !== null
+        && (Wallpapers.preview.screen === "" || Wallpapers.preview.screen === screen.name)
+
+    function showPreview(path) {
+        fadeAnimation.stop();
+        transitioning = false;
+        if (incomingSlot >= 0) {
+            const pending = slot(incomingSlot);
+            if (pending)
+                pending.wallpaperPath = "";
+        }
+        incomingSlot = -1;
+        fade = 1;
+        const front = slot(frontSlot);
+        if (front && front.wallpaperPath !== path)
+            front.wallpaperPath = path;
+        const spare = slot(1 - frontSlot);
+        if (spare)
+            spare.wallpaperPath = "";
+    }
 
     function slot(index) {
         return layers.itemAt(index);
@@ -33,6 +53,10 @@ PanelWindow {
             return;
         }
         const front = slot(frontSlot);
+        if (previewing) {
+            showPreview(path);
+            return;
+        }
         if (front && front.wallpaperPath === path && incomingSlot < 0)
             return;
         // Restart a pending transition from the currently visible frame.
@@ -70,6 +94,7 @@ PanelWindow {
     }
 
     onPathChanged: requestWallpaper(path)
+    onPreviewingChanged: requestWallpaper(path)
     Component.onCompleted: requestWallpaper(path)
 
     anchors {
