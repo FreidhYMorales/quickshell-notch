@@ -24,7 +24,7 @@ Item {
     signal back
     signal applied
 
-    implicitHeight: Layout.wallpaperViewHeight
+    implicitHeight: Layout.wallpaperViewHeight + 36
 
     function navigate(step) {
         Wallpapers.move(step, screen.name);
@@ -68,6 +68,33 @@ Item {
             color: root.scheme.onSurface
             font.family: Fonts.family
             font.pixelSize: Fonts.launcherItem
+        }
+
+        Row {
+            spacing: 10
+            Text {
+                text: Wallpapers.applyToAll ? "Todos los monitores" : "Monitor actual"
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+            Rectangle {
+                width: 38
+                height: 20
+                radius: 10
+                color: Wallpapers.applyToAll ? root.scheme.primary : root.scheme.muted
+                Rectangle {
+                    width: 16
+                    height: 16
+                    radius: 8
+                    y: 2
+                    x: Wallpapers.applyToAll ? 20 : 2
+                    color: Colours.background
+                }
+                TapHandler {
+                    onTapped: Wallpapers.setApplyToAll(!Wallpapers.applyToAll)
+                }
+            }
         }
 
         Item {
