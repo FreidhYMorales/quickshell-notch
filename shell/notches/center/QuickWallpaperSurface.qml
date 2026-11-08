@@ -289,11 +289,12 @@ PanelWindow {
                     readonly property int entryIndex: index
                     readonly property var entry: Wallpapers.entries[index]
                     readonly property bool nearby: Math.abs(offset) <= 2
+                    readonly property bool inPreloadWindow: Wallpapers.isPreloaded(index)
                     readonly property bool selected: offset === 0
                     // Once visited, retain the source and decoded frame.
                     property bool thumbnailLoaded: false
-                    onNearbyChanged: {
-                        if (nearby)
+                    onInPreloadWindowChanged: {
+                        if (inPreloadWindow)
                             thumbnailLoaded = true;
                     }
                     Component.onCompleted: {
