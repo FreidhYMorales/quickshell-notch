@@ -40,9 +40,10 @@ Item {
     property real loginProgress: 0
     Behavior on loginProgress { NumberAnimation { duration: 440; easing.type: Easing.InOutCubic } }
     onLoginVisibleChanged: loginProgress = loginVisible ? 1 : 0
-    function notchPath(w, h) {
-        const e = Math.min(earRadius, h, w / 2);
-        const corner = Math.max(0, Math.min(cornerRadius, h - e, w / 2 - e));
+    function notchPath(w, h, progress) {
+        const t = progress === undefined ? 1 : Math.max(0, Math.min(1, progress));
+        const e = Math.min(earRadius * t, h, w / 2);
+        const corner = Math.max(0, Math.min(cornerRadius * t, h - e, w / 2 - e));
         const k = 0.5523 * e;
         return `M 0 0 L ${w} 0 C ${w-k} 0 ${w-e} ${e-k} ${w-e} ${e} L ${w-e} ${h-corner} A ${corner} ${corner} 0 0 1 ${w-e-corner} ${h} L ${e+corner} ${h} A ${corner} ${corner} 0 0 1 ${e} ${h-corner} L ${e} ${e} C ${e} ${e-k} ${k} 0 0 0 Z`;
     }
@@ -143,6 +144,33 @@ Item {
         color: "#141a23"
     }
 
+    // Alpha mask follows the same concave-ear geometry as Quickshell.
+    // At full reveal the radii are zero (full-screen rectangle); at the
+    // end they become the exact configured notch radii.
+    Shape {
+        id: morphMaskShape
+        x: morph.x
+        y: 0
+        width: morph.width
+        height: morph.height
+        visible: false
+        ShapePath {
+            strokeWidth: -1
+            fillColor: "#ffffff"
+            PathSvg {
+                path: root.notchPath(morph.width, morph.height, 1 - root.reveal)
+            }
+        }
+    }
+
+    ShaderEffectSource {
+        id: morphMaskTexture
+        sourceItem: morphMaskShape
+        hideSource: true
+        live: true
+        visible: false
+    }
+
     Item {
         id: morph
         width: root.notchWidth + (root.width - root.notchWidth) * root.reveal
@@ -150,11 +178,18 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         clip: true
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: morphMaskTexture
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1.0
+        }
 
         // The preview remains in the same SDDM process and resets after a hold.
         // A real post-authentication handoff remains a separate integration task.
-        // This is the first visual approximation. The final shared curved
-        // notch mask will be ported from the wallpaper picker in phase 3.
+        // Mask geometry is now shared conceptually with earGeometry.mjs;
+        // the actual SDDM-to-compositor handoff remains a separate task.
         Rectangle {
             width: root.width
             height: root.height
