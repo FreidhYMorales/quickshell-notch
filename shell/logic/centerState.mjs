@@ -119,6 +119,22 @@ const handlers = {
       keyboard: merge(keyboard, { sub: "wallpaper" }),
     });
   },
+  ThemeOpen(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub) return unchanged(state);
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: "theme" }),
+    });
+  },
+  ThemeBack(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub !== "theme") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: null }),
+    });
+  },
   WallpaperBack(state) {
     const keyboard = state.global.keyboard;
     if (keyboard?.kind !== "launcher" || keyboard.sub !== "wallpaper") {
