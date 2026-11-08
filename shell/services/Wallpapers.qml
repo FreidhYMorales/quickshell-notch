@@ -68,8 +68,7 @@ Singleton {
             a = Math.imul(a ^ c, 16777619);
             b = Math.imul(b, 33) ^ c;
         }
-        return "frame-" + (a >>> 0).toString(16).padStart(8, "0")
-            + "-" + (b >>> 0).toString(16).padStart(8, "0") + ".jpg";
+        return "frame-" + (a >>> 0).toString(16).padStart(8, "0") + "-" + (b >>> 0).toString(16).padStart(8, "0") + ".jpg";
     }
 
     function startThumbnailJob() {
@@ -83,11 +82,7 @@ Singleton {
         const output = thumbnailDir + "/" + name;
         // Only regenerate when missing, empty or older than the source.
         // A temporary file avoids exposing a partially written JPEG.
-        thumbnailExtractor.command = ["sh", "-c",
-            "if [ -s \"$2\" ] && [ \"$2\" -nt \"$1\" ]; then exit 0; fi; "
-            + "ffmpeg -nostdin -hide_banner -loglevel error -y -i \"$1\" "
-            + "-frames:v 1 -q:v 2 \"$2.tmp.jpg\" && mv -f \"$2.tmp.jpg\" \"$2\"",
-            "thumbnail-cache", path, output];
+        thumbnailExtractor.command = ["sh", "-c", "if [ -s \"$2\" ] && [ \"$2\" -nt \"$1\" ]; then exit 0; fi; " + "ffmpeg -nostdin -hide_banner -loglevel error -y -i \"$1\" " + "-frames:v 1 -q:v 2 \"$2.tmp.jpg\" && mv -f \"$2.tmp.jpg\" \"$2\"", "thumbnail-cache", path, output];
         thumbnailExtractor.running = true;
     }
 
@@ -186,8 +181,7 @@ Singleton {
         const path = WallpaperPicker.commitPreview(selection);
         if (!path)
             return;
-        const next = applyToAll ? WallpaperState.commitShared(path)
-            : WallpaperState.commitFor(perScreen, fallback, screen, path);
+        const next = applyToAll ? WallpaperState.commitShared(path) : WallpaperState.commitFor(perScreen, fallback, screen, path);
         fallback = next.fallback;
         perScreen = next.perScreen;
         cancel();
