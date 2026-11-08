@@ -70,8 +70,8 @@ Singleton {
         const name = "frame-" + thumbnailSerial + ".jpg";
         thumbnailOutputName = name;
         thumbnailExtractor.command = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
-            "-y", "-i", path, "-frames:v", "1", "-vf",
-            "scale=480:-2", thumbnailDir + "/" + name];
+            "-y", "-i", path, "-frames:v", "1",
+            "-q:v", "2", thumbnailDir + "/" + name];
         thumbnailExtractor.running = true;
     }
 
