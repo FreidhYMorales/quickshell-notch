@@ -43,6 +43,8 @@ Item {
         spacing: Layout.launcherGap
 
         Text {
+            id: title
+
             width: parent.width
             text: Strings.themeTitle
             color: root.scheme.onSurface
@@ -54,7 +56,7 @@ Item {
             id: list
 
             width: parent.width
-            height: parent.height - Layout.launcherRowHeight - Layout.launcherGap * 2
+            height: parent.height - title.height - hint.height - Layout.launcherGap * 2
             model: ThemeLogic.MODES
             clip: true
 
@@ -109,6 +111,8 @@ Item {
         }
 
         Text {
+            id: hint
+
             width: parent.width
             text: Strings.themeHint
             color: root.scheme.muted
