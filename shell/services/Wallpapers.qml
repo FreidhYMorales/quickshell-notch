@@ -300,6 +300,7 @@ Singleton {
             const snapshot = root.saveQueue.active;
             root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "mkdir");
             defaultWriter.setText(snapshot.fallback);
+            defaultWriter.save();
         }
     }
 
@@ -314,6 +315,7 @@ Singleton {
             const snapshot = root.saveQueue.active;
             root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "default");
             screensWriter.setText(JSON.stringify(snapshot.perScreen));
+            screensWriter.save();
         }
         onSaveFailed: root.failSave("default wallpaper")
     }
