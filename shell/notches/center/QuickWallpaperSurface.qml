@@ -22,56 +22,6 @@ PanelWindow {
     readonly property bool pickerVisible: pickerPhase !== "closed"
     property real reveal: 0
     property bool waitingForFirstFrame: false
-    property int activeSlot: 0
-    property int pendingSlot: -1
-    property string slotPath0: ""
-    property string slotPath1: ""
-    property string displayedPath: ""
-
-    function preparePreview() {
-        if (!pickerVisible || !previewVideo)
-            return;
-        if (displayedPath === previewPath) {
-            pendingSlot = -1;
-            return;
-        }
-        const next = displayedPath ? 1 - activeSlot : activeSlot;
-        pendingSlot = next;
-        if (next === 0) {
-            if (slotPath0 === previewPath)
-                player0.play();
-            else
-                slotPath0 = previewPath;
-        } else {
-            if (slotPath1 === previewPath)
-                player1.play();
-            else
-                slotPath1 = previewPath;
-        }
-    }
-
-    function frameArrived(slot) {
-        if (slot !== pendingSlot)
-            return;
-        const path = slot === 0 ? slotPath0 : slotPath1;
-        if (!pickerVisible || path !== previewPath)
-            return;
-        const old = activeSlot;
-        activeSlot = slot;
-        displayedPath = path;
-        pendingSlot = -1;
-        startReveal();
-        if (old !== slot) {
-            if (old === 0) {
-                player0.stop();
-                slotPath0 = "";
-            } else {
-                player1.stop();
-                slotPath1 = "";
-            }
-        }
-    }
-    onPreviewPathChanged: preparePreview()
 
     function startReveal() {
         if (pickerPhase !== "opening" || !waitingForFirstFrame)
@@ -157,17 +107,10 @@ PanelWindow {
     // Keep playback alive during the opening and closing reveal, not only
     // while the picker accepts keyboard input.
     onPickerVisibleChanged: {
-        if (pickerVisible)
-            preparePreview();
-        else {
-            player0.stop();
-            player1.stop();
-            slotPath0 = "";
-            slotPath1 = "";
-            displayedPath = "";
-            pendingSlot = -1;
-            activeSlot = 0;
-        }
+        if (pickerVisible && previewVideo)
+            videoPreview.play();
+        else
+            videoPreview.stop();
     }
 
     Timer {
@@ -266,62 +209,29 @@ PanelWindow {
         }
 
         MediaPlayer {
-            id: player0
-            source: root.slotPath0 ? "file://" + root.slotPath0 : ""
-            videoOutput: output0
+            id: videoPreview
+            source: root.previewVideo ? "file://" + root.previewPath : ""
+            videoOutput: previewOutput
             loops: MediaPlayer.Infinite
             audioOutput: AudioOutput { muted: true }
             onSourceChanged: {
-                if (root.pickerVisible && root.slotPath0)
+                if (root.pickerVisible && root.previewVideo)
                     play();
             }
-            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: " + errorString)
-        }
-
-        MediaPlayer {
-            id: player1
-            source: root.slotPath1 ? "file://" + root.slotPath1 : ""
-            videoOutput: output1
-            loops: MediaPlayer.Infinite
-            audioOutput: AudioOutput { muted: true }
-            onSourceChanged: {
-                if (root.pickerVisible && root.slotPath1)
-                    play();
-            }
-            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: " + errorString)
-        }
-
-        // Keep both sinks in the scene graph: a hidden VideoOutput may not
-        // produce frames. Opacity zero keeps the decoder running offscreen.
-        VideoOutput {
-            id: output0
-            anchors.fill: parent
-            visible: root.pickerVisible
-            opacity: root.displayedPath !== "" && root.activeSlot === 0 ? 1 : 0
-            z: root.activeSlot === 0 ? 1 : 0
-            fillMode: VideoOutput.PreserveAspectCrop
+            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: cannot play video " + root.previewPath + ": " + errorString)
         }
 
         VideoOutput {
-            id: output1
+            id: previewOutput
             anchors.fill: parent
-            visible: root.pickerVisible
-            opacity: root.displayedPath !== "" && root.activeSlot === 1 ? 1 : 0
-            z: root.activeSlot === 1 ? 1 : 0
+            visible: root.previewVideo
             fillMode: VideoOutput.PreserveAspectCrop
         }
 
         Connections {
-            target: output0.videoSink
+            target: previewOutput.videoSink
             function onVideoFrameChanged(frame) {
-                root.frameArrived(0);
-            }
-        }
-
-        Connections {
-            target: output1.videoSink
-            function onVideoFrameChanged(frame) {
-                root.frameArrived(1);
+                root.startReveal();
             }
         }
 
