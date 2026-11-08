@@ -27,7 +27,9 @@ Item {
     readonly property string avatarPath: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 260) || "") : ""
     // Match the Quickshell idle height and ear/corner radii (Layout.qml).
     // Width remains configurable until the live idle width is exported.
-    readonly property real notchWidth: 420
+    // Override from the exported Quickshell idle width when available.
+    // Quickshell computes this dynamically from visible row contents.
+    readonly property real notchWidth: Math.max(80, Number(config.notchWidth) || 420)
     readonly property real notchHeight: 32
     readonly property real earRadius: 12
     readonly property real cornerRadius: 18
@@ -173,29 +175,29 @@ Item {
                 width: 284
                 spacing: 12
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: root.height * (0.51 + 0.035 * (1 - root.loginProgress))
+                y: root.height * (0.46 + 0.035 * (1 - root.loginProgress))
                 opacity: root.loginProgress * root.reveal
                 visible: opacity > 0
 
 
                 Item {
                     width: parent.width
-                    height: root.choosingUser && root.hasUsers ? 150 : 112
+                    height: root.choosingUser && root.hasUsers ? 184 : 146
                     Behavior on height { NumberAnimation { duration: 220 } }
 
                     Rectangle {
                         id: avatarCircle
-                        width: 88
-                        height: 88
-                        radius: 44
+                        width: 116
+                        height: 116
+                        radius: 58
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color: "#29313d"
+                        color: "#303946"
                         clip: true
 
                         Image {
                             id: face
                             anchors.fill: parent
-                            anchors.margins: 6
+                            anchors.margins: 8
                             source: root.avatarPath === "" ? "" : (root.avatarPath.indexOf(":/") >= 0 ? root.avatarPath : "file://" + root.avatarPath)
                             fillMode: Image.PreserveAspectCrop
                             visible: status === Image.Ready
@@ -205,9 +207,14 @@ Item {
                             anchors.centerIn: parent
                             visible: !face.visible
                             text: "󰀄"
-                            color: "white"
+                            color: "#f4f7ff"
                             font.family: "IosevkaTerm Nerd Font"
-                            font.pixelSize: 34
+                            font.pixelSize: 42
+                            width: 70
+                            height: 70
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            fontSizeMode: Text.Fit
                         }
                         MouseArea {
                             anchors.fill: parent
