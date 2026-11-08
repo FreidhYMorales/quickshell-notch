@@ -20,6 +20,7 @@ Item {
     readonly property color panel: "#000000"
     readonly property bool hasUsers: userModel.count > 0
     property int selectedUser: 0
+    readonly property bool loginVisible: view === "login"
 
     function showLogin() {
         if (exiting)
@@ -113,7 +114,8 @@ Item {
             Column {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: parent.height * 0.19
+                anchors.topMargin: root.loginVisible ? parent.height * 0.22 : parent.height * 0.19
+                Behavior on anchors.topMargin { NumberAnimation { duration: 320; easing.type: Easing.InOutCubic } }
                 spacing: 5
                 opacity: root.reveal
 
@@ -121,12 +123,13 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatTime(root.now, "hh:mm")
                     font.family: "IosevkaTerm Nerd Font"
-                    font.pixelSize: 68
+                    font.pixelSize: root.loginVisible ? 56 : 68
+                    Behavior on font.pixelSize { NumberAnimation { duration: 320; easing.type: Easing.InOutCubic } }
                     color: root.foreground
                 }
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDate(root.now, "dddd, d MMMM yyyy")
+                    text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
                     font.family: "IosevkaTerm Nerd Font"
                     font.pixelSize: 19
                     color: root.foreground
@@ -135,11 +138,12 @@ Item {
 
             Column {
                 id: loginPanel
-                visible: root.view === "login"
-                opacity: root.reveal
+                visible: opacity > 0
+                opacity: root.loginVisible ? root.reveal : 0
+                y: root.loginVisible ? (parent.height - height) / 2 + 70 : (parent.height - height) / 2 + 92
+                Behavior on opacity { NumberAnimation { duration: 240 } }
+                Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.InOutCubic } }
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: 85
                 spacing: 12
 
                 Rectangle {
@@ -165,7 +169,7 @@ Item {
                             width: 270
                             visible: root.hasUsers
                             model: userModel
-                            textRole: "realName"
+                            textRole: "name"
                             Connections {
                                 target: users
                                 function onActivated(index) { root.selectedUser = index; }
@@ -185,11 +189,16 @@ Item {
                             echoMode: TextInput.Password
                             placeholderText: "Contraseña"
                             onAccepted: root.submit()
+                            background: Rectangle { radius: 18; color: "#202630"; border.color: password.activeFocus ? root.accent : "#353d49"; border.width: 1 }
+                            color: root.foreground
+                            placeholderTextColor: "#aab5c5"
                         }
                         Button {
                             width: 270
                             text: "Entrar"
                             onClicked: root.submit()
+                            background: Rectangle { radius: 18; color: "#202630"; border.color: root.accent; border.width: 1 }
+                            contentItem: Text { text: "Entrar"; color: root.foreground; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                         }
                         Text {
                             width: 270
@@ -223,8 +232,24 @@ Item {
         anchors.top: parent.top
         width: 190
         height: 32
-        radius: 14
-        color: root.panel
+        radius: 0
+        color: "transparent"
+        Canvas {
+            anchors.fill: parent
+            onPaint: {
+                const ctx = getContext("2d");
+                ctx.reset();
+                ctx.fillStyle = "#000000";
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(width, 0);
+                ctx.bezierCurveTo(width - 16, 0, width - 16, height, width - 32, height);
+                ctx.lineTo(32, height);
+                ctx.bezierCurveTo(16, height, 16, 0, 0, 0);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
 
         Text {
             anchors.centerIn: parent
