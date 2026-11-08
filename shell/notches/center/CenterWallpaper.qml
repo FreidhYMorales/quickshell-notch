@@ -93,19 +93,18 @@ Item {
                 visible: root.session?.entries.length > 0
 
                 Repeater {
-                    model: Wallpapers.preloadIndices
+                    model: 3
 
                     delegate: Item {
                         id: card
                         required property int index
-                        readonly property int entryIndex: modelData
-                        readonly property int offset: entryIndex - root.currentIndex
+                        readonly property int offset: index - 1
+                        readonly property int entryIndex: root.wrappedIndex(offset)
                         readonly property var entry: entryIndex >= 0
                             ? root.session.entries[entryIndex] : null
                         readonly property bool selected: offset === 0
 
-                        visible: Math.abs(offset) <= 1
-                        width: visible ? Layout.wallpaperCardWidth : 0
+                        width: Layout.wallpaperCardWidth
                         height: Layout.wallpaperCardHeight
 
                         Rectangle {
@@ -140,37 +139,24 @@ Item {
                                 layer.enabled: true
                             }
 
-                            Video {
-                                id: videoThumbnail
+                            Image {
+                                id: videoPoster
                                 anchors.fill: parent
                                 anchors.margins: Layout.wallpaperCardPad
                                 visible: card.entry?.video ?? false
-                                source: card.entry?.video ? "file://" + card.entry.path : ""
-                                autoPlay: false
-                                muted: true
-                                fillMode: VideoOutput.PreserveAspectCrop
+                                source: card.entry?.video ? Wallpapers.thumbnailFor(card.entry.path) : ""
+                                asynchronous: true
+                                fillMode: Image.PreserveAspectCrop
                                 layer.enabled: true
                                 layer.effect: MultiEffect {
                                     maskEnabled: true
                                     maskSource: maskShape
                                 }
-                                onSourceChanged: {
-                                    if (source.toString() !== "")
-                                        play();
-                                }
-                                onPositionChanged: {
-                                    if (position >= 250 && playbackState === MediaPlayer.PlayingState)
-                                        pause();
-                                }
-                                onHasVideoChanged: {
-                                    if (hasVideo && playbackState === MediaPlayer.PlayingState)
-                                        pause();
-                                }
                             }
 
                             Text {
                                 anchors.centerIn: parent
-                                visible: (card.entry?.video ?? false) && !videoThumbnail.hasVideo
+                                visible: (card.entry?.video ?? false) && videoPoster.status !== Image.Ready
                                 text: "CARGANDO"
                                 color: root.scheme.onSurface
                                 font.family: Fonts.family
