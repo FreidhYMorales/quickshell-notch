@@ -531,7 +531,10 @@ Item {
                         ctx.lineCap = "round";
                         ctx.lineJoin = "round";
                         ctx.beginPath();
-                        ctx.arc(12, 12, 9, -Math.PI * 0.72, Math.PI * 0.72, true); ctx.moveTo(12, 1); ctx.lineTo(12, 12);
+                        // 290-degree power ring with the opening at the top.
+                        ctx.arc(12, 12, 8, -Math.PI * 0.31, Math.PI * 1.31, false);
+                        ctx.moveTo(12, 2);
+                        ctx.lineTo(12, 12);
                         ctx.stroke();
                     }
                 }
@@ -557,7 +560,12 @@ Item {
                         ctx.lineCap = "round";
                         ctx.lineJoin = "round";
                         ctx.beginPath();
-                        ctx.arc(12, 12, 9, -Math.PI * 0.65, Math.PI * 0.68, false); ctx.moveTo(20, 4); ctx.lineTo(21, 11); ctx.lineTo(14, 10);
+                        // Almost-complete clockwise ring with an attached arrowhead.
+                        ctx.arc(12, 12, 8, -Math.PI * 0.5, Math.PI * 1.25, false);
+                        ctx.moveTo(12, 4);
+                        ctx.lineTo(18, 4);
+                        ctx.moveTo(12, 4);
+                        ctx.lineTo(12, 10);
                         ctx.stroke();
                     }
                 }
