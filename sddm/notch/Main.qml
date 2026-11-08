@@ -19,8 +19,22 @@ Item {
     readonly property color foreground: "#ffffff"
     readonly property color panel: "#000000"
     readonly property bool hasUsers: userModel.count > 0
-    property int selectedUser: 0
+    property int selectedUser: Math.max(0, userModel.lastIndex)
+    property bool choosingUser: false
+    readonly property string userName: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 257) || "") : username.text
+    readonly property string displayName: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 258) || userName) : username.text
+    readonly property string avatarPath: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 260) || "") : ""
+    readonly property real notchWidth: 420
+    readonly property real notchHeight: 62
     readonly property bool loginVisible: view === "login"
+
+    function chooseUser(index) {
+        selectedUser = index;
+        choosingUser = false;
+        password.text = "";
+        errorMessage = "";
+        Qt.callLater(() => password.forceActiveFocus());
+    }
 
     function showLogin() {
         if (exiting)
@@ -33,7 +47,7 @@ Item {
         if (exiting || password.text.length === 0)
             return;
         errorMessage = "";
-        sddm.login(hasUsers ? userModel.data(userModel.index(selectedUser, 0), 257) : username.text,
+        sddm.login(hasUsers ? userName : username.text,
                    password.text, sessions.currentIndex);
     }
 
@@ -84,8 +98,8 @@ Item {
 
     Item {
         id: morph
-        width: 190 + (root.width - 190) * root.reveal
-        height: 32 + (root.height - 32) * root.reveal
+        width: root.notchWidth + (root.width - root.notchWidth) * root.reveal
+        height: root.notchHeight + (root.height - root.notchHeight) * root.reveal
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         clip: true
@@ -111,105 +125,199 @@ Item {
                 color: "#52000000"
             }
 
-            Column {
+            Item {
+                id: clockGroup
+                width: 600
+                height: root.loginVisible ? 120 : 190
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: root.loginVisible ? parent.height * 0.22 : parent.height * 0.19
-                Behavior on anchors.topMargin { NumberAnimation { duration: 320; easing.type: Easing.InOutCubic } }
-                spacing: 5
+                y: root.loginVisible ? root.height * 0.22 : (root.height - height) / 2
                 opacity: root.reveal
+                Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
+                Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
 
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatTime(root.now, "hh:mm")
-                    font.family: "IosevkaTerm Nerd Font"
-                    font.pixelSize: root.loginVisible ? 56 : 68
-                    Behavior on font.pixelSize { NumberAnimation { duration: 320; easing.type: Easing.InOutCubic } }
-                    color: root.foreground
-                }
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
-                    font.family: "IosevkaTerm Nerd Font"
-                    font.pixelSize: 19
-                    color: root.foreground
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 4
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Qt.formatTime(root.now, "hh:mm")
+                        font.family: "IosevkaTerm Nerd Font"
+                        font.pixelSize: root.loginVisible ? 60 : 100
+                        Behavior on font.pixelSize { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
+                        color: "white"
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
+                        font.family: "IosevkaTerm Nerd Font"
+                        font.pixelSize: root.loginVisible ? 18 : 23
+                        Behavior on font.pixelSize { NumberAnimation { duration: 360 } }
+                        color: "white"
+                    }
                 }
             }
 
             Column {
                 id: loginPanel
-                visible: opacity > 0
-                opacity: root.loginVisible ? root.reveal : 0
-                y: root.loginVisible ? (parent.height - height) / 2 + 70 : (parent.height - height) / 2 + 92
-                Behavior on opacity { NumberAnimation { duration: 240 } }
-                Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.InOutCubic } }
+                width: 320
+                spacing: 14
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 12
+                y: root.loginVisible ? root.height * 0.48 : root.height * 0.54
+                opacity: root.loginVisible ? root.reveal : 0
+                visible: opacity > 0
+                Behavior on opacity { NumberAnimation { duration: 240 } }
+                Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
 
-                Rectangle {
-                    width: 320
-                    height: loginItems.implicitHeight + 40
-                    radius: 22
-                    color: root.panel
+                Item {
+                    width: parent.width
+                    height: root.choosingUser && root.hasUsers ? 118 : 80
+                    Behavior on height { NumberAnimation { duration: 220 } }
 
-                    Column {
-                        id: loginItems
-                        anchors.centerIn: parent
-                        spacing: 12
+                    Rectangle {
+                        id: avatarCircle
+                        width: 64
+                        height: 64
+                        radius: 32
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        color: "#171b22"
+                        clip: true
 
+                        Image {
+                            id: face
+                            anchors.fill: parent
+                            source: root.avatarPath === "" ? "" : (root.avatarPath.indexOf(":/") >= 0 ? root.avatarPath : "file://" + root.avatarPath)
+                            fillMode: Image.PreserveAspectCrop
+                            visible: status === Image.Ready
+                            asynchronous: true
+                        }
                         Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: root.hasUsers ? "Iniciar sesión" : "Usuario"
+                            anchors.centerIn: parent
+                            visible: !face.visible
+                            text: "󰀄"
+                            color: "white"
                             font.family: "IosevkaTerm Nerd Font"
-                            font.pixelSize: 17
-                            color: root.foreground
+                            font.pixelSize: 29
                         }
-                        ComboBox {
-                            id: users
-                            width: 270
-                            visible: root.hasUsers
-                            model: userModel
-                            textRole: "name"
-                            Connections {
-                                target: users
-                                function onActivated(index) { root.selectedUser = index; }
-                            }
-                        }
-                        TextField {
-                            id: username
-                            width: 270
-                            visible: !root.hasUsers
-                            placeholderText: "Usuario"
-                            onAccepted: password.forceActiveFocus()
-                        }
-                        TextField {
-                            id: password
-                            width: 270
-                            height: 42
-                            echoMode: TextInput.Password
-                            placeholderText: "Contraseña"
-                            onAccepted: root.submit()
-                            background: Rectangle { radius: 18; color: "#202630"; border.color: password.activeFocus ? root.accent : "#353d49"; border.width: 1 }
-                            color: root.foreground
-                            placeholderTextColor: "#aab5c5"
-                        }
-                        Button {
-                            width: 270
-                            text: "Entrar"
-                            onClicked: root.submit()
-                            background: Rectangle { radius: 18; color: "#202630"; border.color: root.accent; border.width: 1 }
-                            contentItem: Text { text: "Entrar"; color: root.foreground; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                        }
-                        Text {
-                            width: 270
-                            horizontalAlignment: Text.AlignHCenter
-                            visible: root.errorMessage !== ""
-                            text: root.errorMessage
-                            wrapMode: Text.Wrap
-                            color: "#ff7777"
-                            font.pixelSize: 12
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: root.hasUsers && userModel.count > 1
+                            onClicked: root.choosingUser = !root.choosingUser
                         }
                     }
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: avatarCircle.bottom
+                        anchors.topMargin: 5
+                        text: root.displayName
+                        color: "white"
+                        font.family: "IosevkaTerm Nerd Font"
+                        font.pixelSize: 17
+                    }
+
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: avatarCircle.bottom
+                        anchors.topMargin: 30
+                        visible: root.choosingUser && root.hasUsers
+                        spacing: 10
+
+                        Repeater {
+                            model: userModel
+                            delegate: Item {
+                                width: 38
+                                height: 38
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    color: "#202630"
+                                    border.width: index === root.selectedUser ? 2 : 0
+                                    border.color: root.accent
+                                    clip: true
+                                    Image {
+                                        id: optionFace
+                                        anchors.fill: parent
+                                        source: model.icon || ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        visible: status === Image.Ready
+                                    }
+                                    Text {
+                                        anchors.centerIn: parent
+                                        visible: !optionFace.visible
+                                        text: "󰀄"
+                                        font.family: "IosevkaTerm Nerd Font"
+                                        font.pixelSize: 19
+                                        color: "white"
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: root.chooseUser(index)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                TextField {
+                    id: username
+                    visible: !root.hasUsers
+                    width: parent.width
+                    height: 44
+                    placeholderText: "Usuario"
+                    color: "white"
+                    placeholderTextColor: "#9da8b7"
+                    background: Rectangle { color: "#000000"; radius: 22 }
+                    onAccepted: password.forceActiveFocus()
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 48
+                    radius: 24
+                    color: "#000000"
+
+                    TextField {
+                        id: password
+                        anchors.left: parent.left
+                        anchors.right: submitArrow.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        leftPadding: 18
+                        background: Item {}
+                        color: "white"
+                        placeholderTextColor: "#a6b1bf"
+                        placeholderText: "Contraseña"
+                        echoMode: TextInput.Password
+                        onAccepted: root.submit()
+                    }
+                    Item {
+                        id: submitArrow
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 48
+                        height: 48
+                        Text {
+                            anchors.centerIn: parent
+                            text: "→"
+                            font.pixelSize: 25
+                            color: "white"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.submit()
+                        }
+                    }
+                }
+
+                Text {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    visible: root.errorMessage !== ""
+                    text: root.errorMessage
+                    wrapMode: Text.Wrap
+                    color: "#ff7777"
+                    font.pixelSize: 13
                 }
             }
 
@@ -230,8 +338,8 @@ Item {
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        width: 190
-        height: 32
+        width: root.notchWidth
+        height: root.notchHeight
         radius: 0
         color: "transparent"
         Canvas {
@@ -255,7 +363,7 @@ Item {
             anchors.centerIn: parent
             text: "󰌾"
             font.family: "IosevkaTerm Nerd Font"
-            font.pixelSize: 16
+            font.pixelSize: 18
             color: root.foreground
         }
     }
@@ -277,6 +385,7 @@ Item {
             text: "Volver"
             onClicked: {
                 root.view = "clock";
+                root.choosingUser = false;
                 root.forceActiveFocus();
             }
         }
@@ -296,6 +405,7 @@ Item {
             event.accepted = true;
         } else if (event.key === Qt.Key_Escape && root.view === "login") {
             root.view = "clock";
+            root.choosingUser = false;
             root.forceActiveFocus();
             event.accepted = true;
         } else if (root.view === "clock") {
