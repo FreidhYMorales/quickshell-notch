@@ -22,6 +22,8 @@ PanelWindow {
     readonly property bool pickerVisible: pickerPhase !== "closed"
     property real reveal: 0
     property bool waitingForFirstFrame: false
+    property bool videoFrameReady: false
+    onPreviewPathChanged: videoFrameReady = false
 
     function startReveal() {
         if (pickerPhase !== "opening" || !waitingForFirstFrame)
@@ -224,15 +226,26 @@ PanelWindow {
         VideoOutput {
             id: previewOutput
             anchors.fill: parent
-            visible: root.previewVideo
+            visible: root.previewVideo && root.videoFrameReady
             fillMode: VideoOutput.PreserveAspectCrop
         }
 
         Connections {
             target: previewOutput.videoSink
             function onVideoFrameChanged(frame) {
-                root.startReveal();
+                if (root.previewVideo && frame.valid) {
+                    root.videoFrameReady = true;
+                    root.startReveal();
+                }
             }
+        }
+
+        Image {
+            anchors.fill: parent
+            visible: root.previewVideo && !root.videoFrameReady
+            source: root.previewVideo ? Wallpapers.thumbnailFor(root.previewPath) : ""
+            asynchronous: true
+            fillMode: Image.PreserveAspectCrop
         }
 
         Rectangle {
@@ -289,7 +302,7 @@ PanelWindow {
                     readonly property int entryIndex: index
                     readonly property var entry: Wallpapers.entries[index]
                     readonly property bool nearby: Math.abs(offset) <= 2
-                    readonly property bool inPreloadWindow: Wallpapers.isPreloaded(index)
+                    readonly property bool inPreloadWindow: nearby
                     readonly property bool selected: offset === 0
                     // Once visited, retain the source and decoded frame.
                     property bool thumbnailLoaded: false
@@ -357,30 +370,16 @@ PanelWindow {
                             layer.enabled: true
                         }
 
-                        // Hold a decoded video frame; only the fullscreen preview loops.
-                        Video {
-                            id: videoThumbnail
+                        // A single extracted poster is shared with the launcher.
+                        Image {
+                            id: videoPoster
                             anchors.fill: parent
                             anchors.margins: 4
                             visible: card.entry?.video ?? false
-                            source: card.thumbnailLoaded && card.entry?.video ? "file://" + card.entry.path : ""
-                            autoPlay: false
-                            muted: true
-                            fillMode: VideoOutput.PreserveAspectCrop
-                            onSourceChanged: {
-                                if (card.thumbnailLoaded && source.toString() !== "")
-                                    play();
-                            }
-                            onVisibleChanged: {
-                                if (visible && source.toString() !== "")
-                                    play();
-                                else
-                                    stop();
-                            }
-                            onPositionChanged: {
-                                if (position >= 250 && playbackState === MediaPlayer.PlayingState)
-                                    pause();
-                            }
+                            source: card.thumbnailLoaded && card.entry?.video
+                                ? Wallpapers.thumbnailFor(card.entry.path) : ""
+                            asynchronous: true
+                            fillMode: Image.PreserveAspectCrop
                             layer.enabled: true
                             layer.effect: MultiEffect {
                                 maskEnabled: true
@@ -391,7 +390,7 @@ PanelWindow {
                         Column {
                             anchors.centerIn: parent
                             spacing: 8
-                            visible: (card.entry?.video ?? false) && !videoThumbnail.hasVideo
+                            visible: (card.entry?.video ?? false) && videoPoster.status !== Image.Ready
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
