@@ -58,3 +58,10 @@ export function normalizePerScreen(value) {
   }
   return clean;
 }
+
+ 
+// Applying to all monitors clears per-monitor overrides so newly connected
+// monitors also inherit the shared wallpaper.
+export function commitShared(path) {
+  return { perScreen: {}, fallback: path };
+}
