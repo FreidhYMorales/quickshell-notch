@@ -46,7 +46,6 @@ test("out-of-order transition completion is ignored", () => {
   assert.equal(closeQuickWallpaper(closing), closing);
 });
 
-
 test("opening and closing remain visible but never accept input", () => {
   const opening = openQuickWallpaper(initialQuickWallpaper(), "eDP-1");
   const closing = closeQuickWallpaper(opening);

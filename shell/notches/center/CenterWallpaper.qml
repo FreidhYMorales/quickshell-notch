@@ -18,7 +18,8 @@ Item {
         const entries = root.session?.entries;
         const count = entries?.length ?? 0;
         const selected = root.currentIndex;
-        if (count === 0 || selected < 0) return -1;
+        if (count === 0 || selected < 0)
+            return -1;
         return ((selected + offset) % count + count) % count;
     }
 
@@ -100,8 +101,7 @@ Item {
                         required property int index
                         readonly property int offset: index - 1
                         readonly property int entryIndex: root.wrappedIndex(offset)
-                        readonly property var entry: entryIndex >= 0
-                            ? root.session.entries[entryIndex] : null
+                        readonly property var entry: entryIndex >= 0 ? root.session.entries[entryIndex] : null
                         readonly property bool selected: offset === 0
 
                         function requestPoster() {
@@ -132,8 +132,7 @@ Item {
                                     maskEnabled: true
                                     maskSource: maskShape
                                 }
-                                source: card.entry && !card.entry.video
-                                    ? "file://" + card.entry.path : ""
+                                source: card.entry && !card.entry.video ? "file://" + card.entry.path : ""
                                 asynchronous: true
                                 fillMode: Image.PreserveAspectCrop
                             }
@@ -151,8 +150,7 @@ Item {
                                 anchors.fill: parent
                                 anchors.margins: Layout.wallpaperCardPad
                                 visible: card.entry?.video ?? false
-                                source: card.entry?.video && Wallpapers.thumbnailReady[card.entry.path]
-                                    ? "file://" + Wallpapers.thumbnailDir + "/" + Wallpapers.thumbnailReady[card.entry.path] : ""
+                                source: card.entry?.video && Wallpapers.thumbnailReady[card.entry.path] ? "file://" + Wallpapers.thumbnailDir + "/" + Wallpapers.thumbnailReady[card.entry.path] : ""
                                 asynchronous: true
                                 fillMode: Image.PreserveAspectCrop
                                 layer.enabled: true
@@ -210,7 +208,9 @@ Item {
                         x: Wallpapers.applyToAll ? 20 : 2
                         color: Colours.background
                         Behavior on x {
-                            NumberAnimation { duration: Timings.animNormal }
+                            NumberAnimation {
+                                duration: Timings.animNormal
+                            }
                         }
                     }
                     TapHandler {
@@ -219,6 +219,5 @@ Item {
                 }
             }
         }
-
     }
 }
