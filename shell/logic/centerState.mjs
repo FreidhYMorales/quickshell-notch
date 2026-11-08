@@ -128,6 +128,24 @@ const handlers = {
       keyboard: merge(keyboard, { sub: null }),
     });
   },
+  ThemeOpen(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub === "theme") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: "theme" }),
+    });
+  },
+  ThemeBack(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub !== "theme") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: null }),
+    });
+  },
   LauncherQuery(state, { text }) {
     const { keyboard } = state.global;
     if (keyboard?.kind !== "launcher") return unchanged(state);
