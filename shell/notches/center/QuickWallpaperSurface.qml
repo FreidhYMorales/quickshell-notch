@@ -263,15 +263,17 @@ PanelWindow {
         }
 
         Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: coverflow.top
+            anchors.right: coverflow.right
+            anchors.bottom: parent.bottom
             anchors.bottomMargin: 12
-            spacing: 12
+            spacing: 10
+
             Text {
-                text: Wallpapers.applyToAll ? "Todos los monitores" : "Monitor actual"
+                text: Wallpapers.applyToAll ? "Todos" : "Individual"
                 color: "white"
                 font.family: Fonts.family
                 font.pixelSize: 14
+                anchors.verticalCenter: parent.verticalCenter
             }
             Rectangle {
                 width: 40
@@ -300,7 +302,7 @@ PanelWindow {
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: Math.max(20, parent.height * 0.045)
+            anchors.bottomMargin: Math.max(56, parent.height * 0.065)
             width: Math.min(parent.width - 32, 840)
             height: Math.min(parent.height / 3, 250)
 
