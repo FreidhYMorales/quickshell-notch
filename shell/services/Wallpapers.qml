@@ -30,25 +30,81 @@ Singleton {
     property bool applyToAll: false
     property string selectionMonitor: ""
 
-    // Shared five-entry preload window for the launcher and fullscreen picker.
-    // The window shifts at the edges instead of wasting available slots.
-    readonly property var preloadIndices: {
-        const count = selection?.entries?.length ?? 0;
-        const selected = selection?.index ?? -1;
-        if (selected < 0 || count === 0)
-            return [];
-        const size = Math.min(5, count);
-        const start = Math.max(0, Math.min(selected - 2, count - size));
-        const indices = [];
-        for (let i = 0; i < size; i++)
-            indices.push(start + i);
-        return indices;
+    // On-demand, shared still-frame cache. One ffmpeg job at a time.
+    readonly property string thumbnailDir: notchDir + "/thumbnails"
+    property var thumbnailReady: ({})
+    property var thumbnailRequested: ({})
+    property var thumbnailQueue: []
+    property string thumbnailWorking: ""
+    property int thumbnailRevision: 0
+
+    function thumbnailFor(path: string): string {
+        if (!path || !/\\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(path))
+            return "";
+        if (thumbnailReady[path])
+            return "file://" + thumbnailDir + "/" + thumbnailReady[path] + "?v=" + thumbnailRevision;
+        requestThumbnail(path);
+        return "";
     }
 
-    function isPreloaded(index: int): bool {
-        return preloadIndices.includes(index);
+    function requestThumbnail(path: string) {
+        if (!path || thumbnailRequested[path])
+            return;
+        const requested = Object.assign({}, thumbnailRequested);
+        requested[path] = true;
+        thumbnailRequested = requested;
+        thumbnailQueue = thumbnailQueue.concat([path]);
+        if (!thumbnailWorking && !thumbnailFolder.running)
+            thumbnailFolder.running = true;
     }
 
+    function startThumbnailJob() {
+        if (thumbnailWorking || thumbnailQueue.length === 0)
+            return;
+        const path = thumbnailQueue[0];
+        thumbnailQueue = thumbnailQueue.slice(1);
+        thumbnailWorking = path;
+        const index = entries.findIndex(entry => entry.path === path);
+        // Use a session-local sequential identifier to avoid unsafe path names.
+        const name = "frame-" + thumbnailRevision + "-" + index + ".jpg";
+        thumbnailExtractor.command = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+            "-y", "-i", path, "-frames:v", "1", "-vf",
+            "scale=480:-2", thumbnailDir + "/" + name];
+        thumbnailExtractor.running = true;
+    }
+
+    Process {
+        id: thumbnailFolder
+        command: ["mkdir", "-p", root.thumbnailDir]
+        onExited: code => {
+            if (code === 0)
+                root.startThumbnailJob();
+            else
+                console.warn("Wallpapers: cannot create thumbnail directory");
+        }
+    }
+
+    Process {
+        id: thumbnailExtractor
+        property string extractingPath: ""
+        onRunningChanged: {
+            if (running)
+                extractingPath = root.thumbnailWorking;
+        }
+        onExited: code => {
+            const path = extractingPath;
+            if (code === 0) {
+                const index = root.entries.findIndex(entry => entry.path === path);
+                const ready = Object.assign({}, root.thumbnailReady);
+                ready[path] = "frame-" + root.thumbnailRevision + "-" + index + ".jpg";
+                root.thumbnailReady = ready;
+            } else {
+                console.warn("Wallpapers: cannot extract frame from " + path + " (is ffmpeg installed?)");
+            }
+            root.thumbnailWorking = "";
+            root.startThumbnailJob();
+        }
+    }
 
     function setApplyToAll(enabled: bool) {
         applyToAll = enabled;
