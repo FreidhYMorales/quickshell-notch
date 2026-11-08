@@ -27,6 +27,16 @@ Singleton {
     property var entries: []
     property var preview: null
     property var selection: null
+    property bool applyToAll: false
+
+    function setApplyToAll(enabled: bool) {
+        applyToAll = enabled;
+        if (selection && selection.index >= 0)
+            preview = {
+                screen: applyToAll ? "" : (preview?.screen ?? ""),
+                path: selection.preview
+            };
+    }
 
     function refreshCatalog() {
         const paths = [];
@@ -36,7 +46,7 @@ Singleton {
         if (selection) {
             selection = WallpaperPicker.refreshPreview(selection, entries);
             preview = selection.index < 0 ? null : {
-                screen: preview?.screen ?? "",
+                screen: applyToAll ? "" : (preview?.screen ?? ""),
                 path: selection.preview
             };
         }
@@ -45,7 +55,7 @@ Singleton {
     function begin(screen: string) {
         selection = WallpaperPicker.beginPreview(entries, WallpaperState.wallpaperFor(perScreen, fallback, screen));
         preview = selection.index < 0 ? null : {
-            screen: screen,
+            screen: applyToAll ? "" : screen,
             path: selection.preview
         };
     }
@@ -55,7 +65,7 @@ Singleton {
             return;
         selection = WallpaperPicker.movePreview(selection, step);
         preview = selection.index < 0 ? null : {
-            screen: screen,
+            screen: applyToAll ? "" : screen,
             path: selection.preview
         };
     }
@@ -65,7 +75,7 @@ Singleton {
             return;
         selection = WallpaperPicker.movePreview(selection, index - selection.index);
         preview = {
-            screen: screen,
+            screen: applyToAll ? "" : screen,
             path: selection.preview
         };
     }
@@ -81,7 +91,8 @@ Singleton {
         const path = WallpaperPicker.commitPreview(selection);
         if (!path)
             return;
-        const next = WallpaperState.commitFor(perScreen, fallback, screen, path);
+        const next = applyToAll ? WallpaperState.commitShared(path)
+            : WallpaperState.commitFor(perScreen, fallback, screen, path);
         fallback = next.fallback;
         perScreen = next.perScreen;
         cancel();
