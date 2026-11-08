@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
+import QtQuick.Shapes
 
 Item {
     id: root
@@ -24,8 +25,21 @@ Item {
     readonly property string userName: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 257) || "") : username.text
     readonly property string displayName: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 258) || userName) : username.text
     readonly property string avatarPath: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 260) || "") : ""
+    // Match the Quickshell idle height and ear/corner radii (Layout.qml).
+    // Width remains configurable until the live idle width is exported.
     readonly property real notchWidth: 420
-    readonly property real notchHeight: 62
+    readonly property real notchHeight: 32
+    readonly property real earRadius: 12
+    readonly property real cornerRadius: 18
+    property real loginProgress: 0
+    Behavior on loginProgress { NumberAnimation { duration: 440; easing.type: Easing.InOutCubic } }
+    onLoginVisibleChanged: loginProgress = loginVisible ? 1 : 0
+    function notchPath(w, h) {
+        const e = Math.min(earRadius, h, w / 2);
+        const corner = Math.max(0, Math.min(cornerRadius, h - e, w / 2 - e));
+        const k = 0.5523 * e;
+        return `M 0 0 L ${w} 0 C ${w-k} 0 ${w-e} ${e-k} ${w-e} ${e} L ${w-e} ${h-corner} A ${corner} ${corner} 0 0 1 ${w-e-corner} ${h} L ${e+corner} ${h} A ${corner} ${corner} 0 0 1 ${e} ${h-corner} L ${e} ${e} C ${e} ${e-k} ${k} 0 0 0 Z`;
+    }
     readonly property bool loginVisible: view === "login"
 
     function chooseUser(index) {
@@ -128,12 +142,11 @@ Item {
             Item {
                 id: clockGroup
                 width: 600
-                height: root.loginVisible ? 120 : 190
+                height: 190 - 70 * root.loginProgress
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: root.loginVisible ? root.height * 0.22 : (root.height - height) / 2
+                y: (root.height - 190) / 2 + (root.height * 0.22 - (root.height - 190) / 2) * root.loginProgress
                 opacity: root.reveal
-                Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
-                Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
+
 
                 Column {
                     anchors.centerIn: parent
@@ -142,16 +155,14 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatTime(root.now, "hh:mm")
                         font.family: "IosevkaTerm Nerd Font"
-                        font.pixelSize: root.loginVisible ? 60 : 100
-                        Behavior on font.pixelSize { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
+                        font.pixelSize: 100 - 40 * root.loginProgress
                         color: "white"
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
                         font.family: "IosevkaTerm Nerd Font"
-                        font.pixelSize: root.loginVisible ? 18 : 23
-                        Behavior on font.pixelSize { NumberAnimation { duration: 360 } }
+                        font.pixelSize: 23 - 5 * root.loginProgress
                         color: "white"
                     }
                 }
@@ -159,32 +170,32 @@ Item {
 
             Column {
                 id: loginPanel
-                width: 320
-                spacing: 14
+                width: 284
+                spacing: 12
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: root.loginVisible ? root.height * 0.48 : root.height * 0.54
-                opacity: root.loginVisible ? root.reveal : 0
+                y: root.height * (0.51 + 0.035 * (1 - root.loginProgress))
+                opacity: root.loginProgress * root.reveal
                 visible: opacity > 0
-                Behavior on opacity { NumberAnimation { duration: 240 } }
-                Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.InOutCubic } }
+
 
                 Item {
                     width: parent.width
-                    height: root.choosingUser && root.hasUsers ? 118 : 80
+                    height: root.choosingUser && root.hasUsers ? 150 : 112
                     Behavior on height { NumberAnimation { duration: 220 } }
 
                     Rectangle {
                         id: avatarCircle
-                        width: 64
-                        height: 64
-                        radius: 32
+                        width: 88
+                        height: 88
+                        radius: 44
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color: "#171b22"
+                        color: "#29313d"
                         clip: true
 
                         Image {
                             id: face
                             anchors.fill: parent
+                            anchors.margins: 6
                             source: root.avatarPath === "" ? "" : (root.avatarPath.indexOf(":/") >= 0 ? root.avatarPath : "file://" + root.avatarPath)
                             fillMode: Image.PreserveAspectCrop
                             visible: status === Image.Ready
@@ -196,7 +207,7 @@ Item {
                             text: "󰀄"
                             color: "white"
                             font.family: "IosevkaTerm Nerd Font"
-                            font.pixelSize: 29
+                            font.pixelSize: 34
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -218,7 +229,7 @@ Item {
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: avatarCircle.bottom
-                        anchors.topMargin: 30
+                        anchors.topMargin: 34
                         visible: root.choosingUser && root.hasUsers
                         spacing: 10
 
@@ -273,8 +284,8 @@ Item {
 
                 Rectangle {
                     width: parent.width
-                    height: 48
-                    radius: 24
+                    height: 40
+                    radius: 20
                     color: "#000000"
 
                     TextField {
@@ -283,7 +294,7 @@ Item {
                         anchors.right: submitArrow.left
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        leftPadding: 18
+                        leftPadding: 15
                         background: Item {}
                         color: "white"
                         placeholderTextColor: "#a6b1bf"
@@ -295,8 +306,8 @@ Item {
                         id: submitArrow
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 48
-                        height: 48
+                        width: 40
+                        height: 40
                         Text {
                             anchors.centerIn: parent
                             text: "→"
@@ -342,20 +353,13 @@ Item {
         height: root.notchHeight
         radius: 0
         color: "transparent"
-        Canvas {
+        Shape {
             anchors.fill: parent
-            onPaint: {
-                const ctx = getContext("2d");
-                ctx.reset();
-                ctx.fillStyle = "#000000";
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(width, 0);
-                ctx.bezierCurveTo(width - 16, 0, width - 16, height, width - 32, height);
-                ctx.lineTo(32, height);
-                ctx.bezierCurveTo(16, height, 16, 0, 0, 0);
-                ctx.closePath();
-                ctx.fill();
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                strokeWidth: -1
+                fillColor: "black"
+                PathSvg { path: root.notchPath(root.notchWidth, root.notchHeight) }
             }
         }
 
