@@ -226,14 +226,15 @@ PanelWindow {
         VideoOutput {
             id: previewOutput
             anchors.fill: parent
-            visible: root.previewVideo && root.videoFrameReady
+            visible: root.previewVideo
+            opacity: root.videoFrameReady ? 1 : 0
             fillMode: VideoOutput.PreserveAspectCrop
         }
 
         Connections {
             target: previewOutput.videoSink
             function onVideoFrameChanged(frame) {
-                if (root.previewVideo && frame.valid) {
+                if (root.previewVideo && frame.isValid) {
                     root.videoFrameReady = true;
                     root.startReveal();
                 }
