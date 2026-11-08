@@ -2,10 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 
 test("other test entry points disable Quickshell crash relaunch", () => {
-  const dir = mkdtempSync("/tmp/opencode/other-runners-");
+  const dir = mkdtempSync(join(tmpdir(), "other-runners-"));
   try {
     const fakeQs = join(dir, "qs");
     writeFileSync(
