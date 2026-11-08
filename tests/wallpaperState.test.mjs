@@ -120,3 +120,11 @@ test("monitor state excludes dangerous inherited keys", () => {
   assert.deepEqual(normalizePerScreen(value), { "DP-1": "/w/ok.png" });
   assert.equal(shouldImport(null, ""), true);
 });
+
+test("shared commit replaces all monitor overrides and updates fallback", async () => {
+  const { commitShared } = await import("../shell/logic/wallpaperState.mjs");
+  const next = commitShared("/w/shared.mp4");
+  assert.deepEqual(next, { perScreen: {}, fallback: "/w/shared.mp4" });
+  assert.equal(wallpaperFor(next.perScreen, next.fallback, "DP-1"), "/w/shared.mp4");
+  assert.equal(wallpaperFor(next.perScreen, next.fallback, "HDMI-A-1"), "/w/shared.mp4");
+});
