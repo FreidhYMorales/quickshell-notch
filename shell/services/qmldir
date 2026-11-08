@@ -20,3 +20,4 @@ singleton PowerProfile PowerProfile.qml
 singleton Idle Idle.qml
 singleton SleepLock SleepLock.qml
 singleton Requests Requests.qml
+singleton Theme Theme.qml

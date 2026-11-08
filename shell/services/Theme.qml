@@ -1,0 +1,194 @@
+pragma Singleton
+
+import Quickshell
+import Quickshell.Io
+import QtQuick
+import "../config"
+import "../logic/theme.mjs" as ThemeLogic
+
+// The theme mode and the matugen pipeline. The notch's own theme.json wins;
+// the old shell's file is imported once when the notch has none, and is only
+// read. Dynamic is permanent: every wallpaper commit and mode choice rebuilds
+// the apps, an override only recolours its monitor.
+Singleton {
+    id: root
+
+    readonly property string stateHome: Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")
+    readonly property string notchDir: stateHome + "/quickshell-notch"
+    readonly property string oldDir: stateHome + "/quickshell"
+    readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")
+    readonly property string postHookPath: configHome + "/matugen/post-hook.sh"
+
+    // scheme-* id; DEFAULT_MODE until a saved state says otherwise.
+    property string mode: ThemeLogic.DEFAULT_MODE
+    // true once the notch state on disk holds the current mode.
+    property bool saved: false
+    // true once the app pipeline and the queued monitor palettes are done.
+    property bool applied: true
+    property var palettes: ({})
+
+    property bool appDone: true
+    property bool paletteBusy: false
+    property var paletteQueue: []
+
+    // Colours.paletteFor(screen) reads these; a screen without an entry
+    // follows the global colors.json palette.
+    function paletteFor(screen: string): var {
+        return palettes[screen] ?? null;
+    }
+
+    function readText(path: string): var {
+        reader.path = path;
+        reader.reload();
+        reader.waitForJob();
+        return reader.loaded ? reader.text() : null;
+    }
+
+    function load() {
+        const notch = readText(notchDir + "/theme.json");
+        if (notch !== null) {
+            mode = ThemeLogic.themeState(notch, null).mode;
+            saved = true;
+            return;
+        }
+        mode = ThemeLogic.themeState(null, readText(oldDir + "/theme.json")).mode;
+        persist();
+    }
+
+    function persist() {
+        saved = false;
+        mkdir.running = true;
+    }
+
+    // Called by the theme view; an unknown id is ignored so a stale probe or
+    // a corrupted state cannot start a matugen run with bogus args.
+    function select(nextMode: string) {
+        if (ThemeLogic.MODES.indexOf(nextMode) === -1)
+            return;
+        mode = nextMode;
+        persist();
+        apply(ThemeLogic.commitJobs({
+            kind: "mode",
+            wallpaper: Wallpapers.fallback,
+            perScreen: Wallpapers.perScreen
+        }));
+    }
+
+    function apply(jobs: var) {
+        if (Flags.smoke)
+            return;
+        applied = false;
+        appDone = jobs.app === null;
+        if (jobs.app)
+            runApp(jobs.app);
+        paletteQueue = paletteQueue.concat(jobs.palettes);
+        startPalette();
+        checkApplied();
+    }
+
+    function checkApplied() {
+        applied = appDone && !paletteBusy && paletteQueue.length === 0;
+    }
+
+    function runApp(path: string) {
+        appProc.command = ThemeLogic.appArgs(path, root.mode);
+        appProc.running = true;
+    }
+
+    function startPalette() {
+        if (paletteBusy || paletteQueue.length === 0) {
+            checkApplied();
+            return;
+        }
+        const job = paletteQueue[0];
+        paletteQueue = paletteQueue.slice(1);
+        paletteBusy = true;
+        paletteProc.pendingScreen = job.screen;
+        paletteProc.command = ThemeLogic.dryArgs(job.path, root.mode);
+        paletteProc.running = true;
+    }
+
+    Component.onCompleted: {
+        if (!Flags.smoke)
+            load();
+    }
+
+    FileView {
+        id: reader
+
+        blockLoading: true
+        printErrors: false
+    }
+
+    Process {
+        id: mkdir
+
+        command: ["mkdir", "-p", root.notchDir]
+        onExited: code => {
+            if (code !== 0)
+                return console.warn("Theme: cannot create " + root.notchDir);
+            writer.setText(JSON.stringify({
+                mode: root.mode
+            }));
+        }
+    }
+
+    FileView {
+        id: writer
+
+        path: root.notchDir + "/theme.json"
+        blockLoading: true
+        printErrors: false
+        onSaved: root.saved = true
+        onSaveFailed: console.warn("Theme: cannot save " + path)
+    }
+
+    Process {
+        id: appProc
+
+        onExited: code => {
+            if (code !== 0) {
+                console.warn("Theme: matugen exited with " + code);
+                root.appDone = true;
+                root.checkApplied();
+                return;
+            }
+            postHook.running = true;
+        }
+    }
+
+    Process {
+        id: postHook
+
+        command: [root.postHookPath, "dark"]
+        onExited: code => {
+            if (code !== 0)
+                console.warn("Theme: post-hook exited with " + code);
+            root.appDone = true;
+            root.checkApplied();
+        }
+    }
+
+    Process {
+        id: paletteProc
+
+        property string pendingScreen: ""
+
+        stdout: StdioCollector {
+            id: paletteOut
+
+            onStreamFinished: {
+                const palette = ThemeLogic.parseDryPalette(paletteOut.text);
+                if (palette) {
+                    const next = Object.assign({}, root.palettes);
+                    next[paletteProc.pendingScreen] = palette;
+                    root.palettes = next;
+                } else {
+                    console.warn("Theme: no palette for " + paletteProc.pendingScreen);
+                }
+                root.paletteBusy = false;
+                root.startPalette();
+            }
+        }
+    }
+}
