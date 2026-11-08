@@ -5,6 +5,7 @@ import {
   dryArgs,
   MODES,
   parseDryPalette,
+  themeState,
 } from "../shell/logic/theme.mjs";
 
 test("theme modes are the nine matugen scheme types in display order", () => {
@@ -83,4 +84,31 @@ test("the app-facing run writes the theme, the dry-run only reads it", () => {
     "--json",
     "hex",
   ]);
+});
+
+test("the notch theme state wins and drops the old dynamic flag", () => {
+  assert.deepEqual(
+    themeState(
+      '{"mode":"scheme-vibrant","dynamic":true}',
+      '{"mode":"scheme-neutral"}',
+    ),
+    { mode: "scheme-vibrant" },
+  );
+});
+
+test("the old theme is imported only when the notch has no state", () => {
+  assert.deepEqual(themeState(null, '{"mode":"scheme-rainbow"}'), {
+    mode: "scheme-rainbow",
+  });
+  assert.deepEqual(themeState("not json", '{"mode":"scheme-rainbow"}'), {
+    mode: "scheme-content",
+  });
+});
+
+test("a missing or broken theme state falls back to scheme-content", () => {
+  assert.deepEqual(themeState(null, null), { mode: "scheme-content" });
+  assert.deepEqual(themeState("not json", null), { mode: "scheme-content" });
+  assert.deepEqual(themeState('{"mode":"scheme-bogus"}', null), {
+    mode: "scheme-content",
+  });
 });
