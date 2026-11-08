@@ -93,18 +93,19 @@ Item {
                 visible: root.session?.entries.length > 0
 
                 Repeater {
-                    model: 3
+                    model: Wallpapers.preloadIndices
 
                     delegate: Item {
                         id: card
                         required property int index
-                        readonly property int offset: index - 1
-                        readonly property int entryIndex: root.wrappedIndex(offset)
+                        readonly property int entryIndex: modelData
+                        readonly property int offset: entryIndex - root.currentIndex
                         readonly property var entry: entryIndex >= 0
                             ? root.session.entries[entryIndex] : null
                         readonly property bool selected: offset === 0
 
-                        width: Layout.wallpaperCardWidth
+                        visible: Math.abs(offset) <= 1
+                        width: visible ? Layout.wallpaperCardWidth : 0
                         height: Layout.wallpaperCardHeight
 
                         Rectangle {
