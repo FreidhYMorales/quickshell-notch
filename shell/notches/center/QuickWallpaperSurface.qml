@@ -23,7 +23,29 @@ PanelWindow {
     property real reveal: 0
     property bool waitingForFirstFrame: false
     property bool videoFrameReady: false
-    onPreviewPathChanged: videoFrameReady = false
+    // Navigation updates the poster immediately; decoding starts only after
+    // the selection remains unchanged for a short moment.
+    property string playbackPath: ""
+    onPreviewPathChanged: {
+        videoFrameReady = false;
+        playbackDelay.stop();
+        videoPreview.stop();
+        playbackPath = "";
+        if (pickerVisible && previewVideo)
+            playbackDelay.restart();
+    }
+
+    Timer {
+        id: playbackDelay
+        interval: 320
+        repeat: false
+        onTriggered: {
+            if (root.pickerVisible && root.previewVideo) {
+                root.playbackPath = root.previewPath;
+                videoPreview.play();
+            }
+        }
+    }
 
     function startReveal() {
         if (pickerPhase !== "opening" || !waitingForFirstFrame)
@@ -109,10 +131,15 @@ PanelWindow {
     // Keep playback alive during the opening and closing reveal, not only
     // while the picker accepts keyboard input.
     onPickerVisibleChanged: {
-        if (pickerVisible && previewVideo)
-            videoPreview.play();
-        else
+        if (pickerVisible && previewVideo) {
+            videoFrameReady = false;
+            playbackDelay.restart();
+        } else {
+            playbackDelay.stop();
             videoPreview.stop();
+            playbackPath = "";
+            videoFrameReady = false;
+        }
     }
 
     Timer {
@@ -212,14 +239,10 @@ PanelWindow {
 
         MediaPlayer {
             id: videoPreview
-            source: root.previewVideo ? "file://" + root.previewPath : ""
+            source: root.playbackPath ? "file://" + root.playbackPath : ""
             videoOutput: previewOutput
             loops: MediaPlayer.Infinite
             audioOutput: AudioOutput { muted: true }
-            onSourceChanged: {
-                if (root.pickerVisible && root.previewVideo)
-                    play();
-            }
             onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: cannot play video " + root.previewPath + ": " + errorString)
         }
 
@@ -234,7 +257,7 @@ PanelWindow {
         Connections {
             target: previewOutput.videoSink
             function onVideoFrameChanged(frame) {
-                if (root.previewVideo && root.pickerVisible) {
+                if (root.previewVideo && root.pickerVisible && root.playbackPath === root.previewPath && videoPreview.playbackState === MediaPlayer.PlayingState) {
                     root.videoFrameReady = true;
                     root.startReveal();
                 }
