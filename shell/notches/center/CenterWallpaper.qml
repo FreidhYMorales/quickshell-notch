@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Effects
+import QtMultimedia
 import "../../config"
 import "../../services"
 
@@ -68,33 +69,6 @@ Item {
             color: root.scheme.onSurface
             font.family: Fonts.family
             font.pixelSize: Fonts.launcherItem
-        }
-
-        Row {
-            spacing: 10
-            Text {
-                text: Wallpapers.applyToAll ? "Todos los monitores" : "Monitor actual"
-                color: root.scheme.onSurface
-                font.family: Fonts.family
-                font.pixelSize: Fonts.launcherItem
-            }
-            Rectangle {
-                width: 38
-                height: 20
-                radius: 10
-                color: Wallpapers.applyToAll ? root.scheme.primary : root.scheme.muted
-                Rectangle {
-                    width: 16
-                    height: 16
-                    radius: 8
-                    y: 2
-                    x: Wallpapers.applyToAll ? 20 : 2
-                    color: Colours.background
-                }
-                TapHandler {
-                    onTapped: Wallpapers.setApplyToAll(!Wallpapers.applyToAll)
-                }
-            }
         }
 
         Item {
@@ -165,10 +139,38 @@ Item {
                                 layer.enabled: true
                             }
 
+                            Video {
+                                id: videoThumbnail
+                                anchors.fill: parent
+                                anchors.margins: Layout.wallpaperCardPad
+                                visible: card.entry?.video ?? false
+                                source: card.entry?.video ? "file://" + card.entry.path : ""
+                                autoPlay: false
+                                muted: true
+                                fillMode: VideoOutput.PreserveAspectCrop
+                                layer.enabled: true
+                                layer.effect: MultiEffect {
+                                    maskEnabled: true
+                                    maskSource: maskShape
+                                }
+                                onSourceChanged: {
+                                    if (source.toString() !== "")
+                                        play();
+                                }
+                                onPositionChanged: {
+                                    if (position >= 250 && playbackState === MediaPlayer.PlayingState)
+                                        pause();
+                                }
+                                onHasVideoChanged: {
+                                    if (hasVideo && playbackState === MediaPlayer.PlayingState)
+                                        pause();
+                                }
+                            }
+
                             Text {
                                 anchors.centerIn: parent
-                                visible: card.entry?.video ?? false
-                                text: Strings.wallpaperVideo
+                                visible: (card.entry?.video ?? false) && !videoThumbnail.hasVideo
+                                text: "CARGANDO"
                                 color: root.scheme.onSurface
                                 font.family: Fonts.family
                                 font.pixelSize: Fonts.launcherItem
@@ -178,6 +180,46 @@ Item {
                         TapHandler {
                             onTapped: Wallpapers.select(card.entryIndex, root.screen.name)
                         }
+                    }
+                }
+            }
+        }
+
+        Item {
+            width: parent.width
+            height: 24
+
+            Row {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 10
+
+                Text {
+                    text: Wallpapers.applyToAll ? "Todos" : "Individual"
+                    color: root.scheme.onSurface
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.launcherItem
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Rectangle {
+                    width: 38
+                    height: 20
+                    radius: 10
+                    color: Wallpapers.applyToAll ? root.scheme.primary : root.scheme.muted
+                    Rectangle {
+                        width: 16
+                        height: 16
+                        radius: 8
+                        y: 2
+                        x: Wallpapers.applyToAll ? 20 : 2
+                        color: Colours.background
+                        Behavior on x {
+                            NumberAnimation { duration: Timings.animNormal }
+                        }
+                    }
+                    TapHandler {
+                        onTapped: Wallpapers.setApplyToAll(!Wallpapers.applyToAll)
                     }
                 }
             }
