@@ -148,8 +148,7 @@ PanelWindow {
                     if (hasVideo && layer.isIncoming)
                         root.incomingReady();
                 }
-                onErrorOccurred: (error, errorString) =>
-                    console.warn("WallpaperSurface: cannot play " + layer.wallpaperPath + ": " + errorString)
+                onErrorOccurred: (error, errorString) => console.warn("WallpaperSurface: cannot play " + layer.wallpaperPath + ": " + errorString)
             }
 
             onPlayVideoChanged: {
