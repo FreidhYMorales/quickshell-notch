@@ -15,6 +15,29 @@ export const MODES = [
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
+// Argv arrays, no shell. The app-facing run writes colors.json and runs the
+// post-hook; the dry-run only dumps one monitor's palette. The notch stays
+// dark in this story: #40 adds the app-only light/dark axis.
+const baseArgs = (path, mode) => [
+  "matugen",
+  "image",
+  path,
+  "--type",
+  mode,
+  "--mode",
+  "dark",
+  "--source-color-index",
+  "0",
+];
+
+export function appArgs(path, mode) {
+  return baseArgs(path, mode).concat(["--quiet"]);
+}
+
+export function dryArgs(path, mode) {
+  return baseArgs(path, mode).concat(["--dry-run", "--quiet", "--json", "hex"]);
+}
+
 // matugen --dry-run --json hex nests each colour as { default: { color } },
 // unlike the { hex } shape of the colors.json it writes for the apps.
 export function parseDryPalette(jsonText) {
