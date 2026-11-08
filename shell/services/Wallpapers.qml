@@ -37,9 +37,11 @@ Singleton {
     property var thumbnailQueue: []
     property string thumbnailWorking: ""
     property int thumbnailRevision: 0
+    property int thumbnailSerial: 0
+    property string thumbnailOutputName: ""
 
     function thumbnailFor(path: string): string {
-        if (!path || !/\\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(path))
+        if (!path || !/\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(path))
             return "";
         if (thumbnailReady[path])
             return "file://" + thumbnailDir + "/" + thumbnailReady[path] + "?v=" + thumbnailRevision;
@@ -64,9 +66,9 @@ Singleton {
         const path = thumbnailQueue[0];
         thumbnailQueue = thumbnailQueue.slice(1);
         thumbnailWorking = path;
-        const index = entries.findIndex(entry => entry.path === path);
-        // Use a session-local sequential identifier to avoid unsafe path names.
-        const name = "frame-" + thumbnailRevision + "-" + index + ".jpg";
+        thumbnailSerial += 1;
+        const name = "frame-" + thumbnailSerial + ".jpg";
+        thumbnailOutputName = name;
         thumbnailExtractor.command = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
             "-y", "-i", path, "-frames:v", "1", "-vf",
             "scale=480:-2", thumbnailDir + "/" + name];
@@ -94,14 +96,14 @@ Singleton {
         onExited: code => {
             const path = extractingPath;
             if (code === 0) {
-                const index = root.entries.findIndex(entry => entry.path === path);
                 const ready = Object.assign({}, root.thumbnailReady);
-                ready[path] = "frame-" + root.thumbnailRevision + "-" + index + ".jpg";
+                ready[path] = root.thumbnailOutputName;
                 root.thumbnailReady = ready;
             } else {
                 console.warn("Wallpapers: cannot extract frame from " + path + " (is ffmpeg installed?)");
             }
             root.thumbnailWorking = "";
+            root.thumbnailRevision += 1;
             root.startThumbnailJob();
         }
     }
