@@ -279,7 +279,7 @@ PanelWindow {
             readonly property real step: Math.min(cardWidth * 0.76, width / 6.5)
 
             Repeater {
-                model: Wallpapers.entries
+                model: root.secondaryPreview ? [] : Wallpapers.entries
 
                 delegate: Item {
                     id: card
