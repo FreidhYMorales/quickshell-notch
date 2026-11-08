@@ -23,50 +23,35 @@ PanelWindow {
     property real reveal: 0
     property bool waitingForFirstFrame: false
     property bool videoFrameReady: false
-    // Navigation updates the poster immediately; decoding starts only after
-    // the selection remains unchanged for a short moment.
+    // During held-key navigation only the lightweight poster changes.
+    // The final selection starts decoding as soon as the key is released.
     property string playbackPath: ""
+    property bool keyboardNavigating: false
+
     function resetPlayback() {
         videoFrameReady = false;
-        playbackDelay.stop();
         videoPreview.stop();
         playbackPath = "";
-        // Defer until previewPath, previewVideo and pickerVisible bindings
-        // have all settled after a selection/type change.
         Qt.callLater(schedulePlayback);
     }
 
     function schedulePlayback() {
-        if (!pickerVisible || !previewVideo || previewPath === "")
+        if (!pickerVisible || !previewVideo || previewPath === ""
+                || keyboardNavigating)
             return;
-        // The already-selected desktop wallpaper should start decoding as
-        // soon as the picker opens. Navigation still gets a short debounce.
-        playbackDelay.interval = pickerPhase === "opening"
-            && previewPath === Wallpapers.pathFor(monitorName) ? 1 : 320;
-        playbackDelay.restart();
+        playbackPath = previewPath;
+        // Source bindings must settle before starting Qt Multimedia.
+        Qt.callLater(() => {
+            if (pickerVisible && !keyboardNavigating
+                    && playbackPath === previewPath && playbackPath !== "")
+                videoPreview.play();
+        });
     }
 
     onPreviewPathChanged: resetPlayback()
     onPreviewVideoChanged: {
         if (previewVideo)
             Qt.callLater(schedulePlayback);
-    }
-
-    Timer {
-        id: playbackDelay
-        interval: 320
-        repeat: false
-        onTriggered: {
-            if (root.pickerVisible && root.previewVideo && root.previewPath !== "") {
-                root.playbackPath = root.previewPath;
-                // Let the MediaPlayer source binding settle before play().
-                Qt.callLater(() => {
-                    if (root.pickerVisible && root.playbackPath === root.previewPath
-                            && root.playbackPath !== "")
-                        videoPreview.play();
-                });
-            }
-        }
     }
 
     function startReveal() {
@@ -157,7 +142,7 @@ PanelWindow {
             videoFrameReady = false;
             Qt.callLater(schedulePlayback);
         } else {
-            playbackDelay.stop();
+            keyboardNavigating = false;
             videoPreview.stop();
             playbackPath = "";
             videoFrameReady = false;
@@ -231,9 +216,11 @@ PanelWindow {
         focus: root.pickerOpen && !root.secondaryPreview
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
+                root.keyboardNavigating = true;
                 Wallpapers.move(-1, root.monitorName);
                 event.accepted = true;
             } else if (event.key === Qt.Key_Right || event.key === Qt.Key_L) {
+                root.keyboardNavigating = true;
                 Wallpapers.move(1, root.monitorName);
                 event.accepted = true;
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -241,6 +228,17 @@ PanelWindow {
                 event.accepted = true;
             } else if (event.key === Qt.Key_Escape) {
                 CenterStore.cancelQuickWallpaper();
+                event.accepted = true;
+            }
+        }
+        Keys.onReleased: event => {
+            if (event.key === Qt.Key_Left || event.key === Qt.Key_Right
+                    || event.key === Qt.Key_H || event.key === Qt.Key_L) {
+                // Auto-repeat release events are not the end of navigation.
+                if (!event.isAutoRepeat) {
+                    root.keyboardNavigating = false;
+                    Qt.callLater(root.schedulePlayback);
+                }
                 event.accepted = true;
             }
         }
