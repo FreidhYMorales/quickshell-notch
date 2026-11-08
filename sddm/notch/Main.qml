@@ -25,11 +25,13 @@ Item {
     readonly property string userName: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 257) || "") : username.text
     readonly property string displayName: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 258) || userName) : username.text
     readonly property string avatarPath: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 260) || "") : ""
-    // Match the Quickshell idle height and ear/corner radii (Layout.qml).
-    // Width remains configurable until the live idle width is exported.
-    // Fixed handoff target: match the chosen Quickshell idle appearance.
-    // Runtime battery/media/notification changes need not change SDDM.
-    readonly property real notchWidth: Math.max(80, Number(config.notchWidth) || 420)
+    // Two handoff presets. The actual idle width is content-driven in
+    // CenterSurface.qml: idleWidth(baseWidth, sideNeed, batteryLayer, dotExtent).
+    // These values are calibration targets, not runtime measurements.
+    readonly property real normalNotchWidth: Math.max(80, Number(config.normalNotchWidth) || 300)
+    readonly property real chargingNotchWidth: Math.max(normalNotchWidth, Number(config.chargingNotchWidth) || 420)
+    readonly property string notchMode: String(config.notchMode || "normal")
+    readonly property real notchWidth: notchMode === "charging" ? chargingNotchWidth : normalNotchWidth
     readonly property real notchHeight: 32
     readonly property real earRadius: 12
     readonly property real cornerRadius: 18
@@ -215,9 +217,9 @@ Item {
                             text: "󰀄"
                             color: "#f4f7ff"
                             font.family: "IosevkaTerm Nerd Font"
-                            font.pixelSize: 29
-                            width: 48
-                            height: 48
+                            font.pixelSize: 43
+                            width: 72
+                            height: 72
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             fontSizeMode: Text.Fit
