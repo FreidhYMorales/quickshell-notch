@@ -184,6 +184,7 @@ Singleton {
         const next = applyToAll ? WallpaperState.commitShared(path) : WallpaperState.commitFor(perScreen, fallback, screen, path);
         fallback = next.fallback;
         perScreen = next.perScreen;
+        Theme.commitWallpaper(applyToAll, screen, path);
         cancel();
         requestSave();
     }

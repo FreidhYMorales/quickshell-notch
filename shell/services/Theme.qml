@@ -74,6 +74,23 @@ Singleton {
         }));
     }
 
+    // Called by Wallpapers.commit once its state holds the new path.
+    function commitWallpaper(shared: bool, screen: string, path: string) {
+        // A shared commit clears every override, so their palettes are stale.
+        if (shared)
+            palettes = ({});
+        apply(ThemeLogic.commitJobs({
+            kind: "wallpaper",
+            shared: shared,
+            screen: screen,
+            path: path,
+            perScreen: Wallpapers.perScreen
+        }));
+    }
+
+    // Colours.paletteFor(screen) prefers these over the global colors.json.
+    onPalettesChanged: Colours.overrides = palettes
+
     function apply(jobs: var) {
         if (Flags.smoke)
             return;
