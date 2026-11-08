@@ -10,9 +10,10 @@ Item {
     focus: true
 
     // Standalone theme. SDDM and Quickshell intentionally do not share auth.
-    // Ctrl+Shift+Return previews the exit morph in greeter test mode.
+    // Ctrl+Shift+Return previews the exit morph and restores the greeter.
     property string view: "clock"
     property bool exiting: false
+    property bool previewingExit: false
     property real reveal: 1
     property date now: new Date()
     property string errorMessage: ""
@@ -73,8 +74,18 @@ Item {
     function previewExit() {
         if (exiting)
             return;
+        previewingExit = true;
         exiting = true;
-        exitMorph.start();
+        exitMorph.restart();
+    }
+
+    function resetPreview() {
+        if (!previewingExit)
+            return;
+        previewingExit = false;
+        exiting = false;
+        root.reveal = 1;
+        root.forceActiveFocus();
     }
 
     Timer {
@@ -87,6 +98,8 @@ Item {
     Connections {
         target: sddm
         function onLoginFailed() {
+            previewReset.stop();
+            root.previewingExit = false;
             root.exiting = false;
             root.reveal = 1;
             root.errorMessage = "No se pudo iniciar sesión";
@@ -96,8 +109,19 @@ Item {
         function onLoginSucceeded() {
             // SDDM may terminate the greeter immediately. A true handoff
             // animation is deferred to the follow-up integration story.
-            root.previewExit();
+            // Do not claim the preview is a real compositor handoff.
+            // Greeter teardown may interrupt this animation.
+            root.previewingExit = false;
+            root.exiting = true;
+            exitMorph.restart();
         }
+    }
+
+    Timer {
+        id: previewReset
+        interval: 1100
+        repeat: false
+        onTriggered: root.resetPreview()
     }
 
     NumberAnimation {
@@ -106,8 +130,12 @@ Item {
         property: "reveal"
         from: 1
         to: 0
-        duration: 400
+        duration: 520
         easing.type: Easing.InOutCubic
+        onFinished: {
+            if (root.previewingExit)
+                previewReset.restart();
+        }
     }
 
     Rectangle {
@@ -123,6 +151,8 @@ Item {
         anchors.top: parent.top
         clip: true
 
+        // The preview remains in the same SDDM process and resets after a hold.
+        // A real post-authentication handoff remains a separate integration task.
         // This is the first visual approximation. The final shared curved
         // notch mask will be ported from the wallpaper picker in phase 3.
         Rectangle {
