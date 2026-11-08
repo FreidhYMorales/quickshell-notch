@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MODES, parseDryPalette } from "../shell/logic/theme.mjs";
+import {
+  appArgs,
+  dryArgs,
+  MODES,
+  parseDryPalette,
+} from "../shell/logic/theme.mjs";
 
 test("theme modes are the nine matugen scheme types in display order", () => {
   assert.deepEqual(MODES, [
@@ -48,4 +53,34 @@ test("a broken dry-run palette gives null", () => {
     ),
     null,
   );
+});
+
+test("the app-facing run writes the theme, the dry-run only reads it", () => {
+  assert.deepEqual(appArgs("/w/a.png", "scheme-vibrant"), [
+    "matugen",
+    "image",
+    "/w/a.png",
+    "--type",
+    "scheme-vibrant",
+    "--mode",
+    "dark",
+    "--source-color-index",
+    "0",
+    "--quiet",
+  ]);
+  assert.deepEqual(dryArgs("/w/b.png", "scheme-neutral"), [
+    "matugen",
+    "image",
+    "/w/b.png",
+    "--type",
+    "scheme-neutral",
+    "--mode",
+    "dark",
+    "--source-color-index",
+    "0",
+    "--dry-run",
+    "--quiet",
+    "--json",
+    "hex",
+  ]);
 });
