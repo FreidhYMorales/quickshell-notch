@@ -560,12 +560,13 @@ Item {
                         ctx.lineCap = "round";
                         ctx.lineJoin = "round";
                         ctx.beginPath();
-                        // Almost-complete clockwise ring with an attached arrowhead.
-                        ctx.arc(12, 12, 8, -Math.PI * 0.5, Math.PI * 1.25, false);
-                        ctx.moveTo(12, 4);
-                        ctx.lineTo(18, 4);
-                        ctx.moveTo(12, 4);
-                        ctx.lineTo(12, 10);
+                        // Circular refresh arrow: arc ends at the upper-left,
+                        // with a chevron aligned to its tangent.
+                        ctx.arc(12, 12, 8, -0.75, 3.93, false);
+                        ctx.moveTo(6.36, 6.34);
+                        ctx.lineTo(6.36, 11.5);
+                        ctx.moveTo(6.36, 6.34);
+                        ctx.lineTo(11.5, 6.34);
                         ctx.stroke();
                     }
                 }
