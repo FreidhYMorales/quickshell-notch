@@ -36,7 +36,6 @@ Singleton {
     property var thumbnailRequested: ({})
     property var thumbnailQueue: []
     property string thumbnailWorking: ""
-    property int thumbnailSerial: 0
     property string thumbnailOutputName: ""
 
     function thumbnailFor(path: string): string {
@@ -59,18 +58,36 @@ Singleton {
             thumbnailFolder.running = true;
     }
 
+    // Stable per-path filename, reused across Quickshell restarts.
+    // Two independent 32-bit hashes make collisions extremely unlikely.
+    function thumbnailName(path: string): string {
+        let a = 2166136261;
+        let b = 5381;
+        for (let i = 0; i < path.length; i++) {
+            const c = path.charCodeAt(i);
+            a = Math.imul(a ^ c, 16777619);
+            b = Math.imul(b, 33) ^ c;
+        }
+        return "frame-" + (a >>> 0).toString(16).padStart(8, "0")
+            + "-" + (b >>> 0).toString(16).padStart(8, "0") + ".jpg";
+    }
+
     function startThumbnailJob() {
         if (thumbnailWorking || thumbnailQueue.length === 0)
             return;
         const path = thumbnailQueue[0];
         thumbnailQueue = thumbnailQueue.slice(1);
         thumbnailWorking = path;
-        thumbnailSerial += 1;
-        const name = "frame-" + thumbnailSerial + ".jpg";
+        const name = thumbnailName(path);
         thumbnailOutputName = name;
-        thumbnailExtractor.command = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
-            "-y", "-i", path, "-frames:v", "1",
-            "-q:v", "2", thumbnailDir + "/" + name];
+        const output = thumbnailDir + "/" + name;
+        // Only regenerate when missing, empty or older than the source.
+        // A temporary file avoids exposing a partially written JPEG.
+        thumbnailExtractor.command = ["sh", "-c",
+            "if [ -s \"$2\" ] && [ \"$2\" -nt \"$1\" ]; then exit 0; fi; "
+            + "ffmpeg -nostdin -hide_banner -loglevel error -y -i \"$1\" "
+            + "-frames:v 1 -q:v 2 \"$2.tmp.jpg\" && mv -f \"$2.tmp.jpg\" \"$2\"",
+            "thumbnail-cache", path, output];
         thumbnailExtractor.running = true;
     }
 
