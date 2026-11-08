@@ -4,12 +4,14 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import "../logic/palette.mjs" as PaletteLogic
+import "../logic/themeState.mjs" as ThemeState
+import "../services"
 
 Singleton {
     id: root
 
     // Notches are pure black; cards are black mixed with a little of the accent.
-    readonly property color background: "#000000"
+    readonly property color background: Theme.current.mode === "light" ? "#f8f8fc" : "#000000"
     readonly property real cardMix: 0.08
     // Control center toggle button fill while off (primary at this alpha).
     readonly property real tileOffAlpha: 0.18
@@ -47,7 +49,7 @@ Singleton {
 
     // paletteFor(screen) -> { primary, onSurface, muted }
     function paletteFor(screen): var {
-        return overrides[screen?.name] ?? global;
+        return ThemeState.themePalette(Theme.current, overrides[screen?.name] ?? global);
     }
 
     // cardFor(screen) -> colour of an inner card on that screen
