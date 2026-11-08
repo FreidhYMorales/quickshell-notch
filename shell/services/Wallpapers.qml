@@ -28,12 +28,13 @@ Singleton {
     property var preview: null
     property var selection: null
     property bool applyToAll: false
+    property string selectionMonitor: ""
 
     function setApplyToAll(enabled: bool) {
         applyToAll = enabled;
         if (selection && selection.index >= 0)
             preview = {
-                screen: applyToAll ? "" : (preview?.screen ?? ""),
+                screen: applyToAll ? "" : selectionMonitor,
                 path: selection.preview
             };
     }
@@ -53,6 +54,7 @@ Singleton {
     }
 
     function begin(screen: string) {
+        selectionMonitor = screen;
         selection = WallpaperPicker.beginPreview(entries, WallpaperState.wallpaperFor(perScreen, fallback, screen));
         preview = selection.index < 0 ? null : {
             screen: applyToAll ? "" : screen,
