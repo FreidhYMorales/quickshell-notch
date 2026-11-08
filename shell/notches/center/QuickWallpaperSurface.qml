@@ -22,50 +22,6 @@ PanelWindow {
     readonly property bool pickerVisible: pickerPhase !== "closed"
     property real reveal: 0
     property bool waitingForFirstFrame: false
-    property int visibleVideoSlot: 0
-    property int loadingVideoSlot: -1
-    property string videoSource0: ""
-    property string videoSource1: ""
-    property string shownVideoPath: ""
-
-    function prepareVideo() {
-        if (!pickerVisible || !previewVideo)
-            return;
-        if (shownVideoPath === previewPath && loadingVideoSlot < 0)
-            return;
-        const next = shownVideoPath ? 1 - visibleVideoSlot : visibleVideoSlot;
-        loadingVideoSlot = next;
-        if (next === 0) {
-            videoSource0 = previewPath;
-            player0.play();
-        } else {
-            videoSource1 = previewPath;
-            player1.play();
-        }
-    }
-
-    function acceptVideoFrame(slot) {
-        if (slot !== loadingVideoSlot)
-            return;
-        const readyPath = slot === 0 ? videoSource0 : videoSource1;
-        if (readyPath !== previewPath)
-            return;
-        const previous = visibleVideoSlot;
-        visibleVideoSlot = slot;
-        shownVideoPath = readyPath;
-        loadingVideoSlot = -1;
-        if (previous !== slot) {
-            if (previous === 0) {
-                player0.stop();
-                videoSource0 = "";
-            } else {
-                player1.stop();
-                videoSource1 = "";
-            }
-        }
-        startReveal();
-    }
-    onPreviewPathChanged: prepareVideo()
 
     function startReveal() {
         if (pickerPhase !== "opening" || !waitingForFirstFrame)
@@ -151,17 +107,10 @@ PanelWindow {
     // Keep playback alive during the opening and closing reveal, not only
     // while the picker accepts keyboard input.
     onPickerVisibleChanged: {
-        if (pickerVisible)
-            prepareVideo();
-        else {
-            player0.stop();
-            player1.stop();
-            videoSource0 = "";
-            videoSource1 = "";
-            shownVideoPath = "";
-            loadingVideoSlot = -1;
-            visibleVideoSlot = 0;
-        }
+        if (pickerVisible && previewVideo)
+            videoPreview.play();
+        else
+            videoPreview.stop();
     }
 
     Timer {
@@ -260,58 +209,29 @@ PanelWindow {
         }
 
         MediaPlayer {
-            id: player0
-            source: root.videoSource0 ? "file://" + root.videoSource0 : ""
-            videoOutput: output0
+            id: videoPreview
+            source: root.previewVideo ? "file://" + root.previewPath : ""
+            videoOutput: previewOutput
             loops: MediaPlayer.Infinite
             audioOutput: AudioOutput { muted: true }
             onSourceChanged: {
-                if (root.pickerVisible && root.videoSource0)
+                if (root.pickerVisible && root.previewVideo)
                     play();
             }
-            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: " + errorString)
-        }
-
-        MediaPlayer {
-            id: player1
-            source: root.videoSource1 ? "file://" + root.videoSource1 : ""
-            videoOutput: output1
-            loops: MediaPlayer.Infinite
-            audioOutput: AudioOutput { muted: true }
-            onSourceChanged: {
-                if (root.pickerVisible && root.videoSource1)
-                    play();
-            }
-            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: " + errorString)
+            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: cannot play video " + root.previewPath + ": " + errorString)
         }
 
         VideoOutput {
-            id: output0
+            id: previewOutput
             anchors.fill: parent
-            visible: root.shownVideoPath !== "" && root.visibleVideoSlot === 0
-            fillMode: VideoOutput.PreserveAspectCrop
-        }
-
-        VideoOutput {
-            id: output1
-            anchors.fill: parent
-            visible: root.shownVideoPath !== "" && root.visibleVideoSlot === 1
+            visible: root.previewVideo
             fillMode: VideoOutput.PreserveAspectCrop
         }
 
         Connections {
-            target: output0.videoSink
+            target: previewOutput.videoSink
             function onVideoFrameChanged(frame) {
-                if (frame.isValid)
-                    root.acceptVideoFrame(0);
-            }
-        }
-
-        Connections {
-            target: output1.videoSink
-            function onVideoFrameChanged(frame) {
-                if (frame.isValid)
-                    root.acceptVideoFrame(1);
+                root.startReveal();
             }
         }
 
