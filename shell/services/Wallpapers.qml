@@ -30,6 +30,26 @@ Singleton {
     property bool applyToAll: false
     property string selectionMonitor: ""
 
+    // Shared five-entry preload window for the launcher and fullscreen picker.
+    // The window shifts at the edges instead of wasting available slots.
+    readonly property var preloadIndices: {
+        const count = selection?.entries?.length ?? 0;
+        const selected = selection?.index ?? -1;
+        if (selected < 0 || count === 0)
+            return [];
+        const size = Math.min(5, count);
+        const start = Math.max(0, Math.min(selected - 2, count - size));
+        const indices = [];
+        for (let i = 0; i < size; i++)
+            indices.push(start + i);
+        return indices;
+    }
+
+    function isPreloaded(index: int): bool {
+        return preloadIndices.includes(index);
+    }
+
+
     function setApplyToAll(enabled: bool) {
         applyToAll = enabled;
         if (selection && selection.index >= 0)
