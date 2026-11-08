@@ -411,7 +411,11 @@ Item {
             model: sessionModel
             textRole: "name"
             font.pixelSize: 12
-            background: Rectangle { color: "#cc000000"; radius: 17 }
+            background: Rectangle {
+                radius: 17
+                color: sessions.hovered || sessions.popup.visible ? "#303946" : "#cc000000"
+                Behavior on color { ColorAnimation { duration: 160 } }
+            }
             contentItem: Text {
                 leftPadding: 14
                 rightPadding: 26
@@ -421,12 +425,33 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
             }
-            indicator: Text {
-                text: "⌄"
-                color: "white"
-                anchors.right: parent.right
-                anchors.rightMargin: 12
-                anchors.verticalCenter: parent.verticalCenter
+            indicator: Item {
+                width: 26
+                height: parent.height
+                x: parent.width - width - 4
+                Canvas {
+                    id: sessionChevron
+                    anchors.centerIn: parent
+                    width: 12
+                    height: 9
+                    rotation: sessions.popup.visible ? 180 : 0
+                    scale: sessions.hovered || sessions.popup.visible ? 1.2 : 1
+                    Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.InOutCubic } }
+                    Behavior on scale { NumberAnimation { duration: 160 } }
+                    onPaint: {
+                        const ctx = getContext("2d");
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.lineWidth = 1.8;
+                        ctx.lineCap = "round";
+                        ctx.lineJoin = "round";
+                        ctx.beginPath();
+                        ctx.moveTo(2, 3);
+                        ctx.lineTo(6, 7);
+                        ctx.lineTo(10, 3);
+                        ctx.stroke();
+                    }
+                }
             }
             delegate: ItemDelegate {
                 width: sessions.width
@@ -467,7 +492,16 @@ Item {
                 root.forceActiveFocus();
             }
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
-            contentItem: Text { text: "‹"; color: "white"; font.pixelSize: 24; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            contentItem: Item {
+                Text {
+                    anchors.centerIn: parent
+                    text: "‹"
+                    color: "white"
+                    font.pixelSize: 24
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
         }
         Button {
             width: 36
@@ -476,7 +510,16 @@ Item {
             ToolTip.text: "Apagar"
             onClicked: sddm.powerOff()
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
-            contentItem: Text { text: "⏻"; color: "white"; font.pixelSize: 20; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            contentItem: Item {
+                Text {
+                    anchors.centerIn: parent
+                    text: "⏻"
+                    color: "white"
+                    font.pixelSize: 20
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
         }
         Button {
             width: 36
@@ -485,7 +528,16 @@ Item {
             ToolTip.text: "Reiniciar"
             onClicked: sddm.reboot()
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
-            contentItem: Text { text: "↻"; color: "white"; font.pixelSize: 21; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            contentItem: Item {
+                Text {
+                    anchors.centerIn: parent
+                    text: "↻"
+                    color: "white"
+                    font.pixelSize: 21
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
         }
     }
 
