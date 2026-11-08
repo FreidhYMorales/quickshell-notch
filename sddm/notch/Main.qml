@@ -548,26 +548,21 @@ Item {
             onClicked: sddm.reboot()
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
             contentItem: Item {
-                Canvas {
+                // Lucide-style refresh-ccw geometry: a complete, balanced
+                // circular arrow rather than hand-joined Canvas segments.
+                Shape {
                     anchors.centerIn: parent
                     width: 24
                     height: 24
-                    onPaint: {
-                        const ctx = getContext("2d");
-                        ctx.clearRect(0, 0, width, height);
-                        ctx.strokeStyle = "#ffffff";
-                        ctx.lineWidth = 2.4;
-                        ctx.lineCap = "round";
-                        ctx.lineJoin = "round";
-                        ctx.beginPath();
-                        // Circular refresh arrow: arc ends at the upper-left,
-                        // with a chevron aligned to its tangent.
-                        ctx.arc(12, 12, 8, -0.75, 3.93, false);
-                        ctx.moveTo(6.36, 6.34);
-                        ctx.lineTo(6.36, 11.5);
-                        ctx.moveTo(6.36, 6.34);
-                        ctx.lineTo(11.5, 6.34);
-                        ctx.stroke();
+                    ShapePath {
+                        strokeColor: "#ffffff"
+                        strokeWidth: 2.4
+                        capStyle: ShapePath.RoundCap
+                        joinStyle: ShapePath.RoundJoin
+                        fillColor: "transparent"
+                        PathSvg {
+                            path: "M 3 12 A 9 9 0 1 0 12 3 A 9.75 9.75 0 0 0 5.26 5.74 L 3 8 M 3 3 L 3 8 L 8 8"
+                        }
                     }
                 }
             }
