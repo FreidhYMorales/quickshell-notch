@@ -36,7 +36,6 @@ Singleton {
     property var thumbnailRequested: ({})
     property var thumbnailQueue: []
     property string thumbnailWorking: ""
-    property int thumbnailRevision: 0
     property int thumbnailSerial: 0
     property string thumbnailOutputName: ""
 
@@ -44,7 +43,7 @@ Singleton {
         if (!path || !/\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(path))
             return "";
         if (thumbnailReady[path])
-            return "file://" + thumbnailDir + "/" + thumbnailReady[path] + "?v=" + thumbnailRevision;
+            return "file://" + thumbnailDir + "/" + thumbnailReady[path];
         requestThumbnail(path);
         return "";
     }
@@ -103,7 +102,6 @@ Singleton {
                 console.warn("Wallpapers: cannot extract frame from " + path + " (is ffmpeg installed?)");
             }
             root.thumbnailWorking = "";
-            root.thumbnailRevision += 1;
             root.startThumbnailJob();
         }
     }
