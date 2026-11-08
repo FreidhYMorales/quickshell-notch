@@ -42,7 +42,6 @@ PanelWindow {
         onTriggered: {
             if (root.pickerVisible && root.previewVideo) {
                 root.playbackPath = root.previewPath;
-                videoPreview.play();
             }
         }
     }
@@ -243,6 +242,21 @@ PanelWindow {
             videoOutput: previewOutput
             loops: MediaPlayer.Infinite
             audioOutput: AudioOutput { muted: true }
+            // Changing the source and playing in the same timer callback can
+            // race Qt Multimedia, especially when switching from an image.
+            onSourceChanged: {
+                if (root.pickerVisible && root.playbackPath === root.previewPath
+                        && root.playbackPath !== "")
+                    play();
+            }
+            onMediaStatusChanged: {
+                if (root.pickerVisible && root.playbackPath === root.previewPath
+                        && root.playbackPath !== ""
+                        && (mediaStatus === MediaPlayer.LoadedMedia
+                            || mediaStatus === MediaPlayer.BufferedMedia)
+                        && playbackState !== MediaPlayer.PlayingState)
+                    play();
+            }
             onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: cannot play video " + root.previewPath + ": " + errorString)
         }
 
