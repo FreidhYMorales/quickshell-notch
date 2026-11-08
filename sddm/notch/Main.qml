@@ -30,8 +30,9 @@ Item {
     // These values are calibration targets, not runtime measurements.
     readonly property real normalNotchWidth: Math.max(80, Number(config.normalNotchWidth) || 300)
     readonly property real chargingNotchWidth: Math.max(normalNotchWidth, Number(config.chargingNotchWidth) || 420)
+    readonly property real lowBatteryNotchWidth: Math.max(normalNotchWidth, Number(config.lowBatteryNotchWidth) || 420)
     readonly property string notchMode: String(config.notchMode || "normal")
-    readonly property real notchWidth: notchMode === "charging" ? chargingNotchWidth : normalNotchWidth
+    readonly property real notchWidth: notchMode === "charging" ? chargingNotchWidth : (notchMode === "low" ? lowBatteryNotchWidth : normalNotchWidth)
     readonly property real notchHeight: 32
     readonly property real earRadius: 12
     readonly property real cornerRadius: 18
@@ -211,18 +212,25 @@ Item {
                             visible: status === Image.Ready
                             asynchronous: true
                         }
-                        Text {
+                        // Vector fallback avoids the optical offset of Nerd Font glyphs.
+                        Canvas {
                             anchors.centerIn: parent
+                            width: 66
+                            height: 66
                             visible: !face.visible
-                            text: "󰀄"
-                            color: "#f4f7ff"
-                            font.family: "IosevkaTerm Nerd Font"
-                            font.pixelSize: 43
-                            width: 72
-                            height: 72
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            fontSizeMode: Text.Fit
+                            onPaint: {
+                                const ctx = getContext("2d");
+                                ctx.clearRect(0, 0, width, height);
+                                ctx.fillStyle = "#f4f7ff";
+                                ctx.beginPath();
+                                ctx.arc(33, 21, 10, 0, 2 * Math.PI);
+                                ctx.fill();
+                                ctx.beginPath();
+                                ctx.moveTo(14, 56);
+                                ctx.bezierCurveTo(14, 32, 52, 32, 52, 56);
+                                ctx.closePath();
+                                ctx.fill();
+                            }
                         }
                         MouseArea {
                             anchors.fill: parent
