@@ -12,6 +12,7 @@ import "../../logic/centerState.mjs" as CenterState
 import "../../logic/centerView.mjs" as CenterView
 import "../../logic/notifQueue.mjs" as NotifQueue
 import "../../logic/powerMenu.mjs" as PowerMenu
+import "../../logic/quickWallpaper.mjs" as QuickWallpaper
 
 // The one global holder of the centre reducer state. Surfaces send events with
 // `dispatch` and read `viewFor(screenName)`; effects are executed here.
@@ -22,6 +23,16 @@ Singleton {
     property var state: CenterState.initialState(screenNames())
     // Id of the notification the reducer currently shows as a toast (null: none).
     property var toastId: null
+    property var quickWallpaper: QuickWallpaper.initialQuickWallpaper()
+    property var idleNotchWidths: ({})
+
+    function setIdleNotchWidth(monitor, width) {
+        if (!monitor || width <= 0 || idleNotchWidths[monitor] === width)
+            return;
+        const next = Object.assign({}, idleNotchWidths);
+        next[monitor] = width;
+        idleNotchWidths = next;
+    }
 
     LazyLoader {
         active: !Flags.smoke
@@ -63,8 +74,11 @@ Singleton {
     }
 
     function dispatch(event) {
+        const wasWallpaper = state.global.keyboard?.kind === "launcher" && state.global.keyboard?.sub === "wallpaper";
         const result = CenterState.reduce(state, event);
         state = result.state;
+        if (wasWallpaper && !(state.global.keyboard?.kind === "launcher" && state.global.keyboard?.sub === "wallpaper"))
+            Wallpapers.cancel();
         for (let i = 0; i < result.effects.length; i++)
             run(result.effects[i]);
     }
@@ -191,6 +205,58 @@ Singleton {
         }
     }
 
+    // Keep the overlay mounted through both animation phases.
+    function finishQuickWallpaperOpening() {
+        if (quickWallpaper.phase === "opening")
+            quickWallpaper = QuickWallpaper.quickWallpaperOpened(quickWallpaper);
+    }
+
+    function finishQuickWallpaperClosing() {
+        if (quickWallpaper.phase === "closing")
+            quickWallpaper = QuickWallpaper.quickWallpaperClosed(quickWallpaper);
+    }
+
+    function toggleQuickWallpaper() {
+        if (quickWallpaper.phase !== "closed") {
+            cancelQuickWallpaper();
+            return;
+        }
+        const monitor = Hyprland.focusedMonitor?.name;
+        if (!monitor || Session.locked || state.global.keyboard) {
+            console.warn("CenterStore: Quick Wallpaper unavailable while another keyboard view is active");
+            return;
+        }
+        Wallpapers.begin(monitor);
+        quickWallpaper = QuickWallpaper.openQuickWallpaper(quickWallpaper, monitor);
+    }
+
+    function cancelQuickWallpaper() {
+        if (quickWallpaper.phase === "closed" || quickWallpaper.phase === "closing")
+            return;
+        Wallpapers.cancel();
+        quickWallpaper = QuickWallpaper.closeQuickWallpaper(quickWallpaper);
+    }
+
+    function applyQuickWallpaper() {
+        if (quickWallpaper.phase !== "open")
+            return;
+        Wallpapers.commit(quickWallpaper.monitor);
+        quickWallpaper = QuickWallpaper.closeQuickWallpaper(quickWallpaper);
+    }
+
+    // Hyprland bind: qs ipc call quickWallpaper toggle
+    LazyLoader {
+        active: !Flags.smoke
+
+        IpcHandler {
+            target: "quickWallpaper"
+
+            function toggle(): void {
+                root.toggleQuickWallpaper();
+            }
+        }
+    }
+
     // The power menu hold: started once per hold (repeats keep the same state,
     // so the timer is not restarted); releasing early stops it.
     Timer {
@@ -240,6 +306,8 @@ Singleton {
                 type: "Locked",
                 on: Session.locked
             });
+            if (Session.locked)
+                root.cancelQuickWallpaper();
         }
 
         target: Session

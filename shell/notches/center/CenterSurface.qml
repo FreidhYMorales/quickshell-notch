@@ -19,6 +19,9 @@ NotchSurface {
         dot: idle.dotExtent,
         max: slot.width
     })
+    onIdleWChanged: CenterStore.setIdleNotchWidth(screen.name, idleW)
+    Component.onCompleted: CenterStore.setIdleNotchWidth(screen.name, idleW)
+
     readonly property bool toast: view.mode === "toast"
     readonly property var size: toast ? CenterLayout.toastShape({
         expanded: view.toast.expanded,

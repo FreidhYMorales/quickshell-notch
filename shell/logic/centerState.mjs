@@ -110,6 +110,24 @@ const handlers = {
     }
     return openKeyboard(state, monitor, "launcher", sub);
   },
+  WallpaperOpen(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub === "wallpaper") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: "wallpaper" }),
+    });
+  },
+  WallpaperBack(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub !== "wallpaper") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: null }),
+    });
+  },
   LauncherQuery(state, { text }) {
     const { keyboard } = state.global;
     if (keyboard?.kind !== "launcher") return unchanged(state);

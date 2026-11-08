@@ -90,6 +90,11 @@ Singleton {
     // The selected app grows slightly, like the power menu selection.
     readonly property real launcherSelectedScale: 1.1
 
+    readonly property int wallpaperViewHeight: 260
+    readonly property int wallpaperCardWidth: 116
+    readonly property int wallpaperCardHeight: 170
+    readonly property int wallpaperCardPad: 3
+
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
     readonly property int expandedPad: 10

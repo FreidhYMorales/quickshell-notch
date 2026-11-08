@@ -36,10 +36,18 @@
 24. [ ] LAST As a user, I want tray icons with failures hidden by Quickshell to show a recognizable fallback instead of its placeholder so that I can identify those apps. Requires: #22
 25. [ ] BLOCKED (Quickshell submenu loading) As a user, I want to navigate a tray app's submenus inside the notch and return to the parent menu so that I can use nested actions without floating windows. Requires: #23
 26. [x] 64af4aa As a user, I want to browse and search launcher commands with a description pane so that I can understand the available setup actions. Requires: #08
-27. [ ] As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
+27. [x] IMPLEMENTED AND LOCALLY VERIFIED (PR #26, pending review; not merged) As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
 28. [ ] As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
 29. [ ] As a user, I want the keybinds command view so that I can access my keybinds from the launcher. Requires: #26
 30. [x] 5b49c55 As a user, I want to lock my session from the notch shell and unlock it with my password so that my session stays protected.
 31. [x] 11498fb As a user, I want an idle chain (screensaver and lock together, then suspend) with my old timeouts so that an unattended session locks and sleeps on its own. Requires: #30, #12
 32. [x] 6e7946a As a user, I want every suspend to lock the notch session first so that my session is already protected when it resumes. Requires: #30
 33. [ ] As a user, I want a lock screen redesigned in the notch style so that my lock matches my shell and no longer depends on the SDDM theme. Requires: #30
+34. [ ] READY TO START (after verified #27; not implemented) As a user, I want a fullscreen Quick Wallpaper picker expanding from the centre notch, with a bottom portrait coverflow (at most one third of screen height), clock/date and live preview, opened by keybind. Requires: #27
+
+## Active wallpaper work
+
+- #27: completed and manually validated on Arch/Hyprland; make check passed and Quickshell runtime warnings were resolved. PR #26 is not merged.
+- #34: ready for implementation; fullscreen picker is not coded. Follow stories/34-quick-wallpaper.md and keep changes separate from #27.
+- CI nested Hyprland probe is deferred: hosted runner lacks `/dev/dri/renderD*` for the KWin/Aquamarine attempt. This is an environment limitation, not evidence of runtime success or failure of the wallpaper UI.
+- Other stories may be worked on separately; this branch does not change their statuses.

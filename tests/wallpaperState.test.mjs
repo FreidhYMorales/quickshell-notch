@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   isVideoPath,
+  normalizePerScreen,
   shouldImport,
   videoShouldPlay,
   wallpaperFor,
@@ -56,4 +57,80 @@ test("a video wallpaper pauses while the session is locked", () => {
 
 test("an image wallpaper never plays", () => {
   assert.equal(videoShouldPlay("/w/arch.png", false), false);
+});
+
+test("a temporary preview overrides only its target monitor", async () => {
+  const { previewFor } = await import("../shell/logic/wallpaperState.mjs");
+  const overrides = { "DP-1": "/w/dp.png" };
+  assert.equal(
+    previewFor(overrides, "/w/base.png", "DP-1", {
+      screen: "DP-1",
+      path: "/w/new.png",
+    }),
+    "/w/new.png",
+  );
+  assert.equal(
+    previewFor(overrides, "/w/base.png", "eDP-1", {
+      screen: "DP-1",
+      path: "/w/new.png",
+    }),
+    "/w/base.png",
+  );
+});
+
+test("committing to a monitor preserves other overrides", async () => {
+  const { commitFor } = await import("../shell/logic/wallpaperState.mjs");
+  const original = { "DP-1": "/w/old.png", "HDMI-A-1": "/w/other.png" };
+  const next = commitFor(original, "/w/default.png", "DP-1", "/w/new.png");
+  assert.equal(next.perScreen["DP-1"], "/w/new.png");
+  assert.equal(next.perScreen["HDMI-A-1"], "/w/other.png");
+  assert.equal(next.fallback, "/w/default.png");
+  assert.equal(original["DP-1"], "/w/old.png");
+});
+
+test("a global temporary preview applies across monitors without changing committed state", async () => {
+  const { previewFor } = await import("../shell/logic/wallpaperState.mjs");
+  const overrides = { "DP-1": "/w/dp.png" };
+  const preview = { screen: "", path: "/w/temporary.png" };
+  assert.equal(
+    previewFor(overrides, "/w/base.png", "DP-1", preview),
+    "/w/temporary.png",
+  );
+  assert.equal(
+    previewFor(overrides, "/w/base.png", "eDP-1", preview),
+    "/w/temporary.png",
+  );
+  assert.equal(previewFor(overrides, "/w/base.png", "DP-1", null), "/w/dp.png");
+});
+
+test("malformed monitor state is normalized before use", () => {
+  assert.deepEqual(normalizePerScreen(null), {});
+  assert.deepEqual(normalizePerScreen(["/w/a.png"]), {});
+  assert.deepEqual(normalizePerScreen("invalid"), {});
+  assert.deepEqual(
+    normalizePerScreen({ "DP-1": "/w/a.png", "eDP-1": 12, "HDMI-1": "" }),
+    { "DP-1": "/w/a.png" },
+  );
+});
+
+test("monitor state excludes dangerous inherited keys", () => {
+  const value = JSON.parse(
+    '{"__proto__":"/w/evil.png","constructor":"/w/b.png","DP-1":"/w/ok.png"}',
+  );
+  assert.deepEqual(normalizePerScreen(value), { "DP-1": "/w/ok.png" });
+  assert.equal(shouldImport(null, ""), true);
+});
+
+test("shared commit replaces all monitor overrides and updates fallback", async () => {
+  const { commitShared } = await import("../shell/logic/wallpaperState.mjs");
+  const next = commitShared("/w/shared.mp4");
+  assert.deepEqual(next, { perScreen: {}, fallback: "/w/shared.mp4" });
+  assert.equal(
+    wallpaperFor(next.perScreen, next.fallback, "DP-1"),
+    "/w/shared.mp4",
+  );
+  assert.equal(
+    wallpaperFor(next.perScreen, next.fallback, "HDMI-A-1"),
+    "/w/shared.mp4",
+  );
 });

@@ -2,10 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { runTrayProbe } from "./run-tray.mjs";
 
 test("tray runner disables crash relaunch for its test config", () => {
-  const dir = mkdtempSync("/tmp/opencode/tray-runner-");
+  const dir = mkdtempSync(join(tmpdir(), "tray-runner-"));
   try {
     const fakeQs = join(dir, "qs");
     writeFileSync(

@@ -765,3 +765,26 @@ test("LauncherActivate: ignored while the power menu is open", () => {
   assert.deepEqual(effects, []);
   assert.equal(state.global.keyboard.kind, "power");
 });
+
+test("wallpaper command opens a launcher subview and returns to commands", () => {
+  const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
+  const wallpaper = reduce(opened, { type: "WallpaperOpen" }).state;
+  assert.equal(wallpaper.global.keyboard.sub, "wallpaper");
+  assert.equal(wallpaper.global.keyboard.kind, "launcher");
+  const returned = reduce(wallpaper, { type: "WallpaperBack" }).state;
+  assert.equal(returned.global.keyboard.sub, null);
+});
+
+test("wallpaper subview cannot open without the launcher", () => {
+  const initial = two();
+  assert.equal(reduce(initial, { type: "WallpaperOpen" }).state, initial);
+});
+
+test("closing a wallpaper launcher clears its keyboard owner", () => {
+  const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
+  const wallpaper = reduce(opened, { type: "WallpaperOpen" }).state;
+  assert.equal(
+    reduce(wallpaper, { type: "Close", monitor: "A" }).state.global.keyboard,
+    null,
+  );
+});

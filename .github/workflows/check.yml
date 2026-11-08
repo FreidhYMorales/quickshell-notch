@@ -6,12 +6,36 @@ on:
   pull_request:
 
 jobs:
-  ci:
+  quality:
+    name: Format and JavaScript
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
       - name: Install tools
         run: pacman -Syu --noconfirm --needed git qt6-declarative nodejs deno make findutils diffutils
       - uses: actions/checkout@v4
-      - name: Quality gate (CI subset)
-        run: make ci
+      - name: Format check
+        run: make fmt-check
+      - name: JavaScript lint
+        run: make lint-js
+      - name: JavaScript tests
+        run: make test
+
+  qml:
+    name: QML static lint (Arch)
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    timeout-minutes: 45
+    steps:
+      - name: Install QML and runtime dependencies
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git sudo qt6-declarative qt6-multimedia qt6-svg qt6-wayland nodejs deno make findutils diffutils dbus python python-dbus python-gobject hyprland weston wayland wayland-utils mesa
+          useradd -m -G wheel builder
+          printf 'builder ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/builder
+      - uses: actions/checkout@v4
+      - name: Build Quickshell from AUR
+        run: |
+          runuser -u builder -- sh -c 'cd /tmp && git clone --depth 1 https://aur.archlinux.org/quickshell-git.git && cd quickshell-git && makepkg -s --noconfirm --needed'
+          pacman -U --noconfirm /tmp/quickshell-git/*.pkg.tar.zst
+      - name: QML static lint
+        run: make lint-qml

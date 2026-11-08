@@ -3,8 +3,11 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import Qt.labs.folderlistmodel
+import "../logic/wallpaperPicker.mjs" as WallpaperPicker
 import "../config"
 import "../logic/wallpaperState.mjs" as WallpaperState
+import "../logic/wallpaperSave.mjs" as WallpaperSave
 
 // Per-monitor wallpaper paths, kept in the notch's own state dir. On first
 // run the old shell's state is imported once; its files are only read.
@@ -19,9 +22,184 @@ Singleton {
     property var perScreen: ({})
     // true once the notch state on disk holds the current values.
     property bool saved: false
+    property var saveQueue: WallpaperSave.initialSaveQueue()
+    readonly property string directory: Quickshell.env("QS_WALLPAPER_DIR") || (Quickshell.env("HOME") + "/Pictures/Wallpaper")
+    property var entries: []
+    property var preview: null
+    property var selection: null
+    property bool applyToAll: false
+    property string selectionMonitor: ""
+
+    // On-demand, shared still-frame cache. One ffmpeg job at a time.
+    readonly property string thumbnailDir: notchDir + "/thumbnails"
+    property var thumbnailReady: ({})
+    property var thumbnailRequested: ({})
+    property var thumbnailQueue: []
+    property string thumbnailWorking: ""
+    property string thumbnailOutputName: ""
+
+    function thumbnailFor(path: string): string {
+        if (!path || !/\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(path))
+            return "";
+        if (thumbnailReady[path])
+            return "file://" + thumbnailDir + "/" + thumbnailReady[path];
+        requestThumbnail(path);
+        return "";
+    }
+
+    function requestThumbnail(path: string) {
+        if (!path || thumbnailRequested[path])
+            return;
+        const requested = Object.assign({}, thumbnailRequested);
+        requested[path] = true;
+        thumbnailRequested = requested;
+        thumbnailQueue = thumbnailQueue.concat([path]);
+        if (!thumbnailWorking && !thumbnailFolder.running)
+            thumbnailFolder.running = true;
+    }
+
+    // Stable per-path filename, reused across Quickshell restarts.
+    // Two independent 32-bit hashes make collisions extremely unlikely.
+    function thumbnailName(path: string): string {
+        let a = 2166136261;
+        let b = 5381;
+        for (let i = 0; i < path.length; i++) {
+            const c = path.charCodeAt(i);
+            a = Math.imul(a ^ c, 16777619);
+            b = Math.imul(b, 33) ^ c;
+        }
+        return "frame-" + (a >>> 0).toString(16).padStart(8, "0") + "-" + (b >>> 0).toString(16).padStart(8, "0") + ".jpg";
+    }
+
+    function startThumbnailJob() {
+        if (thumbnailWorking || thumbnailQueue.length === 0)
+            return;
+        const path = thumbnailQueue[0];
+        thumbnailQueue = thumbnailQueue.slice(1);
+        thumbnailWorking = path;
+        const name = thumbnailName(path);
+        thumbnailOutputName = name;
+        const output = thumbnailDir + "/" + name;
+        // Only regenerate when missing, empty or older than the source.
+        // A temporary file avoids exposing a partially written JPEG.
+        thumbnailExtractor.command = ["sh", "-c", "if [ -s \"$2\" ] && [ \"$2\" -nt \"$1\" ]; then exit 0; fi; " + "ffmpeg -nostdin -hide_banner -loglevel error -y -i \"$1\" " + "-frames:v 1 -q:v 2 \"$2.tmp.jpg\" && mv -f \"$2.tmp.jpg\" \"$2\"", "thumbnail-cache", path, output];
+        thumbnailExtractor.running = true;
+    }
+
+    Process {
+        id: thumbnailFolder
+        command: ["mkdir", "-p", root.thumbnailDir]
+        onExited: code => {
+            if (code === 0)
+                root.startThumbnailJob();
+            else
+                console.warn("Wallpapers: cannot create thumbnail directory");
+        }
+    }
+
+    Process {
+        id: thumbnailExtractor
+        property string extractingPath: ""
+        onRunningChanged: {
+            if (running)
+                extractingPath = root.thumbnailWorking;
+        }
+        onExited: code => {
+            const path = extractingPath;
+            if (code === 0) {
+                const ready = Object.assign({}, root.thumbnailReady);
+                ready[path] = root.thumbnailOutputName;
+                root.thumbnailReady = ready;
+            } else {
+                console.warn("Wallpapers: cannot extract frame from " + path + " (is ffmpeg installed?)");
+            }
+            root.thumbnailWorking = "";
+            root.startThumbnailJob();
+        }
+    }
+
+    function setApplyToAll(enabled: bool) {
+        applyToAll = enabled;
+        if (selection && selection.index >= 0)
+            preview = {
+                screen: applyToAll ? "" : selectionMonitor,
+                path: selection.preview
+            };
+    }
+
+    function refreshCatalog() {
+        const paths = [];
+        for (let i = 0; i < files.count; i++)
+            paths.push(decodeURIComponent(files.get(i, "filePath").toString().replace("file://", "")));
+        entries = WallpaperPicker.catalogEntries(paths);
+        if (selection) {
+            selection = WallpaperPicker.refreshPreview(selection, entries);
+            preview = selection.index < 0 ? null : {
+                screen: applyToAll ? "" : (preview?.screen ?? ""),
+                path: selection.preview
+            };
+        }
+    }
+
+    function begin(screen: string) {
+        selectionMonitor = screen;
+        selection = WallpaperPicker.beginPreview(entries, WallpaperState.wallpaperFor(perScreen, fallback, screen));
+        preview = selection.index < 0 ? null : {
+            screen: applyToAll ? "" : screen,
+            path: selection.preview
+        };
+    }
+
+    function move(step: int, screen: string) {
+        if (!selection)
+            return;
+        selection = WallpaperPicker.movePreview(selection, step);
+        preview = selection.index < 0 ? null : {
+            screen: applyToAll ? "" : screen,
+            path: selection.preview
+        };
+    }
+
+    function select(index: int, screen: string) {
+        if (!selection || index < 0 || index >= selection.entries.length)
+            return;
+        selection = WallpaperPicker.movePreview(selection, index - selection.index);
+        preview = {
+            screen: applyToAll ? "" : screen,
+            path: selection.preview
+        };
+    }
+
+    function cancel() {
+        preview = null;
+        selection = null;
+    }
+
+    function commit(screen: string) {
+        if (!selection || !selection.entries.length)
+            return;
+        const path = WallpaperPicker.commitPreview(selection);
+        if (!path)
+            return;
+        const next = applyToAll ? WallpaperState.commitShared(path) : WallpaperState.commitFor(perScreen, fallback, screen, path);
+        fallback = next.fallback;
+        perScreen = next.perScreen;
+        cancel();
+        requestSave();
+    }
+
+    FolderListModel {
+        id: files
+        folder: "file://" + root.directory
+        nameFilters: ["*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.webp", "*.WEBP", "*.bmp", "*.BMP", "*.mp4", "*.MP4", "*.webm", "*.WEBM", "*.mkv", "*.MKV", "*.mov", "*.MOV", "*.avi", "*.AVI", "*.m4v", "*.M4V"]
+        showDirs: false
+        onStatusChanged: if (status === FolderListModel.Ready)
+            root.refreshCatalog()
+        onCountChanged: root.refreshCatalog()
+    }
 
     function pathFor(screen: string): string {
-        return WallpaperState.wallpaperFor(perScreen, fallback, screen) ?? "";
+        return WallpaperState.previewFor(perScreen, fallback, screen, preview) ?? "";
     }
 
     function readText(path: string): string {
@@ -37,7 +215,7 @@ Singleton {
         let perScreen = {};
         if (json) {
             try {
-                perScreen = JSON.parse(json) ?? {};
+                perScreen = WallpaperState.normalizePerScreen(JSON.parse(json));
             } catch (e) {
                 console.warn("Wallpapers: unreadable state in " + dir + ": " + e);
             }
@@ -63,7 +241,32 @@ Singleton {
             console.warn("Wallpapers: no saved wallpaper");
             return;
         }
+        requestSave();
+    }
+
+    function requestSave() {
+        saveQueue = WallpaperSave.enqueueSave(saveQueue, fallback, perScreen);
+        saved = false;
+        startSave();
+    }
+
+    function startSave() {
+        const next = WallpaperSave.startSave(saveQueue);
+        if (next === saveQueue)
+            return;
+        saveQueue = next;
         mkdir.running = true;
+    }
+
+    function retrySave() {
+        if (saveQueue.phase === "idle")
+            startSave();
+    }
+
+    function failSave(reason: string) {
+        console.warn("Wallpapers: save failed (" + reason + "); retry is available");
+        saveQueue = WallpaperSave.failSave(saveQueue);
+        saved = false;
     }
 
     Component.onCompleted: {
@@ -80,32 +283,58 @@ Singleton {
 
     Process {
         id: mkdir
-
         command: ["mkdir", "-p", root.notchDir]
         onExited: code => {
-            if (code !== 0)
-                return console.warn("Wallpapers: cannot create " + root.notchDir);
-            defaultWriter.setText(root.fallback);
+            if (root.saveQueue.phase !== "mkdir")
+                return;
+            if (code !== 0) {
+                root.failSave("mkdir");
+                return;
+            }
+            const snapshot = root.saveQueue.active;
+            root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "mkdir");
+            if (root.readText(defaultWriter.path) === snapshot.fallback)
+                root.defaultSaveCompleted();
+            else
+                defaultWriter.setText(snapshot.fallback);
         }
+    }
+
+    function defaultSaveCompleted() {
+        if (saveQueue.phase !== "default")
+            return;
+        const snapshot = saveQueue.active;
+        saveQueue = WallpaperSave.advanceSave(saveQueue, "default");
+        const contents = JSON.stringify(snapshot.perScreen);
+        if (readText(screensWriter.path) === contents)
+            screensSaveCompleted();
+        else
+            screensWriter.setText(contents);
+    }
+
+    function screensSaveCompleted() {
+        if (saveQueue.phase !== "screens")
+            return;
+        saveQueue = WallpaperSave.advanceSave(saveQueue, "screens");
+        saved = saveQueue.saved;
+        startSave();
     }
 
     FileView {
         id: defaultWriter
-
         path: root.notchDir + "/wallpaper.txt"
         blockLoading: true
         printErrors: false
-        onSaved: screensWriter.setText(JSON.stringify(root.perScreen))
-        onSaveFailed: console.warn("Wallpapers: cannot save " + path)
+        onSaved: root.defaultSaveCompleted()
+        onSaveFailed: root.failSave("default wallpaper")
     }
 
     FileView {
         id: screensWriter
-
         path: root.notchDir + "/wallpaper-screens.json"
         blockLoading: true
         printErrors: false
-        onSaved: root.saved = true
-        onSaveFailed: console.warn("Wallpapers: cannot save " + path)
+        onSaved: root.screensSaveCompleted()
+        onSaveFailed: root.failSave("per-screen wallpapers")
     }
 }
