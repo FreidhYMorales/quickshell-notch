@@ -38,6 +38,25 @@ export function dryArgs(path, mode) {
   return baseArgs(path, mode).concat(["--dry-run", "--quiet", "--json", "hex"]);
 }
 
+export const DEFAULT_MODE = "scheme-content";
+
+// The notch's theme.json keeps only the mode; the old shell's file used the
+// same key. A missing or broken notch file keeps the default rather than
+// reading the old file, so importing happens once, never after an edit.
+export function themeState(notchText, oldText) {
+  const text = typeof notchText === "string" ? notchText : oldText;
+  let saved = {};
+  if (typeof text === "string") {
+    try {
+      saved = JSON.parse(text) || {};
+    } catch (_error) {
+      saved = {};
+    }
+  }
+  const mode = MODES.indexOf(saved.mode) === -1 ? DEFAULT_MODE : saved.mode;
+  return { mode };
+}
+
 // matugen --dry-run --json hex nests each colour as { default: { color } },
 // unlike the { hex } shape of the colors.json it writes for the apps.
 export function parseDryPalette(jsonText) {
