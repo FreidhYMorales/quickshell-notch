@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   appArgs,
+  commitJobs,
   dryArgs,
   MODES,
   parseDryPalette,
@@ -111,4 +112,53 @@ test("a missing or broken theme state falls back to scheme-content", () => {
   assert.deepEqual(themeState('{"mode":"scheme-bogus"}', null), {
     mode: "scheme-content",
   });
+});
+
+test("a mode choice reruns the apps and every monitor override", () => {
+  assert.deepEqual(
+    commitJobs({
+      kind: "mode",
+      wallpaper: "/w/global.png",
+      perScreen: { DP1: "/w/a.png", DP2: "/w/b.png" },
+    }),
+    {
+      app: "/w/global.png",
+      palettes: [
+        { screen: "DP1", path: "/w/a.png" },
+        { screen: "DP2", path: "/w/b.png" },
+      ],
+    },
+  );
+});
+
+test("a mode choice without overrides only reruns the apps", () => {
+  assert.deepEqual(
+    commitJobs({ kind: "mode", wallpaper: "/w/global.png", perScreen: {} }),
+    { app: "/w/global.png", palettes: [] },
+  );
+});
+
+test("a shared wallpaper commit reruns the apps only", () => {
+  assert.deepEqual(
+    commitJobs({
+      kind: "wallpaper",
+      shared: true,
+      path: "/w/new.png",
+      perScreen: { DP1: "/w/a.png" },
+    }),
+    { app: "/w/new.png", palettes: [] },
+  );
+});
+
+test("a per-monitor commit only recolours that monitor", () => {
+  assert.deepEqual(
+    commitJobs({
+      kind: "wallpaper",
+      shared: false,
+      screen: "DP2",
+      path: "/w/new.png",
+      perScreen: { DP1: "/w/a.png", DP2: "/w/b.png" },
+    }),
+    { app: null, palettes: [{ screen: "DP2", path: "/w/new.png" }] },
+  );
 });
