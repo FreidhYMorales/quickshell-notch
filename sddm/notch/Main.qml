@@ -27,8 +27,8 @@ Item {
     readonly property string avatarPath: hasUsers ? String(userModel.data(userModel.index(selectedUser, 0), 260) || "") : ""
     // Match the Quickshell idle height and ear/corner radii (Layout.qml).
     // Width remains configurable until the live idle width is exported.
-    // Override from the exported Quickshell idle width when available.
-    // Quickshell computes this dynamically from visible row contents.
+    // Fixed handoff target: match the chosen Quickshell idle appearance.
+    // Runtime battery/media/notification changes need not change SDDM.
     readonly property real notchWidth: Math.max(80, Number(config.notchWidth) || 420)
     readonly property real notchHeight: 32
     readonly property real earRadius: 12
@@ -157,14 +157,18 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatTime(root.now, "hh:mm")
                         font.family: "IosevkaTerm Nerd Font"
-                        font.pixelSize: 100 - 40 * root.loginProgress
+                        font.pixelSize: 100
+                        scale: 1 - 0.4 * root.loginProgress
+                        transformOrigin: Item.Center
                         color: "white"
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
                         font.family: "IosevkaTerm Nerd Font"
-                        font.pixelSize: 23 - 5 * root.loginProgress
+                        font.pixelSize: 23
+                        scale: 1 - (5 / 23) * root.loginProgress
+                        transformOrigin: Item.Center
                         color: "white"
                     }
                 }
@@ -198,7 +202,9 @@ Item {
                             id: face
                             anchors.fill: parent
                             anchors.margins: 8
-                            source: root.avatarPath === "" ? "" : (root.avatarPath.indexOf(":/") >= 0 ? root.avatarPath : "file://" + root.avatarPath)
+                            // The SDDM default icon is a dark oversized silhouette;
+                            // render our own compact fallback instead.
+                            source: root.avatarPath === "" || /default|face\.icon|avatar-default|user-default/i.test(root.avatarPath) ? "" : (root.avatarPath.indexOf(":/") >= 0 ? root.avatarPath : "file://" + root.avatarPath)
                             fillMode: Image.PreserveAspectCrop
                             visible: status === Image.Ready
                             asynchronous: true
@@ -209,9 +215,9 @@ Item {
                             text: "󰀄"
                             color: "#f4f7ff"
                             font.family: "IosevkaTerm Nerd Font"
-                            font.pixelSize: 42
-                            width: 70
-                            height: 70
+                            font.pixelSize: 29
+                            width: 48
+                            height: 48
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             fontSizeMode: Text.Fit
