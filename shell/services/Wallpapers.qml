@@ -299,8 +299,31 @@ Singleton {
             }
             const snapshot = root.saveQueue.active;
             root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "mkdir");
-            defaultWriter.setText(snapshot.fallback);
+            if (root.readText(defaultWriter.path) === snapshot.fallback)
+                root.defaultSaveCompleted();
+            else
+                defaultWriter.setText(snapshot.fallback);
         }
+    }
+
+    function defaultSaveCompleted() {
+        if (saveQueue.phase !== "default")
+            return;
+        const snapshot = saveQueue.active;
+        saveQueue = WallpaperSave.advanceSave(saveQueue, "default");
+        const contents = JSON.stringify(snapshot.perScreen);
+        if (readText(screensWriter.path) === contents)
+            screensSaveCompleted();
+        else
+            screensWriter.setText(contents);
+    }
+
+    function screensSaveCompleted() {
+        if (saveQueue.phase !== "screens")
+            return;
+        saveQueue = WallpaperSave.advanceSave(saveQueue, "screens");
+        saved = saveQueue.saved;
+        startSave();
     }
 
     FileView {
@@ -308,13 +331,7 @@ Singleton {
         path: root.notchDir + "/wallpaper.txt"
         blockLoading: true
         printErrors: false
-        onSaved: {
-            if (root.saveQueue.phase !== "default")
-                return;
-            const snapshot = root.saveQueue.active;
-            root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "default");
-            screensWriter.setText(JSON.stringify(snapshot.perScreen));
-        }
+        onSaved: root.defaultSaveCompleted()
         onSaveFailed: root.failSave("default wallpaper")
     }
 
@@ -323,13 +340,7 @@ Singleton {
         path: root.notchDir + "/wallpaper-screens.json"
         blockLoading: true
         printErrors: false
-        onSaved: {
-            if (root.saveQueue.phase !== "screens")
-                return;
-            root.saveQueue = WallpaperSave.advanceSave(root.saveQueue, "screens");
-            root.saved = root.saveQueue.saved;
-            root.startSave();
-        }
+        onSaved: root.screensSaveCompleted()
         onSaveFailed: root.failSave("per-screen wallpapers")
     }
 }
