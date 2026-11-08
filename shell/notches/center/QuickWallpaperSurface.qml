@@ -234,7 +234,7 @@ PanelWindow {
         Connections {
             target: previewOutput.videoSink
             function onVideoFrameChanged(frame) {
-                if (root.previewVideo && frame.isValid) {
+                if (root.previewVideo && root.pickerVisible) {
                     root.videoFrameReady = true;
                     root.startReveal();
                 }
