@@ -18,6 +18,11 @@ Item {
 
     implicitHeight: Layout.themeViewHeight
 
+    Component.onCompleted: if (visible)
+        Theme.generatePreviews(screen.name)
+    onVisibleChanged: if (visible)
+        Theme.generatePreviews(screen.name)
+
     function choose(index) {
         const mode = ThemeLogic.MODES[index];
         if (!mode)
@@ -59,6 +64,7 @@ Item {
                 required property string modelData
                 required property int index
                 readonly property bool active: modelData === Theme.mode
+                readonly property var preview: Theme.previewFor(root.screen.name, modelData)
 
                 objectName: "theme-row-" + modelData
                 width: list.width
@@ -71,11 +77,10 @@ Item {
                     Rectangle {
                         objectName: "theme-preview"
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: !Theme.previews[modelData]
                         width: Layout.themePreview
                         height: Layout.themePreview
                         radius: width / 2
-                        color: root.scheme.muted
+                        color: row.preview ? row.preview.primary : root.scheme.muted
                     }
 
                     Text {

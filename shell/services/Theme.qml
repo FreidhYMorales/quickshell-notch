@@ -26,12 +26,59 @@ Singleton {
     // true once the app pipeline and the queued monitor palettes are done.
     property bool applied: true
     property var palettes: ({})
-    // One dry-run palette per scheme mode for the launcher previews.
+    // One dry-run palette per scheme mode for the launcher previews, keyed by
+    // screen so each monitor previews against its own wallpaper.
     property var previews: ({})
 
     property bool appDone: true
     property bool paletteBusy: false
     property var paletteQueue: []
+
+    property bool previewBusy: false
+    property var previewQueue: []
+    property var previewPaths: ({})
+
+    function previewFor(screen: string, mode: string): var {
+        const own = previews[screen];
+        return own ? (own[mode] ?? null) : null;
+    }
+
+    // Nine dry-runs against the monitor's current wallpaper, queued one at a
+    // time so opening the view never spawns them in parallel. Repeated opens
+    // with the same wallpaper reuse the cache.
+    function generatePreviews(screen: string) {
+        if (Flags.smoke)
+            return;
+        const path = Wallpapers.pathFor(screen);
+        if (!path)
+            return;
+        if (previewPaths[screen] === path && previewFor(screen, ThemeLogic.MODES[0]))
+            return;
+        const paths = Object.assign({}, previewPaths);
+        paths[screen] = path;
+        previewPaths = paths;
+        const jobs = [];
+        for (const mode of ThemeLogic.MODES)
+            jobs.push({
+                screen: screen,
+                mode: mode,
+                path: path
+            });
+        previewQueue = previewQueue.filter(job => job.screen !== screen).concat(jobs);
+        startPreview();
+    }
+
+    function startPreview() {
+        if (previewBusy || previewQueue.length === 0)
+            return;
+        const job = previewQueue[0];
+        previewQueue = previewQueue.slice(1);
+        previewBusy = true;
+        previewProc.pendingScreen = job.screen;
+        previewProc.pendingMode = job.mode;
+        previewProc.command = ThemeLogic.dryArgs(job.path, job.mode);
+        previewProc.running = true;
+    }
 
     // Colours.paletteFor(screen) reads these; a screen without an entry
     // follows the global colors.json palette.
@@ -207,6 +254,32 @@ Singleton {
                 }
                 root.paletteBusy = false;
                 root.startPalette();
+            }
+        }
+    }
+
+    Process {
+        id: previewProc
+
+        property string pendingScreen: ""
+        property string pendingMode: ""
+
+        stdout: StdioCollector {
+            id: previewOut
+
+            onStreamFinished: {
+                const palette = ThemeLogic.parseDryPalette(previewOut.text);
+                if (palette) {
+                    const screen = previewProc.pendingScreen;
+                    const current = root.previews[screen] ?? ({});
+                    const own = Object.assign({}, current);
+                    own[previewProc.pendingMode] = palette;
+                    const next = Object.assign({}, root.previews);
+                    next[screen] = own;
+                    root.previews = next;
+                }
+                root.previewBusy = false;
+                root.startPreview();
             }
         }
     }
