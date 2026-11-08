@@ -22,6 +22,29 @@ PanelWindow {
     readonly property bool pickerVisible: pickerPhase !== "closed"
     property real reveal: 0
     property bool waitingForFirstFrame: false
+    property string displayedVideo: ""
+    property string pendingVideo: ""
+    property bool pendingReady: false
+
+    function updateVideoPreview() {
+        if (!pickerVisible || !previewVideo)
+            return;
+        if (displayedVideo === previewPath || pendingVideo === previewPath)
+            return;
+        pendingReady = false;
+        pendingVideo = previewPath;
+        nextVideo.play();
+    }
+    onPreviewPathChanged: updateVideoPreview()
+
+    function acceptVideoFrame() {
+        if (!pendingVideo || pendingReady)
+            return;
+        pendingReady = true;
+        displayedVideo = pendingVideo;
+        pendingVideo = "";
+        startReveal();
+    }
 
     function startReveal() {
         if (pickerPhase !== "opening" || !waitingForFirstFrame)
@@ -107,10 +130,15 @@ PanelWindow {
     // Keep playback alive during the opening and closing reveal, not only
     // while the picker accepts keyboard input.
     onPickerVisibleChanged: {
-        if (pickerVisible && previewVideo)
-            videoPreview.play();
-        else
+        if (pickerVisible)
+            updateVideoPreview();
+        else {
             videoPreview.stop();
+            nextVideo.stop();
+            displayedVideo = "";
+            pendingVideo = "";
+            pendingReady = false;
+        }
     }
 
     Timer {
@@ -210,28 +238,37 @@ PanelWindow {
 
         MediaPlayer {
             id: videoPreview
-            source: root.previewVideo ? "file://" + root.previewPath : ""
+            source: root.displayedVideo ? "file://" + root.displayedVideo : ""
             videoOutput: previewOutput
             loops: MediaPlayer.Infinite
             audioOutput: AudioOutput { muted: true }
-            onSourceChanged: {
-                if (root.pickerVisible && root.previewVideo)
-                    play();
-            }
-            onErrorOccurred: (error, errorString) => console.warn("QuickWallpaper: cannot play video " + root.previewPath + ": " + errorString)
+            onSourceChanged: if (root.pickerVisible && root.displayedVideo) play()
         }
-
         VideoOutput {
             id: previewOutput
             anchors.fill: parent
-            visible: root.previewVideo
+            visible: root.displayedVideo !== ""
             fillMode: VideoOutput.PreserveAspectCrop
         }
-
+        MediaPlayer {
+            id: nextVideo
+            source: root.pendingVideo ? "file://" + root.pendingVideo : ""
+            videoOutput: nextOutput
+            loops: MediaPlayer.Infinite
+            audioOutput: AudioOutput { muted: true }
+            onSourceChanged: if (root.pickerVisible && root.pendingVideo) play()
+        }
+        VideoOutput {
+            id: nextOutput
+            anchors.fill: parent
+            visible: false
+            fillMode: VideoOutput.PreserveAspectCrop
+        }
         Connections {
-            target: previewOutput.videoSink
+            target: nextOutput.videoSink
             function onVideoFrameChanged(frame) {
-                root.startReveal();
+                if (frame.isValid)
+                    root.acceptVideoFrame();
             }
         }
 
