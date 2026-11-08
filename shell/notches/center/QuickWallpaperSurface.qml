@@ -15,7 +15,8 @@ PanelWindow {
     // Do not derive visibility from PanelWindow.screen: its assignment depends
     // on mapping, which creates a binding cycle when the window is hidden.
     required property string monitorName
-    readonly property string pickerPhase: CenterStore.quickWallpaper.monitor === monitorName
+    readonly property bool secondaryPreview: Wallpapers.applyToAll && CenterStore.quickWallpaper.monitor !== monitorName
+    readonly property string pickerPhase: CenterStore.quickWallpaper.monitor === monitorName || secondaryPreview
         ? CenterStore.quickWallpaper.phase : "closed"
     readonly property bool pickerOpen: pickerPhase === "open"
     readonly property bool pickerVisible: pickerPhase !== "closed"
@@ -80,7 +81,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "notch-quick-wallpaper"
-    WlrLayershell.keyboardFocus: pickerOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: pickerOpen && !secondaryPreview ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     NumberAnimation {
         id: revealAnimation
@@ -89,9 +90,9 @@ PanelWindow {
         duration: Timings.animSlow
         easing.type: Easing.InOutCubic
         onFinished: {
-            if (root.pickerPhase === "opening")
+            if (!root.secondaryPreview && root.pickerPhase === "opening")
                 CenterStore.finishQuickWallpaperOpening();
-            else if (root.pickerPhase === "closing")
+            else if (!root.secondaryPreview && root.pickerPhase === "closing")
                 CenterStore.finishQuickWallpaperClosing();
         }
     }
@@ -176,7 +177,7 @@ PanelWindow {
         height: root.height
         x: -revealFrame.x
         y: 0
-        focus: root.pickerOpen
+        focus: root.pickerOpen && !root.secondaryPreview
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
                 Wallpapers.move(-1, root.monitorName);
@@ -240,6 +241,7 @@ PanelWindow {
         }
 
         Column {
+            visible: !root.secondaryPreview
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
             anchors.topMargin: parent.height * 0.16
@@ -264,6 +266,7 @@ PanelWindow {
 
         Item {
             id: coverflow
+            visible: !root.secondaryPreview
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
