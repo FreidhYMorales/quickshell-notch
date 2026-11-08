@@ -57,6 +57,25 @@ export function themeState(notchText, oldText) {
   return { mode };
 }
 
+// Which matugen runs a commit implies. A mode choice rebuilds the apps from
+// the shared wallpaper and every monitor override from its own; a shared
+// wallpaper commit only rebuilds the apps (monitors without an override
+// follow the new global palette); an override only recolours its monitor.
+export function commitJobs(action) {
+  if (action.kind === "mode") {
+    const palettes = [];
+    for (const screen in action.perScreen) {
+      palettes.push({ screen: screen, path: action.perScreen[screen] });
+    }
+    return { app: action.wallpaper, palettes: palettes };
+  }
+  if (action.shared) return { app: action.path, palettes: [] };
+  return {
+    app: null,
+    palettes: [{ screen: action.screen, path: action.path }],
+  };
+}
+
 // matugen --dry-run --json hex nests each colour as { default: { color } },
 // unlike the { hex } shape of the colors.json it writes for the apps.
 export function parseDryPalette(jsonText) {
