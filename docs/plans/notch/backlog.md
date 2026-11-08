@@ -44,6 +44,11 @@
 32. [x] 6e7946a As a user, I want every suspend to lock the notch session first so that my session is already protected when it resumes. Requires: #30
 33. [ ] As a user, I want a lock screen redesigned in the notch style so that my lock matches my shell and no longer depends on the SDDM theme. Requires: #30
 34. [x] 1c7a44e (PR #27, squash-merged into main; CI green as reported by maintainer) As a user, I want a fullscreen Quick Wallpaper picker expanding from the centre notch, with a bottom portrait coverflow (at most one third of screen height), clock/date and live preview, opened by keybind. Requires: #27
+35. [ ] As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend timeouts from the notch. Requires: #26, #31
+36. [ ] As a user, I want the security command view in the launcher so that I can enable fingerprint unlock and manage my registered fingers. Requires: #26, #30
+37. [ ] As a user, I want the webapp command view in the launcher so that I can install a website as a desktop web app. Requires: #26
+38. [ ] As a user, I want a month view in the expanded notch calendar with week/month scrolling and a jump back to today so that I can look beyond the current week. Requires: —
+39. [ ] As a user, I want a glow pulse when a notification arrives so that I notice it without being interrupted. Requires: #01
 
 ## Wallpaper work status
 
@@ -51,4 +56,5 @@
 - #34: fullscreen Quick Wallpaper picker implemented and merged into `main` via PR #27 (squash commit `1c7a44e`). The maintainer confirmed that both CI jobs passed and that local image/video preview, transitions and persistence worked.
 - #34 validation limitations: multi-monitor behavior was not tested because a second monitor was unavailable. Other unconfirmed manual edge cases (Escape/persistence, lock/session interactions, focus and click-through restoration, missing files and decoder failures) are not marked as passed; issues discovered later can be handled in follow-up stories.
 - The unreliable nested Hyprland compositor CI probe was removed. Functional validation was performed on the maintainer's own environment, not through that hosted compositor probe.
-- Remaining open stories: #15, #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #28, #29 and #33.
+- Remaining open stories: #15, #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #28, #29, #33, #35, #36, #37, #38 and #39.
+- #35-#39 cover plan SHOULD items that had no backlog entry: the screensaver, security and webapp command views (plan line 335), the calendar month view (line 337) and the notification glow pulse (line 338).
