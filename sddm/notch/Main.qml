@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
-import SddmComponents
 
 Item {
     id: root
@@ -19,7 +18,7 @@ Item {
     readonly property color accent: "#adc6ff"
     readonly property color foreground: "#ffffff"
     readonly property color panel: "#000000"
-    readonly property bool hasUsers: userModel && userModel.count > 0
+    readonly property bool hasUsers: userModel.count > 0
     property int selectedUser: 0
 
     function showLogin() {
@@ -167,7 +166,10 @@ Item {
                             visible: root.hasUsers
                             model: userModel
                             textRole: "realName"
-                            onCurrentIndexChanged: root.selectedUser = currentIndex
+                            Connections {
+                                target: users
+                                function onActivated(index) { root.selectedUser = index; }
+                            }
                         }
                         TextField {
                             id: username
