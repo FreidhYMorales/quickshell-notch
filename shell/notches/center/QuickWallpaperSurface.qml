@@ -262,41 +262,6 @@ PanelWindow {
             }
         }
 
-        Row {
-            anchors.right: coverflow.right
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 12
-            spacing: 10
-
-            Text {
-                text: Wallpapers.applyToAll ? "Todos" : "Individual"
-                color: "white"
-                font.family: Fonts.family
-                font.pixelSize: 14
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            Rectangle {
-                width: 40
-                height: 22
-                radius: 11
-                color: Wallpapers.applyToAll ? root.scheme.primary : "#888888"
-                Rectangle {
-                    width: 18
-                    height: 18
-                    radius: 9
-                    y: 2
-                    x: Wallpapers.applyToAll ? 20 : 2
-                    color: "white"
-                    Behavior on x {
-                        NumberAnimation { duration: Timings.animNormal }
-                    }
-                }
-                TapHandler {
-                    onTapped: Wallpapers.setApplyToAll(!Wallpapers.applyToAll)
-                }
-            }
-        }
-
         Item {
             id: coverflow
 
