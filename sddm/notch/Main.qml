@@ -156,13 +156,13 @@ Item {
                 Column {
                     anchors.centerIn: parent
                     spacing: 4
+                    scale: 1 - 0.30 * root.loginProgress
+                    transformOrigin: Item.Center
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatTime(root.now, "hh:mm")
                         font.family: "IosevkaTerm Nerd Font"
                         font.pixelSize: 100
-                        scale: 1 - 0.4 * root.loginProgress
-                        transformOrigin: Item.Center
                         color: "white"
                     }
                     Text {
@@ -170,8 +170,6 @@ Item {
                         text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
                         font.family: "IosevkaTerm Nerd Font"
                         font.pixelSize: 23
-                        scale: 1 - (5 / 23) * root.loginProgress
-                        transformOrigin: Item.Center
                         color: "white"
                     }
                 }
@@ -395,34 +393,99 @@ Item {
         }
     }
 
+    // Quiet, notch-inspired footer; no platform-native gray controls.
     Row {
+        id: footer
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 14
+        anchors.bottomMargin: 22
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 12
-        visible: root.view === "login" && !root.exiting
+        spacing: 10
+        opacity: root.loginProgress * (root.exiting ? 0 : 1)
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: 240 } }
 
         ComboBox {
             id: sessions
-            width: 180
+            width: 190
+            height: 34
             model: sessionModel
             textRole: "name"
+            font.pixelSize: 12
+            background: Rectangle { color: "#cc000000"; radius: 17 }
+            contentItem: Text {
+                leftPadding: 14
+                rightPadding: 26
+                text: sessions.displayText
+                color: "white"
+                font.pixelSize: 12
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+            indicator: Text {
+                text: "⌄"
+                color: "white"
+                anchors.right: parent.right
+                anchors.rightMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            delegate: ItemDelegate {
+                width: sessions.width
+                text: model.name
+                highlighted: sessions.highlightedIndex === index
+                contentItem: Text {
+                    text: model.name
+                    color: "white"
+                    font.pixelSize: 12
+                    verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle { color: highlighted ? "#303946" : "#171b22"; radius: 8 }
+            }
+            popup: Popup {
+                y: -implicitHeight - 6
+                width: sessions.width
+                padding: 5
+                implicitHeight: contentItem.implicitHeight + 10
+                contentItem: ListView {
+                    implicitHeight: contentHeight
+                    model: sessions.popup.visible ? sessions.delegateModel : null
+                    currentIndex: sessions.highlightedIndex
+                    clip: true
+                }
+                background: Rectangle { color: "#171b22"; radius: 12 }
+            }
         }
+
         Button {
-            text: "Volver"
+            width: 36
+            height: 34
+            text: "‹"
+            ToolTip.visible: hovered
+            ToolTip.text: "Volver"
             onClicked: {
                 root.view = "clock";
                 root.choosingUser = false;
                 root.forceActiveFocus();
             }
+            background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
+            contentItem: Text { text: "‹"; color: "white"; font.pixelSize: 24; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
         }
         Button {
-            text: "Apagar"
+            width: 36
+            height: 34
+            ToolTip.visible: hovered
+            ToolTip.text: "Apagar"
             onClicked: sddm.powerOff()
+            background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
+            contentItem: Text { text: "⏻"; color: "white"; font.pixelSize: 20; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
         }
         Button {
-            text: "Reiniciar"
+            width: 36
+            height: 34
+            ToolTip.visible: hovered
+            ToolTip.text: "Reiniciar"
             onClicked: sddm.reboot()
+            background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
+            contentItem: Text { text: "↻"; color: "white"; font.pixelSize: 21; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
         }
     }
 
