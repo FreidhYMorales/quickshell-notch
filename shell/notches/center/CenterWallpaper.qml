@@ -104,6 +104,13 @@ Item {
                             ? root.session.entries[entryIndex] : null
                         readonly property bool selected: offset === 0
 
+                        function requestPoster() {
+                            if (entry?.video)
+                                Wallpapers.requestThumbnail(entry.path);
+                        }
+                        onEntryChanged: requestPoster()
+                        Component.onCompleted: requestPoster()
+
                         width: Layout.wallpaperCardWidth
                         height: Layout.wallpaperCardHeight
 
@@ -144,7 +151,8 @@ Item {
                                 anchors.fill: parent
                                 anchors.margins: Layout.wallpaperCardPad
                                 visible: card.entry?.video ?? false
-                                source: card.entry?.video ? Wallpapers.thumbnailFor(card.entry.path) : ""
+                                source: card.entry?.video && Wallpapers.thumbnailReady[card.entry.path]
+                                    ? "file://" + Wallpapers.thumbnailDir + "/" + Wallpapers.thumbnailReady[card.entry.path] : ""
                                 asynchronous: true
                                 fillMode: Image.PreserveAspectCrop
                                 layer.enabled: true
