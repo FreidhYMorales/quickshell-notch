@@ -23,6 +23,8 @@ PanelWindow {
     }
 
     function requestWallpaper(path) {
+        if (!slot(0) || !slot(1))
+            return;
         if (!initialized) {
             initialized = true;
             const first = slot(frontSlot);
