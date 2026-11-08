@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import "../logic/themeState.mjs" as ThemeState
-import "../config"
 
 // One global appearance choice. Preview is transient; only commit writes state.
 Singleton {
