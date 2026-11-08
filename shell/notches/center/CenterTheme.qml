@@ -26,6 +26,13 @@ Item {
         applied();
     }
 
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Escape) {
+            back();
+            event.accepted = true;
+        }
+    }
+
     Column {
         anchors.fill: parent
         spacing: Layout.launcherGap
