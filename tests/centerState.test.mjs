@@ -788,3 +788,17 @@ test("closing a wallpaper launcher clears its keyboard owner", () => {
     null,
   );
 });
+
+test("theme command opens a launcher subview and returns to commands", () => {
+  const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
+  const theme = reduce(opened, { type: "ThemeOpen" }).state;
+  assert.equal(theme.global.keyboard.sub, "theme");
+  assert.equal(theme.global.keyboard.kind, "launcher");
+  const returned = reduce(theme, { type: "ThemeBack" }).state;
+  assert.equal(returned.global.keyboard.sub, null);
+});
+
+test("theme subview cannot open without the launcher", () => {
+  const initial = two();
+  assert.equal(reduce(initial, { type: "ThemeOpen" }).state, initial);
+});

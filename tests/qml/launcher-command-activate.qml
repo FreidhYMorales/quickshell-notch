@@ -22,7 +22,7 @@ ShellRoot {
             const screen = Quickshell.screens[0];
             root.target = component.createObject(null, { screen: screen });
             root.center.store.dispatch({ type: "LauncherToggle", monitor: screen.name });
-            root.center.store.dispatch({ type: "LauncherQuery", text: ">theme" });
+            root.center.store.dispatch({ type: "LauncherQuery", text: ">keybinds" });
             activate.start();
         }
     }
@@ -30,7 +30,7 @@ ShellRoot {
         id: activate; interval: 800
         onTriggered: {
             const view = root.launcher(root.target.content);
-            if (!view || !Visual.findText(root.target.content, "Theme")) return Qt.exit(2);
+            if (!view || !Visual.findText(root.target.content, "Keybinds")) return Qt.exit(2);
             view.launch(0);
             check.start();
         }
@@ -38,7 +38,7 @@ ShellRoot {
     Timer {
         id: check; interval: 300
         onTriggered: {
-            if (!Visual.findText(root.target.content, "Theme") || !Visual.findText(root.target.content, "Not available yet")) return Qt.exit(1);
+            if (!Visual.findText(root.target.content, "Keybinds") || !Visual.findText(root.target.content, "Not available yet")) return Qt.exit(1);
             console.log("launcher commands: unavailable activation ignored");
             Qt.exit(0);
         }
