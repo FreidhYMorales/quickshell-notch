@@ -21,6 +21,7 @@ Scope {
     property bool exiting: false
     property bool entering: false
     property bool capturing: false
+    property bool notchShown: false
     readonly property string captureDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/quickshell-notch-lock-" + (Quickshell.env("USER") || "user")
     property int captureRevision: 0
     readonly property int morphDuration: 520
@@ -59,6 +60,8 @@ Scope {
                 return;
             exitMorph.stop();
             root.exiting = false;
+            notchDelay.stop();
+            root.notchShown = false;
             root.reveal = 0;
             root.entering = true;
             root.capturing = true;
@@ -91,6 +94,14 @@ Scope {
         to: 1
         duration: root.morphDuration
         easing.type: Easing.InOutCubic
+        onFinished: if (lock.locked && !root.exiting) notchDelay.restart()
+    }
+
+    Timer {
+        id: notchDelay
+        interval: 1600
+        repeat: false
+        onTriggered: if (lock.locked && !root.exiting) root.notchShown = true
     }
 
     NumberAnimation {
@@ -126,6 +137,8 @@ Scope {
                 root.exiting = false;
                 root.entering = false;
                 root.reveal = 1;
+                root.notchShown = false;
+                notchDelay.stop();
                 cleanupCapture.running = true;
             }
         }
@@ -278,26 +291,55 @@ Scope {
                     }
                 }
             }
-            Shape {
+            // A separate secure notch drops from the top after the reveal.
+            // Keep it above the contracting frame until the compositor unlocks.
+            Item {
                 id: lockedNotch
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
                 width: surface.idleWidth
                 height: Layout.idleHeight
-                visible: root.reveal >= 0.995 && !root.exiting
-                preferredRendererType: Shape.CurveRenderer
-                ShapePath {
-                    fillColor: Colours.background
-                    strokeWidth: -1
-                    PathSvg { path: EarGeometry.notchPath(lockedNotch.width, lockedNotch.height, Layout.earRadius, Layout.cornerRadius) }
+                y: root.notchShown ? 0 : -height
+                visible: root.notchShown || notchDrop.running || root.exiting
+                z: 10
+
+                Behavior on y {
+                    NumberAnimation {
+                        id: notchDrop
+                        duration: 420
+                        easing.type: Easing.OutCubic
+                    }
                 }
+
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        fillColor: Colours.background
+                        strokeWidth: -1
+                        PathSvg {
+                            path: EarGeometry.notchPath(lockedNotch.width, lockedNotch.height,
+                                Layout.earRadius, Layout.cornerRadius)
+                        }
+                    }
+                }
+
                 Text {
                     anchors.centerIn: parent
-                    text: "🔒"
-                    color: "white"
-                    font.pixelSize: 21
+                    visible: !(root.exiting && root.reveal <= 0.08)
+                    text: "\uf023"
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.idleClock + 3
+                    color: Colours.paletteFor(surface.screen).onSurface
+                }
+
+                CenterIdle {
+                    anchors.fill: parent
+                    screen: surface.screen
+                    view: CenterStore.viewFor(surface.screen?.name || "")
+                    visible: root.exiting && root.reveal <= 0.08
                 }
             }
+
         }
     }
 }
