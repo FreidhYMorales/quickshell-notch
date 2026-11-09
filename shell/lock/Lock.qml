@@ -301,6 +301,9 @@ Scope {
                 y: root.notchShown ? 0 : -height
                 visible: root.notchShown || notchDrop.running || root.exiting
                 z: 10
+                // Crossfade in the final part of the fullscreen contraction.
+                // Both layers stay mounted so the notch never flashes empty.
+                readonly property real idleMix: root.exiting ? Math.max(0, Math.min(1, (0.42 - root.reveal) / 0.42)) : 0
 
                 Behavior on y {
                     NumberAnimation {
@@ -325,7 +328,8 @@ Scope {
 
                 Text {
                     anchors.centerIn: parent
-                    visible: !(root.exiting && root.reveal <= 0.08)
+                    opacity: 1 - lockedNotch.idleMix
+                    scale: 1 - 0.12 * lockedNotch.idleMix
                     text: "\uf023"
                     font.family: Fonts.family
                     font.pixelSize: Fonts.idleClock + 3
@@ -336,7 +340,8 @@ Scope {
                     anchors.fill: parent
                     screen: surface.screen
                     view: CenterStore.viewFor(surface.screen?.name || "")
-                    visible: root.exiting && root.reveal <= 0.08
+                    opacity: lockedNotch.idleMix
+                    visible: opacity > 0
                 }
             }
 
