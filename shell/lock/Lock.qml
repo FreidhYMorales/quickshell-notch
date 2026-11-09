@@ -62,6 +62,7 @@ Scope {
             notchRetreat.stop();
             root.exiting = false;
             notchDelay.stop();
+            curtainEntrance.stop();
             root.notchShown = false;
             root.reveal = 0;
             root.entering = true;
@@ -95,7 +96,20 @@ Scope {
         to: 1
         duration: root.morphDuration
         easing.type: Easing.InOutCubic
-        onFinished: if (lock.locked && !root.exiting) notchDelay.restart()
+        onFinished: if (lock.locked && !root.exiting) {
+            root.notchShown = false;
+            notchDelay.restart();
+        }
+    }
+
+    Timer {
+        id: curtainEntrance
+        interval: 440
+        repeat: false
+        onTriggered: if (lock.locked && root.entering && !root.exiting) {
+            root.entering = false;
+            enterMorph.restart();
+        }
     }
 
     Timer {
@@ -152,6 +166,7 @@ Scope {
                 root.reveal = 1;
                 root.notchShown = false;
                 notchDelay.stop();
+                curtainEntrance.stop();
                 notchRetreat.stop();
                 cleanupCapture.running = true;
             }
@@ -159,9 +174,9 @@ Scope {
         onSecureChanged: {
             Session.setSecure(secure);
             if (secure && root.entering && lock.locked) {
-                root.entering = false;
-                if (lock.secure)
-                    enterMorph.restart();
+                // First cover the desktop notch with the secure curtain.
+                root.notchShown = true;
+                curtainEntrance.restart();
             }
         }
 
@@ -317,7 +332,7 @@ Scope {
                 width: surface.idleWidth
                 height: Layout.idleHeight
                 z: 9
-                visible: root.exiting && root.reveal <= 0.001
+                visible: (root.entering && root.reveal <= 0.001) || (root.exiting && root.reveal <= 0.001)
 
                 CenterIdle {
                     anchors.fill: parent
