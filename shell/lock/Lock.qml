@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Shapes
+import QtMultimedia
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -102,8 +103,11 @@ Scope {
         easing.type: Easing.InOutCubic
         onFinished: {
             // Never release a session lock before PAM has succeeded.
-            if (root.exiting && lock.locked)
+            if (root.exiting && lock.locked) {
                 lock.locked = false;
+                Session.setLocked(false);
+                Session.setSecure(false);
+            }
         }
     }
 
@@ -142,6 +146,8 @@ Scope {
             // not a texture mask (which could turn the notch invisible).
             readonly property string captureSource: root.captureRevision > 0 && surface.screen ? "file://" + root.captureDir + "/" + surface.screen.name + ".png?v=" + root.captureRevision : ""
             readonly property string wallpaperPath: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
+            property bool videoFrameReady: false
+            readonly property bool videoWallpaper: WallpaperState.isVideoPath(wallpaperPath)
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
             readonly property real morphWidth: idleWidth + (width - idleWidth) * root.reveal
@@ -211,8 +217,38 @@ Scope {
                     Image {
                         anchors.fill: parent
                         source: surface.wallpaperSource
+                        visible: !surface.videoWallpaper || !surface.videoFrameReady
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
+                    }
+
+                    MediaPlayer {
+                        id: lockVideo
+                        source: surface.videoWallpaper ? "file://" + surface.wallpaperPath : ""
+                        videoOutput: lockVideoOutput
+                        loops: MediaPlayer.Infinite
+                        audioOutput: AudioOutput { muted: true }
+                        onSourceChanged: if (surface.videoWallpaper && lock.locked) play()
+                        onMediaStatusChanged: {
+                            if (surface.videoWallpaper && lock.locked && (mediaStatus === MediaPlayer.LoadedMedia || mediaStatus === MediaPlayer.BufferedMedia) && playbackState !== MediaPlayer.PlayingState)
+                                play();
+                        }
+                        onErrorOccurred: (error, message) => console.warn("Lock video: " + message)
+                    }
+
+                    VideoOutput {
+                        id: lockVideoOutput
+                        anchors.fill: parent
+                        visible: surface.videoWallpaper && surface.videoFrameReady
+                        fillMode: VideoOutput.PreserveAspectCrop
+                    }
+
+                    Connections {
+                        target: lockVideoOutput.videoSink
+                        function onVideoFrameChanged(frame) {
+                            if (surface.videoWallpaper && lock.locked)
+                                surface.videoFrameReady = true;
+                        }
                     }
 
                     LockContent {
