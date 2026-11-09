@@ -19,6 +19,9 @@ Scope {
     property real reveal: 1
     property bool exiting: false
     property bool entering: false
+    property bool capturing: false
+    readonly property string captureDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/quickshell-notch-lock-" + (Quickshell.env("USER") || "user")
+    property int captureRevision: 0
     readonly property int morphDuration: 520
 
     function startExit() {
@@ -57,8 +60,26 @@ Scope {
             root.exiting = false;
             root.reveal = 0;
             root.entering = true;
+            root.capturing = true;
+            capture.command = ["sh", "-c", 'umask 077; mkdir -p -m 700 "$1" || exit 1; dir="$1"; shift; for monitor do grim -o "$monitor" "$dir/$monitor.png" || exit 1; done', "capture", root.captureDir].concat(Quickshell.screens.map(s => s.name));
+            capture.running = true;
+        }
+    }
+
+    Process {
+        id: capture
+        onExited: code => {
+            root.capturing = false;
+            if (!root.entering) return;
+            if (code === 0) root.captureRevision++;
+            else console.warn("Lock: grim capture failed, falling back to wallpaper");
             lock.locked = true;
         }
+    }
+
+    Process {
+        id: cleanupCapture
+        command: ["rm", "-rf", root.captureDir]
     }
 
     NumberAnimation {
@@ -100,6 +121,7 @@ Scope {
                 root.exiting = false;
                 root.entering = false;
                 root.reveal = 1;
+                cleanupCapture.running = true;
             }
         }
         onSecureChanged: {
@@ -118,6 +140,7 @@ Scope {
             // Always cover the compositor while locked. The wallpaper is a
             // safe, static backdrop; the morph itself is a visible Shape,
             // not a texture mask (which could turn the notch invisible).
+            readonly property string captureSource: root.captureRevision > 0 && surface.screen ? "file://" + root.captureDir + "/" + surface.screen.name + ".png?v=" + root.captureRevision : ""
             readonly property string wallpaperPath: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
@@ -131,14 +154,9 @@ Scope {
             // surface uses the same wallpaper, without tint or blur.
             Image {
                 anchors.fill: parent
-                source: surface.wallpaperSource
+                source: surface.captureSource || surface.wallpaperSource
                 fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: "#26000000"
+                asynchronous: false
             }
 
             readonly property real earMorph: {
