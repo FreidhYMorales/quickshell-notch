@@ -61,7 +61,6 @@ Scope {
             exitMorph.stop();
             notchRetreat.stop();
             root.exiting = false;
-            notchDelay.stop();
             curtainEntrance.stop();
             root.notchShown = false;
             root.reveal = 0;
@@ -96,10 +95,6 @@ Scope {
         to: 1
         duration: root.morphDuration
         easing.type: Easing.InOutCubic
-        onFinished: if (lock.locked && !root.exiting) {
-            root.notchShown = false;
-            notchDelay.restart();
-        }
     }
 
     Timer {
@@ -110,13 +105,6 @@ Scope {
             root.entering = false;
             enterMorph.restart();
         }
-    }
-
-    Timer {
-        id: notchDelay
-        interval: 1600
-        repeat: false
-        onTriggered: if (lock.locked && !root.exiting) root.notchShown = true
     }
 
     NumberAnimation {
@@ -165,8 +153,7 @@ Scope {
                 root.entering = false;
                 root.reveal = 1;
                 root.notchShown = false;
-                notchDelay.stop();
-                curtainEntrance.stop();
+                    curtainEntrance.stop();
                 notchRetreat.stop();
                 cleanupCapture.running = true;
             }
