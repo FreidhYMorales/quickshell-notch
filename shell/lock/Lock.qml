@@ -232,18 +232,19 @@ Scope {
                         audioOutput: AudioOutput { muted: true }
                         onSourceChanged: if (surface.videoWallpaper && lock.locked) play()
                         Component.onCompleted: if (surface.videoWallpaper && lock.locked) play()
-                        Connections {
-                            target: lock
-                            function onLockedChanged() {
-                                if (lock.locked && surface.videoWallpaper) lockVideo.play();
-                                else lockVideo.stop();
-                            }
-                        }
                         onMediaStatusChanged: {
                             if (surface.videoWallpaper && lock.locked && (mediaStatus === MediaPlayer.LoadedMedia || mediaStatus === MediaPlayer.BufferedMedia) && playbackState !== MediaPlayer.PlayingState)
                                 play();
                         }
                         onErrorOccurred: (error, message) => console.warn("Lock video: " + message)
+                    }
+
+                    Connections {
+                        target: lock
+                        function onLockedChanged() {
+                            if (lock.locked && surface.videoWallpaper) lockVideo.play();
+                            else lockVideo.stop();
+                        }
                     }
 
                     VideoOutput {
