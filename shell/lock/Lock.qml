@@ -18,7 +18,6 @@ Scope {
 
     property real reveal: 1
     property bool exiting: false
-    property real blurAmount: 0
     readonly property int morphDuration: 520
 
     function startExit() {
@@ -56,7 +55,6 @@ Scope {
             exitMorph.stop();
             root.exiting = false;
             root.reveal = 0;
-            root.blurAmount = 1;
             lock.locked = true;
             enterMorph.restart();
         }
@@ -100,7 +98,6 @@ Scope {
                 sharedAuth.stop();
                 root.exiting = false;
                 root.reveal = 1;
-                root.blurAmount = 0;
             }
         }
         onSecureChanged: Session.setSecure(secure)
@@ -120,45 +117,80 @@ Scope {
             readonly property real ear: Layout.earRadius * (1 - root.reveal)
             readonly property real corner: Layout.cornerRadius * (1 - root.reveal)
 
+            // Match QuickWallpaperSurface: a full-screen wallpaper is drawn
+            // inside a growing, curved reveal frame. The surrounding secure
+            // surface uses the same wallpaper, without tint or blur.
             Image {
                 anchors.fill: parent
                 source: surface.wallpaperSource
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    blurEnabled: true
-                    blurMax: 32
-                    blur: root.blurAmount
-                }
+            }
+
+            readonly property real earMorph: {
+                const t = Math.max(0, Math.min(1, (root.reveal - 0.45) / 0.55));
+                return t * t * (3 - 2 * t);
+            }
+            readonly property real cornerMorph: {
+                const t = Math.max(0, Math.min(1, (root.reveal - 0.20) / 0.80));
+                return t * t * (3 - 2 * t);
             }
 
             Shape {
-                id: morph
-                width: surface.morphWidth
-                height: surface.morphHeight
+                id: revealMask
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
+                width: revealFrame.width
+                height: revealFrame.height
+                visible: false
+                layer.enabled: true
                 preferredRendererType: Shape.CurveRenderer
-                opacity: 1 - Math.max(0, Math.min(1, (root.reveal - 0.25) / 0.65))
 
                 ShapePath {
+                    fillColor: "white"
                     strokeWidth: -1
-                    fillColor: Colours.background
                     PathSvg {
-                        path: EarGeometry.notchPath(morph.width, morph.height, surface.ear, surface.corner)
+                        path: EarGeometry.notchPath(revealMask.width, revealMask.height,
+                            Layout.earRadius * (1 - surface.earMorph),
+                            Layout.cornerRadius * (1 - surface.cornerMorph))
                     }
                 }
             }
 
-            // Keep the authentication content in full-screen coordinates so
-            // it does not jump when the animated notch changes its dimensions.
-            LockContent {
-                anchors.fill: parent
-                auth: sharedAuth
-                screen: surface.screen
-                enabled: !root.exiting && root.reveal >= 0.98
-                opacity: root.exiting ? Math.max(0, root.reveal * 2 - 1) : Math.max(0, root.reveal * 2 - 1)
+            Rectangle {
+                id: revealFrame
+                width: surface.morphWidth
+                height: surface.morphHeight
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                color: Colours.background
+                clip: true
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: revealMask
+                }
+
+                Item {
+                    width: surface.width
+                    height: surface.height
+                    x: -revealFrame.x
+
+                    Image {
+                        anchors.fill: parent
+                        source: surface.wallpaperSource
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+
+                    LockContent {
+                        anchors.fill: parent
+                        auth: sharedAuth
+                        screen: surface.screen
+                        enabled: !root.exiting && root.reveal >= 0.98
+                        opacity: Math.max(0, Math.min(1, (root.reveal - 0.5) * 2))
+                    }
+                }
             }
         }
     }
