@@ -45,6 +45,9 @@ Singleton {
     property bool previewBusy: false
     property var previewQueue: []
     property var previewPaths: ({})
+    // Bumped by a wallpaper commit: previews computed from the old wallpaper
+    // are dropped instead of being stored.
+    property int previewEpoch: 0
 
     property var frameQueue: []
     property bool frameBusy: false
@@ -93,6 +96,7 @@ Singleton {
         previewBusy = true;
         previewProc.pendingScreen = job.screen;
         previewProc.pendingMode = job.mode;
+        previewProc.epoch = root.previewEpoch;
         frameFor(job.path, "preview", path => {
             previewProc.pending = true;
             previewProc.didStart = false;
@@ -245,6 +249,16 @@ Singleton {
             paletteQueue = [];
             cancelPalette();
         }
+        // Either way the previews were computed from the old wallpaper.
+        previewEpoch += 1;
+        previewQueue = [];
+        cancelPreview();
+        const kept = {};
+        for (const name in previews) {
+            if (!shared && name !== screen)
+                kept[name] = previews[name];
+        }
+        previews = kept;
         apply(ThemeLogic.commitJobs({
             kind: "wallpaper",
             shared: shared,
@@ -258,6 +272,12 @@ Singleton {
         paletteProc.pending = false;
         paletteProc.running = false;
         paletteBusy = false;
+    }
+
+    function cancelPreview() {
+        previewProc.pending = false;
+        previewProc.running = false;
+        previewBusy = false;
     }
 
     // Colours.paletteFor(screen) prefers these over the global colors.json.
@@ -562,6 +582,7 @@ Singleton {
 
         property string pendingScreen: ""
         property string pendingMode: ""
+        property int epoch: 0
         property bool pending: false
         property bool didStart: false
 
@@ -580,6 +601,12 @@ Singleton {
                 if (!previewProc.pending)
                     return;
                 previewProc.pending = false;
+                // The wallpaper changed while this preview was being computed.
+                if (previewProc.epoch !== root.previewEpoch) {
+                    root.previewBusy = false;
+                    root.startPreview();
+                    return;
+                }
                 const palette = ThemeLogic.parseDryPalette(previewOut.text);
                 if (palette) {
                     const screen = previewProc.pendingScreen;
