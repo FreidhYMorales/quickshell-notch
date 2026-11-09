@@ -40,21 +40,26 @@ export function dryArgs(path, mode) {
 
 export const DEFAULT_MODE = "scheme-content";
 
+// The mode stored in a theme.json, or null when the file is broken or holds a
+// mode this build does not know: those files are rewritten, not trusted.
+export function savedMode(text) {
+  if (typeof text !== "string") return null;
+  let saved;
+  try {
+    saved = JSON.parse(text);
+  } catch (_error) {
+    return null;
+  }
+  if (typeof saved !== "object" || saved === null) return null;
+  return MODES.indexOf(saved.mode) === -1 ? null : saved.mode;
+}
+
 // The notch's theme.json keeps only the mode; the old shell's file used the
 // same key. A missing or broken notch file keeps the default rather than
 // reading the old file, so importing happens once, never after an edit.
 export function themeState(notchText, oldText) {
   const text = typeof notchText === "string" ? notchText : oldText;
-  let saved = {};
-  if (typeof text === "string") {
-    try {
-      saved = JSON.parse(text) || {};
-    } catch (_error) {
-      saved = {};
-    }
-  }
-  const mode = MODES.indexOf(saved.mode) === -1 ? DEFAULT_MODE : saved.mode;
-  return { mode };
+  return { mode: savedMode(text) ?? DEFAULT_MODE };
 }
 
 // Which matugen runs a commit implies. A mode choice rebuilds the apps from

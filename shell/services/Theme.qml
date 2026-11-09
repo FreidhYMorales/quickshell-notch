@@ -181,8 +181,13 @@ Singleton {
     function load() {
         const notch = readText(notchDir + "/theme.json");
         if (notch !== null) {
-            mode = ThemeLogic.themeState(notch, null).mode;
-            saved = true;
+            const stored = ThemeLogic.savedMode(notch);
+            mode = stored ?? ThemeLogic.DEFAULT_MODE;
+            // A broken file is replaced by the default instead of keeping it.
+            if (stored === null)
+                persist();
+            else
+                saved = true;
         } else {
             mode = ThemeLogic.themeState(null, readText(oldDir + "/theme.json")).mode;
             persist();
