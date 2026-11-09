@@ -31,6 +31,10 @@ Singleton {
     property var previews: ({})
 
     property bool appDone: true
+    property bool appBusy: false
+    // The single app run still waiting: a newer commit replaces it, so the
+    // last choice wins instead of being dropped.
+    property var appNext: null
     property bool paletteBusy: false
     property var paletteQueue: []
 
@@ -146,9 +150,11 @@ Singleton {
         if (Flags.smoke)
             return;
         applied = false;
-        appDone = jobs.app === null;
+        // An empty path means there is nothing to theme yet: the run is
+        // skipped instead of spawning matugen with no image.
         if (jobs.app)
             runApp(jobs.app);
+        appDone = !appBusy && appNext === null;
         paletteQueue = paletteQueue.concat(jobs.palettes);
         startPalette();
         checkApplied();
@@ -159,25 +165,59 @@ Singleton {
     }
 
     function runApp(path: string) {
-        appProc.pending = true;
-        appProc.didStart = false;
-        appProc.command = ThemeLogic.appArgs(path, root.mode);
-        appProc.running = true;
+        if (!path)
+            return;
+        appNext = {
+            path: path
+        };
+        if (appBusy)
+            return;
+        startApp();
     }
 
-    function startPalette() {
-        if (paletteBusy || paletteQueue.length === 0) {
+    function startApp() {
+        const job = appNext;
+        if (!job) {
+            appDone = true;
             checkApplied();
             return;
         }
-        const job = paletteQueue[0];
-        paletteQueue = paletteQueue.slice(1);
-        paletteBusy = true;
-        paletteProc.pendingScreen = job.screen;
-        paletteProc.pending = true;
-        paletteProc.didStart = false;
-        paletteProc.command = ThemeLogic.dryArgs(job.path, root.mode);
-        paletteProc.running = true;
+        appNext = null;
+        appBusy = true;
+        appProc.pending = true;
+        appProc.didStart = false;
+        appProc.command = ThemeLogic.appArgs(job.path, root.mode);
+        appProc.running = true;
+    }
+
+    // The app pipeline ends after matugen and its post-hook; a queued choice
+    // starts next, otherwise the pipeline is done.
+    function appFinished() {
+        appBusy = false;
+        if (appNext) {
+            startApp();
+            return;
+        }
+        appDone = true;
+        checkApplied();
+    }
+
+    function startPalette() {
+        while (!paletteBusy && paletteQueue.length !== 0) {
+            const job = paletteQueue[0];
+            paletteQueue = paletteQueue.slice(1);
+            // A monitor without a usable path has nothing to dry-run.
+            if (!job.path)
+                continue;
+            paletteBusy = true;
+            paletteProc.pendingScreen = job.screen;
+            paletteProc.pending = true;
+            paletteProc.didStart = false;
+            paletteProc.command = ThemeLogic.dryArgs(job.path, root.mode);
+            paletteProc.running = true;
+            return;
+        }
+        checkApplied();
     }
 
     // A dry-run that never started (no matugen on PATH) still frees its slot.
@@ -241,16 +281,14 @@ Singleton {
             if (!running && pending && !didStart) {
                 pending = false;
                 console.warn("Theme: can't run matugen");
-                root.appDone = true;
-                root.checkApplied();
+                root.appFinished();
             }
         }
         onExited: code => {
             pending = false;
             if (code !== 0) {
                 console.warn("Theme: matugen exited with " + code);
-                root.appDone = true;
-                root.checkApplied();
+                root.appFinished();
                 return;
             }
             postHook.pending = true;
@@ -271,16 +309,14 @@ Singleton {
             if (!running && pending && !didStart) {
                 pending = false;
                 console.warn("Theme: can't run the matugen post-hook");
-                root.appDone = true;
-                root.checkApplied();
+                root.appFinished();
             }
         }
         onExited: code => {
             pending = false;
             if (code !== 0)
                 console.warn("Theme: post-hook exited with " + code);
-            root.appDone = true;
-            root.checkApplied();
+            root.appFinished();
         }
     }
 
