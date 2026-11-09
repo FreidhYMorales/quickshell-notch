@@ -17,6 +17,7 @@ Scope {
 
     property real reveal: 1
     property bool exiting: false
+    property real blurAmount: 0
     readonly property int morphDuration: 520
 
     function startExit() {
@@ -54,9 +55,23 @@ Scope {
             exitMorph.stop();
             root.exiting = false;
             root.reveal = 0;
+            root.blurAmount = 0;
             lock.locked = true;
-            enterMorph.restart();
+            enterBlur.restart();
         }
+    }
+
+    // Blur the secure wallpaper first, then expand the notch. This never
+    // exposes the compositor's actual desktop beneath the session lock.
+    NumberAnimation {
+        id: enterBlur
+        target: root
+        property: "blurAmount"
+        from: 0
+        to: 1
+        duration: 260
+        easing.type: Easing.OutCubic
+        onFinished: enterMorph.restart()
     }
 
     NumberAnimation {
@@ -92,11 +107,13 @@ Scope {
             if (locked)
                 sharedAuth.listen();
             else {
+                enterBlur.stop();
                 enterMorph.stop();
                 exitMorph.stop();
                 sharedAuth.stop();
                 root.exiting = false;
                 root.reveal = 1;
+                root.blurAmount = 0;
             }
         }
         onSecureChanged: Session.setSecure(secure)
@@ -115,12 +132,12 @@ Scope {
                 source: surface.wallpaperPath === "" ? "" : "file://" + surface.wallpaperPath
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: "#141a23"
-                opacity: 0.30
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    blurEnabled: true
+                    blurMax: 32
+                    blur: root.blurAmount
+                }
             }
 
             // Per-monitor geometry: the actual idle width is supplied by the
@@ -169,10 +186,13 @@ Scope {
                     height: surface.height
                     x: -morph.x
 
-                    Rectangle {
+                    // Use the same wallpaper without an unrelated color tint.
+                    // The full-screen background remains blurred underneath.
+                    Image {
                         anchors.fill: parent
-                        color: "#141a23"
-                        opacity: 0.90
+                        source: surface.wallpaperPath === "" ? "" : "file://" + surface.wallpaperPath
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
                     }
 
                     LockContent {
