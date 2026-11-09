@@ -107,7 +107,7 @@ Scope {
             if (secure && root.entering && lock.locked) {
                 root.entering = false;
                 if (lock.secure)
-                enterMorph.restart();
+                    enterMorph.restart();
             }
         }
 
@@ -134,12 +134,11 @@ Scope {
                 source: surface.wallpaperSource
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    blurEnabled: true
-                    blurMax: 32
-                    blur: 1
-                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: "#26000000"
             }
 
             readonly property real earMorph: {
