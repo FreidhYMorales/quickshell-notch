@@ -116,8 +116,9 @@ Scope {
 
         onLockedChanged: {
             Session.setLocked(locked);
-            if (locked)
+            if (locked) {
                 sharedAuth.listen();
+            }
             else {
                 enterMorph.stop();
                 exitMorph.stop();
@@ -147,6 +148,7 @@ Scope {
             readonly property string captureSource: root.captureRevision > 0 && surface.screen ? "file://" + root.captureDir + "/" + surface.screen.name + ".png?v=" + root.captureRevision : ""
             readonly property string wallpaperPath: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
             property bool videoFrameReady: false
+            onVideoWallpaperChanged: videoFrameReady = false
             readonly property bool videoWallpaper: WallpaperState.isVideoPath(wallpaperPath)
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
@@ -229,6 +231,14 @@ Scope {
                         loops: MediaPlayer.Infinite
                         audioOutput: AudioOutput { muted: true }
                         onSourceChanged: if (surface.videoWallpaper && lock.locked) play()
+                        Component.onCompleted: if (surface.videoWallpaper && lock.locked) play()
+                        Connections {
+                            target: lock
+                            function onLockedChanged() {
+                                if (lock.locked && surface.videoWallpaper) lockVideo.play();
+                                else lockVideo.stop();
+                            }
+                        }
                         onMediaStatusChanged: {
                             if (surface.videoWallpaper && lock.locked && (mediaStatus === MediaPlayer.LoadedMedia || mediaStatus === MediaPlayer.BufferedMedia) && playbackState !== MediaPlayer.PlayingState)
                                 play();
