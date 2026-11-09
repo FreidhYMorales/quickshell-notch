@@ -5,6 +5,10 @@ QML_DIR   := /usr/lib/qt6/qml
 QML_FILES := $(shell find shell -name '*.qml')
 QMLDIRS   := $(addprefix -i ,$(shell find shell -name qmldir))
 JS_PATHS  := shell/logic tests
+THEME_PROBES := $(wildcard tests/qml/theme-*.mjs)
+# Probes that open the launcher and press keys need the keyboard to
+# themselves, so they cannot share the parallel theme run.
+THEME_KEYS := tests/qml/theme-back.mjs tests/qml/theme-keys.mjs
 
 .PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke
 
@@ -45,13 +49,15 @@ qml-test:
 	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs tests/qml/tray-placeholder.mjs tests/qml/tray-hover.mjs tests/qml/tray-empty.mjs tests/qml/tray-switch.mjs tests/qml/tray-activate.mjs tests/qml/tray-close.mjs tests/qml/tray-closing-priority.mjs tests/qml/tray-open-priority.mjs tests/qml/tray-divider.mjs tests/qml/tray-icon-size.mjs tests/qml/tray-image-error.mjs tests/qml/tray-image-ready.mjs tests/qml/tray-multiple.mjs
 	node --test tests/qml/recording-*.mjs
 	node --test tests/qml/power-*.mjs
-	node --test tests/qml/wallpaper-*.mjs tests/qml/caffeine-*.mjs tests/qml/idle-*.mjs tests/qml/sleep-*.mjs tests/qml/controlcenter-*.mjs tests/qml/expanded-*.mjs tests/qml/theme-*.mjs
+	node --test tests/qml/wallpaper-*.mjs tests/qml/caffeine-*.mjs tests/qml/idle-*.mjs tests/qml/sleep-*.mjs tests/qml/controlcenter-*.mjs tests/qml/expanded-*.mjs $(filter-out $(THEME_KEYS),$(THEME_PROBES))
 	# Serial: lock screen probes take the keyboard.
 	node --test --test-concurrency=1 tests/qml/lock-*.mjs
 	# Serial: polkit probes can take the exclusive keyboard.
 	node --test --test-concurrency=1 tests/qml/polkit-*.mjs
 	# Serial: each launcher probe takes the exclusive keyboard.
 	node --test --test-concurrency=1 tests/qml/launcher-*.mjs
+	# Serial: the launcher-driven theme probes press keys too.
+	node --test --test-concurrency=1 $(THEME_KEYS)
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:
