@@ -18,6 +18,7 @@ Scope {
 
     property real reveal: 1
     property bool exiting: false
+    property bool entering: false
     readonly property int morphDuration: 520
 
     function startExit() {
@@ -55,8 +56,8 @@ Scope {
             exitMorph.stop();
             root.exiting = false;
             root.reveal = 0;
+            root.entering = true;
             lock.locked = true;
-            enterMorph.restart();
         }
     }
 
@@ -97,10 +98,17 @@ Scope {
                 exitMorph.stop();
                 sharedAuth.stop();
                 root.exiting = false;
+                root.entering = false;
                 root.reveal = 1;
             }
         }
-        onSecureChanged: Session.setSecure(secure)
+        onSecureChanged: {
+            Session.setSecure(secure);
+            if (secure && root.entering && lock.locked) {
+                root.entering = false;
+                enterMorph.restart();
+            }
+        }
 
         WlSessionLockSurface {
             id: surface
@@ -125,6 +133,12 @@ Scope {
                 source: surface.wallpaperSource
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    blurEnabled: true
+                    blurMax: 32
+                    blur: 1
+                }
             }
 
             readonly property real earMorph: {
