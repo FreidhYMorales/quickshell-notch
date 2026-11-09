@@ -23,7 +23,7 @@ Singleton {
     readonly property string wallpaperVideo: "Video"
     readonly property string wallpaperHint: "← → Browse · Enter Apply · Esc Back"
     readonly property string themeTitle: "Theme"
-    readonly property string themeHint: "Click a scheme · Esc Back"
+    readonly property string themeHint: "↑ ↓ Choose · Enter Apply · Esc Back"
     readonly property string themeActiveMark: "✓"
     // Friendly names for the nine matugen scheme types, keyed by id.
     readonly property var themeModeNames: ({

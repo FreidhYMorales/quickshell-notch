@@ -18,10 +18,27 @@ Item {
 
     implicitHeight: Layout.themeViewHeight
 
-    Component.onCompleted: if (visible)
-        Theme.generatePreviews(screen.name)
-    onVisibleChanged: if (visible)
-        Theme.generatePreviews(screen.name)
+    // The row the arrows move over; starts on the active mode.
+    property int currentIndex: 0
+
+    function resetCursor() {
+        const index = ThemeLogic.MODES.indexOf(Theme.mode);
+        currentIndex = index < 0 ? 0 : index;
+        list.positionViewAtIndex(currentIndex, ListView.Contain);
+    }
+
+    Component.onCompleted: {
+        if (!visible)
+            return;
+        resetCursor();
+        Theme.generatePreviews(screen.name);
+    }
+    onVisibleChanged: {
+        if (!visible)
+            return;
+        resetCursor();
+        Theme.generatePreviews(screen.name);
+    }
 
     function choose(index) {
         const mode = ThemeLogic.MODES[index];
@@ -32,10 +49,29 @@ Item {
     }
 
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_Escape) {
+        switch (event.key) {
+        case Qt.Key_Escape:
             back();
-            event.accepted = true;
+            break;
+        case Qt.Key_Up:
+        case Qt.Key_K:
+            root.currentIndex = Math.max(0, root.currentIndex - 1);
+            list.positionViewAtIndex(root.currentIndex, ListView.Contain);
+            break;
+        case Qt.Key_Down:
+        case Qt.Key_J:
+            root.currentIndex = Math.min(ThemeLogic.MODES.length - 1, root.currentIndex + 1);
+            list.positionViewAtIndex(root.currentIndex, ListView.Contain);
+            break;
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+            root.choose(root.currentIndex);
+            break;
+        default:
+            event.accepted = false;
+            return;
         }
+        event.accepted = true;
     }
 
     Column {
@@ -66,11 +102,17 @@ Item {
                 required property string modelData
                 required property int index
                 readonly property bool active: modelData === Theme.mode
+                readonly property bool current: index === root.currentIndex
                 readonly property var preview: Theme.previewFor(root.screen.name, modelData)
 
                 objectName: "theme-row-" + modelData
                 width: list.width
                 height: Layout.themeRowHeight
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: row.current ? Colours.cardFor(root.screen) : "transparent"
+                }
 
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
