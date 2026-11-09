@@ -8,6 +8,7 @@ import "../config"
 import "../services"
 import "../notches/center"
 import "../logic/earGeometry.mjs" as EarGeometry
+import "../logic/wallpaperState.mjs" as WallpaperState
 import "../logic/lockSecurity.mjs" as LockSecurity
 
 // The compositor keeps every monitor covered by WlSessionLockSurface for the
@@ -112,6 +113,7 @@ Scope {
             // safe, static backdrop; the morph itself is a visible Shape,
             // not a texture mask (which could turn the notch invisible).
             readonly property string wallpaperPath: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
+            readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
             readonly property real morphWidth: idleWidth + (width - idleWidth) * root.reveal
             readonly property real morphHeight: Layout.idleHeight + (height - Layout.idleHeight) * root.reveal
@@ -120,7 +122,7 @@ Scope {
 
             Image {
                 anchors.fill: parent
-                source: surface.wallpaperPath === "" ? "" : "file://" + surface.wallpaperPath
+                source: surface.wallpaperSource
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 layer.enabled: true
@@ -138,6 +140,7 @@ Scope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 preferredRendererType: Shape.CurveRenderer
+                opacity: 1 - Math.max(0, Math.min(1, (root.reveal - 0.25) / 0.65))
 
                 ShapePath {
                     strokeWidth: -1
