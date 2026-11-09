@@ -105,6 +105,24 @@ Scope {
             id: surface
             color: Colours.background
 
+            // Keep the entire secure surface visually covered while the
+            // foreground notch grows/shrinks. A transparent session lock
+            // cannot safely reveal the real desktop before PAM succeeds.
+            readonly property string wallpaperPath: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
+
+            Image {
+                anchors.fill: parent
+                source: surface.wallpaperPath === "" ? "" : "file://" + surface.wallpaperPath
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: "#141a23"
+                opacity: 0.30
+            }
+
             // Per-monitor geometry: the actual idle width is supplied by the
             // live center notch, not a fixed SDDM calibration constant.
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
@@ -151,16 +169,10 @@ Scope {
                     height: surface.height
                     x: -morph.x
 
-                    Image {
-                        readonly property string path: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
+                    Rectangle {
                         anchors.fill: parent
-                        source: path === "" ? "" : "file://" + path
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        onStatusChanged: {
-                            if (status === Image.Error)
-                                console.warn("Lock: cannot load wallpaper " + path);
-                        }
+                        color: "#141a23"
+                        opacity: 0.90
                     }
 
                     LockContent {
