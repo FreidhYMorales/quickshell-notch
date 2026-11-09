@@ -115,7 +115,7 @@ Scope {
 
             Shape {
                 id: maskShape
-                x: (surface.width - surface.morphWidth) / 2
+                x: 0
                 width: surface.morphWidth
                 height: surface.morphHeight
                 visible: false
