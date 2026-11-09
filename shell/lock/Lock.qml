@@ -167,6 +167,8 @@ Scope {
                 asynchronous: false
             }
 
+            // A locked notch stays visible once the reveal reaches fullscreen.
+            // Its lock glyph yields to the real desktop notch after unlock.
             readonly property real earMorph: {
                 const t = Math.max(0, Math.min(1, (root.reveal - 0.45) / 0.55));
                 return t * t * (3 - 2 * t);
@@ -262,6 +264,11 @@ Scope {
                         }
                     }
 
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "#44000000"
+                    }
+
                     LockContent {
                         anchors.fill: parent
                         auth: sharedAuth
@@ -269,6 +276,26 @@ Scope {
                         enabled: !root.exiting && root.reveal >= 0.98
                         opacity: Math.max(0, Math.min(1, (root.reveal - 0.5) * 2))
                     }
+                }
+            }
+            Shape {
+                id: lockedNotch
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                width: surface.idleWidth
+                height: Layout.idleHeight
+                visible: root.reveal >= 0.995 && !root.exiting
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    fillColor: Colours.background
+                    strokeWidth: -1
+                    PathSvg { path: EarGeometry.notchPath(lockedNotch.width, lockedNotch.height, Layout.earRadius, Layout.cornerRadius) }
+                }
+                Text {
+                    anchors.centerIn: parent
+                    text: "🔒"
+                    color: "white"
+                    font.pixelSize: 21
                 }
             }
         }
