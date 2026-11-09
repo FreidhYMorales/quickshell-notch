@@ -59,6 +59,7 @@ Scope {
             if (lock.locked)
                 return;
             exitMorph.stop();
+            notchRetreat.stop();
             root.exiting = false;
             notchDelay.stop();
             root.notchShown = false;
@@ -113,7 +114,19 @@ Scope {
         duration: root.morphDuration
         easing.type: Easing.InOutCubic
         onFinished: {
-            // Never release a session lock before PAM has succeeded.
+            // Keep the secure surface until the black notch has slid away.
+            if (root.exiting && lock.locked) {
+                root.notchShown = false;
+                notchRetreat.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: notchRetreat
+        interval: 440
+        repeat: false
+        onTriggered: {
             if (root.exiting && lock.locked) {
                 lock.locked = false;
                 Session.setLocked(false);
@@ -139,6 +152,7 @@ Scope {
                 root.reveal = 1;
                 root.notchShown = false;
                 notchDelay.stop();
+                notchRetreat.stop();
                 cleanupCapture.running = true;
             }
         }
@@ -293,23 +307,39 @@ Scope {
             }
             // A separate secure notch drops from the top after the reveal.
             // Keep it above the contracting frame until the compositor unlocks.
+            // The desktop notch is hidden by the secure compositor layer.
+            // Draw its normal idle state underneath the black lock curtain,
+            // then release the secure surface after the curtain retreats.
+            Item {
+                id: notchBase
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                width: surface.idleWidth
+                height: Layout.idleHeight
+                z: 9
+                visible: root.exiting && root.reveal <= 0.001
+
+                CenterIdle {
+                    anchors.fill: parent
+                    screen: surface.screen
+                    view: CenterStore.viewFor(surface.screen?.name || "")
+                }
+            }
+
             Item {
                 id: lockedNotch
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: surface.idleWidth
                 height: Layout.idleHeight
                 y: root.notchShown ? 0 : -height
-                visible: root.notchShown || notchDrop.running || root.exiting
+                visible: root.notchShown || notchDrop.running
                 z: 10
-                // Crossfade in the final part of the fullscreen contraction.
-                // Both layers stay mounted so the notch never flashes empty.
-                readonly property real idleMix: root.exiting ? Math.max(0, Math.min(1, (0.42 - root.reveal) / 0.42)) : 0
 
                 Behavior on y {
                     NumberAnimation {
                         id: notchDrop
                         duration: 420
-                        easing.type: Easing.OutCubic
+                        easing.type: root.exiting ? Easing.InCubic : Easing.OutCubic
                     }
                 }
 
@@ -328,20 +358,10 @@ Scope {
 
                 Text {
                     anchors.centerIn: parent
-                    opacity: 1 - lockedNotch.idleMix
-                    scale: 1 - 0.12 * lockedNotch.idleMix
                     text: "\uf023"
                     font.family: Fonts.family
                     font.pixelSize: Fonts.idleClock + 3
                     color: Colours.paletteFor(surface.screen).onSurface
-                }
-
-                CenterIdle {
-                    anchors.fill: parent
-                    screen: surface.screen
-                    view: CenterStore.viewFor(surface.screen?.name || "")
-                    opacity: lockedNotch.idleMix
-                    visible: opacity > 0
                 }
             }
 
