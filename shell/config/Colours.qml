@@ -31,11 +31,13 @@ Singleton {
     // full-primary thumb stands out against it.
     readonly property real fillMix: 0.55
 
-    // Used until (or unless) matugen output is available.
+    // Used until (or unless) matugen output is available. Neutral greys keep
+    // the notch readable when matugen is missing: a colourless theme is better
+    // than the wrong colours.
     readonly property var fallback: ({
-            primary: "#adc6ff",
-            onSurface: "#e2e2e9",
-            muted: "#c4c6d0"
+            primary: "#c6c6c6",
+            onSurface: "#e4e4e4",
+            muted: "#b0b0b0"
         })
 
     // Palette parsed from matugen's dark scheme, shared by every monitor.

@@ -17,6 +17,7 @@ Item {
 
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property bool wallpaperMode: view.sub === "wallpaper"
+    readonly property bool themeMode: view.sub === "theme"
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
     readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
@@ -40,6 +41,10 @@ Item {
                 send({
                     type: "WallpaperOpen"
                 });
+            } else if (results[index]?.name === Strings.themeTitle) {
+                send({
+                    type: "ThemeOpen"
+                });
             }
             return;
         }
@@ -50,7 +55,7 @@ Item {
     }
 
     // The same padding on every side of the content (inside the ears).
-    implicitHeight: (wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
+    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
 
     NotchEarShape {
         anchors.fill: parent
@@ -75,9 +80,28 @@ Item {
         })
     }
 
+    CenterTheme {
+        id: themeView
+        visible: root.themeMode
+        screen: root.screen
+        x: Layout.earRadius + Layout.launcherPad
+        y: Layout.launcherPad
+        width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
+        focus: root.themeMode
+        onVisibleChanged: if (visible)
+            forceActiveFocus()
+        onBack: root.send({
+            type: "ThemeBack"
+        })
+        onApplied: root.send({
+            type: "Close",
+            monitor: root.screen.name
+        })
+    }
+
     Column {
         id: column
-        visible: !root.wallpaperMode
+        visible: !root.wallpaperMode && !root.themeMode
 
         anchors.left: parent.left
         anchors.right: parent.right
