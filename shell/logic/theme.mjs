@@ -96,3 +96,44 @@ export function parseDryPalette(jsonText) {
   }
   return { primary, onSurface, muted };
 }
+
+// matugen reads images only, so a video wallpaper is themed from one still
+// frame: the middle of the file, where a short intro cannot decide the whole
+// palette. ffprobe gives the duration, ffmpeg writes the frame.
+export function probeArgs(path) {
+  return [
+    "ffprobe",
+    "-v",
+    "error",
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "default=nw=1:nk=1",
+    path,
+  ];
+}
+
+export function frameArgs(path, seconds, output) {
+  return [
+    "ffmpeg",
+    "-nostdin",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-y",
+    "-ss",
+    String(seconds),
+    "-i",
+    path,
+    "-frames:v",
+    "1",
+    output,
+  ];
+}
+
+export function midpoint(text) {
+  if (typeof text !== "string") return null;
+  const duration = Number.parseFloat(text);
+  if (!Number.isFinite(duration) || duration <= 0) return null;
+  return duration / 2;
+}

@@ -5,6 +5,7 @@ import Quickshell.Io
 import QtQuick
 import "../config"
 import "../logic/theme.mjs" as ThemeLogic
+import "../logic/wallpaperState.mjs" as WallpaperState
 
 // The theme mode and the matugen pipeline. The notch's own theme.json wins;
 // the old shell's file is imported once when the notch has none, and is only
@@ -41,6 +42,12 @@ Singleton {
     property bool previewBusy: false
     property var previewQueue: []
     property var previewPaths: ({})
+
+    property var frameQueue: []
+    property bool frameBusy: false
+    property var frameJob: null
+    // role -> video already extracted in this session.
+    property var frames: ({})
 
     function previewFor(screen: string, mode: string): var {
         const own = previews[screen];
@@ -80,10 +87,76 @@ Singleton {
         previewBusy = true;
         previewProc.pendingScreen = job.screen;
         previewProc.pendingMode = job.mode;
-        previewProc.pending = true;
-        previewProc.didStart = false;
-        previewProc.command = ThemeLogic.dryArgs(job.path, job.mode);
-        previewProc.running = true;
+        frameFor(job.path, "preview", path => {
+            previewProc.pending = true;
+            previewProc.didStart = false;
+            previewProc.command = ThemeLogic.dryArgs(path, job.mode);
+            previewProc.running = true;
+        }, reason => root.previewFailed(reason));
+    }
+
+    // --- video wallpapers ---------------------------------------------------
+    // matugen only reads images: a video wallpaper is themed from the frame in
+    // its middle, extracted once per role so no two jobs share a file.
+    function framePath(role: string): string {
+        return Quickshell.cachePath("theme-frame-" + role + ".png");
+    }
+
+    function frameFor(path: string, role: string, run: var, fail: var) {
+        // One frame per role and video per session: the nine previews share it
+        // instead of re-extracting the same still nine times.
+        if (frames[role] === path) {
+            run(framePath(role));
+            return;
+        }
+        if (!WallpaperState.isVideoPath(path)) {
+            run(path);
+            return;
+        }
+        frameQueue = frameQueue.concat([
+            {
+                path: path,
+                role: role,
+                output: framePath(role),
+                run: run,
+                fail: fail
+            }
+        ]);
+        startFrame();
+    }
+
+    function startFrame() {
+        if (frameBusy || frameQueue.length === 0)
+            return;
+        frameJob = frameQueue[0];
+        frameQueue = frameQueue.slice(1);
+        frameBusy = true;
+        probe.pending = true;
+        probe.didStart = false;
+        probe.command = ThemeLogic.probeArgs(frameJob.path);
+        probe.running = true;
+    }
+
+    function frameFailed(reason: string) {
+        const job = frameJob;
+        frameJob = null;
+        frameBusy = false;
+        if (job)
+            job.fail(reason);
+        startFrame();
+    }
+
+    function frameReady() {
+        const job = frameJob;
+        frameJob = null;
+        frameBusy = false;
+        if (job) {
+            const done = Object.assign({}, frames);
+            done[job.role] = job.path;
+            frames = done;
+            job.run(job.output);
+        }
+        startFrame();
     }
 
     // Colours.paletteFor(screen) reads these; a screen without an entry
@@ -184,10 +257,16 @@ Singleton {
         }
         appNext = null;
         appBusy = true;
-        appProc.pending = true;
-        appProc.didStart = false;
-        appProc.command = ThemeLogic.appArgs(job.path, root.mode);
-        appProc.running = true;
+        const mode = root.mode;
+        frameFor(job.path, "app", path => {
+            appProc.pending = true;
+            appProc.didStart = false;
+            appProc.command = ThemeLogic.appArgs(path, mode);
+            appProc.running = true;
+        }, reason => {
+            console.warn("Theme: " + reason);
+            root.appFinished();
+        });
     }
 
     // The app pipeline ends after matugen and its post-hook; a queued choice
@@ -211,10 +290,13 @@ Singleton {
                 continue;
             paletteBusy = true;
             paletteProc.pendingScreen = job.screen;
-            paletteProc.pending = true;
-            paletteProc.didStart = false;
-            paletteProc.command = ThemeLogic.dryArgs(job.path, root.mode);
-            paletteProc.running = true;
+            const mode = root.mode;
+            frameFor(job.path, "palette", path => {
+                paletteProc.pending = true;
+                paletteProc.didStart = false;
+                paletteProc.command = ThemeLogic.dryArgs(path, mode);
+                paletteProc.running = true;
+            }, reason => root.paletteFailed(reason));
             return;
         }
         checkApplied();
@@ -266,6 +348,64 @@ Singleton {
         printErrors: false
         onSaved: root.saved = true
         onSaveFailed: console.warn("Theme: cannot save " + path)
+    }
+
+    Process {
+        id: probe
+
+        property bool pending: false
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                root.frameFailed("can't read the video duration");
+            }
+        }
+
+        stdout: StdioCollector {
+            id: probeOut
+
+            onStreamFinished: {
+                if (!probe.pending)
+                    return;
+                probe.pending = false;
+                const job = root.frameJob;
+                if (!job)
+                    return;
+                const seconds = ThemeLogic.midpoint(probeOut.text);
+                if (seconds === null)
+                    return root.frameFailed("no duration in " + job.path);
+                extract.pending = true;
+                extract.didStart = false;
+                extract.command = ThemeLogic.frameArgs(job.path, seconds, job.output);
+                extract.running = true;
+            }
+        }
+    }
+
+    Process {
+        id: extract
+
+        property bool pending: false
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                root.frameFailed("can't extract a frame from " + (root.frameJob?.path ?? "the video"));
+            }
+        }
+        onExited: code => {
+            pending = false;
+            if (code !== 0) {
+                root.frameFailed("can't extract a frame from " + (root.frameJob?.path ?? "the video"));
+                return;
+            }
+            root.frameReady();
+        }
     }
 
     Process {
