@@ -223,6 +223,7 @@ Singleton {
         }
         const monitor = Hyprland.focusedMonitor?.name;
         if (!monitor || Session.locked || state.global.keyboard) {
+            console.warn("CenterStore: blocked details: monitor=" + monitor + " locked=" + Session.locked + " secure=" + Session.secure + " keyboard=" + JSON.stringify(state.global.keyboard));
             console.warn("CenterStore: Quick Wallpaper unavailable while another keyboard view is active");
             return;
         }
