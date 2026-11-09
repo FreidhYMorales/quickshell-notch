@@ -55,23 +55,10 @@ Scope {
             exitMorph.stop();
             root.exiting = false;
             root.reveal = 0;
-            root.blurAmount = 0;
+            root.blurAmount = 1;
             lock.locked = true;
-            enterBlur.restart();
+            enterMorph.restart();
         }
-    }
-
-    // Blur the secure wallpaper first, then expand the notch. This never
-    // exposes the compositor's actual desktop beneath the session lock.
-    NumberAnimation {
-        id: enterBlur
-        target: root
-        property: "blurAmount"
-        from: 0
-        to: 1
-        duration: 260
-        easing.type: Easing.OutCubic
-        onFinished: enterMorph.restart()
     }
 
     NumberAnimation {
@@ -107,7 +94,6 @@ Scope {
             if (locked)
                 sharedAuth.listen();
             else {
-                enterBlur.stop();
                 enterMorph.stop();
                 exitMorph.stop();
                 sharedAuth.stop();
@@ -122,10 +108,15 @@ Scope {
             id: surface
             color: Colours.background
 
-            // Keep the entire secure surface visually covered while the
-            // foreground notch grows/shrinks. A transparent session lock
-            // cannot safely reveal the real desktop before PAM succeeds.
+            // Always cover the compositor while locked. The wallpaper is a
+            // safe, static backdrop; the morph itself is a visible Shape,
+            // not a texture mask (which could turn the notch invisible).
             readonly property string wallpaperPath: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
+            readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
+            readonly property real morphWidth: idleWidth + (width - idleWidth) * root.reveal
+            readonly property real morphHeight: Layout.idleHeight + (height - Layout.idleHeight) * root.reveal
+            readonly property real ear: Layout.earRadius * (1 - root.reveal)
+            readonly property real corner: Layout.cornerRadius * (1 - root.reveal)
 
             Image {
                 anchors.fill: parent
@@ -140,69 +131,31 @@ Scope {
                 }
             }
 
-            // Per-monitor geometry: the actual idle width is supplied by the
-            // live center notch, not a fixed SDDM calibration constant.
-            readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
-            readonly property real morphWidth: idleWidth + (width - idleWidth) * root.reveal
-            readonly property real morphHeight: Layout.idleHeight + (height - Layout.idleHeight) * root.reveal
-            readonly property real ear: Layout.earRadius * (1 - root.reveal)
-            readonly property real corner: Layout.cornerRadius * (1 - root.reveal)
-
             Shape {
-                id: maskShape
-                x: 0
-                width: surface.morphWidth
-                height: surface.morphHeight
-                visible: false
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                    strokeWidth: -1
-                    fillColor: "#ffffff"
-                    PathSvg {
-                        path: EarGeometry.notchPath(maskShape.width, maskShape.height, surface.ear, surface.corner)
-                    }
-                }
-                layer.enabled: true
-            }
-
-            Item {
                 id: morph
                 width: surface.morphWidth
                 height: surface.morphHeight
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                clip: true
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    maskEnabled: true
-                    maskSource: maskShape
-                    maskThresholdMin: 0.5
-                    maskSpreadAtMin: 1.0
-                }
+                preferredRendererType: Shape.CurveRenderer
 
-                Item {
-                    width: surface.width
-                    height: surface.height
-                    x: -morph.x
-
-                    // Use the same wallpaper without an unrelated color tint.
-                    // The full-screen background remains blurred underneath.
-                    Image {
-                        anchors.fill: parent
-                        source: surface.wallpaperPath === "" ? "" : "file://" + surface.wallpaperPath
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                    }
-
-                    LockContent {
-                        anchors.fill: parent
-                        auth: sharedAuth
-                        screen: surface.screen
-                        enabled: !root.exiting
-                        opacity: root.exiting ? Math.max(0, root.reveal * 2 - 1) : Math.min(1, root.reveal * 2)
+                ShapePath {
+                    strokeWidth: -1
+                    fillColor: Colours.background
+                    PathSvg {
+                        path: EarGeometry.notchPath(morph.width, morph.height, surface.ear, surface.corner)
                     }
                 }
+            }
+
+            // Keep the authentication content in full-screen coordinates so
+            // it does not jump when the animated notch changes its dimensions.
+            LockContent {
+                anchors.fill: parent
+                auth: sharedAuth
+                screen: surface.screen
+                enabled: !root.exiting && root.reveal >= 0.98
+                opacity: root.exiting ? Math.max(0, root.reveal * 2 - 1) : Math.max(0, root.reveal * 2 - 1)
             }
         }
     }
