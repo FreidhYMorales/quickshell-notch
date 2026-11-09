@@ -38,6 +38,9 @@ Singleton {
     property var appNext: null
     property bool paletteBusy: false
     property var paletteQueue: []
+    // Bumped when a shared commit invalidates the overrides still being
+    // recoloured, so a dry-run that finishes late cannot write a stale palette.
+    property int paletteEpoch: 0
 
     property bool previewBusy: false
     property var previewQueue: []
@@ -229,9 +232,14 @@ Singleton {
 
     // Called by Wallpapers.commit once its state holds the new path.
     function commitWallpaper(shared: bool, screen: string, path: string) {
-        // A shared commit clears every override, so their palettes are stale.
-        if (shared)
+        // A shared commit clears every override, so their palettes are stale:
+        // the queue is dropped and a dry-run already running is abandoned.
+        if (shared) {
             palettes = ({});
+            paletteEpoch += 1;
+            paletteQueue = [];
+            cancelPalette();
+        }
         apply(ThemeLogic.commitJobs({
             kind: "wallpaper",
             shared: shared,
@@ -239,6 +247,12 @@ Singleton {
             path: path,
             perScreen: Wallpapers.perScreen
         }));
+    }
+
+    function cancelPalette() {
+        paletteProc.pending = false;
+        paletteProc.running = false;
+        paletteBusy = false;
     }
 
     // Colours.paletteFor(screen) prefers these over the global colors.json.
@@ -315,6 +329,7 @@ Singleton {
                 continue;
             paletteBusy = true;
             paletteProc.pendingScreen = job.screen;
+            paletteProc.epoch = root.paletteEpoch;
             const mode = root.mode;
             frameFor(job.path, "palette", path => {
                 paletteProc.pending = true;
@@ -498,6 +513,7 @@ Singleton {
         id: paletteProc
 
         property string pendingScreen: ""
+        property int epoch: 0
         property bool pending: false
         property bool didStart: false
 
@@ -516,6 +532,12 @@ Singleton {
                 if (!paletteProc.pending)
                     return;
                 paletteProc.pending = false;
+                // A shared commit cleared this monitor's override meanwhile.
+                if (paletteProc.epoch !== root.paletteEpoch) {
+                    root.paletteBusy = false;
+                    root.startPalette();
+                    return;
+                }
                 const palette = ThemeLogic.parseDryPalette(paletteOut.text);
                 if (palette) {
                     const next = Object.assign({}, root.palettes);
