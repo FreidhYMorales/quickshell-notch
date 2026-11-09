@@ -76,6 +76,8 @@ Singleton {
         previewBusy = true;
         previewProc.pendingScreen = job.screen;
         previewProc.pendingMode = job.mode;
+        previewProc.pending = true;
+        previewProc.didStart = false;
         previewProc.command = ThemeLogic.dryArgs(job.path, job.mode);
         previewProc.running = true;
     }
@@ -157,6 +159,8 @@ Singleton {
     }
 
     function runApp(path: string) {
+        appProc.pending = true;
+        appProc.didStart = false;
         appProc.command = ThemeLogic.appArgs(path, root.mode);
         appProc.running = true;
     }
@@ -170,8 +174,23 @@ Singleton {
         paletteQueue = paletteQueue.slice(1);
         paletteBusy = true;
         paletteProc.pendingScreen = job.screen;
+        paletteProc.pending = true;
+        paletteProc.didStart = false;
         paletteProc.command = ThemeLogic.dryArgs(job.path, root.mode);
         paletteProc.running = true;
+    }
+
+    // A dry-run that never started (no matugen on PATH) still frees its slot.
+    function paletteFailed(reason: string) {
+        console.warn("Theme: " + reason);
+        paletteBusy = false;
+        startPalette();
+    }
+
+    function previewFailed(reason: string) {
+        console.warn("Theme: " + reason);
+        previewBusy = false;
+        startPreview();
     }
 
     Component.onCompleted: {
@@ -212,13 +231,30 @@ Singleton {
     Process {
         id: appProc
 
+        // A binary that cannot start never emits `exited`: `onStarted` stays
+        // false and `running` drops back, which is the only failure signal.
+        property bool pending: false
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                console.warn("Theme: can't run matugen");
+                root.appDone = true;
+                root.checkApplied();
+            }
+        }
         onExited: code => {
+            pending = false;
             if (code !== 0) {
                 console.warn("Theme: matugen exited with " + code);
                 root.appDone = true;
                 root.checkApplied();
                 return;
             }
+            postHook.pending = true;
+            postHook.didStart = false;
             postHook.running = true;
         }
     }
@@ -227,7 +263,20 @@ Singleton {
         id: postHook
 
         command: [root.postHookPath, "dark"]
+        property bool pending: false
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                console.warn("Theme: can't run the matugen post-hook");
+                root.appDone = true;
+                root.checkApplied();
+            }
+        }
         onExited: code => {
+            pending = false;
             if (code !== 0)
                 console.warn("Theme: post-hook exited with " + code);
             root.appDone = true;
@@ -239,11 +288,24 @@ Singleton {
         id: paletteProc
 
         property string pendingScreen: ""
+        property bool pending: false
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                root.paletteFailed("can't run matugen for " + pendingScreen);
+            }
+        }
 
         stdout: StdioCollector {
             id: paletteOut
 
             onStreamFinished: {
+                if (!paletteProc.pending)
+                    return;
+                paletteProc.pending = false;
                 const palette = ThemeLogic.parseDryPalette(paletteOut.text);
                 if (palette) {
                     const next = Object.assign({}, root.palettes);
@@ -263,11 +325,24 @@ Singleton {
 
         property string pendingScreen: ""
         property string pendingMode: ""
+        property bool pending: false
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                root.previewFailed("can't preview " + pendingMode);
+            }
+        }
 
         stdout: StdioCollector {
             id: previewOut
 
             onStreamFinished: {
+                if (!previewProc.pending)
+                    return;
+                previewProc.pending = false;
                 const palette = ThemeLogic.parseDryPalette(previewOut.text);
                 if (palette) {
                     const screen = previewProc.pendingScreen;
