@@ -4,8 +4,11 @@ import {
   appArgs,
   commitJobs,
   dryArgs,
+  frameArgs,
+  midpoint,
   MODES,
   parseDryPalette,
+  probeArgs,
   themeState,
 } from "../shell/logic/theme.mjs";
 
@@ -161,4 +164,37 @@ test("a per-monitor commit only recolours that monitor", () => {
     }),
     { app: null, palettes: [{ screen: "DP2", path: "/w/new.png" }] },
   );
+});
+
+test("a video is themed from the frame halfway through it", () => {
+  assert.equal(midpoint("10"), 5);
+  assert.equal(midpoint("10.5\n"), 5.25);
+  assert.equal(midpoint("N/A"), null);
+  assert.equal(midpoint("0"), null);
+  assert.equal(midpoint(""), null);
+  assert.deepEqual(probeArgs("/w/clip.mp4"), [
+    "ffprobe",
+    "-v",
+    "error",
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "default=nw=1:nk=1",
+    "/w/clip.mp4",
+  ]);
+  assert.deepEqual(frameArgs("/w/clip.mp4", 5, "/c/frame.png"), [
+    "ffmpeg",
+    "-nostdin",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-y",
+    "-ss",
+    "5",
+    "-i",
+    "/w/clip.mp4",
+    "-frames:v",
+    "1",
+    "/c/frame.png",
+  ]);
 });
