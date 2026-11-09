@@ -106,6 +106,7 @@ Scope {
             Session.setSecure(secure);
             if (secure && root.entering && lock.locked) {
                 root.entering = false;
+                if (lock.secure)
                 enterMorph.restart();
             }
         }
