@@ -50,6 +50,7 @@
 38. [ ] As a user, I want a month view in the expanded notch calendar with week/month scrolling and a jump back to today so that I can look beyond the current week. Requires: —
 39. [ ] As a user, I want a glow pulse when a notification arrives so that I notice it without being interrupted. Requires: #01
 40. [ ] As a user, I want a Light/Dark switch in the theme view that re-themes my apps without changing the notch so that I get the old view's light mode while the notch keeps its black look. Requires: #28
+41. [ ] As a user, I want the theme view's colour swatches to be there the moment I open it so that browsing schemes feels instant instead of filling in over a second. Requires: #28
 
 ## Wallpaper work status
 
@@ -57,5 +58,6 @@
 - #34: fullscreen Quick Wallpaper picker implemented and merged into `main` via PR #27 (squash commit `1c7a44e`). The maintainer confirmed that both CI jobs passed and that local image/video preview, transitions and persistence worked.
 - #34 validation limitations: multi-monitor behavior was not tested because a second monitor was unavailable. Other unconfirmed manual edge cases (Escape/persistence, lock/session interactions, focus and click-through restoration, missing files and decoder failures) are not marked as passed; issues discovered later can be handled in follow-up stories.
 - The unreliable nested Hyprland compositor CI probe was removed. Functional validation was performed on the maintainer's own environment, not through that hosted compositor probe.
-- Remaining open stories: #15, #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #29, #33, #35, #36, #37, #38, #39 and #40.
+- Remaining open stories: #15, #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #29, #33, #35, #36, #37, #38, #39, #40 and #41.
 - #35-#39 cover plan SHOULD items that had no backlog entry: the screensaver, security and webapp command views (plan line 335), the calendar month view (line 337) and the notification glow pulse (line 338).
+- #41 comes from a question after #28 shipped: on the host one dry-run takes ~130 ms, the nine in series ~1.1 s and unbounded ~0.18 s at ~5.7 cores, so a disk cache plus a prefetch when the launcher opens (and three dry-runs at a time) removes most of the wait.
