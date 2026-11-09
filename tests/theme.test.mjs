@@ -3,12 +3,14 @@ import assert from "node:assert/strict";
 import {
   appArgs,
   commitJobs,
+  DEFAULT_MODE,
   dryArgs,
   frameArgs,
   midpoint,
   MODES,
   parseDryPalette,
   probeArgs,
+  savedMode,
   themeState,
 } from "../shell/logic/theme.mjs";
 
@@ -197,4 +199,16 @@ test("a video is themed from the frame halfway through it", () => {
     "1",
     "/c/frame.png",
   ]);
+});
+
+test("a broken theme state is rewritten, never trusted", () => {
+  assert.equal(savedMode('{"mode":"scheme-neutral"}'), "scheme-neutral");
+  assert.equal(savedMode("not json"), null);
+  assert.equal(savedMode('{"mode":"scheme-unknown"}'), null);
+  assert.equal(savedMode("null"), null);
+  assert.equal(savedMode(null), null);
+  assert.equal(
+    themeState("not json", '{"mode":"scheme-vibrant"}').mode,
+    DEFAULT_MODE,
+  );
 });
