@@ -48,6 +48,9 @@ Singleton {
     property var frameJob: null
     // role -> video already extracted in this session.
     property var frames: ({})
+    // Startup restored the saved per-monitor palettes once.
+    property bool restored: false
+    property bool loaded: false
 
     function previewFor(screen: string, mode: string): var {
         const own = previews[screen];
@@ -177,10 +180,32 @@ Singleton {
         if (notch !== null) {
             mode = ThemeLogic.themeState(notch, null).mode;
             saved = true;
-            return;
+        } else {
+            mode = ThemeLogic.themeState(null, readText(oldDir + "/theme.json")).mode;
+            persist();
         }
-        mode = ThemeLogic.themeState(null, readText(oldDir + "/theme.json")).mode;
-        persist();
+        loaded = true;
+        restorePalettes();
+    }
+
+    // Palettes are derived, never stored: a fresh start rebuilds them from the
+    // saved wallpapers, once, without rerunning the apps.
+    function restorePalettes() {
+        if (restored || !loaded || Flags.smoke || !Wallpapers.saved)
+            return;
+        const jobs = [];
+        for (const screen in Wallpapers.perScreen) {
+            jobs.push({
+                screen: screen,
+                path: Wallpapers.perScreen[screen]
+            });
+        }
+        if (jobs.length === 0)
+            return;
+        restored = true;
+        applied = false;
+        paletteQueue = paletteQueue.concat(jobs);
+        startPalette();
     }
 
     function persist() {
@@ -318,6 +343,15 @@ Singleton {
     Component.onCompleted: {
         if (!Flags.smoke)
             load();
+    }
+
+    Connections {
+        target: Wallpapers
+
+        function onSavedChanged() {
+            if (Wallpapers.saved)
+                root.restorePalettes();
+        }
     }
 
     FileView {

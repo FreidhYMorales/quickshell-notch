@@ -100,7 +100,17 @@ test("a shared wallpaper commit re-themes the apps", () => {
       "m",
     ),
   );
-  assert.doesNotMatch(matugen, / --dry-run /);
+  // The saved DP-1 override is rebuilt at startup; the shared commit itself
+  // must not run a dry-run for the new wallpaper.
+  assert.doesNotMatch(
+    matugen,
+    new RegExp(`^image ${chosen} .*--dry-run`, "m"),
+  );
+  assert.equal(
+    matugen.split("\n").filter((line) => line.includes("--dry-run")).length,
+    1,
+    matugen,
+  );
   assert.equal(hook, "dark\n");
 });
 
