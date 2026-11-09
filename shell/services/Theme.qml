@@ -169,12 +169,6 @@ Singleton {
         startFrame();
     }
 
-    // Colours.paletteFor(screen) reads these; a screen without an entry
-    // follows the global colors.json palette.
-    function paletteFor(screen: string): var {
-        return palettes[screen] ?? null;
-    }
-
     function readText(path: string): var {
         reader.path = path;
         reader.reload();
