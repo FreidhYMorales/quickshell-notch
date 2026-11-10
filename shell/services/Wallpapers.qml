@@ -23,6 +23,7 @@ Singleton {
     // true once the notch state on disk holds the current values.
     property bool saved: false
     property var saveQueue: WallpaperSave.initialSaveQueue()
+    property var hyprpaperNext: null
     readonly property string directory: Quickshell.env("QS_WALLPAPER_DIR") || (Quickshell.env("HOME") + "/Pictures/Wallpaper")
     property var entries: []
     property var preview: null
@@ -316,9 +317,32 @@ Singleton {
     function screensSaveCompleted() {
         if (saveQueue.phase !== "screens")
             return;
+        const snapshot = saveQueue.active;
         saveQueue = WallpaperSave.advanceSave(saveQueue, "screens");
         saved = saveQueue.saved;
+        if (saved) {
+            hyprpaperNext = snapshot;
+            startHyprpaperSync();
+        }
         startSave();
+    }
+
+    function startHyprpaperSync() {
+        if (hyprpaperSync.running || !hyprpaperNext)
+            return;
+        const snapshot = hyprpaperNext;
+        hyprpaperNext = null;
+        hyprpaperSync.command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/hyprpaper-sync.py").toString().replace(/^file:\/\//, "")), notchDir, JSON.stringify(snapshot)];
+        hyprpaperSync.running = true;
+    }
+
+    Process {
+        id: hyprpaperSync
+        onExited: code => {
+            if (code !== 0)
+                console.warn("Wallpapers: hyprpaper startup sync failed");
+            root.startHyprpaperSync();
+        }
     }
 
     FileView {
