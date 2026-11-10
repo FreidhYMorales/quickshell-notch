@@ -14,6 +14,10 @@ ShellRoot {
     property string pendingPassword: ""
     readonly property bool autoTest: Quickshell.env("NOTCH_GREETD_AUTOTEST") === "1"
     readonly property bool failureTest: Quickshell.env("NOTCH_GREETD_TEST_FAILURE") === "1"
+    // Test-only credentials. The fixed pair drives the fake-socket tests; the
+    // headless PAM test supplies a throwaway account through the environment.
+    readonly property string testUser: Quickshell.env("NOTCH_GREETD_TEST_USER") || (failureTest ? "preview-failure" : "preview-user")
+    readonly property string testSecret: Quickshell.env("NOTCH_GREETD_TEST_SECRET") || "fake-test-secret"
     readonly property string socketPath: Quickshell.env("GREETD_SOCK")
     // Only a test overrides the session command; greetd executes it as the user.
     readonly property var sessionCommand: {
@@ -153,6 +157,6 @@ ShellRoot {
     Timer {
         id: beginTest
         interval: 50
-        onTriggered: root.preview.submit(root.failureTest ? "preview-failure" : "preview-user", "fake-test-secret")
+        onTriggered: root.preview.submit(root.testUser, root.testSecret)
     }
 }

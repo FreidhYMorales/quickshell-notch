@@ -56,11 +56,20 @@ lives in memory, and then:
 
 1. a wrong password must come back as `auth_error`, and the client must cancel
    that session before retrying;
-2. the right password must authenticate and start the session (`/usr/bin/true`).
+2. the right password must authenticate, and the client cancels it;
+3. the real QML greeter must reject a wrong password and show the failure;
+4. the real QML greeter must authenticate, compress, request the session, and
+   the session must actually run as the throwaway user (a marker script).
 
-The account, its faillock entry, the temporary config and the second greetd
-are removed on exit, including on failure. The installed `greetd.service` is
-untouched and SDDM stays the active display manager.
+The account, its home, its faillock entry, the temporary config and the second
+greetd are removed on exit, including on failure. The installed
+`greetd.service` is untouched and SDDM stays the active display manager.
+
+The QML phase runs `qs` as root because the repository lives under a private
+home; greetd still starts the requested session as the throwaway user. Its
+credentials reach the greeter through the environment and are never logged.
+The placeholder greeter only exits when the test asks it to, because greetd
+keeps a requested session scheduled until the greeter exits.
 
 The greetd PAM service includes `system-local-login`, so the test also shows
 whether `pam_fprintd` runs before the password. Fingerprint support is still

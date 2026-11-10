@@ -13,10 +13,14 @@ import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
 import { endianness, tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const GREETER = "greeter";
 const TIMEOUT = 30000;
+const ENTRYPOINT = fileURLToPath(
+  new URL("../greetd-shell.qml", import.meta.url),
+);
 
 function fail(message) {
   throw new Error(message);
@@ -161,7 +165,18 @@ async function attempt(path, user, password, launch) {
       }
       break;
     }
-    if (!launch) return { result: "success", description: "" };
+    if (!launch) {
+      // Free the authenticated session instead of scheduling a launch.
+      client.send({ type: "cancel_session" });
+      const cancelled = await withTimeout(
+        client.next(),
+        "the cancel_session reply",
+      );
+      if (cancelled.type !== "success") {
+        fail(`cancel_session failed: ${JSON.stringify(cancelled)}`);
+      }
+      return { result: "success", description: "" };
+    }
     // The session command runs as the throwaway user without a VT. `true`
     // proves the launch path without keeping a process around.
     client.send({ type: "start_session", cmd: ["/usr/bin/true"], env: [] });
@@ -175,6 +190,47 @@ async function attempt(path, user, password, launch) {
   } finally {
     client.close();
   }
+}
+
+// Drive the real QML greeter against the same headless greetd. It runs as root
+// because the repository lives under a private home; greetd still runs the
+// requested session as the throwaway user. The credentials reach the child
+// through its environment and are never logged.
+function runGreeterQml(socket, user, password, failure, workdir, session) {
+  return new Promise((resolve, reject) => {
+    const child = spawn("/usr/bin/qs", ["-p", ENTRYPOINT], {
+      cwd: dirname(ENTRYPOINT),
+      env: {
+        ...process.env,
+        HOME: workdir,
+        XDG_RUNTIME_DIR: join(workdir, "runtime"),
+        GREETD_SOCK: socket,
+        NOTCH_GREETD_AUTOTEST: "1",
+        NOTCH_GREETD_TEST_FAILURE: failure ? "1" : "0",
+        NOTCH_GREETD_TEST_USER: user,
+        NOTCH_GREETD_TEST_SECRET: password,
+        NOTCH_GREETD_TEST_SESSION: session,
+        QT_QPA_PLATFORM: "offscreen",
+        QT_QUICK_BACKEND: "software",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let output = "";
+    child.stdout.on("data", (chunk) => output += chunk);
+    child.stderr.on("data", (chunk) => output += chunk);
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error(`the QML greeter timed out: ${output}`));
+    }, 40000);
+    child.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.once("exit", (code) => {
+      clearTimeout(timer);
+      resolve({ code, output });
+    });
+  });
 }
 
 function waitForSocket(child, candidates) {
@@ -191,6 +247,15 @@ function waitForSocket(child, candidates) {
   fail("greetd did not create its socket in 10 s");
 }
 
+function waitForFile(path, what) {
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline) {
+    if (existsSync(path)) return;
+    spawnSync("sleep", ["0.1"]);
+  }
+  fail(`timed out waiting for ${what}`);
+}
+
 async function main() {
   if (process.geteuid() !== 0) {
     console.error(
@@ -205,11 +270,33 @@ async function main() {
     `notch-greetd-pam-${randomBytes(4).toString("hex")}`,
   );
   mkdirSync(dir, { mode: 0o711 });
+  mkdirSync(join(dir, "runtime"), { mode: 0o700 });
+  const home = join(dir, "home");
+  mkdirSync(home, { mode: 0o700 });
   const user = `notch-pam-${randomBytes(4).toString("hex")}`;
   // base64url has no `:` or whitespace, so chpasswd cannot split it.
   const password = randomBytes(18).toString("base64url");
   const configPath = join(dir, "config.toml");
   const runfile = join(dir, "runfile");
+  // greetd only starts a scheduled session once the greeter exits, so the
+  // placeholder greeter waits for a file instead of blocking forever.
+  const greeterPath = join(dir, "greeter.sh");
+  const greeterExit = join(dir, "greeter-exit");
+  writeFileSync(
+    greeterPath,
+    [
+      "#!/bin/sh",
+      `while [ ! -e "${greeterExit}" ]; do sleep 0.1; done`,
+      "",
+    ].join("\n"),
+    { mode: 0o755 },
+  );
+  const launchPath = join(home, "launch.sh");
+  writeFileSync(
+    launchPath,
+    ["#!/bin/sh", 'touch "$HOME/launched"', ""].join("\n"),
+    { mode: 0o755 },
+  );
   writeFileSync(
     configPath,
     [
@@ -221,7 +308,7 @@ async function main() {
       `runfile = "${runfile}"`,
       "",
       "[default_session]",
-      'command = "/bin/sleep 600"',
+      `command = "${greeterPath}"`,
       `user = "${GREETER}"`,
       "",
     ].join("\n"),
@@ -233,13 +320,15 @@ async function main() {
     run("useradd", [
       "-M",
       "-d",
-      "/nonexistent",
+      home,
       "-s",
       "/bin/sh",
       "-c",
       "Notch PAM test",
       user,
     ]);
+    // greetd chdirs into the home before starting the session.
+    run("chown", ["-R", user, home]);
     run("chpasswd", [], `${user}:${password}\n`);
     console.log(`account: ${user} (deleted on exit)`);
 
@@ -257,19 +346,58 @@ async function main() {
     ]);
     console.log(`greetd: pid ${child.pid}, socket ${socket}`);
 
-    console.log("1/2 wrong password is rejected by PAM");
+    console.log("1/4 wrong password is rejected by PAM");
     const wrong = await attempt(socket, user, `${password}-wrong`, false);
     if (wrong.result !== "auth_error" || wrong.description === "") {
       fail(`expected an auth_error, got ${JSON.stringify(wrong)}`);
     }
     console.log(`   rejected: ${wrong.description}`);
 
-    console.log("2/2 right password authenticates and launches the session");
-    const launched = await attempt(socket, user, password, true);
-    if (launched.result !== "success") {
-      fail(`expected a launch, got ${JSON.stringify(launched)}`);
+    console.log("2/4 right password authenticates (session cancelled)");
+    const accepted = await attempt(socket, user, password, false);
+    if (accepted.result !== "success") {
+      fail(`expected success, got ${JSON.stringify(accepted)}`);
     }
-    console.log("PASS: real greetd + PAM authentication works");
+
+    // The QML greeter opens one session per run and must free it on failure,
+    // so the success run is a separate process after a short settle.
+    console.log("3/4 the real QML greeter rejects a wrong password");
+    const rejected = await runGreeterQml(
+      socket,
+      user,
+      `${password}-wrong`,
+      true,
+      dir,
+      launchPath,
+    );
+    if (
+      rejected.code !== 0 ||
+      !/real greeter failure passed/.test(rejected.output)
+    ) {
+      fail(`the QML greeter did not report the failure: ${rejected.output}`);
+    }
+
+    spawnSync("sleep", ["1"]);
+    console.log("4/4 the real QML greeter authenticates and launches");
+    const launched = await runGreeterQml(
+      socket,
+      user,
+      password,
+      false,
+      dir,
+      launchPath,
+    );
+    if (
+      launched.code !== 0 ||
+      !/real greeter launch passed/.test(launched.output)
+    ) {
+      fail(`the QML greeter did not launch: ${launched.output}`);
+    }
+    // The session is only scheduled until the greeter exits; then greetd runs
+    // it as the test user and our script leaves the marker.
+    writeFileSync(greeterExit, "");
+    waitForFile(join(home, "launched"), "the launched session to run");
+    console.log("PASS: real greetd + PAM + greeter QML work");
   } catch (error) {
     console.error(`FAIL: ${error.message}`);
     if (log.length > 0) console.error(log.join("").trim());

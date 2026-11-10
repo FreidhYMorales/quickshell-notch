@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 // The real greeter entrypoint, pointed at a private fake greetd socket. The
 // fake server never executes the requested session command.
-async function runGreeter(failure) {
+async function runGreeter(failure, credentials) {
   const dir = mkdtempSync(join(tmpdir(), "notch-real-"));
   const path = join(dir, "socket");
   const requests = [];
@@ -73,6 +73,12 @@ async function runGreeter(failure) {
         NOTCH_GREETD_AUTOTEST: "1",
         NOTCH_GREETD_TEST_FAILURE: failure ? "1" : "0",
         NOTCH_GREETD_TEST_SESSION: "mock-session-not-executed",
+        ...(credentials
+          ? {
+            NOTCH_GREETD_TEST_USER: credentials.user,
+            NOTCH_GREETD_TEST_SECRET: credentials.secret,
+          }
+          : {}),
         QT_QPA_PLATFORM: "offscreen",
         QT_QUICK_BACKEND: "software",
       },
@@ -130,4 +136,15 @@ test("the real greeter expands with the error and never launches on failure", as
     "cancel_session",
   ]);
   assert.equal(requests[0].username, "preview-failure");
+});
+
+test("the autotest credentials can come from the environment", async () => {
+  const { code, output, requests } = await runGreeter(false, {
+    user: "throwaway-user",
+    secret: "throwaway-secret",
+  });
+  assert.equal(code, 0, output);
+  assert.match(output, /real greeter launch passed/);
+  assert.equal(requests[0].username, "throwaway-user");
+  assert.equal(requests[1].response, "throwaway-secret");
 });
