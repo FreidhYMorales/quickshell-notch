@@ -40,14 +40,34 @@ expands with the error and never launches. The fake server never executes the
 requested command.
 
 Quickshell 0.3 sends a cancellation request after a final failure and logs its
-reply as an unexpected response because the session is already inactive. That
-is only the cancellation acknowledgement: a retry starts a fresh session,
-animates and then requests the simulated launch, which the tests cover.
+reply as an unexpected response: greetd releases the failed session but its
+PAM worker has already exited, so the cancellation comes back as a connection
+error. That is only the cancellation acknowledgement: a retry starts a fresh
+session, animates and then requests the simulated launch, which the tests
+cover.
+
+## Real PAM test
+
+`sudo node scripts/test-greetd-pam.mjs` checks the real greetd and PAM stack
+without touching the running session or the display manager. It starts a
+second greetd with a temporary config on `vt = "none"` (no VT, keyboard or
+compositor), creates a throwaway account with a random password that only
+lives in memory, and then:
+
+1. a wrong password must come back as `auth_error`, and the client must cancel
+   that session before retrying;
+2. the right password must authenticate and start the session (`/usr/bin/true`).
+
+The account, its faillock entry, the temporary config and the second greetd
+are removed on exit, including on failure. The installed `greetd.service` is
+untouched and SDDM stays the active display manager.
+
+The greetd PAM service includes `system-local-login`, so the test also shows
+whether `pam_fprintd` runs before the password. Fingerprint support is still
+deferred until after the reinstall.
 
 ## Not done yet
 
-- No real PAM or greetd test: that needs enabling greetd, which is out of
-  scope without explicit approval. SDDM stays the active display manager.
 - No deployment under `cage`, no greetd config and no installed theme.
 - Avatars, fingerprint and multi-monitor placement are out of scope here.
 - The greeter cannot cancel PAM; a stalled attempt has no timeout yet.
