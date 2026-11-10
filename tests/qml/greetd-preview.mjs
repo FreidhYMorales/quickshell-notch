@@ -9,6 +9,20 @@ const ENV = {
   QT_QUICK_BACKEND: "software",
 };
 
+test("the account avatar matches SDDM and selection is blocked during authentication", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(new URL("./greetd-account-probe.qml", import.meta.url)),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
+test("the real surface starts on the clock and can open and close login", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(new URL("./greetd-clock-probe.qml", import.meta.url)),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
 test("the greeter compresses while authentication is pending and waits for success", () => {
   const result = spawnSync(QML, [
     fileURLToPath(new URL("./greetd-wait-morph-probe.qml", import.meta.url)),

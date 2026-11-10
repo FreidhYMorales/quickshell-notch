@@ -44,7 +44,10 @@ Window {
     // Set by the entrypoint: true for the isolated simulation, false for a
     // real greetd session.
     property bool demo: true
+    property string view: demo ? "login" : "clock"
+    property date now: new Date()
     property var users: []
+    readonly property alias accountAvatar: avatarCircle
     property string username: ""
     property bool choosingUser: false
     // A visible PAM prompt awaits typed text instead of the password.
@@ -72,6 +75,28 @@ Window {
 
     function dispatch(event) {
         stateName = Flow.transition(stateName, event);
+    }
+
+    function showLogin() {
+        if (stateName !== "form" && stateName !== "error")
+            return;
+        view = "login";
+        Qt.callLater(() => passwordInput.forceActiveFocus());
+    }
+
+    function showClock() {
+        if (stateName !== "form" && stateName !== "error")
+            return;
+        choosingUser = false;
+        view = "clock";
+        clockKeys.forceActiveFocus();
+    }
+
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: root.now = new Date()
     }
 
     function startAuthentication() {
@@ -172,6 +197,18 @@ Window {
                 return user.displayName;
         }
         return username;
+    }
+
+    function chooseAccount(name) {
+        if (stateName !== "form" && stateName !== "error")
+            return;
+        username = name;
+        choosingUser = false;
+        passwordInput.text = "";
+        failureText = "";
+        if (stateName === "error")
+            dispatch("edit");
+        passwordInput.forceActiveFocus();
     }
 
     function statusText() {
@@ -279,56 +316,69 @@ Window {
                 opacity: root.reveal
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatTime(new Date(), "hh:mm")
-                    font.pixelSize: 76
+                    text: Qt.formatTime(root.now, "hh:mm")
+                    font.family: "IosevkaTerm Nerd Font"
+                    font.pixelSize: root.demo ? 76 : (root.view === "clock" ? 100 : 70)
                     color: root.foreground
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: !root.demo
+                    text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
+                    font.family: "IosevkaTerm Nerd Font"
+                    font.pixelSize: root.view === "clock" ? 23 : 16
+                    color: root.accent
                 }
                 // Real mode: current account, clickable when there is a choice.
                 Item {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: Math.max(chipRow.width, 160)
-                    height: 56
-                    visible: !root.demo && root.users.length > 0
-                    Row {
-                        id: chipRow
-                        anchors.centerIn: parent
-                        spacing: 10
-                        Rectangle {
-                            width: 40
-                            height: 40
-                            radius: 20
-                            color: "#303946"
-                            Text {
-                                anchors.centerIn: parent
-                                text: root.username.length > 0 ? root.username[0].toUpperCase() : "?"
-                                color: root.foreground
-                                font.pixelSize: 18
+                    width: 284
+                    height: 146
+                    visible: !root.demo && root.view === "login" && root.users.length > 0
+                    Rectangle {
+                        id: avatarCircle
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 116
+                        height: 116
+                        radius: 58
+                        color: "#303946"
+                        Canvas {
+                            anchors.centerIn: parent
+                            width: 66
+                            height: 66
+                            onPaint: {
+                                const ctx = getContext("2d");
+                                ctx.clearRect(0, 0, width, height);
+                                ctx.fillStyle = root.foreground;
+                                ctx.beginPath();
+                                ctx.arc(33, 21, 10, 0, 2 * Math.PI);
+                                ctx.fill();
+                                ctx.beginPath();
+                                ctx.moveTo(14, 56);
+                                ctx.bezierCurveTo(14, 32, 52, 32, 52, 56);
+                                ctx.closePath();
+                                ctx.fill();
                             }
                         }
-                        Column {
-                            anchors.verticalCenter: parent.verticalCenter
-                            Text {
-                                text: root.displayName()
-                                color: root.foreground
-                                font.pixelSize: 16
-                            }
-                            Text {
-                                visible: root.users.length > 1
-                                text: "cambiar usuario"
-                                color: root.accent
-                                font.pixelSize: 11
-                            }
+                        TapHandler {
+                            enabled: root.users.length > 1 && (root.stateName === "form" || root.stateName === "error")
+                            onTapped: root.choosingUser = !root.choosingUser
                         }
                     }
-                    TapHandler {
-                        enabled: root.users.length > 1
-                        onTapped: root.choosingUser = !root.choosingUser
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: avatarCircle.bottom
+                        anchors.topMargin: 5
+                        text: root.displayName()
+                        color: root.foreground
+                        font.family: "IosevkaTerm Nerd Font"
+                        font.pixelSize: 17
                     }
                 }
                 Column {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 4
-                    visible: !root.demo && root.choosingUser && root.users.length > 1
+                    visible: !root.demo && root.view === "login" && root.choosingUser && root.users.length > 1
                     Repeater {
                         model: root.users
                         delegate: Rectangle {
@@ -343,18 +393,25 @@ Window {
                                 font.pixelSize: 14
                             }
                             TapHandler {
-                                onTapped: {
-                                    root.username = modelData.name;
-                                    root.choosingUser = false;
-                                    passwordInput.forceActiveFocus();
-                                }
+                                enabled: root.stateName === "form" || root.stateName === "error"
+                                onTapped: root.chooseAccount(modelData.name)
                             }
                         }
                     }
                 }
+                TextField {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 280
+                    visible: !root.demo && root.view === "login" && root.users.length === 0
+                    placeholderText: "Usuario"
+                    text: root.username
+                    onTextEdited: root.username = text
+                    color: root.foreground
+                }
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 12
+                    visible: root.demo || root.view === "login"
                     TextField {
                         id: passwordInput
                         width: 280
@@ -392,7 +449,7 @@ Window {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     text: root.statusText()
-                    visible: root.demo || root.stateName !== "authenticating" || root.awaitingPrompt
+                    visible: root.demo || (root.view === "login" && (root.stateName !== "authenticating" || root.awaitingPrompt))
                     color: root.stateName === "error" ? "#ff7777" : root.accent
                     font.pixelSize: 15
                 }
@@ -464,6 +521,26 @@ Window {
                 id: lockOffset
             }
         }
+    }
+    Item {
+        id: clockKeys
+        focus: !root.demo && root.view === "clock"
+        Keys.onPressed: event => {
+            if (root.view === "clock") {
+                root.showLogin();
+                event.accepted = true;
+            }
+        }
+    }
+    Shortcut {
+        sequence: "Escape"
+        enabled: !root.demo && root.view === "login" && (root.stateName === "form" || root.stateName === "error")
+        onActivated: root.showClock()
+    }
+    MouseArea {
+        anchors.fill: parent
+        enabled: !root.demo && root.view === "clock" && (root.stateName === "form" || root.stateName === "error")
+        onClicked: root.showLogin()
     }
     Timer {
         id: simulatedAuth
