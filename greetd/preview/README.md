@@ -28,6 +28,8 @@ animation-before-launch ordering and rejection of an unapproved socket. The
 mock server never executes the session command. These tests do not connect to
 a real daemon, send real credentials, or verify PAM.
 
-Quickshell 0.3 sends a cancellation request after a simulated final failure;
-its reply can be logged as unexpected. The retry ordering and real PAM behavior
-remain open questions and this preview is not suitable as a login manager.
+Quickshell 0.3 sends a cancellation request after a final failure; its reply is
+logged as an unexpected response because the session is already inactive. That
+is only the cancellation acknowledgement: a retry starts a fresh session,
+animates and then requests the simulated launch, which the tests cover. Real
+PAM behavior remains unverified, and this preview is not a login manager.

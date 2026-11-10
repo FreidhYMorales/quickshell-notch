@@ -200,3 +200,128 @@ for (const visual of [false, true]) {
     );
   }
 }
+
+test("visual adapter retries after a wrong password and still launches", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "notch-greetd-"));
+  const path = join(dir, "socket");
+  const requests = [];
+  const server = createServer((connection) => {
+    let buffer = Buffer.alloc(0);
+    connection.on("error", (error) => {
+      if (error.code !== "ECONNRESET") throw error;
+    });
+    function reply(payload) {
+      const json = Buffer.from(JSON.stringify(payload));
+      const length = Buffer.alloc(4);
+      if (endianness() === "LE") length.writeUInt32LE(json.length);
+      else length.writeUInt32BE(json.length);
+      connection.write(Buffer.concat([length, json]));
+    }
+    connection.on("data", (chunk) => {
+      buffer = Buffer.concat([buffer, chunk]);
+      while (buffer.length >= 4) {
+        const length = endianness() === "LE"
+          ? buffer.readUInt32LE()
+          : buffer.readUInt32BE();
+        if (buffer.length < length + 4) break;
+        const request = JSON.parse(buffer.subarray(4, length + 4).toString());
+        buffer = buffer.subarray(length + 4);
+        requests.push({ ...request, time: Date.now() });
+        if (requests.length === 1) {
+          reply({
+            type: "auth_message",
+            auth_message_type: "info",
+            auth_message: "Simulated login",
+          });
+        } else if (requests.length === 2) {
+          reply({
+            type: "auth_message",
+            auth_message_type: "secret",
+            auth_message: "Dummy password:",
+          });
+        } else if (requests.length === 3) {
+          reply({
+            type: "error",
+            error_type: "auth_error",
+            description: "Incorrect password",
+          });
+        } else if (requests.length === 4) {
+          reply({ type: "success" });
+        } else if (requests.length === 5) {
+          reply({
+            type: "auth_message",
+            auth_message_type: "info",
+            auth_message: "Simulated login",
+          });
+        } else if (requests.length === 6) {
+          reply({
+            type: "auth_message",
+            auth_message_type: "secret",
+            auth_message: "Dummy password:",
+          });
+        } else reply({ type: "success" });
+      }
+    });
+  });
+  await new Promise((resolve, reject) =>
+    server.listen(path, resolve).once("error", reject)
+  );
+  try {
+    const child = spawn("qs", [
+      "-p",
+      fileURLToPath(
+        new URL("../../greetd-preview-shell.qml", import.meta.url),
+      ),
+    ], {
+      env: {
+        ...process.env,
+        GREETD_SOCK: path,
+        NOTCH_GREETD_MOCK: "1",
+        NOTCH_GREETD_AUTOTEST: "1",
+        NOTCH_GREETD_RETRY: "1",
+        QT_QPA_PLATFORM: "offscreen",
+        QT_QUICK_BACKEND: "software",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let output = "";
+    child.stdout.on("data", (chunk) => output += chunk);
+    child.stderr.on("data", (chunk) => output += chunk);
+    const code = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error("probe timed out: " + output));
+      }, 15000);
+      child.once("error", (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+      child.once("exit", (status) => {
+        clearTimeout(timer);
+        resolve(status);
+      });
+    });
+    assert.equal(code, 0, output);
+    assert.match(output, /visual greetd retry passed/);
+    assert.deepEqual(requests.map((r) => r.type), [
+      "create_session",
+      "post_auth_message_response",
+      "post_auth_message_response",
+      "cancel_session",
+      "create_session",
+      "post_auth_message_response",
+      "post_auth_message_response",
+      "start_session",
+    ]);
+    assert.equal(requests[2].response, "fake-test-secret");
+    assert.equal(requests[6].response, "fake-test-secret");
+    assert.deepEqual(requests[7].cmd, ["mock-session-not-executed"]);
+    assert.ok(
+      requests[7].time - requests[6].time >= 450,
+      "the retry must animate before launching",
+    );
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

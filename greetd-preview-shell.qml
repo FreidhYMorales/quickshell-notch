@@ -9,6 +9,8 @@ ShellRoot {
     property var preview: null
     readonly property bool autoTest: Quickshell.env("NOTCH_GREETD_AUTOTEST") === "1"
     readonly property bool failureTest: Quickshell.env("NOTCH_GREETD_TEST_FAILURE") === "1"
+    readonly property bool retryTest: Quickshell.env("NOTCH_GREETD_RETRY") === "1"
+    property int attempts: 0
     readonly property string socketPath: Quickshell.env("GREETD_SOCK")
     readonly property bool socketAllowed: Quickshell.env("NOTCH_GREETD_MOCK") === "1" && /^\/tmp\/notch-greetd-[A-Za-z0-9]+\/socket$/.test(socketPath)
     readonly property string previewBackground: Quickshell.env("NOTCH_GREETD_PREVIEW_BG")
@@ -57,6 +59,7 @@ ShellRoot {
                 Qt.exit(5);
                 return;
             }
+            root.attempts++;
             Greetd.createSession(fail ? "preview-failure" : "preview-user");
         }
     }
@@ -81,7 +84,7 @@ ShellRoot {
         }
         function onLaunched() {
             if (root.autoTest) {
-                console.log("visual greetd success passed");
+                console.log(root.retryTest ? "visual greetd retry passed" : "visual greetd success passed");
                 Qt.quit();
             } else {
                 exitAfterDemo.start();
@@ -98,6 +101,10 @@ ShellRoot {
             Greetd.launch(["mock-session-not-executed"], [], false);
         }
         function onProtocolFailureComplete() {
+            if (root.retryTest && root.attempts === 1) {
+                retryTimer.start();
+                return;
+            }
             if (root.autoTest) {
                 console.log("visual greetd failure passed");
                 Qt.quit();
@@ -108,6 +115,11 @@ ShellRoot {
         id: beginTest
         interval: 50
         onTriggered: root.preview.submit(root.failureTest)
+    }
+    Timer {
+        id: retryTimer
+        interval: 50
+        onTriggered: root.preview.submit(false)
     }
     Timer {
         id: exitAfterDemo
