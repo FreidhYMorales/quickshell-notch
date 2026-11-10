@@ -42,6 +42,7 @@ test:
 qml-test:
 	node --test tests/qml/sddm-timeout.mjs
 	node --test tests/qml/greetd-preview.mjs
+	node --test tests/qml/greetd-protocol.mjs
 	node --test tests/qml/tray-runner-safety.mjs tests/qml/other-runners-safety.mjs
 	node --test tests/qml/tray-menu-fixture.mjs tests/qml/tray-menu-entry.mjs
 	node --test tests/qml/tray-menu-open.mjs tests/qml/tray-menu-size.mjs tests/qml/tray-menu-activate.mjs tests/qml/tray-menu-disabled.mjs tests/qml/tray-menu-separator.mjs
