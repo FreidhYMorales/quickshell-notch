@@ -1,3 +1,5 @@
 LockPam LockPam.qml
 LockContent LockContent.qml
 Lock Lock.qml
+LockFrameGate LockFrameGate.qml
+LockFrame LockFrame.qml

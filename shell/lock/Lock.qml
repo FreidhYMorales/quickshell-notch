@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Shapes
@@ -20,11 +22,38 @@ Scope {
     property real reveal: 1
     property bool exiting: false
     property bool entering: false
-    property bool capturing: false
     property bool notchShown: false
-    readonly property string captureDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/quickshell-notch-lock-" + (Quickshell.env("USER") || "user")
-    property int captureRevision: 0
+    // Screen name -> LockFrame. Filled by the hidden capture hosts below.
+    property var frames: ({})
     readonly property int morphDuration: 520
+
+    function frameFor(name: string): var {
+        return root.frames[name] ? root.frames[name] : null;
+    }
+
+    // Start one capture per screen and let the gate decide when the lock may
+    // be requested: as soon as every frame is ready, or at the short deadline.
+    function startCapture(): void {
+        const screens = Quickshell.screens;
+        const names = [];
+        for (let i = 0; i < screens.length; ++i)
+            names.push(screens[i].name);
+        frameGate.start(names);
+        for (let i = 0; i < screens.length; ++i) {
+            const frame = root.frameFor(screens[i].name);
+            if (frame)
+                frame.start(screens[i], frameGate.generation);
+            else
+                frameGate.failed(screens[i].name, frameGate.generation);
+        }
+    }
+
+    function releaseFrames(): void {
+        for (const name in root.frames) {
+            if (root.frames[name])
+                root.frames[name].release();
+        }
+    }
 
     function startExit() {
         if (!lock.locked || root.exiting)
@@ -56,7 +85,7 @@ Scope {
     Connections {
         target: Session
         function onLockRequested() {
-            if (lock.locked)
+            if (lock.locked || frameGate.pending)
                 return;
             exitMorph.stop();
             notchRetreat.stop();
@@ -65,26 +94,54 @@ Scope {
             root.notchShown = false;
             root.reveal = 0;
             root.entering = true;
-            root.capturing = true;
-            capture.command = ["sh", "-c", 'umask 077; mkdir -p -m 700 "$1" || exit 1; dir="$1"; shift; for monitor do grim -o "$monitor" "$dir/$monitor.png" || exit 1; done', "capture", root.captureDir].concat(Quickshell.screens.map(s => s.name));
-            capture.running = true;
+            root.startCapture();
         }
     }
 
-    Process {
-        id: capture
-        onExited: code => {
-            root.capturing = false;
-            if (!root.entering) return;
-            if (code === 0) root.captureRevision++;
-            else console.warn("Lock: grim capture failed, falling back to wallpaper");
+    // Waiting a frame is cosmetic: the gate always finishes, and a missing
+    // frame simply leaves the wallpaper in place.
+    LockFrameGate {
+        id: frameGate
+        timeout: Timings.lockCaptureTimeout
+        onFinished: reason => {
+            if (!root.entering)
+                return;
+            if (reason !== "ready")
+                console.warn("Lock: capture incomplete (" + reason + "), keeping wallpaper on screens without a frame");
             lock.locked = true;
         }
     }
 
-    Process {
-        id: cleanupCapture
-        command: ["rm", "-rf", root.captureDir]
+    // A hidden 1x1 layer surface per screen owns the capture view until the
+    // compositor confirms the lock, then the frame moves into the secure
+    // surface. Captures never run while the shell is unlocked.
+    Variants {
+        model: Quickshell.screens
+
+        PanelWindow {
+            id: frameHost
+            required property var modelData
+            screen: modelData
+            implicitWidth: 1
+            implicitHeight: 1
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            mask: Region {}
+
+            LockFrame {
+                id: frame
+                anchors.fill: parent
+                onFrameReady: attempt => frameGate.ready(frameHost.modelData.name, attempt)
+                onFrameFailed: attempt => frameGate.failed(frameHost.modelData.name, attempt)
+                Component.onCompleted: {
+                    root.frames[frameHost.modelData.name] = frame;
+                }
+                Component.onDestruction: {
+                    if (root.frames[frameHost.modelData.name] === frame)
+                        delete root.frames[frameHost.modelData.name];
+                }
+            }
+        }
     }
 
     NumberAnimation {
@@ -144,8 +201,7 @@ Scope {
             Session.setLocked(locked);
             if (locked) {
                 sharedAuth.listen();
-            }
-            else {
+            } else {
                 enterMorph.stop();
                 exitMorph.stop();
                 sharedAuth.stop();
@@ -153,9 +209,9 @@ Scope {
                 root.entering = false;
                 root.reveal = 1;
                 root.notchShown = false;
-                    curtainEntrance.stop();
+                curtainEntrance.stop();
                 notchRetreat.stop();
-                cleanupCapture.running = true;
+                root.releaseFrames();
             }
         }
         onSecureChanged: {
@@ -174,11 +230,13 @@ Scope {
             // Always cover the compositor while locked. The wallpaper is a
             // safe, static backdrop; the morph itself is a visible Shape,
             // not a texture mask (which could turn the notch invisible).
-            readonly property string captureSource: root.captureRevision > 0 && surface.screen ? "file://" + root.captureDir + "/" + surface.screen.name + ".png?v=" + root.captureRevision : ""
+            readonly property var lockFrame: surface.screen ? root.frameFor(surface.screen.name) : null
+            readonly property bool captureShown: surface.lockFrame !== null && surface.lockFrame.hasContent && surface.lockFrame.visualParent === captureLayer
             readonly property string wallpaperPath: surface.screen ? Wallpapers.pathFor(surface.screen.name) : ""
             property bool videoFrameReady: false
             onVideoWallpaperChanged: videoFrameReady = false
             readonly property bool videoWallpaper: WallpaperState.isVideoPath(wallpaperPath)
+            readonly property bool gifWallpaper: /\.gif$/i.test(wallpaperPath)
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
             readonly property real morphWidth: idleWidth + (width - idleWidth) * root.reveal
@@ -188,12 +246,46 @@ Scope {
 
             // Match QuickWallpaperSurface: a full-screen wallpaper is drawn
             // inside a growing, curved reveal frame. The surrounding secure
-            // surface uses the same wallpaper, without tint or blur.
+            // surface shows the frozen desktop frame, or the wallpaper when
+            // the capture did not make it in time.
+            Item {
+                id: captureLayer
+                anchors.fill: parent
+                visible: surface.captureShown
+
+                Component.onDestruction: if (surface.lockFrame && surface.lockFrame.visualParent === captureLayer)
+                    surface.lockFrame.release()
+            }
+
             Image {
                 anchors.fill: parent
-                source: surface.captureSource || surface.wallpaperSource
+                source: surface.wallpaperSource
+                visible: !surface.captureShown
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: false
+            }
+
+            // Frames live in their own window until the surface exists. Attach
+            // as soon as the surface knows its screen, before the compositor
+            // shows it, so the first painted frame is the frozen desktop and
+            // never the wallpaper.
+            function attachCapture(): void {
+                if (!surface.screen)
+                    return;
+                const frame = root.frameFor(surface.screen.name);
+                if (frame && frame.hasContent)
+                    frame.attach(captureLayer);
+            }
+
+            Component.onCompleted: surface.attachCapture()
+            onScreenChanged: surface.attachCapture()
+
+            Connections {
+                target: lock
+                function onSecureChanged() {
+                    if (lock.secure)
+                        surface.attachCapture();
+                }
             }
 
             // A locked notch stays visible once the reveal reaches fullscreen.
@@ -221,9 +313,7 @@ Scope {
                     fillColor: "white"
                     strokeWidth: -1
                     PathSvg {
-                        path: EarGeometry.notchPath(revealMask.width, revealMask.height,
-                            Layout.earRadius * (1 - surface.earMorph),
-                            Layout.cornerRadius * (1 - surface.cornerMorph))
+                        path: EarGeometry.notchPath(revealMask.width, revealMask.height, Layout.earRadius * (1 - surface.earMorph), Layout.cornerRadius * (1 - surface.cornerMorph))
                     }
                 }
             }
@@ -250,9 +340,19 @@ Scope {
                     Image {
                         anchors.fill: parent
                         source: surface.wallpaperSource
-                        visible: !surface.videoWallpaper || !surface.videoFrameReady
+                        visible: !surface.gifWallpaper && (!surface.videoWallpaper || !surface.videoFrameReady)
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
+                    }
+
+                    AnimatedImage {
+                        anchors.fill: parent
+                        source: surface.gifWallpaper ? "file://" + surface.wallpaperPath : ""
+                        visible: surface.gifWallpaper
+                        playing: surface.gifWallpaper && lock.locked
+                        fillMode: Image.PreserveAspectCrop
+                        onStatusChanged: if (status === Image.Error)
+                            console.warn("Lock GIF: cannot load " + surface.wallpaperPath)
                     }
 
                     MediaPlayer {
@@ -260,9 +360,13 @@ Scope {
                         source: surface.videoWallpaper ? "file://" + surface.wallpaperPath : ""
                         videoOutput: lockVideoOutput
                         loops: MediaPlayer.Infinite
-                        audioOutput: AudioOutput { muted: true }
-                        onSourceChanged: if (surface.videoWallpaper && lock.locked) play()
-                        Component.onCompleted: if (surface.videoWallpaper && lock.locked) play()
+                        audioOutput: AudioOutput {
+                            muted: true
+                        }
+                        onSourceChanged: if (surface.videoWallpaper && lock.locked)
+                            play()
+                        Component.onCompleted: if (surface.videoWallpaper && lock.locked)
+                            play()
                         onMediaStatusChanged: {
                             if (surface.videoWallpaper && lock.locked && (mediaStatus === MediaPlayer.LoadedMedia || mediaStatus === MediaPlayer.BufferedMedia) && playbackState !== MediaPlayer.PlayingState)
                                 play();
@@ -273,8 +377,10 @@ Scope {
                     Connections {
                         target: lock
                         function onLockedChanged() {
-                            if (lock.locked && surface.videoWallpaper) lockVideo.play();
-                            else lockVideo.stop();
+                            if (lock.locked && surface.videoWallpaper)
+                                lockVideo.play();
+                            else
+                                lockVideo.stop();
                         }
                     }
 
@@ -352,8 +458,7 @@ Scope {
                         fillColor: Colours.background
                         strokeWidth: -1
                         PathSvg {
-                            path: EarGeometry.notchPath(lockedNotch.width, lockedNotch.height,
-                                Layout.earRadius, Layout.cornerRadius)
+                            path: EarGeometry.notchPath(lockedNotch.width, lockedNotch.height, Layout.earRadius, Layout.cornerRadius)
                         }
                     }
                 }
@@ -366,7 +471,6 @@ Scope {
                     color: Colours.paletteFor(surface.screen).onSurface
                 }
             }
-
         }
     }
 }

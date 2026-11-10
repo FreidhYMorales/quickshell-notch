@@ -15,6 +15,8 @@ Singleton {
     // Pause before the lock fingerprint listener restarts after a failed
     // scan, so fprintd has released the device.
     readonly property int lockFingerprintRetry: 300
+    // Screenshot is cosmetic: do not let it delay a lock indefinitely.
+    readonly property int lockCaptureTimeout: 500
     // How long a notification toast shows (paused while hovered).
     readonly property int toast: 5000
     // Workspace events within this window become one snapshot.

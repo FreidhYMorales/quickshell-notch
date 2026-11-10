@@ -46,10 +46,13 @@ ShellRoot {
                 console.error(component.errorString());
                 return Qt.exit(2);
             }
-            component.createObject(host, {
+            const content = component.createObject(host, {
                 auth: auth,
                 "anchors.fill": host
             });
+            wait(500);
+            content.forceActiveFocus();
+            keyClick(Qt.Key_Space);
             wait(500);
             const input = root.find(host.children, item => item.activeFocus && item.cursorPosition !== undefined);
             if (!input)
