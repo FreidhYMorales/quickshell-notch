@@ -104,13 +104,16 @@ ShellRoot {
         target: Greetd
         function onAuthMessage(message, error, responseRequired, echoResponse) {
             if (responseRequired) {
-                if (echoResponse) {
-                    // PAM wants typed text other than the password.
-                    root.preview.awaitingPrompt = true;
+                if (echoResponse || root.pendingPassword === "") {
+                    // Additional PAM prompts must be answered by the user;
+                    // never reuse the password for a subsequent secret prompt.
+                    root.preview.promptSecret = !echoResponse;
                     root.preview.protocolMessage = message;
+                    root.preview.awaitingPrompt = true;
                     return;
                 }
                 Greetd.respond(root.pendingPassword);
+                root.pendingPassword = "";
                 return;
             }
             if (message)

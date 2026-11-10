@@ -28,7 +28,7 @@ Window {
     }
     Timer {
         id: probe
-        interval: 150
+        interval: 800
         onTriggered: {
             if (!root.surface.authTimedOut || root.surface.stateName !== "authenticating" || root.surface.reveal !== 1 || root.surface.statusText().indexOf("pending") < 0) {
                 Qt.exit(3);
@@ -57,7 +57,7 @@ Window {
     }
     Timer {
         id: lateFailure
-        interval: 150
+        interval: 800
         onTriggered: {
             if (!root.surface.authTimedOut) {
                 Qt.exit(6);

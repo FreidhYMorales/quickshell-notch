@@ -49,6 +49,13 @@ Window {
     property bool choosingUser: false
     // A visible PAM prompt awaits typed text instead of the password.
     property bool awaitingPrompt: false
+    property bool promptSecret: false
+    onAwaitingPromptChanged: {
+        if (!demo && awaitingPrompt && stateName === "authenticating") {
+            exitMorph.stop();
+            returnMorph.restart();
+        }
+    }
     property int authTimeoutMs: 20000
     property bool authTimedOut: false
     property string protocolMessage: ""
@@ -78,8 +85,11 @@ Window {
         failureText = "";
         authTimedOut = false;
         dispatch("submit");
-        if (!demo)
+        if (!demo) {
             authDeadline.restart();
+            returnMorph.stop();
+            exitMorph.restart();
+        }
         return true;
     }
 
@@ -106,11 +116,23 @@ Window {
     function submitEntered() {
         if (awaitingPrompt) {
             const text = passwordInput.text;
-            if (text.length === 0)
+            if (text.length === 0) {
+                inputShake.restart();
                 return;
+            }
             awaitingPrompt = false;
             passwordInput.text = "";
+            if (!demo && !authTimedOut) {
+                returnMorph.stop();
+                exitMorph.restart();
+            }
             protocolBackend.respond(text);
+            return;
+        }
+        if (stateName !== "form" && stateName !== "error")
+            return;
+        if (passwordInput.text.length === 0) {
+            inputShake.restart();
             return;
         }
         submit(username, passwordInput.text);
@@ -122,7 +144,26 @@ Window {
         authDeadline.stop();
         authTimedOut = false;
         dispatch(failed ? "failure" : "success");
-        exitMorph.restart();
+        if (demo) {
+            exitMorph.restart();
+        } else if (reveal <= 0.001 && !returnMorph.running) {
+            finishCompression();
+        } else if (!exitMorph.running) {
+            returnMorph.stop();
+            exitMorph.restart();
+        }
+    }
+
+    function finishCompression() {
+        if (stateName === "rejecting") {
+            dispatch("finished");
+            failureShake.restart();
+        } else if (stateName === "animating") {
+            dispatch("finished");
+            if (protocolBackend)
+                protocolAnimationComplete();
+            resetTimer.restart();
+        }
     }
 
     function displayName() {
@@ -153,8 +194,11 @@ Window {
     Timer {
         id: authDeadline
         interval: root.authTimeoutMs
-        onTriggered: if (root.stateName === "authenticating")
-            root.authTimedOut = true
+        onTriggered: if (root.stateName === "authenticating") {
+            root.authTimedOut = true;
+            exitMorph.stop();
+            returnMorph.restart();
+        }
     }
 
     AnimatedImage {
@@ -314,8 +358,8 @@ Window {
                     TextField {
                         id: passwordInput
                         width: 280
-                        placeholderText: root.demo ? "Demo only — do not enter a real password" : (root.awaitingPrompt ? "Respuesta" : "Contraseña")
-                        echoMode: root.awaitingPrompt ? TextInput.Normal : TextInput.Password
+                        placeholderText: root.demo ? "Demo only — do not enter a real password" : (root.awaitingPrompt ? "Respuesta" : (root.stateName === "authenticating" ? root.statusText() : "Contraseña"))
+                        echoMode: root.awaitingPrompt && !root.promptSecret ? TextInput.Normal : TextInput.Password
                         enabled: root.stateName === "form" || root.stateName === "error" || root.awaitingPrompt
                         onActiveFocusChanged: if (activeFocus && root.stateName === "error")
                             root.dispatch("edit")
@@ -327,6 +371,9 @@ Window {
                             border.color: "#ff7777"
                         }
                         color: root.foreground
+                        transform: Translate {
+                            id: inputOffset
+                        }
                     }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
@@ -345,6 +392,7 @@ Window {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     text: root.statusText()
+                    visible: root.demo || root.stateName !== "authenticating" || root.awaitingPrompt
                     color: root.stateName === "error" ? "#ff7777" : root.accent
                     font.pixelSize: 15
                 }
@@ -398,6 +446,20 @@ Window {
             color: root.stateName === "shaking" || root.stateName === "error" ? "#ff7777" : root.foreground
             font.family: "IosevkaTerm Nerd Font"
             font.pixelSize: 18
+            SequentialAnimation on scale {
+                running: !root.demo && root.stateName === "authenticating" && root.reveal < 0.05
+                loops: Animation.Infinite
+                NumberAnimation {
+                    to: 1.12
+                    duration: 700
+                    easing.type: Easing.InOutSine
+                }
+                NumberAnimation {
+                    to: 1.0
+                    duration: 700
+                    easing.type: Easing.InOutSine
+                }
+            }
             transform: Translate {
                 id: lockOffset
             }
@@ -408,24 +470,36 @@ Window {
         interval: 650
         onTriggered: root.completeAuthentication(root.simulateFailure)
     }
+    SequentialAnimation {
+        id: inputShake
+        NumberAnimation {
+            target: inputOffset
+            property: "x"
+            to: -4
+            duration: 55
+        }
+        NumberAnimation {
+            target: inputOffset
+            property: "x"
+            to: 4
+            duration: 110
+        }
+        NumberAnimation {
+            target: inputOffset
+            property: "x"
+            to: 0
+            duration: 70
+        }
+    }
     NumberAnimation {
         id: exitMorph
         target: root
         property: "reveal"
-        from: 1
         to: 0
         duration: 520
         easing.type: Easing.InOutCubic
         onFinished: {
-            const failed = root.stateName === "rejecting";
-            root.dispatch("finished");
-            if (failed)
-                failureShake.restart();
-            else {
-                if (root.protocolBackend)
-                    root.protocolAnimationComplete();
-                resetTimer.restart();
-            }
+            root.finishCompression();
         }
     }
     SequentialAnimation {
@@ -474,7 +548,11 @@ Window {
         to: 1
         duration: 520
         easing.type: Easing.InOutCubic
-        onFinished: if (root.protocolBackend && root.stateName === "error")
-            root.protocolFailureComplete()
+        onFinished: {
+            if (root.awaitingPrompt && root.stateName === "authenticating")
+                passwordInput.forceActiveFocus();
+            if (root.protocolBackend && root.stateName === "error")
+                root.protocolFailureComplete();
+        }
     }
 }

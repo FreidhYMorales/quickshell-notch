@@ -9,9 +9,9 @@ Three pieces share one login surface (`preview/Main.qml`):
   real credential: both buttons send a fixed dummy secret.
 - `greetd-shell.qml` — the real greeter entrypoint. It refuses to start unless
   `GREETD_SOCK` is set, reads accounts from `/etc/passwd`, sends the typed
-  password to PAM through greetd, compresses into the notch when
-  `readyToLaunch` arrives and only then requests the session command
-  (`Hyprland`). It is not enabled or installed anywhere yet.
+  password to PAM through greetd and compresses into the notch while PAM
+  authenticates. It requests the session command (`Hyprland`) only after both
+  `readyToLaunch` and compression. It is not enabled or installed anywhere yet.
 
 The surface keeps the shared concave ear mask, the notch width and palette
 staged for the SDDM greeter, and the saved wallpaper (still image, GIF or muted
@@ -79,6 +79,7 @@ deferred until after the reinstall.
 
 - No deployment under `cage`, no greetd config and no installed theme.
 - Avatars, fingerprint and multi-monitor placement are out of scope here.
-- A stalled PAM attempt shows a pending message after 20 seconds. It is not
-  cancelled, and another login cannot start until PAM responds. A required
-  interactive PAM prompt remains answerable to avoid blocking authentication.
+- A stalled PAM attempt expands and shows a pending message after 20 seconds.
+  It is not cancelled, and another login cannot start until PAM responds. A
+  required interactive PAM prompt also expands the greeter and remains
+  answerable to avoid blocking authentication.

@@ -9,6 +9,20 @@ const ENV = {
   QT_QUICK_BACKEND: "software",
 };
 
+test("the greeter compresses while authentication is pending and waits for success", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(new URL("./greetd-wait-morph-probe.qml", import.meta.url)),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
+test("an additional PAM prompt expands the waiting greeter", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(new URL("./greetd-extra-prompt-probe.qml", import.meta.url)),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
 test("a stalled authentication stays pending and accepts a late success", () => {
   const result = spawnSync(QML, [
     fileURLToPath(new URL("./greetd-timeout-probe.qml", import.meta.url)),
