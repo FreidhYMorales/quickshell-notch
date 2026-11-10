@@ -23,6 +23,10 @@ export function isVideoPath(path) {
   return VIDEO.test(path ?? "");
 }
 
+export function needsThemeFrame(path) {
+  return isVideoPath(path) || /\.gif$/i.test(path ?? "");
+}
+
 // A video wallpaper pauses while the session is locked (the lock surface may
 // play its own video).
 export function videoShouldPlay(path, locked) {

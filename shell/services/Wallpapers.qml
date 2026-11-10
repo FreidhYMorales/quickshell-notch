@@ -192,7 +192,7 @@ Singleton {
     FolderListModel {
         id: files
         folder: "file://" + root.directory
-        nameFilters: ["*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.webp", "*.WEBP", "*.bmp", "*.BMP", "*.mp4", "*.MP4", "*.webm", "*.WEBM", "*.mkv", "*.MKV", "*.mov", "*.MOV", "*.avi", "*.AVI", "*.m4v", "*.M4V"]
+        nameFilters: ["*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.webp", "*.WEBP", "*.bmp", "*.BMP", "*.gif", "*.GIF", "*.mp4", "*.MP4", "*.webm", "*.WEBM", "*.mkv", "*.MKV", "*.mov", "*.MOV", "*.avi", "*.AVI", "*.m4v", "*.M4V"]
         showDirs: false
         onStatusChanged: if (status === FolderListModel.Ready)
             root.refreshCatalog()

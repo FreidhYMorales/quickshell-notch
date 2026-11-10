@@ -105,6 +105,7 @@ PanelWindow {
             required property int index
             property string wallpaperPath: ""
             readonly property bool videoFile: WallpaperState.isVideoPath(wallpaperPath)
+            readonly property bool gifFile: /\.gif$/i.test(wallpaperPath)
             readonly property url mediaSource: wallpaperPath ? "file://" + wallpaperPath : ""
             readonly property bool isFront: index === root.frontSlot
             readonly property bool isIncoming: index === root.incomingSlot
@@ -117,10 +118,24 @@ PanelWindow {
             Image {
                 id: still
                 anchors.fill: parent
-                visible: !layer.videoFile
-                source: layer.videoFile ? "" : layer.mediaSource
+                visible: !layer.videoFile && !layer.gifFile
+                source: layer.videoFile || layer.gifFile ? "" : layer.mediaSource
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
+                onStatusChanged: {
+                    if (status === Image.Ready && layer.isIncoming)
+                        root.incomingReady();
+                    if (status === Image.Error)
+                        console.warn("WallpaperSurface: cannot load " + layer.wallpaperPath);
+                }
+            }
+
+            AnimatedImage {
+                anchors.fill: parent
+                visible: layer.gifFile
+                source: layer.gifFile ? layer.mediaSource : ""
+                playing: layer.gifFile && !Session.locked && (layer.isFront || layer.isIncoming)
+                fillMode: Image.PreserveAspectCrop
                 onStatusChanged: {
                     if (status === Image.Ready && layer.isIncoming)
                         root.incomingReady();

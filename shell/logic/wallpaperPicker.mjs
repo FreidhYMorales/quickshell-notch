@@ -1,7 +1,7 @@
 // Pure catalog and temporary selection decisions for both wallpaper pickers.
 // The caller owns persistence; browsing must never write committed state.
 
-const SUPPORTED = /\.(png|jpe?g|webp|bmp|avi|mp4|mov|mkv|m4v|webm)$/i;
+const SUPPORTED = /\.(png|jpe?g|webp|bmp|gif|avi|mp4|mov|mkv|m4v|webm)$/i;
 const VIDEO = /\.(avi|mp4|mov|mkv|m4v|webm)$/i;
 
 export function catalogEntries(paths) {

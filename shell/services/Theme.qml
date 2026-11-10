@@ -119,7 +119,7 @@ Singleton {
             run(framePath(role));
             return;
         }
-        if (!WallpaperState.isVideoPath(path)) {
+        if (!WallpaperState.needsThemeFrame(path)) {
             run(path);
             return;
         }
