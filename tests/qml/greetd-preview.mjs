@@ -9,6 +9,13 @@ const ENV = {
   QT_QUICK_BACKEND: "software",
 };
 
+test("a stalled authentication stays pending and accepts a late success", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(new URL("./greetd-timeout-probe.qml", import.meta.url)),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
 test("greetd visual simulation waits for auth before animating", () => {
   const result = spawnSync(QML, [
     fileURLToPath(new URL("./greetd-preview-probe.qml", import.meta.url)),

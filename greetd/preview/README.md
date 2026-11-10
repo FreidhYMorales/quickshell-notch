@@ -79,4 +79,6 @@ deferred until after the reinstall.
 
 - No deployment under `cage`, no greetd config and no installed theme.
 - Avatars, fingerprint and multi-monitor placement are out of scope here.
-- The greeter cannot cancel PAM; a stalled attempt has no timeout yet.
+- A stalled PAM attempt shows a pending message after 20 seconds. It is not
+  cancelled, and another login cannot start until PAM responds. A required
+  interactive PAM prompt remains answerable to avoid blocking authentication.

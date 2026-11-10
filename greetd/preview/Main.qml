@@ -49,6 +49,8 @@ Window {
     property bool choosingUser: false
     // A visible PAM prompt awaits typed text instead of the password.
     property bool awaitingPrompt: false
+    property int authTimeoutMs: 20000
+    property bool authTimedOut: false
     property string protocolMessage: ""
     property string failureText: ""
     // Set only by the isolated Quickshell mock-protocol wrapper.
@@ -74,7 +76,10 @@ Window {
         root.contentItem.forceActiveFocus();
         protocolMessage = "";
         failureText = "";
+        authTimedOut = false;
         dispatch("submit");
+        if (!demo)
+            authDeadline.restart();
         return true;
     }
 
@@ -114,6 +119,8 @@ Window {
     function completeAuthentication(failed) {
         if (stateName !== "authenticating")
             return;
+        authDeadline.stop();
+        authTimedOut = false;
         dispatch(failed ? "failure" : "success");
         exitMorph.restart();
     }
@@ -127,6 +134,10 @@ Window {
     }
 
     function statusText() {
+        if (stateName === "authenticating" && awaitingPrompt && protocolMessage !== "")
+            return protocolMessage;
+        if (stateName === "authenticating" && authTimedOut)
+            return "Authentication pending…";
         if (stateName === "authenticating")
             return demo ? "Authenticating (simulated)…" : "Authenticating…";
         if (stateName === "error") {
@@ -137,6 +148,13 @@ Window {
         if (protocolMessage !== "")
             return protocolMessage;
         return demo ? "greetd preview — no real authentication" : "";
+    }
+
+    Timer {
+        id: authDeadline
+        interval: root.authTimeoutMs
+        onTriggered: if (root.stateName === "authenticating")
+            root.authTimedOut = true
     }
 
     AnimatedImage {
