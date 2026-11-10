@@ -124,10 +124,10 @@ ShellRoot {
             root.preview.completeAuthentication(false);
         }
         function onLaunched() {
-            if (root.autoTest) {
+            if (root.autoTest)
                 console.log("real greeter launch passed");
-                Qt.quit();
-            }
+            // greetd starts the session only after its greeter exits.
+            Qt.quit();
         }
         function onError(message) {
             root.pendingPassword = "";
