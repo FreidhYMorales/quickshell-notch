@@ -16,6 +16,7 @@ Singleton {
 
     readonly property string stateHome: Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")
     readonly property string notchDir: stateHome + "/quickshell-notch"
+    property string sddmDataDir: Quickshell.env("NOTCH_SDDM_DATA_DIR") || (notchDir + "/sddm")
     readonly property string oldDir: stateHome + "/quickshell"
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")
     readonly property string postHookPath: configHome + "/matugen/post-hook.sh"
@@ -33,6 +34,10 @@ Singleton {
 
     property bool appDone: true
     property bool appBusy: false
+    property string appBackground: ""
+    property string sddmWallpaper: ""
+    property var sddmNext: null
+    property bool sddmBusy: false
     // The single app run still waiting: a newer commit replaces it, so the
     // last choice wins instead of being dropped.
     property var appNext: null
@@ -177,6 +182,21 @@ Singleton {
     }
 
     function load() {
+        if (!Quickshell.env("NOTCH_SDDM_DATA_DIR")) {
+            const target = readText(notchDir + "/sddm-target.txt");
+            const path = target ? target.trim() : "";
+            if (/^\/[^\r\n]*$/.test(path))
+                sddmDataDir = path;
+        }
+        const sddmConfig = readText(sddmDataDir + "/theme.conf.user");
+        const source = sddmConfig && sddmConfig.match(/^sourceWallpaper=file:\/\/(.*)$/m);
+        if (source) {
+            try {
+                sddmWallpaper = decodeURIComponent(source[1]);
+            } catch (_error) {
+                console.warn("Theme: invalid SDDM wallpaper path");
+            }
+        }
         const notch = readText(notchDir + "/theme.json");
         if (notch !== null) {
             const stored = ThemeLogic.savedMode(notch);
@@ -235,6 +255,7 @@ Singleton {
 
     // Called by Wallpapers.commit once its state holds the new path.
     function commitWallpaper(shared: bool, screen: string, path: string) {
+        sddmWallpaper = path;
         // A shared commit clears every override, so their palettes are stale:
         // the queue is dropped and a dry-run already running is abandoned.
         if (shared) {
@@ -292,7 +313,7 @@ Singleton {
     }
 
     function checkApplied() {
-        applied = appDone && !paletteBusy && paletteQueue.length === 0;
+        applied = appDone && !paletteBusy && paletteQueue.length === 0 && !sddmBusy && sddmNext === null;
     }
 
     function runApp(path: string) {
@@ -315,6 +336,7 @@ Singleton {
         }
         appNext = null;
         appBusy = true;
+        root.appBackground = job.path;
         const mode = root.mode;
         frameFor(job.path, "app", path => {
             appProc.pending = true;
@@ -339,6 +361,38 @@ Singleton {
         checkApplied();
     }
 
+    function stageSddm(path: string, palette: var) {
+        if (!path || (sddmWallpaper && path !== sddmWallpaper))
+            return;
+        sddmNext = {
+            path: path,
+            palette: palette
+        };
+        applied = false;
+        if (sddmBusy)
+            return;
+        startSddm();
+    }
+
+    function startSddm() {
+        const job = sddmNext;
+        sddmNext = null;
+        sddmBusy = true;
+        sddmSync.pending = true;
+        sddmSync.didStart = false;
+        sddmSync.command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/sddm-sync.py").toString().replace(/^file:\/\//, "")), job.path, job.palette, root.sddmDataDir];
+        sddmSync.running = true;
+    }
+
+    function sddmFinished() {
+        sddmBusy = false;
+        if (sddmNext) {
+            startSddm();
+            return;
+        }
+        checkApplied();
+    }
+
     function startPalette() {
         while (!paletteBusy && paletteQueue.length !== 0) {
             const job = paletteQueue[0];
@@ -348,6 +402,7 @@ Singleton {
                 continue;
             paletteBusy = true;
             paletteProc.pendingScreen = job.screen;
+            paletteProc.pendingPath = job.path;
             paletteProc.epoch = root.paletteEpoch;
             const mode = root.mode;
             frameFor(job.path, "palette", path => {
@@ -517,6 +572,7 @@ Singleton {
             if (!running && pending && !didStart) {
                 pending = false;
                 console.warn("Theme: can't run the matugen post-hook");
+                root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
                 root.appFinished();
             }
         }
@@ -524,7 +580,28 @@ Singleton {
             pending = false;
             if (code !== 0)
                 console.warn("Theme: post-hook exited with " + code);
+            root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
             root.appFinished();
+        }
+    }
+
+    Process {
+        id: sddmSync
+        property bool pending: false
+        property bool didStart: false
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                console.warn("Theme: can't start SDDM staging");
+                root.sddmFinished();
+            }
+        }
+        onExited: code => {
+            pending = false;
+            if (code !== 0)
+                console.warn("Theme: SDDM staging exited with " + code);
+            root.sddmFinished();
         }
     }
 
@@ -532,6 +609,7 @@ Singleton {
         id: paletteProc
 
         property string pendingScreen: ""
+        property string pendingPath: ""
         property int epoch: 0
         property bool pending: false
         property bool didStart: false
@@ -562,6 +640,17 @@ Singleton {
                     const next = Object.assign({}, root.palettes);
                     next[paletteProc.pendingScreen] = palette;
                     root.palettes = next;
+                    if (paletteProc.pendingPath === root.sddmWallpaper)
+                        root.stageSddm(paletteProc.pendingPath, JSON.stringify({
+                            colors: {
+                                primary: {
+                                    hex: palette.primary
+                                },
+                                on_surface: {
+                                    hex: palette.onSurface
+                                }
+                            }
+                        }));
                 } else {
                     console.warn("Theme: no palette for " + paletteProc.pendingScreen);
                 }
