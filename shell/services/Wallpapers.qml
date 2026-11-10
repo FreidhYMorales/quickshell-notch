@@ -27,7 +27,7 @@ Singleton {
     property var entries: []
     property var preview: null
     property var selection: null
-    property bool applyToAll: false
+    property bool applyToAll: true
     property string selectionMonitor: ""
 
     // On-demand, shared still-frame cache. One ffmpeg job at a time.
