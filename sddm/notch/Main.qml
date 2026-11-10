@@ -30,6 +30,8 @@ Item {
     readonly property bool demoMode: Qt.application.arguments.indexOf("--test-mode") !== -1
     property date now: new Date()
     property string errorMessage: ""
+    property bool passwordError: false
+    readonly property color errorColour: "#ff7777"
     // The greeter has no access to Quickshell's singleton. A deployed
     // theme.conf.user can supply the palette copied by the sync integration.
     readonly property color accent: config.accent || "#c6c6c6"
@@ -90,6 +92,7 @@ Item {
         if (exiting || authenticating || password.text.length === 0)
             return;
         errorMessage = "";
+        passwordError = false;
         keyboardRequested = false;
         Qt.inputMethod.hide();
         // SDDM stops the greeter shortly after authentication succeeds, so the
@@ -99,18 +102,40 @@ Item {
         exitMorph.restart();
     }
 
-    // A rejected password, a missed fingerprint or a silent PAM all return to
-    // the login form; the compressed state is never a dead end.
-    function recover(message) {
+    // This timer cannot cancel the daemon's PAM transaction. Show the form,
+    // but keep authenticating true so another login cannot overlap it.
+    function authenticationDelayed() {
+        if (!authenticating)
+            return;
+        exiting = false;
+        password.text = "";
+        passwordError = false;
+        errorMessage = "Authentication still in progress";
+        root.forceActiveFocus();
+        view = "login";
+        returnMorph.restart();
+    }
+
+    function failLogin() {
         authTimeout.stop();
         previewReset.stop();
+        demoReturn.stop();
+        exitMorph.stop();
+        returnMorph.stop();
         authenticating = false;
         previewingExit = false;
-        exiting = false;
-        errorMessage = message;
+        exiting = true;
         password.text = "";
+        root.forceActiveFocus();
+        passwordError = true;
+        errorMessage = "Incorrect password";
+        failureShake.restart();
+    }
+
+    function finishLoginFailure() {
+        exiting = false;
+        view = "login";
         returnMorph.restart();
-        showLogin();
     }
 
     function previewExit() {
@@ -140,21 +165,21 @@ Item {
     Connections {
         target: sddm
         function onLoginFailed() {
-            root.recover("No se pudo iniciar sesión");
+            root.failLogin();
         }
         function onLoginSucceeded() {
             authTimeout.stop();
             root.previewingExit = false;
+            returnMorph.stop();
+            root.exiting = true;
+            root.reveal = 0;
             if (root.authenticating) {
                 // The greeter is already compressed; SDDM stops it in a few
                 // milliseconds, so there is nothing left to animate.
                 root.authenticating = false;
                 return;
             }
-            // Unexpected success (for example after the timeout): at least end
-            // on the notch frame instead of the login form.
-            root.exiting = true;
-            root.reveal = 0;
+            // An unexpected success still leaves the greeter on the notch frame.
         }
     }
 
@@ -162,7 +187,7 @@ Item {
         id: authTimeout
         interval: root.authTimeoutMs
         repeat: false
-        onTriggered: root.recover("Tiempo de espera agotado")
+        onTriggered: root.authenticationDelayed()
     }
 
     Timer {
@@ -176,7 +201,16 @@ Item {
         id: demoReturn
         interval: root.previewHoldMs
         repeat: false
-        onTriggered: root.recover("")
+        onTriggered: root.failLogin()
+    }
+
+    SequentialAnimation {
+        id: failureShake
+        NumberAnimation { target: lockOffset; property: "x"; to: -6; duration: 60 }
+        NumberAnimation { target: lockOffset; property: "x"; to: 6; duration: 120 }
+        NumberAnimation { target: lockOffset; property: "x"; to: -4; duration: 100 }
+        NumberAnimation { target: lockOffset; property: "x"; to: 0; duration: 80 }
+        onFinished: root.finishLoginFailure()
     }
 
     NumberAnimation {
@@ -480,9 +514,13 @@ Item {
                     height: 40
                     radius: 20
                     color: "#000000"
+                    border.width: root.passwordError ? 2 : 0
+                    border.color: root.passwordError ? root.errorColour : "transparent"
 
                     TextField {
                         id: password
+                        objectName: "sddmPassword"
+                        enabled: !root.authenticating
                         anchors.left: parent.left
                         anchors.right: submitArrow.left
                         anchors.top: parent.top
@@ -493,6 +531,12 @@ Item {
                         placeholderTextColor: "#a6b1bf"
                         placeholderText: "Contraseña"
                         echoMode: TextInput.Password
+                        onActiveFocusChanged: {
+                            if (activeFocus && root.passwordError) {
+                                root.passwordError = false;
+                                root.errorMessage = "";
+                            }
+                        }
                         onAccepted: root.submit()
                     }
                     Item {
@@ -520,7 +564,7 @@ Item {
                     visible: root.errorMessage !== ""
                     text: root.errorMessage
                     wrapMode: Text.Wrap
-                    color: "#ff7777"
+                    color: root.errorColour
                     font.pixelSize: 13
                 }
             }
@@ -550,7 +594,8 @@ Item {
             text: "󰌾"
             font.family: "IosevkaTerm Nerd Font"
             font.pixelSize: 18
-            color: root.foreground
+            color: root.passwordError ? root.errorColour : root.foreground
+            transform: Translate { id: lockOffset }
         }
     }
 
