@@ -8,13 +8,14 @@ import "../../shell/logic/greetdPreview.mjs" as Flow
 import "../../shell/logic/wallpaperState.mjs" as WallpaperState
 import "../../shell/logic/earGeometry.mjs" as EarGeometry
 
-// Isolated visual simulation, not a greeter and not connected to greetd or PAM.
+// Notch login surface shared by the isolated simulation (demo: true) and a
+// real greetd session (demo: false). Credentials only exist in real mode.
 Window {
     id: root
     visible: true
     width: 1280
     height: 720
-    title: "greetd simulation — no authentication"
+    title: demo ? "greetd simulation — no authentication" : "notch login"
     color: "#141a23"
     property string stateName: "form"
     property bool simulateFailure: false
@@ -40,6 +41,16 @@ Window {
     readonly property real notchHeight: 32
     readonly property real earRadius: 12
     readonly property real cornerRadius: 18
+    // Set by the entrypoint: true for the isolated simulation, false for a
+    // real greetd session.
+    property bool demo: true
+    property var users: []
+    property string username: ""
+    property bool choosingUser: false
+    // A visible PAM prompt awaits typed text instead of the password.
+    property bool awaitingPrompt: false
+    property string protocolMessage: ""
+    property string failureText: ""
     // Set only by the isolated Quickshell mock-protocol wrapper.
     property var protocolBackend: null
     signal protocolAnimationComplete
@@ -54,26 +65,78 @@ Window {
         stateName = Flow.transition(stateName, event);
     }
 
-    function submit(fail) {
+    function startAuthentication() {
         if (stateName !== "form" && stateName !== "error")
-            return;
+            return false;
         if (stateName === "error")
             dispatch("edit");
-        demoInput.text = "";
+        passwordInput.text = "";
         root.contentItem.forceActiveFocus();
-        simulateFailure = fail;
+        protocolMessage = "";
+        failureText = "";
         dispatch("submit");
+        return true;
+    }
+
+    // The simulation keeps its two buttons and fixed user/secret.
+    function submitDemo(fail) {
+        if (!startAuthentication())
+            return;
+        simulateFailure = fail;
         if (protocolBackend)
-            protocolBackend.begin(fail);
+            protocolBackend.begin(fail ? "preview-failure" : "preview-user", "fake-test-secret");
         else
             simulatedAuth.restart();
     }
 
-    function completeMockAuthentication(failed) {
+    // Real credentials. Never logged, stored or reused after the attempt.
+    function submit(user, password) {
+        if (!user || !password || !protocolBackend)
+            return;
+        if (!startAuthentication())
+            return;
+        protocolBackend.begin(user, password);
+    }
+
+    function submitEntered() {
+        if (awaitingPrompt) {
+            const text = passwordInput.text;
+            if (text.length === 0)
+                return;
+            awaitingPrompt = false;
+            passwordInput.text = "";
+            protocolBackend.respond(text);
+            return;
+        }
+        submit(username, passwordInput.text);
+    }
+
+    function completeAuthentication(failed) {
         if (stateName !== "authenticating")
             return;
         dispatch(failed ? "failure" : "success");
         exitMorph.restart();
+    }
+
+    function displayName() {
+        for (const user of users) {
+            if (user.name === username)
+                return user.displayName;
+        }
+        return username;
+    }
+
+    function statusText() {
+        if (stateName === "authenticating")
+            return demo ? "Authenticating (simulated)…" : "Authenticating…";
+        if (stateName === "error") {
+            if (failureText !== "")
+                return failureText;
+            return demo ? "Incorrect password (simulated)" : "Incorrect password";
+        }
+        if (protocolMessage !== "")
+            return protocolMessage;
+        return demo ? "greetd preview — no real authentication" : "";
     }
 
     AnimatedImage {
@@ -150,7 +213,7 @@ Window {
 
             Column {
                 anchors.centerIn: parent
-                spacing: 18
+                spacing: 14
                 opacity: root.reveal
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -158,45 +221,136 @@ Window {
                     font.pixelSize: 76
                     color: root.foreground
                 }
-                TextField {
-                    id: demoInput
+                // Real mode: current account, clickable when there is a choice.
+                Item {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 300
-                    placeholderText: "Demo only — do not enter a real password"
-                    echoMode: TextInput.Password
-                    enabled: root.stateName === "form" || root.stateName === "error"
-                    onActiveFocusChanged: if (activeFocus && root.stateName === "error")
-                        root.dispatch("edit")
-                    background: Rectangle {
-                        radius: 20
-                        color: "black"
-                        border.width: root.stateName === "error" ? 2 : 0
-                        border.color: "#ff7777"
+                    width: Math.max(chipRow.width, 160)
+                    height: 56
+                    visible: !root.demo && root.users.length > 0
+                    Row {
+                        id: chipRow
+                        anchors.centerIn: parent
+                        spacing: 10
+                        Rectangle {
+                            width: 40
+                            height: 40
+                            radius: 20
+                            color: "#303946"
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.username.length > 0 ? root.username[0].toUpperCase() : "?"
+                                color: root.foreground
+                                font.pixelSize: 18
+                            }
+                        }
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text {
+                                text: root.displayName()
+                                color: root.foreground
+                                font.pixelSize: 16
+                            }
+                            Text {
+                                visible: root.users.length > 1
+                                text: "cambiar usuario"
+                                color: root.accent
+                                font.pixelSize: 11
+                            }
+                        }
                     }
-                    color: root.foreground
+                    TapHandler {
+                        enabled: root.users.length > 1
+                        onTapped: root.choosingUser = !root.choosingUser
+                    }
                 }
-                Text {
+                Column {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: root.stateName === "authenticating" ? "Authenticating (simulated)…" : (root.stateName === "error" ? "Incorrect password (simulated)" : "greetd preview — no real authentication")
-                    color: root.stateName === "error" ? "#ff7777" : root.accent
-                    font.pixelSize: 18
+                    spacing: 4
+                    visible: !root.demo && root.choosingUser && root.users.length > 1
+                    Repeater {
+                        model: root.users
+                        delegate: Rectangle {
+                            width: 200
+                            height: 30
+                            radius: 15
+                            color: modelData.name === root.username ? "#22ffffff" : "transparent"
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData.displayName
+                                color: root.foreground
+                                font.pixelSize: 14
+                            }
+                            TapHandler {
+                                onTapped: {
+                                    root.username = modelData.name;
+                                    root.choosingUser = false;
+                                    passwordInput.forceActiveFocus();
+                                }
+                            }
+                        }
+                    }
                 }
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 12
-                    Button {
-                        text: "Simulate success"
-                        enabled: root.stateName === "form" || root.stateName === "error"
-                        onClicked: root.submit(false)
+                    TextField {
+                        id: passwordInput
+                        width: 280
+                        placeholderText: root.demo ? "Demo only — do not enter a real password" : (root.awaitingPrompt ? "Respuesta" : "Contraseña")
+                        echoMode: root.awaitingPrompt ? TextInput.Normal : TextInput.Password
+                        enabled: root.stateName === "form" || root.stateName === "error" || root.awaitingPrompt
+                        onActiveFocusChanged: if (activeFocus && root.stateName === "error")
+                            root.dispatch("edit")
+                        onAccepted: root.submitEntered()
+                        background: Rectangle {
+                            radius: 20
+                            color: "black"
+                            border.width: root.stateName === "error" ? 2 : 0
+                            border.color: "#ff7777"
+                        }
+                        color: root.foreground
                     }
-                    Button {
-                        text: "Simulate failure"
-                        enabled: root.stateName === "form" || root.stateName === "error"
-                        onClicked: root.submit(true)
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !root.demo
+                        text: "→"
+                        color: root.accent
+                        font.pixelSize: 25
+                        TapHandler {
+                            onTapped: root.submitEntered()
+                        }
                     }
                 }
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
+                    width: 360
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    text: root.statusText()
+                    color: root.stateName === "error" ? "#ff7777" : root.accent
+                    font.pixelSize: 15
+                }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 12
+                    visible: root.demo
+                    Button {
+                        text: "Simulate success"
+                        enabled: root.stateName === "form" || root.stateName === "error"
+                        onClicked: root.submitDemo(false)
+                    }
+                    Button {
+                        text: "Simulate failure"
+                        enabled: root.stateName === "form" || root.stateName === "error"
+                        onClicked: root.submitDemo(true)
+                    }
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 420
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    visible: root.demo
                     text: root.protocolBackend ? "Private simulated socket; no real password, PAM or session launch." : "No password, PAM, greetd or session launch is used. Close this window to exit."
                     color: "#dddddd"
                     font.pixelSize: 13
@@ -234,13 +388,7 @@ Window {
     Timer {
         id: simulatedAuth
         interval: 650
-        onTriggered: {
-            if (root.simulateFailure) {
-                root.completeMockAuthentication(true);
-            } else {
-                root.completeMockAuthentication(false);
-            }
-        }
+        onTriggered: root.completeAuthentication(root.simulateFailure)
     }
     NumberAnimation {
         id: exitMorph

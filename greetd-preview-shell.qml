@@ -11,6 +11,7 @@ ShellRoot {
     readonly property bool failureTest: Quickshell.env("NOTCH_GREETD_TEST_FAILURE") === "1"
     readonly property bool retryTest: Quickshell.env("NOTCH_GREETD_RETRY") === "1"
     property int attempts: 0
+    property string pendingPassword: ""
     readonly property string socketPath: Quickshell.env("GREETD_SOCK")
     readonly property bool socketAllowed: Quickshell.env("NOTCH_GREETD_MOCK") === "1" && /^\/tmp\/notch-greetd-[A-Za-z0-9]+\/socket$/.test(socketPath)
     readonly property string previewBackground: Quickshell.env("NOTCH_GREETD_PREVIEW_BG")
@@ -53,14 +54,18 @@ ShellRoot {
     }
     QtObject {
         id: backend
-        function begin(fail) {
+        function begin(user, password) {
             if (Greetd.state !== GreetdState.Inactive) {
                 console.error("mock authentication is already active");
                 Qt.exit(5);
                 return;
             }
             root.attempts++;
-            Greetd.createSession(fail ? "preview-failure" : "preview-user");
+            root.pendingPassword = password;
+            Greetd.createSession(user);
+        }
+        function respond(text) {
+            Greetd.respond(text);
         }
     }
     Connections {
@@ -72,15 +77,17 @@ ShellRoot {
                     Qt.exit(6);
                     return;
                 }
-                Greetd.respond("fake-test-secret");
+                Greetd.respond(root.pendingPassword);
             }
             // Informational and recoverable errors do not finish authentication.
         }
         function onAuthFailure(message) {
-            root.preview.completeMockAuthentication(true);
+            root.pendingPassword = "";
+            root.preview.completeAuthentication(true);
         }
         function onReadyToLaunch() {
-            root.preview.completeMockAuthentication(false);
+            root.pendingPassword = "";
+            root.preview.completeAuthentication(false);
         }
         function onLaunched() {
             if (root.autoTest) {
@@ -114,12 +121,12 @@ ShellRoot {
     Timer {
         id: beginTest
         interval: 50
-        onTriggered: root.preview.submit(root.failureTest)
+        onTriggered: root.preview.submitDemo(root.failureTest)
     }
     Timer {
         id: retryTimer
         interval: 50
-        onTriggered: root.preview.submit(false)
+        onTriggered: root.preview.submitDemo(false)
     }
     Timer {
         id: exitAfterDemo
