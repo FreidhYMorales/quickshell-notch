@@ -15,7 +15,10 @@ Item {
     property real loginProgress: showingLogin ? 1 : 0
 
     Behavior on loginProgress {
-        NumberAnimation { duration: 440; easing.type: Easing.InOutCubic }
+        NumberAnimation {
+            duration: 440
+            easing.type: Easing.InOutCubic
+        }
     }
 
     function showLogin() {
@@ -70,7 +73,10 @@ Item {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: { const minute = Time.minutes; return Qt.formatDate(new Date(), Qt.locale("es_GT"), "dddd, d MMMM yyyy"); }
+                text: {
+                    const minute = Time.minutes;
+                    return Qt.formatDate(new Date(), Qt.locale("es_GT"), "dddd, d MMMM yyyy");
+                }
                 color: root.scheme.onSurface
                 font.family: Fonts.family
                 font.pixelSize: 23
@@ -97,16 +103,18 @@ Item {
                 height: 116
                 radius: width / 2
                 anchors.horizontalCenter: parent.horizontalCenter
-                color: "#303946"
+                color: Colours.cardFor(root.screen)
 
                 Canvas {
                     anchors.centerIn: parent
                     width: 72
                     height: 72
+                    property color glyphColor: root.scheme.onSurface
+                    onGlyphColorChanged: requestPaint()
                     onPaint: {
                         const ctx = getContext("2d");
                         ctx.reset();
-                        ctx.fillStyle = "#ffffff";
+                        ctx.fillStyle = glyphColor;
                         ctx.beginPath();
                         ctx.arc(36, 24, 13, 0, Math.PI * 2);
                         ctx.fill();
@@ -134,7 +142,7 @@ Item {
             width: parent.width
             height: 40
             radius: height / 2
-            color: "#000000"
+            color: Colours.background
 
             TextInput {
                 id: field
@@ -145,7 +153,7 @@ Item {
                 anchors.leftMargin: 16
                 verticalAlignment: TextInput.AlignVCenter
                 echoMode: TextInput.Password
-                color: "#ffffff"
+                color: root.scheme.onSurface
                 font.family: Fonts.family
                 font.pixelSize: Fonts.body
                 onAccepted: root.submitPassword()
@@ -158,7 +166,7 @@ Item {
                 anchors.rightMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
                 text: "→"
-                color: "#ffffff"
+                color: root.scheme.primary
                 font.pixelSize: 25
 
                 TapHandler {
