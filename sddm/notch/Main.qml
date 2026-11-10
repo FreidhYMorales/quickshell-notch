@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 import QtQuick.Shapes
+import QtQuick.VirtualKeyboard
+import QtMultimedia
 
 Item {
     id: root
@@ -14,12 +16,26 @@ Item {
     property string view: "clock"
     property bool exiting: false
     property bool previewingExit: false
+    property bool authenticating: false
+    property bool keyboardRequested: false
     property real reveal: 1
+    // Matches the notch shell's lock morph so the two animations feel the same.
+    readonly property int morphDuration: 520
+    // How long the compressed notch frame is held before the demo expands.
+    readonly property int previewHoldMs: 1100
+    // Fingerprint PAM can take a few seconds; never leave the greeter compressed.
+    readonly property int authTimeoutMs: 20000
+    // --test-mode never has a daemon: sddm.login() cannot answer, so the greeter
+    // replays the handoff and expands on its own instead of waiting for a signal.
+    readonly property bool demoMode: Qt.application.arguments.indexOf("--test-mode") !== -1
     property date now: new Date()
     property string errorMessage: ""
-    readonly property color accent: "#adc6ff"
-    readonly property color foreground: "#ffffff"
+    // The greeter has no access to Quickshell's singleton. A deployed
+    // theme.conf.user can supply the palette copied by the sync integration.
+    readonly property color accent: config.accent || "#c6c6c6"
+    readonly property color foreground: config.foreground || "#e4e4e4"
     readonly property color panel: "#000000"
+    readonly property bool videoBackground: config.mediaKind === "video"
     readonly property bool hasUsers: userModel.count > 0
     property int selectedUser: Math.max(0, userModel.lastIndex)
     property bool choosingUser: false
@@ -39,7 +55,13 @@ Item {
     readonly property real cornerRadius: 18
     property real loginProgress: 0
     Behavior on loginProgress { NumberAnimation { duration: 440; easing.type: Easing.InOutCubic } }
-    onLoginVisibleChanged: loginProgress = loginVisible ? 1 : 0
+    onLoginVisibleChanged: {
+        loginProgress = loginVisible ? 1 : 0;
+        if (!loginVisible) {
+            keyboardRequested = false;
+            Qt.inputMethod.hide();
+        }
+    }
     function notchPath(w, h, progress) {
         const t = progress === undefined ? 1 : Math.max(0, Math.min(1, progress));
         const e = Math.min(earRadius * t, h, w / 2);
@@ -65,11 +87,30 @@ Item {
     }
 
     function submit() {
-        if (exiting || password.text.length === 0)
+        if (exiting || authenticating || password.text.length === 0)
             return;
         errorMessage = "";
-        sddm.login(hasUsers ? userName : username.text,
-                   password.text, sessions.currentIndex);
+        keyboardRequested = false;
+        Qt.inputMethod.hide();
+        // SDDM stops the greeter shortly after authentication succeeds, so the
+        // compression has to run before authenticating; see exitMorph.onFinished.
+        authenticating = true;
+        exiting = true;
+        exitMorph.restart();
+    }
+
+    // A rejected password, a missed fingerprint or a silent PAM all return to
+    // the login form; the compressed state is never a dead end.
+    function recover(message) {
+        authTimeout.stop();
+        previewReset.stop();
+        authenticating = false;
+        previewingExit = false;
+        exiting = false;
+        errorMessage = message;
+        password.text = "";
+        returnMorph.restart();
+        showLogin();
     }
 
     function previewExit() {
@@ -85,7 +126,7 @@ Item {
             return;
         previewingExit = false;
         exiting = false;
-        root.reveal = 1;
+        returnMorph.restart();
         root.forceActiveFocus();
     }
 
@@ -99,30 +140,43 @@ Item {
     Connections {
         target: sddm
         function onLoginFailed() {
-            previewReset.stop();
-            root.previewingExit = false;
-            root.exiting = false;
-            root.reveal = 1;
-            root.errorMessage = "No se pudo iniciar sesión";
-            password.text = "";
-            root.showLogin();
+            root.recover("No se pudo iniciar sesión");
         }
         function onLoginSucceeded() {
-            // SDDM may terminate the greeter immediately. A true handoff
-            // animation is deferred to the follow-up integration story.
-            // Do not claim the preview is a real compositor handoff.
-            // Greeter teardown may interrupt this animation.
+            authTimeout.stop();
             root.previewingExit = false;
+            if (root.authenticating) {
+                // The greeter is already compressed; SDDM stops it in a few
+                // milliseconds, so there is nothing left to animate.
+                root.authenticating = false;
+                return;
+            }
+            // Unexpected success (for example after the timeout): at least end
+            // on the notch frame instead of the login form.
             root.exiting = true;
-            exitMorph.restart();
+            root.reveal = 0;
         }
     }
 
     Timer {
+        id: authTimeout
+        interval: root.authTimeoutMs
+        repeat: false
+        onTriggered: root.recover("Tiempo de espera agotado")
+    }
+
+    Timer {
         id: previewReset
-        interval: 1100
+        interval: root.previewHoldMs
         repeat: false
         onTriggered: root.resetPreview()
+    }
+
+    Timer {
+        id: demoReturn
+        interval: root.previewHoldMs
+        repeat: false
+        onTriggered: root.recover("")
     }
 
     NumberAnimation {
@@ -131,17 +185,54 @@ Item {
         property: "reveal"
         from: 1
         to: 0
-        duration: 520
+        duration: root.morphDuration
         easing.type: Easing.InOutCubic
         onFinished: {
-            if (root.previewingExit)
+            if (root.previewingExit) {
                 previewReset.restart();
+                return;
+            }
+            if (root.demoMode) {
+                // No daemon in test mode: hold the notch frame like the real
+                // handoff, then expand so the recovery animation is visible.
+                demoReturn.restart();
+                return;
+            }
+            if (!root.authenticating)
+                return;
+            // Authenticate only now: SDDM kills the greeter ~74 ms after a
+            // successful login, too soon for this animation to be seen.
+            authTimeout.restart();
+            sddm.login(hasUsers ? userName : username.text,
+                       password.text, sessions.currentIndex);
         }
+    }
+
+    NumberAnimation {
+        id: returnMorph
+        target: root
+        property: "reveal"
+        // No from: start wherever the exit morph left reveal, so an early
+        // failure expands smoothly instead of snapping back to 0 first.
+        to: 1
+        duration: root.morphDuration
+        easing.type: Easing.InOutCubic
     }
 
     Rectangle {
         anchors.fill: parent
         color: "#141a23"
+    }
+
+    // The compression reveals this undimmed wallpaper, so the last greeter
+    // frame matches the notch shell's first frame. Video keeps the dark fill
+    // because the one player lives inside the morph.
+    Image {
+        anchors.fill: parent
+        source: config.background
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        visible: !root.videoBackground && status === Image.Ready
     }
 
     // Alpha mask follows the same concave-ear geometry as Quickshell.
@@ -186,10 +277,9 @@ Item {
             maskSpreadAtMin: 1.0
         }
 
-        // The preview remains in the same SDDM process and resets after a hold.
-        // A real post-authentication handoff remains a separate integration task.
-        // Mask geometry is now shared conceptually with earGeometry.mjs;
-        // the actual SDDM-to-compositor handoff remains a separate task.
+        // The login UI lives inside the morph; compressing it into the notch
+        // before authentication leaves the shell's wallpaper and notch on
+        // screen when SDDM stops the greeter.
         Rectangle {
             width: root.width
             height: root.height
@@ -201,7 +291,24 @@ Item {
                 source: config.background
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                visible: status === Image.Ready
+                visible: !root.videoBackground && status === Image.Ready
+            }
+
+            MediaPlayer {
+                id: backgroundPlayer
+                source: root.videoBackground ? config.background : ""
+                videoOutput: backgroundVideo
+                loops: MediaPlayer.Infinite
+                audioOutput: AudioOutput { muted: true }
+                Component.onCompleted: if (root.videoBackground) play()
+                onErrorOccurred: (error, message) => console.warn("SDDM background: " + message)
+            }
+
+            VideoOutput {
+                id: backgroundVideo
+                anchors.fill: parent
+                visible: root.videoBackground
+                fillMode: VideoOutput.PreserveAspectCrop
             }
 
             Rectangle {
@@ -228,14 +335,14 @@ Item {
                         text: Qt.formatTime(root.now, "hh:mm")
                         font.family: "IosevkaTerm Nerd Font"
                         font.pixelSize: 100
-                        color: "white"
+                        color: root.foreground
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
                         font.family: "IosevkaTerm Nerd Font"
                         font.pixelSize: 23
-                        color: "white"
+                        color: root.accent
                     }
                 }
             }
@@ -284,7 +391,7 @@ Item {
                             onPaint: {
                                 const ctx = getContext("2d");
                                 ctx.clearRect(0, 0, width, height);
-                                ctx.fillStyle = "#f4f7ff";
+                                ctx.fillStyle = root.foreground;
                                 ctx.beginPath();
                                 ctx.arc(33, 21, 10, 0, 2 * Math.PI);
                                 ctx.fill();
@@ -307,7 +414,7 @@ Item {
                         anchors.top: avatarCircle.bottom
                         anchors.topMargin: 5
                         text: root.displayName
-                        color: "white"
+                        color: root.foreground
                         font.family: "IosevkaTerm Nerd Font"
                         font.pixelSize: 17
                     }
@@ -382,7 +489,7 @@ Item {
                         anchors.bottom: parent.bottom
                         leftPadding: 15
                         background: Item {}
-                        color: "white"
+                        color: root.foreground
                         placeholderTextColor: "#a6b1bf"
                         placeholderText: "Contraseña"
                         echoMode: TextInput.Password
@@ -398,7 +505,7 @@ Item {
                             anchors.centerIn: parent
                             text: "→"
                             font.pixelSize: 25
-                            color: "white"
+                            color: root.accent
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -418,17 +525,6 @@ Item {
                 }
             }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 32
-                visible: root.view === "clock"
-                opacity: root.reveal
-                text: "Presiona una tecla para continuar"
-                font.family: "IosevkaTerm Nerd Font"
-                font.pixelSize: 14
-                color: root.foreground
-            }
         }
     }
 
@@ -459,12 +555,32 @@ Item {
     }
 
     // Quiet, notch-inspired footer; no platform-native gray controls.
+    InputPanel {
+        id: virtualKeyboard
+        width: Math.min(root.width / 2, 600)
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: footer.top
+        anchors.bottomMargin: 12
+        active: Qt.inputMethod.visible
+        visible: root.keyboardRequested && root.loginVisible
+        layer.enabled: true
+        layer.effect: ShaderEffect {
+            property color darkColor: Qt.darker(root.accent, 4)
+            property color lightColor: root.foreground
+            property size panelSize: Qt.size(virtualKeyboard.width, virtualKeyboard.height)
+            property real cornerRadius: 16
+            fragmentShader: "shaders/keyboard.frag.qsb"
+        }
+        z: 2
+    }
+
     Row {
         id: footer
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 22
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 10
+        z: 3
         opacity: root.loginProgress * (root.exiting ? 0 : 1)
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: 240 } }
@@ -475,6 +591,7 @@ Item {
             height: 34
             model: sessionModel
             textRole: "name"
+            currentIndex: sessionModel.lastIndex >= 0 ? sessionModel.lastIndex : 0
             font.pixelSize: 12
             background: Rectangle {
                 radius: 17
@@ -548,6 +665,28 @@ Item {
         Button {
             width: 36
             height: 34
+            text: "⌨"
+            ToolTip.visible: hovered
+            ToolTip.text: "Teclado virtual"
+            onClicked: {
+                root.keyboardRequested = !root.keyboardRequested;
+                if (root.keyboardRequested) {
+                    password.forceActiveFocus();
+                    Qt.inputMethod.show();
+                } else {
+                    Qt.inputMethod.hide();
+                    password.forceActiveFocus();
+                }
+            }
+            background: Rectangle { color: parent.hovered || root.keyboardRequested ? "#303946" : "#cc000000"; radius: 17 }
+            contentItem: Item {
+                Image { anchors.centerIn: parent; width: 24; height: 24; source: "icons/keyboard.svg"; fillMode: Image.PreserveAspectFit }
+            }
+        }
+
+        Button {
+            width: 36
+            height: 34
             text: "‹"
             ToolTip.visible: hovered
             ToolTip.text: "Volver"
@@ -558,22 +697,7 @@ Item {
             }
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
             contentItem: Item {
-                Canvas {
-                    anchors.centerIn: parent
-                    width: 24
-                    height: 24
-                    onPaint: {
-                        const ctx = getContext("2d");
-                        ctx.clearRect(0, 0, width, height);
-                        ctx.strokeStyle = "#ffffff";
-                        ctx.lineWidth = 2.4;
-                        ctx.lineCap = "round";
-                        ctx.lineJoin = "round";
-                        ctx.beginPath();
-                        ctx.moveTo(15, 5); ctx.lineTo(8, 12); ctx.lineTo(15, 19);
-                        ctx.stroke();
-                    }
-                }
+                Image { anchors.centerIn: parent; width: 24; height: 24; source: "icons/chevron-left.svg"; fillMode: Image.PreserveAspectFit }
             }
         }
         Button {
@@ -584,25 +708,7 @@ Item {
             onClicked: sddm.powerOff()
             background: Rectangle { color: parent.hovered ? "#303946" : "#cc000000"; radius: 17 }
             contentItem: Item {
-                Canvas {
-                    anchors.centerIn: parent
-                    width: 24
-                    height: 24
-                    onPaint: {
-                        const ctx = getContext("2d");
-                        ctx.clearRect(0, 0, width, height);
-                        ctx.strokeStyle = "#ffffff";
-                        ctx.lineWidth = 2.4;
-                        ctx.lineCap = "round";
-                        ctx.lineJoin = "round";
-                        ctx.beginPath();
-                        // 290-degree power ring with the opening at the top.
-                        ctx.arc(12, 12, 8, -Math.PI * 0.31, Math.PI * 1.31, false);
-                        ctx.moveTo(12, 2);
-                        ctx.lineTo(12, 12);
-                        ctx.stroke();
-                    }
-                }
+                Image { anchors.centerIn: parent; width: 24; height: 24; source: "icons/power.svg"; fillMode: Image.PreserveAspectFit }
             }
         }
         Button {
@@ -627,6 +733,10 @@ Item {
     }
 
     Keys.onPressed: event => {
+        if (root.exiting || root.authenticating) {
+            event.accepted = true;
+            return;
+        }
         if (event.key === Qt.Key_Return && (event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier)) {
             root.previewExit();
             event.accepted = true;
