@@ -55,3 +55,31 @@ export function visualSettings(themeText, wallpaperText, baseThemeText) {
     notchWidth: theme.notchWidth,
   };
 }
+
+// The manifest is one atomic snapshot; the image name is content-addressed.
+export function manifestSettings(text, directory) {
+  let value;
+  try {
+    value = JSON.parse(text);
+  } catch (_error) {
+    return null;
+  }
+  if (
+    !value || value.version !== 1 || typeof directory !== "string" ||
+    directory[0] !== "/" || typeof value.background !== "string" ||
+    !/^background-[a-f0-9]{64}\.(png|jpg|jpeg|webp|gif|mp4|mkv|webm|mov|avi|m4v)$/
+      .test(value.background) ||
+    !/^#[a-f0-9]{6}$/i.test(value.accent || "") ||
+    !/^#[a-f0-9]{6}$/i.test(value.foreground || "")
+  ) return null;
+  const path = directory.replace(/\/+$/, "") + "/" + value.background;
+  return {
+    background: "file://" +
+      path.split("/").map((part, index) =>
+        index === 0 ? "" : encodeURIComponent(part)
+      ).join("/"),
+    accent: value.accent,
+    foreground: value.foreground,
+    notchWidth: 300,
+  };
+}

@@ -50,12 +50,14 @@ ShellRoot {
             demo: false,
             protocolBackend: backend
         };
-        const visuals = Visual.visualSettings(themeFile.text(), wallpaperFile.text(), baseThemeFile.text());
+        const visuals = Visual.manifestSettings(manifestFile.text(), visualDirectory) || Visual.visualSettings(themeFile.text(), wallpaperFile.text(), baseThemeFile.text());
         properties.background = previewBackground || visuals.background;
         properties.accent = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(previewAccent) ? previewAccent : visuals.accent;
         properties.foreground = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(previewForeground) ? previewForeground : visuals.foreground;
         const width = Number(previewWidth);
         properties.notchWidth = isFinite(width) && width > 0 ? width : visuals.notchWidth;
+        if (autoTest && Quickshell.env("NOTCH_GREETD_TEST_VISUAL") === "1")
+            console.log("greeter visual: " + JSON.stringify(visuals));
         preview = component.createObject(null, properties);
         if (!preview) {
             console.error("could not create the login surface");
@@ -87,6 +89,12 @@ ShellRoot {
         printErrors: false
         onLoaded: root.applyUsers()
         onLoadFailed: root.users = []
+    }
+    FileView {
+        id: manifestFile
+        path: root.visualDirectory ? root.visualDirectory + "/visual.json" : ""
+        blockLoading: true
+        printErrors: false
     }
     FileView {
         id: themeFile

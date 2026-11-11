@@ -4,8 +4,60 @@ import { readFileSync } from "node:fs";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { previewTheme, visualSettings } from "../shell/logic/greetdVisual.mjs";
+import {
+  manifestSettings,
+  previewTheme,
+  visualSettings,
+} from "../shell/logic/greetdVisual.mjs";
 import { readPreviewSettings } from "../scripts/greetd-preview-settings.mjs";
+
+test("manifest settings validate the immutable local image and palette together", () => {
+  const name = `background-${"a".repeat(64)}.png`;
+  const value = manifestSettings(
+    JSON.stringify({
+      version: 1,
+      background: name,
+      accent: "#123456",
+      foreground: "#abcdef",
+    }),
+    "/shared/greeter assets",
+  );
+  assert.deepEqual(value, {
+    background: `file:///shared/greeter%20assets/${name}`,
+    accent: "#123456",
+    foreground: "#abcdef",
+    notchWidth: 300,
+  });
+  for (
+    const background of ["../secret.png", "/etc/passwd", "background-x.png"]
+  ) {
+    assert.equal(
+      manifestSettings(
+        JSON.stringify({
+          version: 1,
+          background,
+          accent: "#123456",
+          foreground: "#abcdef",
+        }),
+        "/shared",
+      ),
+      null,
+    );
+  }
+  assert.equal(manifestSettings("not json", "/shared"), null);
+  assert.equal(
+    manifestSettings(
+      JSON.stringify({
+        version: 1,
+        background: name,
+        accent: "bad",
+        foreground: "#abcdef",
+      }),
+      "/shared",
+    ),
+    null,
+  );
+});
 
 test("real greeter settings use explicit wallpaper and validated shared theme", () => {
   assert.deepEqual(

@@ -40,6 +40,17 @@ The repository and the existing SDDM theme remain available as a fallback.
 - At the time of inspection SDDM was active/enabled, greetd inactive/disabled,
   and `/etc/systemd/system/display-manager.service` pointed to SDDM. Recheck
   these facts before any future switch; do not rely on this snapshot.
+- The currently staged SDDM directory is group `sddm`, mode `2750`, and its
+  theme and background files are mode `0640`; `greeter` is not in that group.
+  These mode/group facts imply no access through ordinary Unix permissions;
+  an actual read as `greeter` has not yet been performed. The original saved
+  wallpaper is inside a private home directory. Do not grant home traversal or
+  change groups to work around this without a reviewed deployment decision.
+- A separate `/var/lib/quickshell-notch-greetd` was created on the development
+  machine with owner `deadlock`, group `greeter`, mode `2750`. The publisher
+  staged the current GIF and palette as `0640` files, and the maintainer
+  confirmed that `sudo -u greeter` could read the manifest and the entire image.
+  This verifies file access only, not a graphical login.
 
 ## Blockers before a graphical test
 
@@ -49,7 +60,7 @@ The repository and the existing SDDM theme remain available as a fallback.
 | Screen coverage | Nested Cage tests measured the real window equal to 630×844 and fullscreen 1440×900 nested outputs. The QML starts at 1280×720 and has no explicit fullscreen request; direct physical-output coverage and input remain **unverified**. Multi-monitor and fractional-scale validation remain deferred. |
 | Recovery | Confirm a working second TTY, local credentials and, if applicable, remote access. Record the current display-manager symlink and original configuration before a switch. |
 | Deployment path | Stage the greeter in a root-controlled directory traversable/readable by `greeter`. Its root entrypoint must retain its relative `greetd/`, `shell/logic/` and `sddm/notch/` assets. Do not loosen private home-directory permissions. |
-| Visual assets | Provide a greeter-readable `NOTCH_GREETD_VISUAL_DIR` with optional `theme.conf`, `theme.conf.user` and a `wallpaper.txt` containing a readable absolute file path. Test every parent directory as the `greeter` user. Private wallpapers must be explicitly copied or published to a suitable shared location. Missing assets fall back to defaults. |
+| Visual assets | A dedicated directory and a manual read as `greeter` are verified on the development machine. Deploy the updated shell and configure `NOTCH_GREETD_VISUAL_DIR` for the greeter; verify actual graphical loading. Missing assets fall back to defaults. |
 | Keyboard and power | Test Qt Virtual Keyboard under the chosen compositor, including its input-method environment, and verify that power actions are authorized. Never invoke power actions from automated tests. |
 | Authentication | Keep the PAM stack unchanged without separate approval. The current host's `greetd` PAM stack includes `pam_fprintd` before password authentication; fingerprint configuration is deferred. Test wrong password, retry, timeout and success with a disposable account first. |
 | Session and handoff | Confirm that `Hyprland` is the intended session command, the session actually starts after greeter exit, and wallpaper/notch continuity is acceptable. The selector currently offers Hyprland only; the shell's idle notch width is dynamic while the greeter uses presets. |
@@ -58,6 +69,40 @@ No greeter configuration is supplied as ready-to-install: the compositor,
 deployment location, asset publication and graphical behavior are not yet
 verified. The real greeter's visual-directory interface is documented in
 [`preview/README.md`](preview/README.md).
+
+### Asset publication
+
+The existing SDDM publisher uses atomic replacements and mode `0640` for its
+theme and background files. Granting an ACL to one existing file is therefore
+not a durable sync strategy: that file may be replaced on the next wallpaper
+update. Nor is pointing at the current private wallpaper path a safe assumption.
+
+The opt-in publisher `shell/scripts/greetd-sync.py` copies the selected image or
+video to a content-addressed immutable filename, then atomically replaces a
+single `visual.json` containing that filename and the two palette colours.
+The greeter reads the manifest once, so an update cannot mix its wallpaper and
+palette. Older wallpaper files are deliberately retained for readers that
+already loaded an earlier manifest; no automatic garbage collection is in
+place, so disk usage grows when different wallpapers are published. Default
+notch width remains 300; the legacy files still work when no valid manifest is
+present, but their separate reads do not offer the same atomic guarantee.
+
+Publication is disabled unless the shell receives an explicit absolute
+`NOTCH_GREETD_DATA_DIR` or an absolute path in
+`$XDG_STATE_HOME/quickshell-notch/greetd-target.txt` (the environment takes
+precedence). The real greeter reads `NOTCH_GREETD_VISUAL_DIR`.
+The output must already exist, be owned by the publishing user, have no
+group/other write permission, and contain no symlink components. Files are
+created with mode `0640`, inheriting the directory's group. The deployment must
+ensure that group and every parent directory are readable/traversable by the
+greeter, without granting access to the private home. The directory must be
+dedicated to greetd and not shared with SDDM or untrusted writers.
+
+On the development machine the target file now names the prepared directory,
+but the currently running shell is an older deployment and has not loaded this
+feature yet. If publication fails, the prior manifest and image remain in
+place. A crash can leave an unused staged or wallpaper file. The publisher does
+not provide power-loss durability guarantees. No service was changed.
 
 ## Proposed future test sequence
 

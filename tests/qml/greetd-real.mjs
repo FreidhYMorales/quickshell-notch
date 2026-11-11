@@ -83,6 +83,7 @@ async function runGreeter(
         NOTCH_GREETD_TEST_GEOMETRY_DELAY: fullScreen ? "3000" : "500",
         NOTCH_GREETD_TEST_SESSION: "mock-session-not-executed",
         NOTCH_GREETD_VISUAL_DIR: visualDir || "",
+        NOTCH_GREETD_TEST_VISUAL: visualDir ? "1" : "0",
         ...(credentials
           ? {
             NOTCH_GREETD_TEST_USER: credentials.user,
@@ -277,6 +278,31 @@ test("the real entrypoint loads explicit shared visual settings", async () => {
     assert.equal(code, 0, output);
     assert.match(output, /real greeter launch passed/);
     assert.doesNotMatch(output, /TypeError|ReferenceError|cannot assign/i);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the real entrypoint reads the atomic visual manifest", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "notch-greeter-manifest-"));
+  try {
+    const name = `background-${"a".repeat(64)}.png`;
+    writeFileSync(
+      join(dir, "visual.json"),
+      JSON.stringify({
+        version: 1,
+        background: name,
+        accent: "#123456",
+        foreground: "#abcdef",
+      }),
+    );
+    writeFileSync(join(dir, "theme.conf.user"), "[General]\naccent=#ffffff\n");
+    const { code, output } = await runGreeter(false, null, dir);
+    assert.equal(code, 0, output);
+    const value = JSON.parse(output.match(/greeter visual: (\{[^\n]+\})/)[1]);
+    assert.equal(value.accent, "#123456");
+    assert.equal(value.foreground, "#abcdef");
+    assert.equal(value.background, `file://${dir}/${name}`);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

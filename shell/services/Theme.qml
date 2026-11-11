@@ -17,6 +17,8 @@ Singleton {
     readonly property string stateHome: Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")
     readonly property string notchDir: stateHome + "/quickshell-notch"
     property string sddmDataDir: Quickshell.env("NOTCH_SDDM_DATA_DIR") || (notchDir + "/sddm")
+    // Opt in only: deployment must provision this separate directory first.
+    property string greetdDataDir: Quickshell.env("NOTCH_GREETD_DATA_DIR")
     readonly property string oldDir: stateHome + "/quickshell"
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")
     readonly property string postHookPath: configHome + "/matugen/post-hook.sh"
@@ -38,6 +40,8 @@ Singleton {
     property string sddmWallpaper: ""
     property var sddmNext: null
     property bool sddmBusy: false
+    property var greetdNext: null
+    property bool greetdBusy: false
     // The single app run still waiting: a newer commit replaces it, so the
     // last choice wins instead of being dropped.
     property var appNext: null
@@ -182,6 +186,12 @@ Singleton {
     }
 
     function load() {
+        if (!greetdDataDir) {
+            const target = readText(notchDir + "/greetd-target.txt");
+            const path = target ? target.trim() : "";
+            if (/^\/[^\r\n]*$/.test(path))
+                greetdDataDir = path;
+        }
         if (!Quickshell.env("NOTCH_SDDM_DATA_DIR")) {
             const target = readText(notchDir + "/sddm-target.txt");
             const path = target ? target.trim() : "";
@@ -313,7 +323,7 @@ Singleton {
     }
 
     function checkApplied() {
-        applied = appDone && !paletteBusy && paletteQueue.length === 0 && !sddmBusy && sddmNext === null;
+        applied = appDone && !paletteBusy && paletteQueue.length === 0 && !sddmBusy && sddmNext === null && !greetdBusy && greetdNext === null;
     }
 
     function runApp(path: string) {
@@ -364,6 +374,10 @@ Singleton {
     function stageSddm(path: string, palette: var) {
         if (!path || (sddmWallpaper && path !== sddmWallpaper))
             return;
+        if (greetdDataDir && greetdDataDir !== sddmDataDir)
+            stageGreetd(path, palette);
+        else if (greetdDataDir)
+            console.warn("Theme: greetd and SDDM staging directories must differ");
         sddmNext = {
             path: path,
             palette: palette
@@ -372,6 +386,63 @@ Singleton {
         if (sddmBusy)
             return;
         startSddm();
+    }
+
+    function stageGreetd(path: string, palette: var) {
+        if (!greetdDataDir)
+            return;
+        // A queued app job must not read a later run's mutable colors.json.
+        const snapshot = palette.charAt(0) === "{" ? palette : readText(palette);
+        if (!snapshot) {
+            console.warn("Theme: can't read greetd palette");
+            greetdNext = null;
+            return;
+        }
+        // Capture only the two tokens the publisher uses, rather than passing
+        // the potentially large and mutable complete matugen output as argv.
+        let colors;
+        try {
+            colors = JSON.parse(snapshot).colors;
+            colors = {
+                primary: {
+                    hex: colors.primary.hex
+                },
+                on_surface: {
+                    hex: colors.on_surface.hex
+                }
+            };
+        } catch (_error) {
+            console.warn("Theme: invalid greetd palette");
+            greetdNext = null;
+            return;
+        }
+        greetdNext = {
+            path: path,
+            palette: JSON.stringify({
+                colors: colors
+            })
+        };
+        applied = false;
+        if (!greetdBusy)
+            startGreetd();
+    }
+
+    function startGreetd() {
+        const job = greetdNext;
+        greetdNext = null;
+        greetdBusy = true;
+        greetdSync.pending = true;
+        greetdSync.didStart = false;
+        greetdSync.command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/greetd-sync.py").toString().replace(/^file:\/\//, "")), job.path, job.palette, greetdDataDir];
+        greetdSync.running = true;
+    }
+
+    function greetdFinished() {
+        greetdBusy = false;
+        if (greetdNext)
+            startGreetd();
+        else
+            checkApplied();
     }
 
     function startSddm() {
@@ -582,6 +653,26 @@ Singleton {
                 console.warn("Theme: post-hook exited with " + code);
             root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
             root.appFinished();
+        }
+    }
+
+    Process {
+        id: greetdSync
+        property bool pending: false
+        property bool didStart: false
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                console.warn("Theme: can't start greetd staging");
+                root.greetdFinished();
+            }
+        }
+        onExited: code => {
+            pending = false;
+            if (code !== 0)
+                console.warn("Theme: greetd staging exited with " + code);
+            root.greetdFinished();
         }
     }
 

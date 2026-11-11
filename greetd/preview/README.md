@@ -35,14 +35,14 @@ inside `greetd-shell.qml`, which greetd starts.
 ## Greeter visual settings
 
 The real entrypoint accepts an administrator-provided absolute directory in
-`NOTCH_GREETD_VISUAL_DIR`. It reads optional `theme.conf` and `theme.conf.user`
-(the SDDM `[General]` palette and notch presets, with the latter taking
-precedence) and `wallpaper.txt` (one absolute wallpaper path).
-Both files and the wallpaper must be readable by the greeter account. Missing
-or invalid values fall back to the default palette and no wallpaper. The
-existing `NOTCH_GREETD_PREVIEW_*` variables override these settings when set.
-This only supplies the runtime interface: it does not deploy files, change
-greetd configuration or grant access to private home directories.
+`NOTCH_GREETD_VISUAL_DIR`. It prefers the atomic `visual.json` produced by the
+opt-in publisher described in [`../DEPLOYMENT.md`](../DEPLOYMENT.md). Without a
+valid manifest, it falls back to optional `theme.conf`, `theme.conf.user` and
+`wallpaper.txt`; those legacy files are read separately and are not an atomic
+snapshot. All files and their parent directories must be accessible to the
+greeter account. Missing values use the default palette and no wallpaper.
+`NOTCH_GREETD_PREVIEW_*` variables override these settings when set. This
+interface does not deploy files or grant access to private home directories.
 
 The footer offers a styled session selector, a virtual keyboard, back, power
 off and reboot. The selector currently has only Hyprland: unlike SDDM, greetd
