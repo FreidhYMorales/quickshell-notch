@@ -9,6 +9,12 @@ import {
   refreshPreview,
 } from "../shell/logic/wallpaperPicker.mjs";
 
+test("catalog includes GIF wallpapers regardless of extension case", () => {
+  assert.deepEqual(catalogEntries(["/w/loop.GIF"]), [
+    { path: "/w/loop.GIF", name: "loop.GIF", video: false },
+  ]);
+});
+
 test("catalog keeps supported image and video paths in stable name order", () => {
   assert.deepEqual(
     catalogEntries(["/w/z.mp4", "/w/a.PNG", "/w/no.txt", "/w/b.webp"]),

@@ -1,0 +1,20 @@
+# Files copied into the greeter deployment tree, relative to the repo root.
+# Used by `make deploy-greeter` and by tests/qml/greetd-real.mjs.
+greetd-shell.qml
+greetd/launch-greeter.sh
+greetd/preview/Main.qml
+shell/config/motion.mjs
+shell/logic/earGeometry.mjs
+shell/logic/greetdPreview.mjs
+shell/logic/greetdVisual.mjs
+shell/logic/users.mjs
+shell/logic/wallpaperState.mjs
+sddm/notch/icons/LICENSE
+sddm/notch/icons/arrow-right.svg
+sddm/notch/icons/chevron-down.svg
+sddm/notch/icons/chevron-left.svg
+sddm/notch/icons/keyboard.svg
+sddm/notch/icons/power.svg
+sddm/notch/icons/rotate-ccw.svg
+sddm/notch/shaders/keyboard.frag
+sddm/notch/shaders/keyboard.frag.qsb

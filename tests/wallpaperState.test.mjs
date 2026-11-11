@@ -2,11 +2,18 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   isVideoPath,
+  needsThemeFrame,
   normalizePerScreen,
   shouldImport,
   videoShouldPlay,
   wallpaperFor,
 } from "../shell/logic/wallpaperState.mjs";
+
+test("animated GIFs and videos need a frame for their theme", () => {
+  assert.equal(needsThemeFrame("/w/loop.GIF"), true);
+  assert.equal(needsThemeFrame("/w/loop.mp4"), true);
+  assert.equal(needsThemeFrame("/w/still.png"), false);
+});
 
 test("a screen listed in the per-screen state gets its own wallpaper", () => {
   const perScreen = { "DP-1": "/w/video.mp4", "eDP-1": "/w/arch.png" };

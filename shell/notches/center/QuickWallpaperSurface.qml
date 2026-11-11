@@ -85,6 +85,7 @@ PanelWindow {
     readonly property int currentIndex: session?.index ?? -1
     readonly property string previewPath: session?.preview ?? (pickerVisible ? Wallpapers.pathFor(monitorName) : "")
     readonly property bool previewVideo: /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(previewPath)
+    readonly property bool previewGif: /\.gif$/i.test(previewPath)
     property date currentTime: new Date()
     readonly property var scheme: Colours.paletteFor(screen)
 
@@ -240,14 +241,24 @@ PanelWindow {
 
             Image {
                 anchors.fill: parent
-                visible: !root.previewVideo
-                source: root.previewPath && !root.previewVideo ? "file://" + root.previewPath : ""
+                visible: !root.previewVideo && !root.previewGif
+                source: root.previewPath && !root.previewVideo && !root.previewGif ? "file://" + root.previewPath : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 onStatusChanged: {
                     if (status === Image.Error)
                         console.warn("QuickWallpaper: cannot load image " + root.previewPath);
                 }
+            }
+
+            AnimatedImage {
+                anchors.fill: parent
+                visible: root.previewGif
+                source: root.previewGif ? "file://" + root.previewPath : ""
+                playing: root.previewGif && root.pickerVisible
+                fillMode: Image.PreserveAspectCrop
+                onStatusChanged: if (status === Image.Error)
+                    console.warn("QuickWallpaper: cannot load GIF " + root.previewPath)
             }
 
             MediaPlayer {

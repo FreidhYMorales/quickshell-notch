@@ -16,6 +16,9 @@ Singleton {
 
     readonly property string stateHome: Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")
     readonly property string notchDir: stateHome + "/quickshell-notch"
+    property string sddmDataDir: Quickshell.env("NOTCH_SDDM_DATA_DIR") || (notchDir + "/sddm")
+    // Opt in only: deployment must provision this separate directory first.
+    property string greetdDataDir: Quickshell.env("NOTCH_GREETD_DATA_DIR")
     readonly property string oldDir: stateHome + "/quickshell"
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")
     readonly property string postHookPath: configHome + "/matugen/post-hook.sh"
@@ -33,6 +36,16 @@ Singleton {
 
     property bool appDone: true
     property bool appBusy: false
+    property string appBackground: ""
+    property string sddmWallpaper: ""
+    property var sddmNext: null
+    property bool sddmBusy: false
+    property var greetdNext: null
+    property bool greetdBusy: false
+    // Idle notch width per monitor, reported by the centre surface. Published
+    // with the greeter assets so the login surface compresses into the same
+    // shape the session will show instead of a fixed preset.
+    property var idleNotchWidths: ({})
     // The single app run still waiting: a newer commit replaces it, so the
     // last choice wins instead of being dropped.
     property var appNext: null
@@ -119,7 +132,7 @@ Singleton {
             run(framePath(role));
             return;
         }
-        if (!WallpaperState.isVideoPath(path)) {
+        if (!WallpaperState.needsThemeFrame(path)) {
             run(path);
             return;
         }
@@ -177,6 +190,27 @@ Singleton {
     }
 
     function load() {
+        if (!greetdDataDir) {
+            const target = readText(notchDir + "/greetd-target.txt");
+            const path = target ? target.trim() : "";
+            if (/^\/[^\r\n]*$/.test(path))
+                greetdDataDir = path;
+        }
+        if (!Quickshell.env("NOTCH_SDDM_DATA_DIR")) {
+            const target = readText(notchDir + "/sddm-target.txt");
+            const path = target ? target.trim() : "";
+            if (/^\/[^\r\n]*$/.test(path))
+                sddmDataDir = path;
+        }
+        const sddmConfig = readText(sddmDataDir + "/theme.conf.user");
+        const source = sddmConfig && sddmConfig.match(/^sourceWallpaper=file:\/\/(.*)$/m);
+        if (source) {
+            try {
+                sddmWallpaper = decodeURIComponent(source[1]);
+            } catch (_error) {
+                console.warn("Theme: invalid SDDM wallpaper path");
+            }
+        }
         const notch = readText(notchDir + "/theme.json");
         if (notch !== null) {
             const stored = ThemeLogic.savedMode(notch);
@@ -235,6 +269,7 @@ Singleton {
 
     // Called by Wallpapers.commit once its state holds the new path.
     function commitWallpaper(shared: bool, screen: string, path: string) {
+        sddmWallpaper = path;
         // A shared commit clears every override, so their palettes are stale:
         // the queue is dropped and a dry-run already running is abandoned.
         if (shared) {
@@ -274,6 +309,23 @@ Singleton {
         previewBusy = false;
     }
 
+    // The greeter shows on one monitor and only needs one width: publish the
+    // widest idle notch, which matches every monitor whose slot is not capped.
+    function setIdleNotchWidth(monitor: string, width: int) {
+        if (!monitor || width <= 0 || idleNotchWidths[monitor] === width)
+            return;
+        const next = Object.assign({}, idleNotchWidths);
+        next[monitor] = width;
+        idleNotchWidths = next;
+    }
+
+    function greeterNotchWidth(): int {
+        let widest = 0;
+        for (const name in idleNotchWidths)
+            widest = Math.max(widest, idleNotchWidths[name]);
+        return widest;
+    }
+
     // Colours.paletteFor(screen) prefers these over the global colors.json.
     onPalettesChanged: Colours.overrides = palettes
 
@@ -292,7 +344,7 @@ Singleton {
     }
 
     function checkApplied() {
-        applied = appDone && !paletteBusy && paletteQueue.length === 0;
+        applied = appDone && !paletteBusy && paletteQueue.length === 0 && !sddmBusy && sddmNext === null && !greetdBusy && greetdNext === null;
     }
 
     function runApp(path: string) {
@@ -315,6 +367,7 @@ Singleton {
         }
         appNext = null;
         appBusy = true;
+        root.appBackground = job.path;
         const mode = root.mode;
         frameFor(job.path, "app", path => {
             appProc.pending = true;
@@ -339,6 +392,104 @@ Singleton {
         checkApplied();
     }
 
+    function stageSddm(path: string, palette: var) {
+        if (!path || (sddmWallpaper && path !== sddmWallpaper))
+            return;
+        if (greetdDataDir && greetdDataDir !== sddmDataDir)
+            stageGreetd(path, palette);
+        else if (greetdDataDir)
+            console.warn("Theme: greetd and SDDM staging directories must differ");
+        sddmNext = {
+            path: path,
+            palette: palette
+        };
+        applied = false;
+        if (sddmBusy)
+            return;
+        startSddm();
+    }
+
+    function stageGreetd(path: string, palette: var) {
+        if (!greetdDataDir)
+            return;
+        // A queued app job must not read a later run's mutable colors.json.
+        const snapshot = palette.charAt(0) === "{" ? palette : readText(palette);
+        if (!snapshot) {
+            console.warn("Theme: can't read greetd palette");
+            greetdNext = null;
+            return;
+        }
+        // Capture only the two tokens the publisher uses, rather than passing
+        // the potentially large and mutable complete matugen output as argv.
+        let colors;
+        try {
+            colors = JSON.parse(snapshot).colors;
+            colors = {
+                primary: {
+                    hex: colors.primary.hex
+                },
+                on_surface: {
+                    hex: colors.on_surface.hex
+                }
+            };
+        } catch (_error) {
+            console.warn("Theme: invalid greetd palette");
+            greetdNext = null;
+            return;
+        }
+        greetdNext = {
+            path: path,
+            palette: JSON.stringify({
+                colors: colors
+            })
+        };
+        applied = false;
+        if (!greetdBusy)
+            startGreetd();
+    }
+
+    function startGreetd() {
+        const job = greetdNext;
+        greetdNext = null;
+        greetdBusy = true;
+        greetdSync.pending = true;
+        greetdSync.didStart = false;
+        const command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/greetd-sync.py").toString().replace(/^file:\/\//, "")), job.path, job.palette, greetdDataDir];
+        // Optional: the reader falls back to the theme preset when absent.
+        const width = root.greeterNotchWidth();
+        if (width > 0)
+            command.push(String(width));
+        greetdSync.command = command;
+        greetdSync.running = true;
+    }
+
+    function greetdFinished() {
+        greetdBusy = false;
+        if (greetdNext)
+            startGreetd();
+        else
+            checkApplied();
+    }
+
+    function startSddm() {
+        const job = sddmNext;
+        sddmNext = null;
+        sddmBusy = true;
+        sddmSync.pending = true;
+        sddmSync.didStart = false;
+        sddmSync.command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/sddm-sync.py").toString().replace(/^file:\/\//, "")), job.path, job.palette, root.sddmDataDir];
+        sddmSync.running = true;
+    }
+
+    function sddmFinished() {
+        sddmBusy = false;
+        if (sddmNext) {
+            startSddm();
+            return;
+        }
+        checkApplied();
+    }
+
     function startPalette() {
         while (!paletteBusy && paletteQueue.length !== 0) {
             const job = paletteQueue[0];
@@ -348,6 +499,7 @@ Singleton {
                 continue;
             paletteBusy = true;
             paletteProc.pendingScreen = job.screen;
+            paletteProc.pendingPath = job.path;
             paletteProc.epoch = root.paletteEpoch;
             const mode = root.mode;
             frameFor(job.path, "palette", path => {
@@ -517,6 +669,7 @@ Singleton {
             if (!running && pending && !didStart) {
                 pending = false;
                 console.warn("Theme: can't run the matugen post-hook");
+                root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
                 root.appFinished();
             }
         }
@@ -524,7 +677,48 @@ Singleton {
             pending = false;
             if (code !== 0)
                 console.warn("Theme: post-hook exited with " + code);
+            root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
             root.appFinished();
+        }
+    }
+
+    Process {
+        id: greetdSync
+        property bool pending: false
+        property bool didStart: false
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                console.warn("Theme: can't start greetd staging");
+                root.greetdFinished();
+            }
+        }
+        onExited: code => {
+            pending = false;
+            if (code !== 0)
+                console.warn("Theme: greetd staging exited with " + code);
+            root.greetdFinished();
+        }
+    }
+
+    Process {
+        id: sddmSync
+        property bool pending: false
+        property bool didStart: false
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (!running && pending && !didStart) {
+                pending = false;
+                console.warn("Theme: can't start SDDM staging");
+                root.sddmFinished();
+            }
+        }
+        onExited: code => {
+            pending = false;
+            if (code !== 0)
+                console.warn("Theme: SDDM staging exited with " + code);
+            root.sddmFinished();
         }
     }
 
@@ -532,6 +726,7 @@ Singleton {
         id: paletteProc
 
         property string pendingScreen: ""
+        property string pendingPath: ""
         property int epoch: 0
         property bool pending: false
         property bool didStart: false
@@ -562,6 +757,17 @@ Singleton {
                     const next = Object.assign({}, root.palettes);
                     next[paletteProc.pendingScreen] = palette;
                     root.palettes = next;
+                    if (paletteProc.pendingPath === root.sddmWallpaper)
+                        root.stageSddm(paletteProc.pendingPath, JSON.stringify({
+                            colors: {
+                                primary: {
+                                    hex: palette.primary
+                                },
+                                on_surface: {
+                                    hex: palette.onSurface
+                                }
+                            }
+                        }));
                 } else {
                     console.warn("Theme: no palette for " + paletteProc.pendingScreen);
                 }

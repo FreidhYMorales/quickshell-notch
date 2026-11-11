@@ -4,13 +4,15 @@ QMLLINT   := $(QT_BIN)/qmllint
 QML_DIR   := /usr/lib/qt6/qml
 QML_FILES := $(shell find shell -name '*.qml')
 QMLDIRS   := $(addprefix -i ,$(shell find shell -name qmldir))
-JS_PATHS  := shell/logic tests
+JS_PATHS  := shell/logic shell/config tests
 THEME_PROBES := $(wildcard tests/qml/theme-*.mjs)
 # Probes that open the launcher and press keys need the keyboard to
 # themselves, so they cannot share the parallel theme run.
 THEME_KEYS := tests/qml/theme-back.mjs tests/qml/theme-keys.mjs
+# Deployment tree for the greetd greeter; the file list lives in greetd/tree.txt.
+GREETER_DEST ?= /usr/local/share/quickshell-notch-greetd
 
-.PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke
+.PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke deploy-greeter
 
 # Full local quality gate (read-only).
 check: fmt-check lint test qml-test smoke
@@ -40,6 +42,10 @@ test:
 	node --test tests/
 
 qml-test:
+	node --test tests/qml/sddm-timeout.mjs
+	node --test tests/qml/greetd-preview.mjs
+	node --test tests/qml/greetd-protocol.mjs
+	node --test tests/qml/greetd-real.mjs
 	node --test tests/qml/tray-runner-safety.mjs tests/qml/other-runners-safety.mjs
 	node --test tests/qml/tray-menu-fixture.mjs tests/qml/tray-menu-entry.mjs
 	node --test tests/qml/tray-menu-open.mjs tests/qml/tray-menu-size.mjs tests/qml/tray-menu-activate.mjs tests/qml/tray-menu-disabled.mjs tests/qml/tray-menu-separator.mjs
@@ -58,6 +64,20 @@ qml-test:
 	node --test --test-concurrency=1 tests/qml/launcher-*.mjs
 	# Serial: the launcher-driven theme probes press keys too.
 	node --test --test-concurrency=1 $(THEME_KEYS)
+
+# Installs the greeter tree that greetd runs. Needs root:
+#   sudo make deploy-greeter
+# The list of deployed files is greetd/tree.txt, the same one the greeter test
+# copies into a temporary tree.
+deploy-greeter:
+	install -d $(GREETER_DEST)
+	chmod 0755 $(GREETER_DEST)
+	@while IFS= read -r file; do \
+		case "$$file" in ""|\#*) continue;; esac; \
+		install -D -m 0644 "$$file" "$(GREETER_DEST)/$$file" || exit 1; \
+	done < greetd/tree.txt
+	install -D -m 0755 greetd/launch-greeter.sh $(GREETER_DEST)/greetd/launch-greeter.sh
+	@echo "greeter tree installed in $(GREETER_DEST)"
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:

@@ -20,6 +20,7 @@ printf '%s\\n' "$*" >> "$MATUGEN_LOG"
 case " $* " in
   *" --dry-run "*) printf '%s' '{"colors":{"primary":{"default":{"color":"#aabbcc"}},"on_surface":{"default":{"color":"#ddeeff"}},"on_surface_variant":{"default":{"color":"#112233"}}}}'; exit 0 ;;
 esac
+printf '%s' '{"colors":{"primary":{"hex":"#123456"},"on_surface":{"hex":"#abcdef"}}}' > "$XDG_CONFIG_HOME/matugen/colors.json"
 `;
 
 const ffprobe = `#!/bin/sh
@@ -44,6 +45,7 @@ test("a video wallpaper is themed from its middle frame", () => {
   const cache = join(dir, "cache");
   const bin = join(dir, "bin");
   const notch = join(state, "quickshell-notch");
+  const video = join(dir, "clip.mp4");
   const logs = {
     matugen: join(dir, "matugen.log"),
     ffprobe: join(dir, "ffprobe.log"),
@@ -55,10 +57,11 @@ test("a video wallpaper is themed from its middle frame", () => {
     mkdirSync(bin, { recursive: true });
     mkdirSync(cache, { recursive: true });
     mkdirSync(join(config, "matugen"), { recursive: true });
-    writeFileSync(join(notch, "wallpaper.txt"), "/w/clip.mp4\n");
+    writeFileSync(video, "video bytes");
+    writeFileSync(join(notch, "wallpaper.txt"), video + "\n");
     writeFileSync(
       join(notch, "wallpaper-screens.json"),
-      '{"DP-1":"/w/clip.mp4"}',
+      JSON.stringify({ "DP-1": video }),
     );
     writeFileSync(join(notch, "theme.json"), '{"mode":"scheme-content"}');
     writeFileSync(join(bin, "matugen"), matugen, { mode: 0o755 });
@@ -94,12 +97,12 @@ test("a video wallpaper is themed from its middle frame", () => {
     const output = result.stdout + result.stderr;
     assert.equal(result.status, 0, output);
     assert.match(output, /theme video: applied true, previews 9/);
-    assert.match(readFileSync(logs.ffprobe, "utf8"), /\/w\/clip\.mp4$/m);
+    assert.ok(readFileSync(logs.ffprobe, "utf8").includes(video));
     const frames = readFileSync(logs.ffmpeg, "utf8").trim().split("\n");
     assert.equal(frames.length, 3, frames.join("\n"));
     for (const line of frames) {
       assert.match(line, /(^| )-ss 5( |$)/, line);
-      assert.match(line, /\/w\/clip\.mp4 /, line);
+      assert.ok(line.includes(video + " "), line);
     }
     assert.ok(
       frames.some((line) => /theme-frame-app\.png$/.test(line)),
@@ -128,6 +131,18 @@ test("a video wallpaper is themed from its middle frame", () => {
       /^image .*theme-frame-preview\.png --type scheme-content --mode dark --source-color-index 0 --dry-run --quiet --json hex$/m,
     );
     assert.equal(readFileSync(logs.hook, "utf8"), "dark\n");
+    const greeterConfig = readFileSync(
+      join(notch, "sddm", "theme.conf.user"),
+      "utf8",
+    );
+    assert.match(greeterConfig, /accent=#123456/);
+    assert.equal(
+      readFileSync(
+        fileURLToPath(greeterConfig.match(/^background=(.+)$/m)[1]),
+        "utf8",
+      ),
+      "video bytes",
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

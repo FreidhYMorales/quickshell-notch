@@ -1,0 +1,9 @@
+# /etc/greetd/config.toml for the notch greeter.
+# Back up the packaged file first: it runs agreety with /bin/sh.
+[terminal]
+vt = 1
+switch = true
+
+[default_session]
+command = "/usr/local/share/quickshell-notch-greetd/greetd/launch-greeter.sh"
+user = "greeter"

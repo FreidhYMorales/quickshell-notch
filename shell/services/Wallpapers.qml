@@ -23,11 +23,12 @@ Singleton {
     // true once the notch state on disk holds the current values.
     property bool saved: false
     property var saveQueue: WallpaperSave.initialSaveQueue()
+    property var hyprpaperNext: null
     readonly property string directory: Quickshell.env("QS_WALLPAPER_DIR") || (Quickshell.env("HOME") + "/Pictures/Wallpaper")
     property var entries: []
     property var preview: null
     property var selection: null
-    property bool applyToAll: false
+    property bool applyToAll: true
     property string selectionMonitor: ""
 
     // On-demand, shared still-frame cache. One ffmpeg job at a time.
@@ -192,7 +193,7 @@ Singleton {
     FolderListModel {
         id: files
         folder: "file://" + root.directory
-        nameFilters: ["*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.webp", "*.WEBP", "*.bmp", "*.BMP", "*.mp4", "*.MP4", "*.webm", "*.WEBM", "*.mkv", "*.MKV", "*.mov", "*.MOV", "*.avi", "*.AVI", "*.m4v", "*.M4V"]
+        nameFilters: ["*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.webp", "*.WEBP", "*.bmp", "*.BMP", "*.gif", "*.GIF", "*.mp4", "*.MP4", "*.webm", "*.WEBM", "*.mkv", "*.MKV", "*.mov", "*.MOV", "*.avi", "*.AVI", "*.m4v", "*.M4V"]
         showDirs: false
         onStatusChanged: if (status === FolderListModel.Ready)
             root.refreshCatalog()
@@ -316,9 +317,32 @@ Singleton {
     function screensSaveCompleted() {
         if (saveQueue.phase !== "screens")
             return;
+        const snapshot = saveQueue.active;
         saveQueue = WallpaperSave.advanceSave(saveQueue, "screens");
         saved = saveQueue.saved;
+        if (saved) {
+            hyprpaperNext = snapshot;
+            startHyprpaperSync();
+        }
         startSave();
+    }
+
+    function startHyprpaperSync() {
+        if (hyprpaperSync.running || !hyprpaperNext)
+            return;
+        const snapshot = hyprpaperNext;
+        hyprpaperNext = null;
+        hyprpaperSync.command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/hyprpaper-sync.py").toString().replace(/^file:\/\//, "")), notchDir, JSON.stringify(snapshot)];
+        hyprpaperSync.running = true;
+    }
+
+    Process {
+        id: hyprpaperSync
+        onExited: code => {
+            if (code !== 0)
+                console.warn("Wallpapers: hyprpaper startup sync failed");
+            root.startHyprpaperSync();
+        }
     }
 
     FileView {
