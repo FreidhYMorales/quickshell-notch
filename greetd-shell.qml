@@ -20,10 +20,22 @@ ShellRoot {
     readonly property string testUser: Quickshell.env("NOTCH_GREETD_TEST_USER") || (failureTest ? "preview-failure" : "preview-user")
     readonly property string testSecret: Quickshell.env("NOTCH_GREETD_TEST_SECRET") || "fake-test-secret"
     readonly property string socketPath: Quickshell.env("GREETD_SOCK")
-    // Only a test overrides the session command; greetd executes it as the user.
+    // greetd executes this command as the authenticated user. The deployment
+    // sets NOTCH_GREETD_SESSION (default: the same uwsm entry SDDM starts);
+    // tests still override it with NOTCH_GREETD_TEST_SESSION.
+    function sessionArguments(value) {
+        const parts = String(value || "").split(" ");
+        const args = [];
+        for (let i = 0; i < parts.length; i++)
+            if (parts[i] !== "") args.push(parts[i]);
+        return args;
+    }
     readonly property var sessionCommand: {
-        const override = Quickshell.env("NOTCH_GREETD_TEST_SESSION");
-        return override ? override.split(" ") : ["Hyprland"];
+        const test = Quickshell.env("NOTCH_GREETD_TEST_SESSION");
+        if (test) return root.sessionArguments(test);
+        const deployed = Quickshell.env("NOTCH_GREETD_SESSION");
+        if (deployed) return root.sessionArguments(deployed);
+        return root.sessionArguments("uwsm start -e -D Hyprland hyprland.desktop");
     }
     readonly property string previewBackground: Quickshell.env("NOTCH_GREETD_PREVIEW_BG")
     readonly property string previewAccent: Quickshell.env("NOTCH_GREETD_PREVIEW_ACCENT")
@@ -48,6 +60,7 @@ ShellRoot {
         }
         const properties = {
             demo: false,
+            fillScreen: true,
             protocolBackend: backend
         };
         const visuals = Visual.manifestSettings(manifestFile.text(), visualDirectory) || Visual.visualSettings(themeFile.text(), wallpaperFile.text(), baseThemeFile.text());

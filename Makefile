@@ -9,8 +9,10 @@ THEME_PROBES := $(wildcard tests/qml/theme-*.mjs)
 # Probes that open the launcher and press keys need the keyboard to
 # themselves, so they cannot share the parallel theme run.
 THEME_KEYS := tests/qml/theme-back.mjs tests/qml/theme-keys.mjs
+# Deployment tree for the greetd greeter; the file list lives in greetd/tree.txt.
+GREETER_DEST ?= /usr/local/share/quickshell-notch-greetd
 
-.PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke
+.PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke deploy-greeter
 
 # Full local quality gate (read-only).
 check: fmt-check lint test qml-test smoke
@@ -62,6 +64,20 @@ qml-test:
 	node --test --test-concurrency=1 tests/qml/launcher-*.mjs
 	# Serial: the launcher-driven theme probes press keys too.
 	node --test --test-concurrency=1 $(THEME_KEYS)
+
+# Installs the greeter tree that greetd runs. Needs root:
+#   sudo make deploy-greeter
+# The list of deployed files is greetd/tree.txt, the same one the greeter test
+# copies into a temporary tree.
+deploy-greeter:
+	install -d $(GREETER_DEST)
+	chmod 0755 $(GREETER_DEST)
+	@while IFS= read -r file; do \
+		case "$$file" in ""|\#*) continue;; esac; \
+		install -D -m 0644 "$$file" "$(GREETER_DEST)/$$file" || exit 1; \
+	done < greetd/tree.txt
+	install -D -m 0755 greetd/launch-greeter.sh $(GREETER_DEST)/greetd/launch-greeter.sh
+	@echo "greeter tree installed in $(GREETER_DEST)"
 
 # Loads the real config in Quickshell; timeout exit 124 is the success path.
 smoke:

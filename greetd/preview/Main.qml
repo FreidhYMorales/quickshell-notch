@@ -15,8 +15,12 @@ import "../../shell/logic/users.mjs" as Users
 Window {
     id: root
     visible: true
-    width: 1280
-    height: 720
+    // A real greeter compositor may honour the requested size instead of
+    // fullscreening the client. Fill the logical screen, so the surface never
+    // sits small in a corner; previews keep their fixed 1280x720 stage.
+    width: fillScreen && screen ? screen.width : 1280
+    height: fillScreen && screen ? screen.height : 720
+    property bool fillScreen: false
     title: demo ? "greetd simulation — no authentication" : "notch login"
     color: "#141a23"
     property string stateName: "form"

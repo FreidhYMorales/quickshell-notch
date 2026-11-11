@@ -6,6 +6,7 @@ import {
   copyFileSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -26,6 +27,7 @@ async function runGreeter(
   nested = false,
   fullScreen = false,
   entrypoint = defaultEntrypoint,
+  extraEnv = {},
 ) {
   const dir = mkdtempSync(join(tmpdir(), "notch-real-"));
   const path = join(dir, "socket");
@@ -110,6 +112,7 @@ async function runGreeter(
             NOTCH_GREETD_TEST_GEOMETRY: "1",
           }
           : {}),
+        ...extraEnv,
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -322,22 +325,13 @@ test("the real entrypoint reads the atomic visual manifest", async () => {
 test("the real entrypoint loads a minimal deployable greeter tree", async () => {
   const source = fileURLToPath(new URL("../../", import.meta.url));
   const target = mkdtempSync(join(tmpdir(), "notch-greeter-tree-"));
-  const files = [
-    "greetd-shell.qml",
-    "greetd/preview/Main.qml",
-    "shell/logic/greetdPreview.mjs",
-    "shell/logic/greetdVisual.mjs",
-    "shell/logic/wallpaperState.mjs",
-    "shell/logic/earGeometry.mjs",
-    "shell/logic/users.mjs",
-    "sddm/notch/icons/arrow-right.svg",
-    "sddm/notch/icons/chevron-down.svg",
-    "sddm/notch/icons/chevron-left.svg",
-    "sddm/notch/icons/keyboard.svg",
-    "sddm/notch/icons/power.svg",
-    "sddm/notch/icons/rotate-ccw.svg",
-    "sddm/notch/shaders/keyboard.frag.qsb",
-  ];
+  const files = readFileSync(
+    new URL("../../greetd/tree.txt", import.meta.url),
+    "utf8",
+  )
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "" && !line.startsWith("#"));
   try {
     for (const file of files) {
       const destination = join(target, file);
@@ -402,4 +396,29 @@ test("the autotest credentials can come from the environment", async () => {
   assert.match(output, /real greeter launch passed/);
   assert.equal(requests[0].username, "throwaway-user");
   assert.equal(requests[1].response, "throwaway-secret");
+});
+
+test("the deployment sets the session command through the environment", async () => {
+  const { code, output, requests } = await runGreeter(
+    false,
+    null,
+    null,
+    false,
+    false,
+    undefined,
+    {
+      NOTCH_GREETD_TEST_SESSION: "",
+      NOTCH_GREETD_SESSION: "uwsm start -e -D Hyprland hyprland.desktop",
+    },
+  );
+  assert.equal(code, 0, output);
+  assert.match(output, /real greeter launch passed/);
+  assert.deepEqual(requests[2].cmd, [
+    "uwsm",
+    "start",
+    "-e",
+    "-D",
+    "Hyprland",
+    "hyprland.desktop",
+  ]);
 });

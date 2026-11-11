@@ -1,10 +1,9 @@
-# greetd deployment and SDDM recovery: preparation only
+# greetd deployment and SDDM fallback
 
-This is a **draft runbook**: the greeter tree is installed, but no display
-manager is configured to use it. Keep SDDM enabled and active, and greetd
-disabled and inactive, until the open checks below are resolved and the
-maintainer explicitly approves a display-manager switch.
-The repository and the existing SDDM theme remain available as a fallback.
+This runbook installs the notch greeter as the display manager on the
+development machine. SDDM stays installed as the fallback and can take over
+again with the commands below. Editing PAM, the VT or user groups is out of
+scope unless it is agreed separately.
 
 ## Verified so far
 
@@ -77,23 +76,65 @@ The repository and the existing SDDM theme remain available as a fallback.
   fake-socket headless test with `NOTCH_GREETD_VISUAL_DIR` pointing at the
   published assets. This proves the deployed bytes load and authenticate; it
   does not prove graphical rendering, a physical VT or a real session launch.
+- A throwaway greetd instance was then run on `vt = 8` (above systemd's
+  `NAutoVTs = 6`) from a temporary configuration via `systemd-run`, leaving
+  SDDM, `/etc/greetd` and the display-manager selection untouched. The
+  installed tree rendered on the physical panel and accepted keyboard input;
+  greetd opened a logind session for `greeter`
+  (`pam_unix(greetd:session): session opened for user greeter`), which is what
+  supplies the seat, DRM node and input devices, so neither `seatd` nor extra
+  groups are required. A real account authenticated and `start_session` ran a
+  placeholder command (`/usr/bin/sleep 5`), not a desktop session.
+- That test exposed a scale problem: cage leaves its output at scale 1, so on
+  a 2880×1800 panel everything renders at half the size it has on the desktop
+  (Hyprland scale 2). `greetd/launch-greeter.sh` now exports
+  `QT_SCALE_FACTOR` from `NOTCH_GREETD_SCALE` (default 2; it must match the
+  monitor scale) and the login surface fills the compositor's logical screen
+  instead of staying 1280×720. The maintainer confirmed the corrected scale.
+- A second physical-VT run confirmed the scale matches the desktop, but cage
+  decorated the maximised client with its own title bar and close button.
+  `launch-greeter.sh` now starts cage with `-d` so the surface has no
+  decorations; `-s` keeps the VT-switch escape hatch. The maintainer confirmed
+  the undecorated surface.
 
-## Blockers before a graphical test
+## Current deployment
 
-| Check | Required outcome |
+The deployable tree is `greetd/tree.txt`; `sudo make deploy-greeter` installs
+it as root into `/usr/local/share/quickshell-notch-greetd` (directories
+`0755`, files `0644`, launcher `0755`). The greeter reads the published
+wallpaper and palette from `/var/lib/quickshell-notch-greetd`.
+
+`greetd/config.toml.example` is the system configuration: `vt = 1`,
+`user = "greeter"` and the installed launcher as `command`. Back up the
+packaged file first; it runs `agreety`.
+
+Cutover, run once:
+
+```sh
+sudo install -m 0644 greetd/config.toml.example /etc/greetd/config.toml
+sudo make deploy-greeter
+sudo systemctl disable sddm
+sudo systemctl enable greetd
+systemctl is-enabled sddm greetd
+readlink /etc/systemd/system/display-manager.service
+# reboot when convenient
+```
+
+`systemctl enable greetd` points `display-manager.service` at greetd through
+the unit's `Alias`. SDDM must be disabled first so the same alias cannot
+belong to both. The greeter's environment comes from PAM
+(`system-local-login`), which opens a logind session for `greeter` and starts
+the authenticated account's user manager.
+
+Launcher defaults, overridable through the environment:
+
+| Variable | Default |
 | --- | --- |
-| Compositor | Cage and the visual mock have run nested. Verify the real entrypoint, direct seat activation and the actual compositor/session lifecycle with greetd before choosing it for deployment. |
-| Screen coverage | Nested Cage tests measured the real window equal to 630×844 and fullscreen 1440×900 nested outputs. The QML starts at 1280×720 and has no explicit fullscreen request; direct physical-output coverage and input remain **unverified**. Multi-monitor and fractional-scale validation remain deferred. |
-| Recovery | Confirm a working second TTY, local credentials and, if applicable, remote access. Record the current display-manager symlink and original configuration before a switch. |
-| Deployment path | A root-owned tree readable by `greeter` is installed and passes the headless fake-socket test. Still open: verify graphical loading of that exact tree as `greeter` under the chosen compositor. Its root entrypoint must retain its relative `greetd/`, `shell/logic/` and `sddm/notch/` assets. Do not loosen private home-directory permissions. |
-| Visual assets | A dedicated directory and a manual read as `greeter` are verified on the development machine. Deploy the updated shell and configure `NOTCH_GREETD_VISUAL_DIR` for the greeter; verify actual graphical loading. Missing assets fall back to defaults. |
-| Keyboard and power | Test Qt Virtual Keyboard under the chosen compositor, including its input-method environment, and verify that power actions are authorized. Never invoke power actions from automated tests. |
-| Authentication | Keep the PAM stack unchanged without separate approval. The current host's `greetd` PAM stack includes `pam_fprintd` before password authentication; fingerprint configuration is deferred. Test wrong password, retry, timeout and success with a disposable account first. |
-| Session and handoff | Confirm that `Hyprland` is the intended session command, the session actually starts after greeter exit, and wallpaper/notch continuity is acceptable. The selector currently offers Hyprland only; the shell's idle notch width is dynamic while the greeter uses presets. |
+| `NOTCH_GREETD_VISUAL_DIR` | `/var/lib/quickshell-notch-greetd` |
+| `NOTCH_GREETD_SCALE` | `2` (must match the Hyprland monitor scale) |
+| `NOTCH_GREETD_SESSION` | `uwsm start -e -D Hyprland hyprland.desktop` |
 
-No greeter configuration is supplied as ready-to-install: the compositor,
-deployment location, asset publication and graphical behavior are not yet
-verified. The real greeter's visual-directory interface is documented in
+The real greeter's visual-directory interface is documented in
 [`preview/README.md`](preview/README.md).
 
 ### Asset publication
@@ -126,37 +167,39 @@ dedicated to greetd and not shared with SDDM or untrusted writers.
 
 On the development machine the target file names the prepared directory, and
 the active shell reloaded the implementation after its submodule was updated.
-A real wallpaper change has not yet been observed after this update. If
+A real wallpaper change has not yet been observed after this update; the next
+one should be checked against the published manifest. If
 publication fails, the prior manifest and image remain in
 place. A crash can leave an unused staged or wallpaper file. The publisher does
-not provide power-loss durability guarantees. No service was changed.
+not provide power-loss durability guarantees and changes no service.
 
-## Proposed future test sequence
+## Post-cutover checks
 
-1. Complete the blockers and agree on a specific test plan, target VT and
-   exact commands. A graphical greeter can capture keyboard input and a VT;
-   warn the user immediately before running it.
-2. Prefer an isolated test that leaves SDDM running and does not take its VT.
-   Prove the compositor, permissions and a disposable-account login first.
-   Stop and recover if a separate safe VT cannot be established.
-3. Review results and only then ask for separate explicit approval to change
-   the default display manager. Never restart or stop the active SDDM session
-   as an implicit part of preparation.
+1. Sign in at the greeter; the notch shell should appear with the desktop
+   session, wallpaper and notch continuity.
+2. Log out (or run `hyprctl dispatch exit`): greetd must restart the greeter.
+3. Try a wrong password and a retry. Use the power buttons only when a restart
+   is acceptable; they run `systemctl poweroff` / `reboot` as `greeter`.
+4. Still deferred: fingerprint prompts, multi-monitor layouts, fractional
+   scales and a session selector beyond Hyprland.
 
-## Recovery contract
+## Rollback to SDDM
 
-Before any approved switch, prepare and verify a rollback with the maintainer:
+From `tty3` (a getty is available there):
 
-- Preserve the original greetd configuration and the exact current
-  `display-manager.service` target; record backup locations and permissions.
-- From a working TTY or remote shell, stop the **test instance** if one was
-  started, restore any files and display-manager selection changed by that
-  test, and return control to SDDM using the reviewed procedure for that test.
-- If the machine cannot reach a TTY or remote shell, boot into the previously
-  verified rescue environment and perform the same restoration there.
-- Do not run broad cleanup, reset PAM, delete user files or restart an active
+```sh
+sudo systemctl disable greetd
+sudo systemctl enable sddm
+sudo systemctl start sddm   # or reboot
+```
+
+If the greeter cannot start at boot, add `systemd.mask=greetd.service` to the
+kernel command line, boot to a text console and run the commands above.
+
+- Preserve `/etc/greetd/config.toml.packaged` and the recorded
+  `display-manager.service` target before any change.
+- Do not run broad cleanup, reset PAM, delete user files or stop an active
   graphical session as a generic recovery step. Verify SDDM and the login path
   after recovery.
-
-Exact privileged commands are deliberately deferred until the compositor,
-test isolation and switching procedure have been verified and approved.
+- If the machine cannot reach a TTY or remote shell, boot into the previously
+  verified rescue environment and restore the same selection there.
