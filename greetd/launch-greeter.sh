@@ -34,9 +34,8 @@ fi
 
 # Blank the text console before cage takes the display. When the greeter exits,
 # the kernel restores this VT for the fraction of a second before the session
-# compositor paints, so the boot messages would flash there. Clearing the
-# buffer and hiding the cursor leaves black instead. The greeter owns its VT
-# through its logind session; if it cannot write, nothing changes.
+# compositor paints. This is best effort: the greeter may not have write
+# access to the configured device, and its stdout may not be a terminal.
 console=${NOTCH_GREETD_CONSOLE:-/dev/tty1}
 if [ -w "$console" ]; then
 	printf '\033[H\033[2J\033[?25l' >"$console" 2>/dev/null || true

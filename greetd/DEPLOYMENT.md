@@ -96,9 +96,13 @@ scope unless it is agreed separately.
   `launch-greeter.sh` now starts cage with `-d` so the surface has no
   decorations; `-s` keeps the VT-switch escape hatch. The maintainer confirmed
   the undecorated surface.
-- The launcher blanks the greeter's text console first, so the moment between
-  `cage` exiting and the session compositor painting shows black instead of
-  the buffered boot text. The login surface also takes its animation durations
+- The launcher attempts to blank the greeter's text console before `cage`;
+  this is best effort because the greeter may lack permission to open the VT.
+  The authenticated session starts via `systemd-cat`, keeping its stdout and
+  stderr in the journal rather than writing UWSM progress to the VT. Inspect
+  it with `journalctl -b -t notch-greetd-session`. Other sources can still
+  write to the console, and the graphical handoff needs a real-login check.
+- The login surface also takes its animation durations
   from `shell/config/motion.mjs`, the module `shell/config/Timings.qml`
   re-exports, and compresses into the idle notch width the running shell
   publishes, so the handoff keeps the same shape and motion language.
@@ -140,6 +144,10 @@ Launcher defaults, overridable through the environment:
 | `NOTCH_GREETD_SCALE` | `2` (must match the Hyprland monitor scale) |
 | `NOTCH_GREETD_SESSION` | `uwsm start -e -D Hyprland hyprland.desktop` |
 | `NOTCH_GREETD_CONSOLE` | `/dev/tty1` (text console blanked before cage takes over) |
+
+`NOTCH_GREETD_SESSION` is split on spaces into executable and arguments; it is
+not shell syntax. Its stdout and stderr go to the system journal. The session
+retains its standard input and controlling terminal.
 
 The real greeter's visual-directory interface is documented in
 [`preview/README.md`](preview/README.md).

@@ -32,10 +32,11 @@ ShellRoot {
     }
     readonly property var sessionCommand: {
         const test = Quickshell.env("NOTCH_GREETD_TEST_SESSION");
-        if (test) return root.sessionArguments(test);
         const deployed = Quickshell.env("NOTCH_GREETD_SESSION");
-        if (deployed) return root.sessionArguments(deployed);
-        return root.sessionArguments("uwsm start -e -D Hyprland hyprland.desktop");
+        const args = root.sessionArguments(test || deployed || "uwsm start -e -D Hyprland hyprland.desktop");
+        // Keep the VT blank without discarding session diagnostics. Preserve
+        // argv rather than interpreting the configured command as shell code.
+        return ["/usr/bin/systemd-cat", "--identifier=notch-greetd-session", "--"].concat(args);
     }
     readonly property string previewBackground: Quickshell.env("NOTCH_GREETD_PREVIEW_BG")
     readonly property string previewAccent: Quickshell.env("NOTCH_GREETD_PREVIEW_ACCENT")

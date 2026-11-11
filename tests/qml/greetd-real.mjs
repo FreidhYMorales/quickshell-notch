@@ -21,6 +21,14 @@ import { loginMorph } from "../../shell/config/motion.mjs";
 const defaultEntrypoint = process.env.NOTCH_GREETD_ENTRYPOINT ||
   fileURLToPath(new URL("../../greetd-shell.qml", import.meta.url));
 
+// Preserve each argument; only the session's output is redirected to the journal.
+const journalSession = (...args) => [
+  "/usr/bin/systemd-cat",
+  "--identifier=notch-greetd-session",
+  "--",
+  ...args,
+];
+
 async function runGreeter(
   failure,
   credentials,
@@ -257,7 +265,10 @@ test("nested Cage reports the real greeter window and output geometry", {
     "post_auth_message_response",
     "start_session",
   ]);
-  assert.deepEqual(requests[2].cmd, ["mock-session-not-executed"]);
+  assert.deepEqual(
+    requests[2].cmd,
+    journalSession("mock-session-not-executed"),
+  );
 });
 
 test("fullscreen nested Cage fills the selected Hyprland monitor", {
@@ -369,7 +380,10 @@ test("the real greeter authenticates, compresses, then launches the session", as
   ]);
   assert.equal(requests[0].username, "preview-user");
   assert.equal(requests[1].response, "fake-test-secret");
-  assert.deepEqual(requests[2].cmd, ["mock-session-not-executed"]);
+  assert.deepEqual(
+    requests[2].cmd,
+    journalSession("mock-session-not-executed"),
+  );
   assert.ok(
     requests[2].time - requests[1].time >= loginMorph - 50,
     "the session must wait for the compression",
@@ -414,12 +428,8 @@ test("the deployment sets the session command through the environment", async ()
   );
   assert.equal(code, 0, output);
   assert.match(output, /real greeter launch passed/);
-  assert.deepEqual(requests[2].cmd, [
-    "uwsm",
-    "start",
-    "-e",
-    "-D",
-    "Hyprland",
-    "hyprland.desktop",
-  ]);
+  assert.deepEqual(
+    requests[2].cmd,
+    journalSession("uwsm", "start", "-e", "-D", "Hyprland", "hyprland.desktop"),
+  );
 });
