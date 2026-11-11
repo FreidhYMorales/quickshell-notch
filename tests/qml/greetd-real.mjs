@@ -2,9 +2,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:net";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { endianness, tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // The real greeter entrypoint, pointed at a private fake greetd socket. The
@@ -15,6 +21,9 @@ async function runGreeter(
   visualDir,
   nested = false,
   fullScreen = false,
+  entrypoint = fileURLToPath(
+    new URL("../../greetd-shell.qml", import.meta.url),
+  ),
 ) {
   const dir = mkdtempSync(join(tmpdir(), "notch-real-"));
   const path = join(dir, "socket");
@@ -72,7 +81,7 @@ async function runGreeter(
     const program = nested ? "cage" : "qs";
     const args = [
       "-p",
-      fileURLToPath(new URL("../../greetd-shell.qml", import.meta.url)),
+      entrypoint,
     ];
     const child = spawn(program, nested ? ["--", "qs", ...args] : args, {
       env: {
@@ -305,6 +314,50 @@ test("the real entrypoint reads the atomic visual manifest", async () => {
     assert.equal(value.background, `file://${dir}/${name}`);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the real entrypoint loads a minimal deployable greeter tree", async () => {
+  const source = fileURLToPath(new URL("../../", import.meta.url));
+  const target = mkdtempSync(join(tmpdir(), "notch-greeter-tree-"));
+  const files = [
+    "greetd-shell.qml",
+    "greetd/preview/Main.qml",
+    "shell/logic/greetdPreview.mjs",
+    "shell/logic/greetdVisual.mjs",
+    "shell/logic/wallpaperState.mjs",
+    "shell/logic/earGeometry.mjs",
+    "shell/logic/users.mjs",
+    "sddm/notch/icons/arrow-right.svg",
+    "sddm/notch/icons/chevron-down.svg",
+    "sddm/notch/icons/chevron-left.svg",
+    "sddm/notch/icons/keyboard.svg",
+    "sddm/notch/icons/power.svg",
+    "sddm/notch/icons/rotate-ccw.svg",
+    "sddm/notch/shaders/keyboard.frag.qsb",
+  ];
+  try {
+    for (const file of files) {
+      const destination = join(target, file);
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(join(source, file), destination);
+    }
+    const { code, output } = await runGreeter(
+      false,
+      null,
+      null,
+      false,
+      false,
+      join(target, "greetd-shell.qml"),
+    );
+    assert.equal(code, 0, output);
+    assert.match(output, /real greeter launch passed/);
+    assert.doesNotMatch(
+      output,
+      /TypeError|ReferenceError|Failed to load|module .* is not installed/i,
+    );
+  } finally {
+    rmSync(target, { recursive: true, force: true });
   }
 });
 

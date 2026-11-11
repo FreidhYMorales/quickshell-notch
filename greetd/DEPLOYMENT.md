@@ -51,6 +51,17 @@ The repository and the existing SDDM theme remain available as a fallback.
   staged the current GIF and palette as `0640` files, and the maintainer
   confirmed that `sudo -u greeter` could read the manifest and the entire image.
   This verifies file access only, not a graphical login.
+- The active Hyprland session is on `tty1`, and the installed greetd config
+  also specifies `vt = 1`; the packaged service conflicts with
+  `getty@tty1.service`. Do not start that service to perform a parallel test.
+  A separate greetd process, configuration, socket and explicitly verified
+  spare VT are required, without altering `/etc/greetd/config.toml`.
+- The maintainer confirmed access to `tty3` with Ctrl+Alt+F3. A getty is
+  running there; credential-based login and the return shortcut to `tty1`
+  were not independently verified. Reserve `tty3` for recovery, not testing.
+- A minimal copy of the real greeter and its relative imports/resources passes
+  the fake-socket headless login test (`tests/qml/greetd-real.mjs`); it is not
+  yet installed as a root-controlled system tree or tested as `greeter`.
 
 ## Blockers before a graphical test
 
@@ -98,9 +109,10 @@ ensure that group and every parent directory are readable/traversable by the
 greeter, without granting access to the private home. The directory must be
 dedicated to greetd and not shared with SDDM or untrusted writers.
 
-On the development machine the target file now names the prepared directory,
-but the currently running shell is an older deployment and has not loaded this
-feature yet. If publication fails, the prior manifest and image remain in
+On the development machine the target file names the prepared directory, and
+the active shell reloaded the implementation after its submodule was updated.
+A real wallpaper change has not yet been observed after this update. If
+publication fails, the prior manifest and image remain in
 place. A crash can leave an unused staged or wallpaper file. The publisher does
 not provide power-loss durability guarantees. No service was changed.
 
