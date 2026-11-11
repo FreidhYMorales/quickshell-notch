@@ -36,3 +36,11 @@ export function defaultUser(users, preferred) {
   }
   return list.length > 0 ? list[0].name : "";
 }
+
+// AccountsService caches public login avatars here. A missing or unreadable
+// file is handled by the surface's vector fallback, without reading homes.
+export function avatarUrl(name) {
+  const user = String(name || "");
+  if (!/^[a-zA-Z0-9_][a-zA-Z0-9_.-]*\$?$/.test(user)) return "";
+  return "file:///var/lib/AccountsService/icons/" + user;
+}

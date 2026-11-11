@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaultUser, humanUsers } from "../shell/logic/users.mjs";
+import { avatarUrl, defaultUser, humanUsers } from "../shell/logic/users.mjs";
 
 const PASSWD = [
   "root:x:0:0:root:/root:/bin/bash",
@@ -37,4 +37,14 @@ test("preselects the given user, then the first account, then nothing", () => {
   assert.equal(defaultUser(users, "root"), "deadlock");
   assert.equal(defaultUser(users, ""), "deadlock");
   assert.equal(defaultUser([], "invitado"), "");
+});
+
+test("uses only safe account names for the public avatar cache", () => {
+  assert.equal(
+    avatarUrl("alice"),
+    "file:///var/lib/AccountsService/icons/alice",
+  );
+  assert.equal(avatarUrl("../alice"), "");
+  assert.equal(avatarUrl("alice/name"), "");
+  assert.equal(avatarUrl(""), "");
 });
