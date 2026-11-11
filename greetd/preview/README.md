@@ -65,6 +65,17 @@ private fake socket: success compresses before `start_session`; failure
 expands with the error and never launches. The fake server never executes the
 requested command.
 
+The optional nested Cage geometry check is run from an existing Wayland
+session with `NOTCH_GREETD_CAGE_TEST=1 node --test --test-name-pattern='nested Cage reports' tests/qml/greetd-real.mjs`.
+It opens a nested window that may receive keyboard focus. It uses a private
+fake socket and dummy credentials, never executes the mock session command,
+and does not validate a physical VT or a direct DRM/seat session.
+
+For an opt-in fullscreen variant on Hyprland, run
+`NOTCH_GREETD_CAGE_FULLSCREEN=1 node --test --test-name-pattern='fullscreen nested Cage' tests/qml/greetd-real.mjs`.
+It temporarily fullscreens only its own Cage window and may take keyboard
+focus; it does not change the monitor resolution, scale, VT or display manager.
+
 Quickshell 0.3 sends a cancellation request after a final failure and logs its
 reply as an unexpected response: greetd releases the failed session but its
 PAM worker has already exited, so the cancellation comes back as a connection
@@ -103,6 +114,8 @@ deferred until after the reinstall.
 
 ## Not done yet
 
+- Deployment preparation and the recovery contract are in
+  [`../DEPLOYMENT.md`](../DEPLOYMENT.md). They do not authorize activation.
 - No deployment under `cage`, no greetd config and no installed theme.
 - Real power authorization, virtual keyboard input and avatar permissions need
   testing in the deployed greeter environment; fingerprint and multi-monitor

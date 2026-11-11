@@ -63,8 +63,12 @@ ShellRoot {
             return;
         }
         applyUsers();
-        if (autoTest)
-            beginTest.start();
+        if (autoTest) {
+            if (Quickshell.env("NOTCH_GREETD_TEST_GEOMETRY") === "1")
+                geometryProbe.start();
+            else
+                beginTest.start();
+        }
     }
 
     function applyUsers() {
@@ -188,6 +192,19 @@ ShellRoot {
                 console.log("real greeter failure passed");
                 Qt.quit();
             }
+        }
+    }
+    Timer {
+        id: geometryProbe
+        interval: Quickshell.env("NOTCH_GREETD_TEST_GEOMETRY_DELAY") === "3000" ? 3000 : 500
+        onTriggered: {
+            if (!root.preview || !root.preview.screen) {
+                console.error("greeter geometry: screen unavailable");
+                Qt.exit(8);
+                return;
+            }
+            console.log("greeter geometry: window=" + root.preview.width + "x" + root.preview.height + " output=" + root.preview.screen.width + "x" + root.preview.screen.height);
+            beginTest.start();
         }
     }
     Timer {

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:net";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { endianness, tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,7 +9,13 @@ import { fileURLToPath } from "node:url";
 
 // The real greeter entrypoint, pointed at a private fake greetd socket. The
 // fake server never executes the requested session command.
-async function runGreeter(failure, credentials, visualDir) {
+async function runGreeter(
+  failure,
+  credentials,
+  visualDir,
+  nested = false,
+  fullScreen = false,
+) {
   const dir = mkdtempSync(join(tmpdir(), "notch-real-"));
   const path = join(dir, "socket");
   const requests = [];
@@ -63,15 +69,18 @@ async function runGreeter(failure, credentials, visualDir) {
     server.listen(path, resolve).once("error", reject)
   );
   try {
-    const child = spawn("qs", [
+    const program = nested ? "cage" : "qs";
+    const args = [
       "-p",
       fileURLToPath(new URL("../../greetd-shell.qml", import.meta.url)),
-    ], {
+    ];
+    const child = spawn(program, nested ? ["--", "qs", ...args] : args, {
       env: {
         ...process.env,
         GREETD_SOCK: path,
         NOTCH_GREETD_AUTOTEST: "1",
         NOTCH_GREETD_TEST_FAILURE: failure ? "1" : "0",
+        NOTCH_GREETD_TEST_GEOMETRY_DELAY: fullScreen ? "3000" : "500",
         NOTCH_GREETD_TEST_SESSION: "mock-session-not-executed",
         NOTCH_GREETD_VISUAL_DIR: visualDir || "",
         ...(credentials
@@ -80,14 +89,33 @@ async function runGreeter(failure, credentials, visualDir) {
             NOTCH_GREETD_TEST_SECRET: credentials.secret,
           }
           : {}),
-        QT_QPA_PLATFORM: "offscreen",
+        QT_QPA_PLATFORM: nested ? "wayland" : "offscreen",
         QT_QUICK_BACKEND: "software",
+        ...(nested
+          ? {
+            WLR_BACKENDS: "wayland",
+            WLR_RENDERER: "pixman",
+            NOTCH_GREETD_TEST_GEOMETRY: "1",
+          }
+          : {}),
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let output = "";
     child.stdout.on("data", (chunk) => output += chunk);
     child.stderr.on("data", (chunk) => output += chunk);
+    let outerGeometry = null;
+    if (fullScreen) {
+      try {
+        outerGeometry = await targetNestedCage(child.pid);
+      } catch (error) {
+        child.kill("SIGTERM");
+        if (child.exitCode === null && child.signalCode === null) {
+          await new Promise((resolve) => child.once("close", resolve));
+        }
+        throw error;
+      }
+    }
     const code = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         child.kill();
@@ -102,12 +130,140 @@ async function runGreeter(failure, credentials, visualDir) {
         resolve(status);
       });
     });
-    return { code, output, requests };
+    return { code, output, requests, outerGeometry };
   } finally {
     await new Promise((resolve) => server.close(resolve));
     rmSync(dir, { recursive: true, force: true });
   }
 }
+
+async function targetNestedCage(pid) {
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline) {
+    const result = spawnSync("hyprctl", ["-j", "clients"], {
+      encoding: "utf8",
+    });
+    if (result.status !== 0) throw new Error("cannot inspect Hyprland windows");
+    const clients = JSON.parse(result.stdout);
+    const cage = clients.find((client) => client.pid === pid && client.mapped);
+    if (cage) {
+      if (!/^0x[0-9a-f]+$/i.test(cage.address)) {
+        throw new Error("invalid Cage window address");
+      }
+      const expression =
+        `hl.dsp.window.fullscreen({mode = "fullscreen", action = "set", window = "address:${cage.address}"})`;
+      const switched = spawnSync("hyprctl", ["dispatch", expression], {
+        encoding: "utf8",
+      });
+      if (switched.status !== 0 || !/^ok\s*$/.test(switched.stdout)) {
+        throw new Error(
+          "could not fullscreen the Cage window: " + switched.stdout +
+            switched.stderr,
+        );
+      }
+      console.log(`Cage ${cage.address} requested fullscreen`);
+      while (Date.now() < deadline) {
+        const state = spawnSync("hyprctl", ["-j", "clients"], {
+          encoding: "utf8",
+        });
+        const current = state.status === 0
+          ? JSON.parse(state.stdout).find((client) =>
+            client.pid === pid && client.address === cage.address
+          )
+          : null;
+        if (
+          current && current.fullscreen === 2 && current.size[0] > 0 &&
+          current.size[1] > 0
+        ) {
+          const displays = spawnSync("hyprctl", ["-j", "monitors"], {
+            encoding: "utf8",
+          });
+          const monitor = displays.status === 0
+            ? JSON.parse(displays.stdout).find((display) =>
+              display.id === current.monitor && !display.disabled
+            )
+            : null;
+          if (!monitor) {
+            throw new Error("cannot identify the fullscreen monitor");
+          }
+          const rotated = monitor.transform % 2 === 1;
+          const expected = [
+            rotated ? monitor.height : monitor.width,
+            rotated ? monitor.width : monitor.height,
+          ].map((value) => Math.round(value / monitor.scale));
+          if (
+            current.size.some((value, index) =>
+              Math.abs(value - expected[index]) > 1
+            )
+          ) throw new Error("Cage fullscreen size does not match its monitor");
+          console.log(
+            `monitor ${monitor.name}: ${monitor.width}x${monitor.height} scale=${monitor.scale} logical≈${
+              expected.join("x")
+            }`,
+          );
+          return current.size;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 40));
+      }
+      throw new Error("Cage did not enter fullscreen");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 40));
+  }
+  throw new Error(
+    "could not find the Cage window; no other window was modified",
+  );
+}
+
+test("nested Cage reports the real greeter window and output geometry", {
+  skip: process.env.NOTCH_GREETD_CAGE_TEST !== "1",
+}, async () => {
+  const { code, output, requests } = await runGreeter(false, null, null, true);
+  assert.equal(code, 0, output);
+  assert.match(output, /greeter geometry: window=\d+x\d+ output=\d+x\d+/);
+  assert.match(output, /real greeter launch passed/);
+  const geometry = output.match(
+    /greeter geometry: window=(\d+)x(\d+) output=(\d+)x(\d+)/,
+  );
+  console.log(geometry[0]);
+  assert.ok(Number(geometry[1]) > 0 && Number(geometry[2]) > 0);
+  assert.deepEqual(
+    geometry.slice(1, 3),
+    geometry.slice(3, 5),
+    "window must fill the nested output",
+  );
+  assert.notEqual(
+    geometry[1] + "x" + geometry[2],
+    "1280x720",
+    "test must exercise a non-default output size",
+  );
+  assert.deepEqual(requests.map((r) => r.type), [
+    "create_session",
+    "post_auth_message_response",
+    "start_session",
+  ]);
+  assert.deepEqual(requests[2].cmd, ["mock-session-not-executed"]);
+});
+
+test("fullscreen nested Cage fills the selected Hyprland monitor", {
+  skip: process.env.NOTCH_GREETD_CAGE_FULLSCREEN !== "1",
+}, async () => {
+  const { code, output, outerGeometry } = await runGreeter(
+    false,
+    null,
+    null,
+    true,
+    true,
+  );
+  assert.equal(code, 0, output);
+  assert.match(output, /greeter geometry: window=\d+x\d+ output=\d+x\d+/);
+  assert.match(output, /real greeter launch passed/);
+  const geometry = output.match(
+    /greeter geometry: window=(\d+)x(\d+) output=(\d+)x(\d+)/,
+  );
+  assert.deepEqual(geometry.slice(1, 3), geometry.slice(3, 5));
+  assert.deepEqual(geometry.slice(3, 5).map(Number), outerGeometry);
+  console.log(`fullscreen Cage: ${outerGeometry.join("x")} logical pixels`);
+});
 
 test("the real entrypoint loads explicit shared visual settings", async () => {
   const dir = mkdtempSync(join(tmpdir(), "notch-greeter-visual-"));
