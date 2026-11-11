@@ -133,6 +133,7 @@ Launcher defaults, overridable through the environment:
 | `NOTCH_GREETD_VISUAL_DIR` | `/var/lib/quickshell-notch-greetd` |
 | `NOTCH_GREETD_SCALE` | `2` (must match the Hyprland monitor scale) |
 | `NOTCH_GREETD_SESSION` | `uwsm start -e -D Hyprland hyprland.desktop` |
+| `NOTCH_GREETD_CONSOLE` | `/dev/tty1` (text console blanked before cage takes over) |
 
 The real greeter's visual-directory interface is documented in
 [`preview/README.md`](preview/README.md).

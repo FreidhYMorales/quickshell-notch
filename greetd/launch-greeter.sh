@@ -7,6 +7,8 @@
 #   NOTCH_GREETD_VISUAL_DIR  published wallpaper/palette directory
 #   NOTCH_GREETD_SCALE       Qt scale for the greeter; must match the monitor
 #                            scale in the Hyprland config (cage reports 1).
+#   NOTCH_GREETD_CONSOLE     text console cleared before cage starts (default
+#                            /dev/tty1, the greetd VT).
 set -eu
 
 : "${NOTCH_GREETD_VISUAL_DIR:=/var/lib/quickshell-notch-greetd}"
@@ -28,6 +30,16 @@ fi
 if [ -z "${HOME:-}" ] || [ ! -d "${HOME:-}" ]; then
 	HOME=$XDG_RUNTIME_DIR
 	export HOME
+fi
+
+# Blank the text console before cage takes the display. When the greeter exits,
+# the kernel restores this VT for the fraction of a second before the session
+# compositor paints, so the boot messages would flash there. Clearing the
+# buffer and hiding the cursor leaves black instead. The greeter owns its VT
+# through its logind session; if it cannot write, nothing changes.
+console=${NOTCH_GREETD_CONSOLE:-/dev/tty1}
+if [ -w "$console" ]; then
+	printf '\033[H\033[2J\033[?25l' >"$console" 2>/dev/null || true
 fi
 
 here=$(unset CDPATH && cd -- "$(dirname -- "$0")" && pwd)
