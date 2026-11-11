@@ -9,6 +9,7 @@ import "../../shell/logic/greetdPreview.mjs" as Flow
 import "../../shell/logic/wallpaperState.mjs" as WallpaperState
 import "../../shell/logic/earGeometry.mjs" as EarGeometry
 import "../../shell/logic/users.mjs" as Users
+import "../../shell/config/motion.mjs" as Motion
 
 // Notch login surface shared by the isolated simulation (demo: true) and a
 // real greetd session (demo: false). Credentials only exist in real mode.
@@ -58,10 +59,11 @@ Window {
     readonly property alias morphHeight: morph.height
     property string view: realisticSurface ? "clock" : "login"
     property real loginProgress: view === "login" ? 1 : 0
+    // Same notch language as the shell: slow morph, decelerating easing.
     Behavior on loginProgress {
         NumberAnimation {
-            duration: 440
-            easing.type: Easing.InOutCubic
+            duration: Motion.loginMorph
+            easing.type: Easing.OutCubic
         }
     }
     property date now: new Date()
@@ -99,7 +101,7 @@ Window {
             returnMorph.restart();
         }
     }
-    property int authTimeoutMs: 20000
+    property int authTimeoutMs: Motion.loginAuthTimeout
     property bool authTimedOut: false
     property string protocolMessage: ""
     property string failureText: ""
@@ -158,7 +160,7 @@ Window {
     }
 
     Timer {
-        interval: 1000
+        interval: Motion.clockTick
         running: true
         repeat: true
         onTriggered: root.now = new Date()
@@ -645,12 +647,12 @@ Window {
                 loops: Animation.Infinite
                 NumberAnimation {
                     to: 1.12
-                    duration: 700
+                    duration: Motion.loginPulse
                     easing.type: Easing.InOutSine
                 }
                 NumberAnimation {
                     to: 1.0
-                    duration: 700
+                    duration: Motion.loginPulse
                     easing.type: Easing.InOutSine
                 }
             }
@@ -729,7 +731,7 @@ Window {
                 color: sessions.hovered || sessions.popup.visible ? "#303946" : "#cc000000"
                 Behavior on color {
                     ColorAnimation {
-                        duration: 160
+                        duration: Motion.loginHover
                     }
                 }
             }
@@ -757,13 +759,13 @@ Window {
                     scale: sessions.hovered || sessions.popup.visible ? 1.2 : 1
                     Behavior on rotation {
                         NumberAnimation {
-                            duration: 180
-                            easing.type: Easing.InOutCubic
+                            duration: Motion.loginHover
+                            easing.type: Easing.OutCubic
                         }
                     }
                     Behavior on scale {
                         NumberAnimation {
-                            duration: 160
+                            duration: Motion.loginHover
                         }
                     }
                 }
@@ -856,7 +858,7 @@ Window {
     }
     Timer {
         id: simulatedAuth
-        interval: root.parityPreview ? root.simulatedDelayMs : 650
+        interval: root.parityPreview ? root.simulatedDelayMs : Motion.loginSimulatedAuth
         onTriggered: root.completeAuthentication(root.simulateFailure)
     }
     SequentialAnimation {
@@ -865,19 +867,19 @@ Window {
             target: inputOffset
             property: "x"
             to: -4
-            duration: 55
+            duration: Motion.loginShake
         }
         NumberAnimation {
             target: inputOffset
             property: "x"
             to: 4
-            duration: 110
+            duration: Motion.loginShakeWide
         }
         NumberAnimation {
             target: inputOffset
             property: "x"
             to: 0
-            duration: 70
+            duration: Motion.loginShake
         }
     }
     NumberAnimation {
@@ -885,8 +887,8 @@ Window {
         target: root
         property: "reveal"
         to: 0
-        duration: 520
-        easing.type: Easing.InOutCubic
+        duration: Motion.loginMorph
+        easing.type: Easing.OutCubic
         onFinished: {
             root.finishCompression();
         }
@@ -897,25 +899,25 @@ Window {
             target: lockOffset
             property: "x"
             to: -6
-            duration: 60
+            duration: Motion.loginShake
         }
         NumberAnimation {
             target: lockOffset
             property: "x"
             to: 6
-            duration: 120
+            duration: Motion.loginShakeWide
         }
         NumberAnimation {
             target: lockOffset
             property: "x"
             to: -4
-            duration: 100
+            duration: Motion.loginShake
         }
         NumberAnimation {
             target: lockOffset
             property: "x"
             to: 0
-            duration: 80
+            duration: Motion.loginShake
         }
         onFinished: {
             root.dispatch("finished");
@@ -924,7 +926,7 @@ Window {
     }
     Timer {
         id: resetTimer
-        interval: 1100
+        interval: Motion.loginReset
         onTriggered: {
             root.dispatch("reset");
             returnMorph.restart();
@@ -935,8 +937,8 @@ Window {
         target: root
         property: "reveal"
         to: 1
-        duration: 520
-        easing.type: Easing.InOutCubic
+        duration: Motion.loginMorph
+        easing.type: Easing.OutCubic
         onFinished: {
             if (root.awaitingPrompt && root.stateName === "authenticating")
                 passwordInput.forceActiveFocus();

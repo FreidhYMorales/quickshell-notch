@@ -42,6 +42,10 @@ Singleton {
     property bool sddmBusy: false
     property var greetdNext: null
     property bool greetdBusy: false
+    // Idle notch width per monitor, reported by the centre surface. Published
+    // with the greeter assets so the login surface compresses into the same
+    // shape the session will show instead of a fixed preset.
+    property var idleNotchWidths: ({})
     // The single app run still waiting: a newer commit replaces it, so the
     // last choice wins instead of being dropped.
     property var appNext: null
@@ -305,6 +309,23 @@ Singleton {
         previewBusy = false;
     }
 
+    // The greeter shows on one monitor and only needs one width: publish the
+    // widest idle notch, which matches every monitor whose slot is not capped.
+    function setIdleNotchWidth(monitor: string, width: int) {
+        if (!monitor || width <= 0 || idleNotchWidths[monitor] === width)
+            return;
+        const next = Object.assign({}, idleNotchWidths);
+        next[monitor] = width;
+        idleNotchWidths = next;
+    }
+
+    function greeterNotchWidth(): int {
+        let widest = 0;
+        for (const name in idleNotchWidths)
+            widest = Math.max(widest, idleNotchWidths[name]);
+        return widest;
+    }
+
     // Colours.paletteFor(screen) prefers these over the global colors.json.
     onPalettesChanged: Colours.overrides = palettes
 
@@ -433,7 +454,12 @@ Singleton {
         greetdBusy = true;
         greetdSync.pending = true;
         greetdSync.didStart = false;
-        greetdSync.command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/greetd-sync.py").toString().replace(/^file:\/\//, "")), job.path, job.palette, greetdDataDir];
+        const command = ["python3", decodeURIComponent(Qt.resolvedUrl("../scripts/greetd-sync.py").toString().replace(/^file:\/\//, "")), job.path, job.palette, greetdDataDir];
+        // Optional: the reader falls back to the theme preset when absent.
+        const width = root.greeterNotchWidth();
+        if (width > 0)
+            command.push(String(width));
+        greetdSync.command = command;
         greetdSync.running = true;
     }
 

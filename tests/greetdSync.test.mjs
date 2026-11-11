@@ -23,8 +23,18 @@ const palette = (accent, foreground = "#abcdef") =>
   JSON.stringify({
     colors: { primary: { hex: accent }, on_surface: { hex: foreground } },
   });
-const run = (image, colors, output) =>
-  spawnSync("python3", [script, image, colors, output], { encoding: "utf8" });
+const run = (image, colors, output, width) =>
+  spawnSync(
+    "python3",
+    [
+      script,
+      image,
+      colors,
+      output,
+      ...(width === undefined ? [] : [String(width)]),
+    ],
+    { encoding: "utf8" },
+  );
 const manifest = (output) =>
   JSON.parse(readFileSync(join(output, "visual.json"), "utf8"));
 
@@ -167,4 +177,23 @@ test("requires a pre-existing private writable output and rejects symlink target
   assert.notEqual(run(image, palette("#123456"), output).status, 0);
   assert.equal(readlinkSync(join(output, ".publish.lock")), image);
   assert.equal(readFileSync(image, "utf8"), "image");
+});
+
+test("publishes the idle notch width in the same atomic snapshot", () => {
+  const dir = mkdtempSync(join(tmpdir(), "greetd-sync-width-"));
+  const output = join(dir, "output");
+  const image = join(dir, "wallpaper.png");
+  mkdirSync(output);
+  writeFileSync(image, "image");
+  assert.equal(run(image, palette("#123456"), output, 380).status, 0);
+  assert.equal(manifest(output).notchWidth, 380);
+  const before = readFileSync(join(output, "visual.json"), "utf8");
+  for (const width of [0, 79, 4097, "wide"]) {
+    assert.notEqual(run(image, palette("#654321"), output, width).status, 0);
+    assert.equal(readFileSync(join(output, "visual.json"), "utf8"), before);
+  }
+  // Without a width the manifest stays valid for an older reader.
+  assert.equal(run(image, palette("#654321"), output).status, 0);
+  assert.equal(manifest(output).notchWidth, undefined);
+  assert.equal(manifest(output).accent, "#654321");
 });

@@ -96,6 +96,12 @@ scope unless it is agreed separately.
   `launch-greeter.sh` now starts cage with `-d` so the surface has no
   decorations; `-s` keeps the VT-switch escape hatch. The maintainer confirmed
   the undecorated surface.
+- The launcher blanks the greeter's text console first, so the moment between
+  `cage` exiting and the session compositor painting shows black instead of
+  the buffered boot text. The login surface also takes its animation durations
+  from `shell/config/motion.mjs`, the module `shell/config/Timings.qml`
+  re-exports, and compresses into the idle notch width the running shell
+  publishes, so the handoff keeps the same shape and motion language.
 
 ## Current deployment
 
@@ -147,13 +153,16 @@ update. Nor is pointing at the current private wallpaper path a safe assumption.
 
 The opt-in publisher `shell/scripts/greetd-sync.py` copies the selected image or
 video to a content-addressed immutable filename, then atomically replaces a
-single `visual.json` containing that filename and the two palette colours.
-The greeter reads the manifest once, so an update cannot mix its wallpaper and
-palette. Older wallpaper files are deliberately retained for readers that
-already loaded an earlier manifest; no automatic garbage collection is in
-place, so disk usage grows when different wallpapers are published. Default
-notch width remains 300; the legacy files still work when no valid manifest is
-present, but their separate reads do not offer the same atomic guarantee.
+single `visual.json` containing that filename, the two palette colours and the
+shell's current idle notch width. The greeter reads the manifest once, so an
+update cannot mix its wallpaper and palette. Older wallpaper files are
+deliberately retained for readers that already loaded an earlier manifest; no
+automatic garbage collection is in place, so disk usage grows when different
+wallpapers are published. The width is what makes the login surface compress
+into the same shape the session shows; a manifest without it (older shell)
+falls back to 300, as do the legacy files, which still work when no valid
+manifest is present but their separate reads do not offer the same atomic
+guarantee.
 
 Publication is disabled unless the shell receives an explicit absolute
 `NOTCH_GREETD_DATA_DIR` or an absolute path in

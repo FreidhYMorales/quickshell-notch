@@ -19,8 +19,13 @@ NotchSurface {
         dot: idle.dotExtent,
         max: slot.width
     })
-    onIdleWChanged: CenterStore.setIdleNotchWidth(screen.name, idleW)
-    Component.onCompleted: CenterStore.setIdleNotchWidth(screen.name, idleW)
+    // The greeter reads the published width to compress into the same shape.
+    function reportIdleWidth() {
+        CenterStore.setIdleNotchWidth(screen.name, idleW);
+        Theme.setIdleNotchWidth(screen.name, idleW);
+    }
+    onIdleWChanged: root.reportIdleWidth()
+    Component.onCompleted: root.reportIdleWidth()
 
     readonly property bool toast: view.mode === "toast"
     readonly property var size: toast ? CenterLayout.toastShape({

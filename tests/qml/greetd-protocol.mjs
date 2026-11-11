@@ -6,6 +6,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { endianness, tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loginMorph } from "../../shell/config/motion.mjs";
 
 test("visual adapter refuses an unapproved socket without connecting", async () => {
   const dir = mkdtempSync(join(tmpdir(), "notch-disallowed-"));
@@ -188,7 +189,7 @@ for (const visual of [false, true]) {
           if (!failure) {
             assert.deepEqual(requests[4].cmd, ["mock-session-not-executed"]);
             assert.ok(
-              requests[4].time - requests[3].time >= 450,
+              requests[4].time - requests[3].time >= loginMorph - 50,
               "launch must wait for simulated animation",
             );
           }
@@ -317,7 +318,7 @@ test("visual adapter retries after a wrong password and still launches", async (
     assert.equal(requests[6].response, "fake-test-secret");
     assert.deepEqual(requests[7].cmd, ["mock-session-not-executed"]);
     assert.ok(
-      requests[7].time - requests[6].time >= 450,
+      requests[7].time - requests[6].time >= loginMorph - 50,
       "the retry must animate before launching",
     );
   } finally {

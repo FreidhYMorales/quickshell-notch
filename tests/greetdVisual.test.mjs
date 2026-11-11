@@ -97,6 +97,44 @@ test("uses the SDDM notch presets and synced palette", () => {
   });
 });
 
+test("manifest settings take the shell's published idle notch width when valid", () => {
+  const name = `background-${"a".repeat(64)}.png`;
+  const value = (notchWidth) =>
+    manifestSettings(
+      JSON.stringify({
+        version: 1,
+        background: name,
+        accent: "#123456",
+        foreground: "#abcdef",
+        notchWidth,
+      }),
+      "/shared",
+    ).notchWidth;
+  assert.equal(value(380), 380);
+  assert.equal(value(80), 80);
+  assert.equal(value(4096), 4096);
+  for (const invalid of [0, 79, 4097, 380.5, "380", null]) {
+    assert.equal(value(invalid), 300);
+  }
+});
+
+test("the greeter morphs with the shell's shared motion tokens", () => {
+  const greeter = readFileSync(
+    new URL("../greetd/preview/Main.qml", import.meta.url),
+    "utf8",
+  );
+  assert.match(greeter, /import .*config\/motion\.mjs.* as Motion/);
+  assert.doesNotMatch(greeter, /duration:\s*\d/);
+  assert.doesNotMatch(greeter, /interval:\s*\d/);
+  assert.match(greeter, /duration:\s*Motion\.loginMorph/);
+  const timings = readFileSync(
+    new URL("../shell/config/Timings.qml", import.meta.url),
+    "utf8",
+  );
+  assert.match(timings, /import "motion\.mjs" as Motion/);
+  assert.match(timings, /animSlow:\s*Motion\.animSlow/);
+});
+
 test("preview merges the shipped SDDM presets with staged overrides", () => {
   const dir = mkdtempSync(join(tmpdir(), "greetd-presets-"));
   const target = join(dir, "quickshell-notch", "sddm");

@@ -13,6 +13,7 @@ import {
 import { endianness, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loginMorph } from "../../shell/config/motion.mjs";
 
 // The real greeter entrypoint, pointed at a private fake greetd socket. The
 // fake server never executes the requested session command. A deployment can
@@ -370,7 +371,7 @@ test("the real greeter authenticates, compresses, then launches the session", as
   assert.equal(requests[1].response, "fake-test-secret");
   assert.deepEqual(requests[2].cmd, ["mock-session-not-executed"]);
   assert.ok(
-    requests[2].time - requests[1].time >= 450,
+    requests[2].time - requests[1].time >= loginMorph - 50,
     "the session must wait for the compression",
   );
 });

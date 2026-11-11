@@ -1,7 +1,10 @@
 pragma Singleton
 
 import Quickshell
+import "motion.mjs" as Motion
 
+// Animation durations come from `motion.mjs` so the greetd login surface, a
+// separate entrypoint, moves with the same tokens.
 Singleton {
     // Interaction (milliseconds)
     readonly property int hoverOpen: 200
@@ -29,7 +32,7 @@ Singleton {
     readonly property int recordingHelperTimeout: 5000
 
     // Unread dot blink half-period (milliseconds).
-    readonly property int blink: 700
+    readonly property int blink: Motion.blink
 
     // Polling (milliseconds)
     readonly property int sysPoll: 2000
@@ -40,7 +43,7 @@ Singleton {
     readonly property int cavaRestart: 2000
 
     // Animation durations (milliseconds)
-    readonly property int animFast: 120
-    readonly property int animNormal: 220
-    readonly property int animSlow: 400
+    readonly property int animFast: Motion.animFast
+    readonly property int animNormal: Motion.animNormal
+    readonly property int animSlow: Motion.animSlow
 }

@@ -73,6 +73,10 @@ export function manifestSettings(text, directory) {
     !/^#[a-f0-9]{6}$/i.test(value.foreground || "")
   ) return null;
   const path = directory.replace(/\/+$/, "") + "/" + value.background;
+  // The shell publishes its live idle width; a manifest from an older shell
+  // has none, so keep the former preset.
+  const rawWidth = value.notchWidth;
+  const width = Number(rawWidth);
   return {
     background: "file://" +
       path.split("/").map((part, index) =>
@@ -80,6 +84,9 @@ export function manifestSettings(text, directory) {
       ).join("/"),
     accent: value.accent,
     foreground: value.foreground,
-    notchWidth: 300,
+    notchWidth: typeof rawWidth === "number" && isFinite(width) &&
+        width % 1 === 0 && width >= 80 && width <= 4096
+      ? width
+      : 300,
   };
 }

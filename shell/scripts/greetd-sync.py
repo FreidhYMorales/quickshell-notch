@@ -12,9 +12,11 @@ import sys
 import tempfile
 
 
-def publish(image, palette_arg, output):
+def publish(image, palette_arg, output, notch_width=None):
     if not output.is_absolute() or output.is_symlink():
         raise ValueError("output must be an absolute, non-symlink directory")
+    if notch_width is not None and not 80 <= notch_width <= 4096:
+        raise ValueError("invalid notch width")
     info = output.stat()
     if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o022:
         raise ValueError("output must be owned by this user and not group/other writable")
@@ -63,7 +65,11 @@ def publish(image, palette_arg, output):
             staged = None
             with tempfile.NamedTemporaryFile(mode="w", dir=output, prefix=".stage-", delete=False) as dest:
                 manifest = Path(dest.name)
-                json.dump({"version": 1, "background": name, "accent": accent, "foreground": foreground}, dest)
+                value = {"version": 1, "background": name, "accent": accent, "foreground": foreground}
+                # Optional: the greeter falls back to its theme preset.
+                if notch_width is not None:
+                    value["notchWidth"] = notch_width
+                json.dump(value, dest)
                 dest.write("\n")
                 os.fchmod(dest.fileno(), 0o640)
             target = output / "visual.json"
@@ -80,9 +86,10 @@ def publish(image, palette_arg, output):
 
 if __name__ == "__main__":
     try:
-        if len(sys.argv) != 4:
-            raise ValueError("expected image, colors.json and output directory")
-        publish(Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3]))
+        if len(sys.argv) not in (4, 5):
+            raise ValueError("expected image, colors.json, output directory and optional notch width")
+        notch_width = int(sys.argv[4]) if len(sys.argv) == 5 else None
+        publish(Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3]), notch_width)
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"greetd sync: {error}", file=sys.stderr)
         sys.exit(1)

@@ -3,6 +3,7 @@
 greetd-shell.qml
 greetd/launch-greeter.sh
 greetd/preview/Main.qml
+shell/config/motion.mjs
 shell/logic/earGeometry.mjs
 shell/logic/greetdPreview.mjs
 shell/logic/greetdVisual.mjs

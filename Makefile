@@ -4,7 +4,7 @@ QMLLINT   := $(QT_BIN)/qmllint
 QML_DIR   := /usr/lib/qt6/qml
 QML_FILES := $(shell find shell -name '*.qml')
 QMLDIRS   := $(addprefix -i ,$(shell find shell -name qmldir))
-JS_PATHS  := shell/logic tests
+JS_PATHS  := shell/logic shell/config tests
 THEME_PROBES := $(wildcard tests/qml/theme-*.mjs)
 # Probes that open the launcher and press keys need the keyboard to
 # themselves, so they cannot share the parallel theme run.
