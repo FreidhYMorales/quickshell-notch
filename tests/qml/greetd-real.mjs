@@ -14,16 +14,18 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // The real greeter entrypoint, pointed at a private fake greetd socket. The
-// fake server never executes the requested session command.
+// fake server never executes the requested session command. A deployment can
+// be checked by pointing NOTCH_GREETD_ENTRYPOINT at its installed copy.
+const defaultEntrypoint = process.env.NOTCH_GREETD_ENTRYPOINT ||
+  fileURLToPath(new URL("../../greetd-shell.qml", import.meta.url));
+
 async function runGreeter(
   failure,
   credentials,
   visualDir,
   nested = false,
   fullScreen = false,
-  entrypoint = fileURLToPath(
-    new URL("../../greetd-shell.qml", import.meta.url),
-  ),
+  entrypoint = defaultEntrypoint,
 ) {
   const dir = mkdtempSync(join(tmpdir(), "notch-real-"));
   const path = join(dir, "socket");

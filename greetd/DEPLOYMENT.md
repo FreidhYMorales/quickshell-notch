@@ -1,8 +1,9 @@
 # greetd deployment and SDDM recovery: preparation only
 
-This is a **draft runbook, not an installation procedure**. Keep SDDM enabled
-and active, and greetd disabled and inactive, until the open checks below are
-resolved and the maintainer explicitly approves a display-manager switch.
+This is a **draft runbook**: the greeter tree is installed, but no display
+manager is configured to use it. Keep SDDM enabled and active, and greetd
+disabled and inactive, until the open checks below are resolved and the
+maintainer explicitly approves a display-manager switch.
 The repository and the existing SDDM theme remain available as a fallback.
 
 ## Verified so far
@@ -60,8 +61,22 @@ The repository and the existing SDDM theme remain available as a fallback.
   running there; credential-based login and the return shortcut to `tty1`
   were not independently verified. Reserve `tty3` for recovery, not testing.
 - A minimal copy of the real greeter and its relative imports/resources passes
-  the fake-socket headless login test (`tests/qml/greetd-real.mjs`); it is not
-  yet installed as a root-controlled system tree or tested as `greeter`.
+  the fake-socket headless login test (`tests/qml/greetd-real.mjs`).
+- That copy is installed at `/usr/local/share/quickshell-notch-greetd` as a
+  root-owned system tree: 16 files, every directory `0755`, every file `0644`,
+  owner `root:root`. Their SHA-256 digests match the staged tree and the
+  repository working tree. The first copy was made with `cp -r`, which kept the
+  private `0700` mode of the source directory; the maintainer corrected only
+  the root directory to `0755`.
+- `greeter` (uid 947, groups `greeter` and `video`) is not the owner and not in
+  the owning group, so access depends on the world bits above; no ACLs are set
+  and AppArmor/SELinux are not enforcing. This implies read/traverse access but
+  an actual read of this installed tree as `greeter` has not been performed,
+  because privileged commands require the maintainer's password.
+- The **installed** entrypoint, not only the repository one, passed the
+  fake-socket headless test with `NOTCH_GREETD_VISUAL_DIR` pointing at the
+  published assets. This proves the deployed bytes load and authenticate; it
+  does not prove graphical rendering, a physical VT or a real session launch.
 
 ## Blockers before a graphical test
 
@@ -70,7 +85,7 @@ The repository and the existing SDDM theme remain available as a fallback.
 | Compositor | Cage and the visual mock have run nested. Verify the real entrypoint, direct seat activation and the actual compositor/session lifecycle with greetd before choosing it for deployment. |
 | Screen coverage | Nested Cage tests measured the real window equal to 630×844 and fullscreen 1440×900 nested outputs. The QML starts at 1280×720 and has no explicit fullscreen request; direct physical-output coverage and input remain **unverified**. Multi-monitor and fractional-scale validation remain deferred. |
 | Recovery | Confirm a working second TTY, local credentials and, if applicable, remote access. Record the current display-manager symlink and original configuration before a switch. |
-| Deployment path | Stage the greeter in a root-controlled directory traversable/readable by `greeter`. Its root entrypoint must retain its relative `greetd/`, `shell/logic/` and `sddm/notch/` assets. Do not loosen private home-directory permissions. |
+| Deployment path | A root-owned tree readable by `greeter` is installed and passes the headless fake-socket test. Still open: verify graphical loading of that exact tree as `greeter` under the chosen compositor. Its root entrypoint must retain its relative `greetd/`, `shell/logic/` and `sddm/notch/` assets. Do not loosen private home-directory permissions. |
 | Visual assets | A dedicated directory and a manual read as `greeter` are verified on the development machine. Deploy the updated shell and configure `NOTCH_GREETD_VISUAL_DIR` for the greeter; verify actual graphical loading. Missing assets fall back to defaults. |
 | Keyboard and power | Test Qt Virtual Keyboard under the chosen compositor, including its input-method environment, and verify that power actions are authorized. Never invoke power actions from automated tests. |
 | Authentication | Keep the PAM stack unchanged without separate approval. The current host's `greetd` PAM stack includes `pam_fprintd` before password authentication; fingerprint configuration is deferred. Test wrong password, retry, timeout and success with a disposable account first. |
