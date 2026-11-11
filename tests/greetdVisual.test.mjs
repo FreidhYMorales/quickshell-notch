@@ -4,8 +4,34 @@ import { readFileSync } from "node:fs";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { previewTheme } from "../shell/logic/greetdVisual.mjs";
+import { previewTheme, visualSettings } from "../shell/logic/greetdVisual.mjs";
 import { readPreviewSettings } from "../scripts/greetd-preview-settings.mjs";
+
+test("real greeter settings use explicit wallpaper and validated shared theme", () => {
+  assert.deepEqual(
+    visualSettings(
+      "[General]\naccent=#123456\nnormalNotchWidth=444\n",
+      "/shared/my wall.png\n",
+    ),
+    {
+      background: "file:///shared/my%20wall.png",
+      accent: "#123456",
+      foreground: "#e4e4e4",
+      notchWidth: 444,
+    },
+  );
+  assert.equal(visualSettings("", "relative.png").background, "");
+  assert.equal(visualSettings("", "https://example.com/x").background, "");
+});
+
+test("real settings combine base and override using SDDM precedence", () => {
+  const value = visualSettings(
+    "[General]\nnotchMode=low\nlowBatteryNotchWidth=505\n",
+    "",
+    "[General]\nnormalNotchWidth=355\nlowBatteryNotchWidth=490\n",
+  );
+  assert.equal(value.notchWidth, 505);
+});
 
 test("uses the SDDM notch presets and synced palette", () => {
   const defaults =
@@ -17,6 +43,21 @@ test("uses the SDDM notch presets and synced palette", () => {
     accent: "#b3c5ff",
     foreground: "#e3e2e9",
   });
+});
+
+test("preview merges the shipped SDDM presets with staged overrides", () => {
+  const dir = mkdtempSync(join(tmpdir(), "greetd-presets-"));
+  const target = join(dir, "quickshell-notch", "sddm");
+  mkdirSync(target, { recursive: true });
+  writeFileSync(
+    join(target, "theme.conf"),
+    "[General]\nnormalNotchWidth=355\nchargingNotchWidth=490\n",
+  );
+  writeFileSync(
+    join(target, "theme.conf.user"),
+    "[General]\nnotchMode=charging\n",
+  );
+  assert.equal(readPreviewSettings(dir).theme.notchWidth, 490);
 });
 
 test("preview reads the staged palette and saved wallpaper", () => {
@@ -52,6 +93,19 @@ test("the preview masks the morph with the shared concave notch geometry", () =>
     source,
     /root\.notchWidth\s*\+\s*\(root\.width\s*-\s*root\.notchWidth\)/,
   );
+});
+
+test("greetd uses the same wallpaper dimming opacity as the SDDM theme", () => {
+  const greeter = readFileSync(
+    new URL("../greetd/preview/Main.qml", import.meta.url),
+    "utf8",
+  );
+  const sddm = readFileSync(
+    new URL("../sddm/notch/Main.qml", import.meta.url),
+    "utf8",
+  );
+  assert.match(sddm, /color:\s*"#52000000"/i);
+  assert.match(greeter, /color:\s*"#52000000"/i);
 });
 
 test("invalid values use safe defaults and do not parse other sections", () => {

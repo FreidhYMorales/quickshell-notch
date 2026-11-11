@@ -29,7 +29,10 @@ export function readPreviewSettings(stateHome) {
   const base = join(stateHome, "quickshell-notch");
   const target = firstLine(read(join(base, "sddm-target.txt")));
   const dataDir = target[0] === "/" ? target : join(base, "sddm");
-  const theme = previewTheme("", read(join(dataDir, "theme.conf.user")));
+  const theme = previewTheme(
+    read(join(dataDir, "theme.conf")),
+    read(join(dataDir, "theme.conf.user")),
+  );
   const wallpaper = firstLine(read(join(base, "wallpaper.txt")));
   return { background: fileUrl(wallpaper), theme };
 }

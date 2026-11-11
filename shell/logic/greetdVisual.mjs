@@ -38,3 +38,20 @@ export function previewTheme(base, override) {
     foreground: colour(values.foreground, "#e4e4e4"),
   };
 }
+
+export function visualSettings(themeText, wallpaperText, baseThemeText) {
+  const theme = previewTheme(baseThemeText || "", themeText);
+  const path = String(wallpaperText || "").split(/\r?\n/)[0].trim();
+  const background = path[0] === "/"
+    ? "file://" +
+      path.split("/").map((part, index) =>
+        index === 0 ? "" : encodeURIComponent(part)
+      ).join("/")
+    : "";
+  return {
+    background: background,
+    accent: theme.accent,
+    foreground: theme.foreground,
+    notchWidth: theme.notchWidth,
+  };
+}
