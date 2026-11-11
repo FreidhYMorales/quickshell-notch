@@ -9,6 +9,29 @@ const ENV = {
   QT_QUICK_BACKEND: "software",
 };
 
+test("the waiting lock pulses in size and accent, and preserves the error colour", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(new URL("./greetd-lock-colour-probe.qml", import.meta.url)),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 6000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
+test("footer controls are inert in preview and dispatch through an explicit backend", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(new URL("./greetd-footer-probe.qml", import.meta.url)),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
+test("the isolated visual preview shows the real clock and safe simulated controls", () => {
+  const result = spawnSync(QML, [
+    fileURLToPath(
+      new URL("./greetd-parity-preview-probe.qml", import.meta.url),
+    ),
+  ], { env: { ...process.env, ...ENV }, encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 42, result.stdout + result.stderr);
+});
+
 test("the account avatar matches SDDM and selection is blocked during authentication", () => {
   const result = spawnSync(QML, [
     fileURLToPath(new URL("./greetd-account-probe.qml", import.meta.url)),

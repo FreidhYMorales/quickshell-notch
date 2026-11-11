@@ -15,18 +15,44 @@ Three pieces share one login surface (`preview/Main.qml`):
 
 The surface keeps the shared concave ear mask, the notch width and palette
 staged for the SDDM greeter, and the saved wallpaper (still image, GIF or muted
-video). The account list uses the GECOS real name; there are no avatars or
-AccountsService lookups yet.
+video). The account list uses the GECOS real name. It tries the standard
+AccountsService icon cache, falling back to the vector silhouette if the
+greeter cannot read an image; it does not require the AccountsService daemon.
 
 ## Visual checks
 
 Run `./scripts/test-greetd-preview.sh` from the repository root for the
 simulation and `node scripts/test-greetd-protocol.mjs` for the fake-socket
-version. Both open a normal window and never authenticate anything. A simulated
-success closes the window after the notch frame; close it normally to exit.
+version. Both open a normal window and never authenticate anything. The visual
+preview starts with the clock; click or press a key to open the login. Click the
+arrow or press Enter to simulate success; press Ctrl+Shift+F to simulate a
+failure. Its password field is disabled and its power controls do nothing.
+Close the window normally to exit.
 
 Do not enter real credentials into either command: the field is only real
 inside `greetd-shell.qml`, which greetd starts.
+
+## Greeter visual settings
+
+The real entrypoint accepts an administrator-provided absolute directory in
+`NOTCH_GREETD_VISUAL_DIR`. It reads optional `theme.conf` and `theme.conf.user`
+(the SDDM `[General]` palette and notch presets, with the latter taking
+precedence) and `wallpaper.txt` (one absolute wallpaper path).
+Both files and the wallpaper must be readable by the greeter account. Missing
+or invalid values fall back to the default palette and no wallpaper. The
+existing `NOTCH_GREETD_PREVIEW_*` variables override these settings when set.
+This only supplies the runtime interface: it does not deploy files, change
+greetd configuration or grant access to private home directories.
+
+The footer offers a styled session selector, a virtual keyboard, back, power
+off and reboot. The selector currently has only Hyprland: unlike SDDM, greetd
+does not provide a session model, and other desktop sessions are not launched.
+Real power buttons call `systemctl` as the greeter and may require logind/polkit
+authorization; their real effect has not been tested. Preview buttons cannot
+power off or reboot the machine. Qt Virtual Keyboard must be installed and the
+compositor must enable the `qtvirtualkeyboard` input method for typing to work.
+In the visual simulation the keyboard button shows its panel for inspection,
+but the password field remains disabled and cannot accept real credentials.
 
 ## Tests
 
@@ -78,7 +104,9 @@ deferred until after the reinstall.
 ## Not done yet
 
 - No deployment under `cage`, no greetd config and no installed theme.
-- Avatars, fingerprint and multi-monitor placement are out of scope here.
+- Real power authorization, virtual keyboard input and avatar permissions need
+  testing in the deployed greeter environment; fingerprint and multi-monitor
+  placement remain deferred.
 - A stalled PAM attempt expands and shows a pending message after 20 seconds.
   It is not cancelled, and another login cannot start until PAM responds. A
   required interactive PAM prompt also expands the greeter and remains

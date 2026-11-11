@@ -25,6 +25,7 @@ const child = spawn(qml, [
   theme.accent,
   theme.foreground,
   String(theme.notchWidth),
+  "notch-parity-preview",
 ], { stdio: "inherit" });
 
 child.once("error", (error) => {

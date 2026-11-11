@@ -2,14 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:net";
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { endianness, tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // The real greeter entrypoint, pointed at a private fake greetd socket. The
 // fake server never executes the requested session command.
-async function runGreeter(failure, credentials) {
+async function runGreeter(failure, credentials, visualDir) {
   const dir = mkdtempSync(join(tmpdir(), "notch-real-"));
   const path = join(dir, "socket");
   const requests = [];
@@ -73,6 +73,7 @@ async function runGreeter(failure, credentials) {
         NOTCH_GREETD_AUTOTEST: "1",
         NOTCH_GREETD_TEST_FAILURE: failure ? "1" : "0",
         NOTCH_GREETD_TEST_SESSION: "mock-session-not-executed",
+        NOTCH_GREETD_VISUAL_DIR: visualDir || "",
         ...(credentials
           ? {
             NOTCH_GREETD_TEST_USER: credentials.user,
@@ -107,6 +108,23 @@ async function runGreeter(failure, credentials) {
     rmSync(dir, { recursive: true, force: true });
   }
 }
+
+test("the real entrypoint loads explicit shared visual settings", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "notch-greeter-visual-"));
+  try {
+    writeFileSync(
+      join(dir, "theme.conf.user"),
+      "[General]\naccent=#123456\nnormalNotchWidth=444\n",
+    );
+    writeFileSync(join(dir, "wallpaper.txt"), "/shared/example.png\n");
+    const { code, output } = await runGreeter(false, null, dir);
+    assert.equal(code, 0, output);
+    assert.match(output, /real greeter launch passed/);
+    assert.doesNotMatch(output, /TypeError|ReferenceError|cannot assign/i);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test("the real greeter authenticates, compresses, then launches the session", async () => {
   const { code, output, requests } = await runGreeter(false);

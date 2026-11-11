@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Greetd
 import "./shell/logic/users.mjs" as Users
+import "./shell/logic/greetdVisual.mjs" as Visual
 
 // Real greetd greeter. greetd starts it with GREETD_SOCK pointing at its
 // socket; without that socket it refuses to run. Accounts come from
@@ -28,6 +29,10 @@ ShellRoot {
     readonly property string previewAccent: Quickshell.env("NOTCH_GREETD_PREVIEW_ACCENT")
     readonly property string previewForeground: Quickshell.env("NOTCH_GREETD_PREVIEW_FOREGROUND")
     readonly property string previewWidth: Quickshell.env("NOTCH_GREETD_PREVIEW_WIDTH")
+    // Deployment may point to a greeter-readable, administrator-managed
+    // directory containing theme.conf.user and wallpaper.txt. No user home is
+    // searched implicitly at the login screen.
+    readonly property string visualDirectory: Quickshell.env("NOTCH_GREETD_VISUAL_DIR")
 
     Component.onCompleted: {
         if (!socketPath || !Greetd.available) {
@@ -45,15 +50,12 @@ ShellRoot {
             demo: false,
             protocolBackend: backend
         };
-        if (previewBackground)
-            properties.background = previewBackground;
-        if (/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(previewAccent))
-            properties.accent = previewAccent;
-        if (/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(previewForeground))
-            properties.foreground = previewForeground;
+        const visuals = Visual.visualSettings(themeFile.text(), wallpaperFile.text(), baseThemeFile.text());
+        properties.background = previewBackground || visuals.background;
+        properties.accent = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(previewAccent) ? previewAccent : visuals.accent;
+        properties.foreground = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(previewForeground) ? previewForeground : visuals.foreground;
         const width = Number(previewWidth);
-        if (isFinite(width) && width > 0)
-            properties.notchWidth = width;
+        properties.notchWidth = isFinite(width) && width > 0 ? width : visuals.notchWidth;
         preview = component.createObject(null, properties);
         if (!preview) {
             console.error("could not create the login surface");
@@ -82,6 +84,24 @@ ShellRoot {
         onLoaded: root.applyUsers()
         onLoadFailed: root.users = []
     }
+    FileView {
+        id: themeFile
+        path: root.visualDirectory ? root.visualDirectory + "/theme.conf.user" : ""
+        blockLoading: true
+        printErrors: false
+    }
+    FileView {
+        id: baseThemeFile
+        path: root.visualDirectory ? root.visualDirectory + "/theme.conf" : ""
+        blockLoading: true
+        printErrors: false
+    }
+    FileView {
+        id: wallpaperFile
+        path: root.visualDirectory ? root.visualDirectory + "/wallpaper.txt" : ""
+        blockLoading: true
+        printErrors: false
+    }
     QtObject {
         id: backend
         function begin(user, password) {
@@ -98,6 +118,19 @@ ShellRoot {
         }
         function respond(text) {
             Greetd.respond(text);
+        }
+        function power(action) {
+            if (action === "poweroff" || action === "reboot") {
+                powerProcess.command = ["systemctl", action];
+                powerProcess.running = true;
+            }
+        }
+    }
+    Process {
+        id: powerProcess
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0)
+                console.warn("greeter power action failed: " + exitCode);
         }
     }
     Connections {

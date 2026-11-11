@@ -3,10 +3,12 @@ import QtQuick.Controls
 import QtQuick.Window
 import QtQuick.Effects
 import QtQuick.Shapes
+import QtQuick.VirtualKeyboard
 import QtMultimedia
 import "../../shell/logic/greetdPreview.mjs" as Flow
 import "../../shell/logic/wallpaperState.mjs" as WallpaperState
 import "../../shell/logic/earGeometry.mjs" as EarGeometry
+import "../../shell/logic/users.mjs" as Users
 
 // Notch login surface shared by the isolated simulation (demo: true) and a
 // real greetd session (demo: false). Credentials only exist in real mode.
@@ -19,6 +21,7 @@ Window {
     color: "#141a23"
     property string stateName: "form"
     property bool simulateFailure: false
+    property int simulatedDelayMs: 1600
     // Visual tokens come from the launcher as
     // `-- notch-preview <background> <accent> <foreground> <notchWidth>`;
     // a `-` token keeps the built-in default.
@@ -44,12 +47,45 @@ Window {
     // Set by the entrypoint: true for the isolated simulation, false for a
     // real greetd session.
     property bool demo: true
-    property string view: demo ? "login" : "clock"
+    property bool parityPreview: Qt.application.arguments.indexOf("notch-parity-preview") !== -1
+    readonly property bool realisticSurface: !demo || parityPreview
+    readonly property alias compressionRunning: exitMorph.running
+    readonly property alias morphWidth: morph.width
+    readonly property alias morphHeight: morph.height
+    property string view: realisticSurface ? "clock" : "login"
+    property real loginProgress: view === "login" ? 1 : 0
+    Behavior on loginProgress {
+        NumberAnimation {
+            duration: 440
+            easing.type: Easing.InOutCubic
+        }
+    }
     property date now: new Date()
-    property var users: []
+    property var users: parityPreview ? [
+        {
+            name: "preview-user",
+            displayName: "Usuario de prueba"
+        },
+        {
+            name: "preview-guest",
+            displayName: "Invitado"
+        }
+    ] : []
     readonly property alias accountAvatar: avatarCircle
-    property string username: ""
+    readonly property alias loginControls: loginControls
+    readonly property alias passwordField: passwordInput
+    readonly property alias lockGlyph: lockGlyph
+    readonly property alias submitIcon: submitIcon
+    readonly property alias sessionIcon: sessionIcon
+    readonly property alias sessionSelector: sessions
+    readonly property alias virtualKeyboardPanel: virtualKeyboard
+    readonly property real clockPosition: clockGroup.y
+    readonly property bool simulationButtonsVisible: simulationButtons.visible
+    readonly property bool simulationArrowVisible: simulationArrow.visible
+    readonly property bool footerPowerEnabled: !demo && footer.enabled
+    property string username: parityPreview ? "preview-user" : ""
     property bool choosingUser: false
+    property bool keyboardRequested: false
     // A visible PAM prompt awaits typed text instead of the password.
     property bool awaitingPrompt: false
     property bool promptSecret: false
@@ -81,15 +117,40 @@ Window {
         if (stateName !== "form" && stateName !== "error")
             return;
         view = "login";
-        Qt.callLater(() => passwordInput.forceActiveFocus());
+        if (!demo)
+            Qt.callLater(() => passwordInput.forceActiveFocus());
     }
 
     function showClock() {
         if (stateName !== "form" && stateName !== "error")
             return;
         choosingUser = false;
+        if (keyboardRequested || Qt.inputMethod.visible)
+            Qt.inputMethod.hide();
+        keyboardRequested = false;
         view = "clock";
         clockKeys.forceActiveFocus();
+    }
+
+    function requestPower(action) {
+        if (demo || stateName !== "form" && stateName !== "error")
+            return;
+        if ((action === "poweroff" || action === "reboot") && protocolBackend && typeof protocolBackend.power === "function")
+            protocolBackend.power(action);
+    }
+
+    function toggleKeyboard() {
+        if (demo && !parityPreview)
+            return;
+        keyboardRequested = !keyboardRequested;
+        if (parityPreview)
+            return;
+        if (keyboardRequested) {
+            passwordInput.forceActiveFocus();
+            Qt.inputMethod.show();
+        } else {
+            Qt.inputMethod.hide();
+        }
     }
 
     Timer {
@@ -105,12 +166,16 @@ Window {
         if (stateName === "error")
             dispatch("edit");
         passwordInput.text = "";
+        if (keyboardRequested || Qt.inputMethod.visible)
+            Qt.inputMethod.hide();
+        keyboardRequested = false;
         root.contentItem.forceActiveFocus();
         protocolMessage = "";
         failureText = "";
+        choosingUser = false;
         authTimedOut = false;
         dispatch("submit");
-        if (!demo) {
+        if (realisticSurface) {
             authDeadline.restart();
             returnMorph.stop();
             exitMorph.restart();
@@ -131,7 +196,7 @@ Window {
 
     // Real credentials. Never logged, stored or reused after the attempt.
     function submit(user, password) {
-        if (!user || !password || !protocolBackend)
+        if (demo || !user || !password || !protocolBackend)
             return;
         if (!startAuthentication())
             return;
@@ -154,6 +219,8 @@ Window {
             protocolBackend.respond(text);
             return;
         }
+        if (parityPreview)
+            return;
         if (stateName !== "form" && stateName !== "error")
             return;
         if (passwordInput.text.length === 0) {
@@ -169,7 +236,7 @@ Window {
         authDeadline.stop();
         authTimedOut = false;
         dispatch(failed ? "failure" : "success");
-        if (demo) {
+        if (demo && !parityPreview) {
             exitMorph.restart();
         } else if (reveal <= 0.001 && !returnMorph.running) {
             finishCompression();
@@ -197,6 +264,10 @@ Window {
                 return user.displayName;
         }
         return username;
+    }
+
+    function avatarSource() {
+        return demo ? "" : Users.avatarUrl(username);
     }
 
     function chooseAccount(name) {
@@ -308,33 +379,51 @@ Window {
             x: -morph.x
             width: root.width
             height: root.height
-            color: "#a0000000"
+            color: "#52000000"
 
-            Column {
-                anchors.centerIn: parent
-                spacing: 14
+            Item {
+                id: clockGroup
+                width: 600
+                height: 190 - 70 * root.loginProgress
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: root.realisticSurface ? (root.height - 190) / 2 + (root.height * 0.25 - (root.height - 190) / 2) * root.loginProgress : (root.height - 190) / 2
                 opacity: root.reveal
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatTime(root.now, "hh:mm")
-                    font.family: "IosevkaTerm Nerd Font"
-                    font.pixelSize: root.demo ? 76 : (root.view === "clock" ? 100 : 70)
-                    color: root.foreground
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 4
+                    scale: root.realisticSurface ? 1 - 0.30 * root.loginProgress : 1
+                    transformOrigin: Item.Center
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Qt.formatTime(root.now, "hh:mm")
+                        font.family: "IosevkaTerm Nerd Font"
+                        font.pixelSize: root.realisticSurface ? 100 : 76
+                        color: root.foreground
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: root.realisticSurface
+                        text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
+                        font.family: "IosevkaTerm Nerd Font"
+                        font.pixelSize: 23
+                        color: root.accent
+                    }
                 }
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible: !root.demo
-                    text: Qt.formatDate(root.now, Qt.locale("es_GT"), "dddd, d MMMM yyyy")
-                    font.family: "IosevkaTerm Nerd Font"
-                    font.pixelSize: root.view === "clock" ? 23 : 16
-                    color: root.accent
-                }
+            }
+            Column {
+                id: loginPanel
+                width: 284
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: root.realisticSurface ? root.height * (0.46 + 0.035 * (1 - root.loginProgress)) : root.height * 0.48
+                spacing: 12
+                opacity: root.reveal
                 // Real mode: current account, clickable when there is a choice.
                 Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: 284
                     height: 146
-                    visible: !root.demo && root.view === "login" && root.users.length > 0
+                    visible: root.realisticSurface && (root.view === "login" || root.loginProgress > 0) && root.users.length > 0
+                    opacity: root.loginProgress
                     Rectangle {
                         id: avatarCircle
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -342,10 +431,21 @@ Window {
                         height: 116
                         radius: 58
                         color: "#303946"
+                        clip: true
+                        Image {
+                            id: accountPhoto
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            source: root.avatarSource()
+                            asynchronous: true
+                            fillMode: Image.PreserveAspectCrop
+                            visible: status === Image.Ready
+                        }
                         Canvas {
                             anchors.centerIn: parent
                             width: 66
                             height: 66
+                            visible: !accountPhoto.visible
                             onPaint: {
                                 const ctx = getContext("2d");
                                 ctx.clearRect(0, 0, width, height);
@@ -361,7 +461,7 @@ Window {
                             }
                         }
                         TapHandler {
-                            enabled: root.users.length > 1 && (root.stateName === "form" || root.stateName === "error")
+                            enabled: root.view === "login" && root.users.length > 1 && (root.stateName === "form" || root.stateName === "error")
                             onTapped: root.choosingUser = !root.choosingUser
                         }
                     }
@@ -378,7 +478,8 @@ Window {
                 Column {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 4
-                    visible: !root.demo && root.view === "login" && root.choosingUser && root.users.length > 1
+                    visible: root.realisticSurface && root.view === "login" && root.choosingUser && root.users.length > 1
+                    opacity: root.loginProgress
                     Repeater {
                         model: root.users
                         delegate: Rectangle {
@@ -402,45 +503,74 @@ Window {
                 TextField {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: 280
-                    visible: !root.demo && root.view === "login" && root.users.length === 0
+                    visible: root.realisticSurface && (root.view === "login" || root.loginProgress > 0) && root.users.length === 0
+                    enabled: root.view === "login"
+                    opacity: root.loginProgress
                     placeholderText: "Usuario"
                     text: root.username
                     onTextEdited: root.username = text
                     color: root.foreground
                 }
-                Row {
+                Rectangle {
+                    id: loginControls
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 12
-                    visible: root.demo || root.view === "login"
+                    width: 284
+                    height: 40
+                    radius: 20
+                    color: "black"
+                    border.width: root.stateName === "error" ? 2 : 0
+                    border.color: "#ff7777"
+                    visible: !root.realisticSurface || root.view === "login" || root.loginProgress > 0
+                    enabled: !root.realisticSurface || root.view === "login"
+                    opacity: root.realisticSurface ? root.loginProgress : 1
                     TextField {
                         id: passwordInput
-                        width: 280
-                        placeholderText: root.demo ? "Demo only — do not enter a real password" : (root.awaitingPrompt ? "Respuesta" : (root.stateName === "authenticating" ? root.statusText() : "Contraseña"))
+                        anchors.left: parent.left
+                        anchors.right: simulationArrow.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        leftPadding: 15
+                        placeholderText: root.demo && !root.parityPreview ? "Solo simulación — no uses contraseñas" : (root.awaitingPrompt ? "Respuesta" : (root.stateName === "authenticating" ? root.statusText() : "Contraseña"))
                         echoMode: root.awaitingPrompt && !root.promptSecret ? TextInput.Normal : TextInput.Password
-                        enabled: root.stateName === "form" || root.stateName === "error" || root.awaitingPrompt
+                        enabled: !root.parityPreview && (root.stateName === "form" || root.stateName === "error" || root.awaitingPrompt)
                         onActiveFocusChanged: if (activeFocus && root.stateName === "error")
                             root.dispatch("edit")
                         onAccepted: root.submitEntered()
-                        background: Rectangle {
-                            radius: 20
-                            color: "black"
-                            border.width: root.stateName === "error" ? 2 : 0
-                            border.color: "#ff7777"
-                        }
+                        background: Item {}
+                        placeholderTextColor: "#a6b1bf"
                         color: root.foreground
-                        transform: Translate {
-                            id: inputOffset
+                    }
+                    Item {
+                        id: simulationArrow
+                        width: 40
+                        height: 40
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !root.demo || root.parityPreview
+                        Image {
+                            id: submitIcon
+                            anchors.centerIn: parent
+                            width: 20
+                            height: 20
+                            source: "../../sddm/notch/icons/arrow-right.svg"
+                            fillMode: Image.PreserveAspectFit
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                colorization: 1
+                                colorizationColor: root.accent
+                            }
+                        }
+                        TapHandler {
+                            onTapped: {
+                                if (root.parityPreview)
+                                    root.submitDemo(false);
+                                else
+                                    root.submitEntered();
+                            }
                         }
                     }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: !root.demo
-                        text: "→"
-                        color: root.accent
-                        font.pixelSize: 25
-                        TapHandler {
-                            onTapped: root.submitEntered()
-                        }
+                    transform: Translate {
+                        id: inputOffset
                     }
                 }
                 Text {
@@ -449,14 +579,15 @@ Window {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     text: root.statusText()
-                    visible: root.demo || (root.view === "login" && (root.stateName !== "authenticating" || root.awaitingPrompt))
+                    visible: (!root.realisticSurface && root.demo) || (root.view === "login" && (root.stateName !== "authenticating" || root.awaitingPrompt))
                     color: root.stateName === "error" ? "#ff7777" : root.accent
                     font.pixelSize: 15
                 }
                 Row {
+                    id: simulationButtons
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 12
-                    visible: root.demo
+                    visible: root.demo && !root.parityPreview
                     Button {
                         text: "Simulate success"
                         enabled: root.stateName === "form" || root.stateName === "error"
@@ -473,7 +604,7 @@ Window {
                     width: 420
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    visible: root.demo
+                    visible: root.demo && !root.parityPreview
                     text: root.protocolBackend ? "Private simulated socket; no real password, PAM or session launch." : "No password, PAM, greetd or session launch is used. Close this window to exit."
                     color: "#dddddd"
                     font.pixelSize: 13
@@ -498,13 +629,15 @@ Window {
             }
         }
         Text {
+            id: lockGlyph
+            readonly property real pulseAmount: Math.max(0, Math.min(1, (scale - 1) / 0.12))
             anchors.centerIn: parent
             text: "󰌾"
-            color: root.stateName === "shaking" || root.stateName === "error" ? "#ff7777" : root.foreground
+            color: root.stateName === "shaking" || root.stateName === "error" ? "#ff7777" : Qt.rgba(root.foreground.r + (root.accent.r - root.foreground.r) * pulseAmount, root.foreground.g + (root.accent.g - root.foreground.g) * pulseAmount, root.foreground.b + (root.accent.b - root.foreground.b) * pulseAmount, 1)
             font.family: "IosevkaTerm Nerd Font"
             font.pixelSize: 18
             SequentialAnimation on scale {
-                running: !root.demo && root.stateName === "authenticating" && root.reveal < 0.05
+                running: root.realisticSurface && root.stateName === "authenticating" && root.reveal < 0.05
                 loops: Animation.Infinite
                 NumberAnimation {
                     to: 1.12
@@ -524,7 +657,7 @@ Window {
     }
     Item {
         id: clockKeys
-        focus: !root.demo && root.view === "clock"
+        focus: root.realisticSurface && root.view === "clock"
         Keys.onPressed: event => {
             if (root.view === "clock") {
                 root.showLogin();
@@ -534,17 +667,192 @@ Window {
     }
     Shortcut {
         sequence: "Escape"
-        enabled: !root.demo && root.view === "login" && (root.stateName === "form" || root.stateName === "error")
+        enabled: root.realisticSurface && root.view === "login" && (root.stateName === "form" || root.stateName === "error")
         onActivated: root.showClock()
+    }
+    Shortcut {
+        sequence: "Return"
+        enabled: root.parityPreview && root.view === "login" && (root.stateName === "form" || root.stateName === "error")
+        onActivated: root.submitDemo(false)
+    }
+    Shortcut {
+        sequence: "Ctrl+Shift+F"
+        enabled: root.parityPreview && root.view === "login" && (root.stateName === "form" || root.stateName === "error")
+        onActivated: root.submitDemo(true)
     }
     MouseArea {
         anchors.fill: parent
-        enabled: !root.demo && root.view === "clock" && (root.stateName === "form" || root.stateName === "error")
+        enabled: root.realisticSurface && root.view === "clock" && (root.stateName === "form" || root.stateName === "error")
         onClicked: root.showLogin()
+    }
+    InputPanel {
+        id: virtualKeyboard
+        width: Math.min(root.width / 2, 600)
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: footer.top
+        anchors.bottomMargin: 12
+        active: root.parityPreview ? root.keyboardRequested : Qt.inputMethod.visible
+        visible: root.keyboardRequested && root.view === "login" && (!root.demo || root.parityPreview)
+        layer.enabled: true
+        layer.effect: ShaderEffect {
+            property color darkColor: Qt.darker(root.accent, 4)
+            property color lightColor: root.foreground
+            property size panelSize: Qt.size(virtualKeyboard.width, virtualKeyboard.height)
+            property real cornerRadius: 16
+            fragmentShader: "../../sddm/notch/shaders/keyboard.frag.qsb"
+        }
+        z: 2
+    }
+    Row {
+        id: footer
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 22
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 10
+        z: 3
+        opacity: root.loginProgress * root.reveal * (root.stateName === "authenticating" ? 0 : 1)
+        visible: root.realisticSurface && opacity > 0
+        enabled: root.view === "login" && (root.stateName === "form" || root.stateName === "error")
+        ComboBox {
+            id: sessions
+            width: 190
+            height: 34
+            model: ["Hyprland"]
+            currentIndex: 0
+            font.pixelSize: 12
+            background: Rectangle {
+                radius: 17
+                color: sessions.hovered || sessions.popup.visible ? "#303946" : "#cc000000"
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 160
+                    }
+                }
+            }
+            contentItem: Text {
+                leftPadding: 14
+                rightPadding: 26
+                text: sessions.displayText
+                color: "white"
+                font.pixelSize: 12
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+            indicator: Item {
+                width: 26
+                height: parent.height
+                x: parent.width - width - 4
+                Image {
+                    id: sessionIcon
+                    anchors.centerIn: parent
+                    width: 16
+                    height: 16
+                    source: "../../sddm/notch/icons/chevron-down.svg"
+                    fillMode: Image.PreserveAspectFit
+                    rotation: sessions.popup.visible ? 180 : 0
+                    scale: sessions.hovered || sessions.popup.visible ? 1.2 : 1
+                    Behavior on rotation {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.InOutCubic
+                        }
+                    }
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 160
+                        }
+                    }
+                }
+            }
+            delegate: ItemDelegate {
+                required property int index
+                required property string modelData
+                width: ListView.view ? ListView.view.width : sessions.width - 2 * sessions.popup.padding
+                highlighted: sessions.highlightedIndex === index
+                contentItem: Text {
+                    text: modelData
+                    color: "white"
+                    font.pixelSize: 12
+                    verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle {
+                    color: parent.highlighted ? "#303946" : "#171b22"
+                    radius: Math.min(width, height) / 2
+                }
+            }
+            popup: Popup {
+                y: -implicitHeight - 6
+                width: sessions.width
+                padding: 5
+                implicitHeight: contentItem.implicitHeight + 10
+                contentItem: ListView {
+                    implicitHeight: contentHeight
+                    model: sessions.popup.visible ? sessions.delegateModel : null
+                    currentIndex: sessions.highlightedIndex
+                    clip: true
+                }
+                background: Rectangle {
+                    color: "#171b22"
+                    radius: 17
+                }
+            }
+        }
+        Repeater {
+            model: [
+                {
+                    icon: "keyboard.svg",
+                    hint: "Teclado virtual",
+                    action: "keyboard"
+                },
+                {
+                    icon: "chevron-left.svg",
+                    hint: "Volver",
+                    action: "back"
+                },
+                {
+                    icon: "power.svg",
+                    hint: "Apagar",
+                    action: "poweroff"
+                },
+                {
+                    icon: "rotate-ccw.svg",
+                    hint: "Reiniciar",
+                    action: "reboot"
+                }
+            ]
+            delegate: Button {
+                required property var modelData
+                width: 36
+                height: 34
+                ToolTip.visible: hovered
+                ToolTip.text: modelData.hint
+                background: Rectangle {
+                    radius: 17
+                    color: parent.hovered || (modelData.action === "keyboard" && root.keyboardRequested) ? "#303946" : "#cc000000"
+                }
+                contentItem: Item {
+                    Image {
+                        anchors.centerIn: parent
+                        width: 24
+                        height: 24
+                        source: "../../sddm/notch/icons/" + modelData.icon
+                        fillMode: Image.PreserveAspectFit
+                    }
+                }
+                onClicked: {
+                    if (modelData.action === "back")
+                        root.showClock();
+                    else if (modelData.action === "keyboard")
+                        root.toggleKeyboard();
+                    else
+                        root.requestPower(modelData.action);
+                }
+            }
+        }
     }
     Timer {
         id: simulatedAuth
-        interval: 650
+        interval: root.parityPreview ? root.simulatedDelayMs : 650
         onTriggered: root.completeAuthentication(root.simulateFailure)
     }
     SequentialAnimation {

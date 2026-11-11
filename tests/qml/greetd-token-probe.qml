@@ -30,6 +30,11 @@ Window {
         id: check
         interval: 50
         onTriggered: {
+            root.preview.reveal = 0;
+            if (root.preview.morphWidth !== root.preview.notchWidth || root.preview.morphHeight !== 32 || root.preview.notchHeight !== 32 || root.preview.earRadius !== 12 || root.preview.cornerRadius !== 18) {
+                Qt.exit(12);
+                return;
+            }
             if (root.mode === "themed") {
                 if (!Qt.colorEqual(root.preview.accent, "#123456")) {
                     Qt.exit(4);

@@ -30,6 +30,10 @@ Window {
             Qt.exit(3);
             return;
         }
+        if (surface.avatarSource().toString() !== "file:///var/lib/AccountsService/icons/alice") {
+            Qt.exit(6);
+            return;
+        }
         surface.chooseAccount("bob");
         if (surface.username !== "bob" || surface.displayName() !== "Bob") {
             Qt.exit(4);
