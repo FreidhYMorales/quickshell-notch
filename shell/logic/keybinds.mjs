@@ -35,3 +35,16 @@ export function bindsFromJson(text) {
   }
   return { available: true, rows: rows };
 }
+
+// Scaffold only: the behaviour lands with the next commit.
+export function filterKeybinds(rows, query) {
+  const q = (query ?? "").toLowerCase();
+  if (!q) return rows;
+  const kept = [];
+  for (const row of rows) {
+    if ((row.keys + " " + row.description).toLowerCase().includes(q)) {
+      kept.push(row);
+    }
+  }
+  return kept;
+}
