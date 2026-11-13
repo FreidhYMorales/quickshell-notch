@@ -38,7 +38,7 @@
 26. [x] 64af4aa As a user, I want to browse and search launcher commands with a description pane so that I can understand the available setup actions. Requires: #08
 27. [x] IMPLEMENTED AND LOCALLY VERIFIED (wallpaper command view present in main; earlier PR #26 status not independently verified) As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
 28. [x] 116b9a6 As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
-29. [ ] As a user, I want the keybinds command view so that I can access my keybinds from the launcher. Requires: #26
+29. [~] As a user, I want the keybinds command view so that I can access my keybinds from the launcher. Requires: #26
 30. [x] 5b49c55 As a user, I want to lock my session from the notch shell and unlock it with my password so that my session stays protected.
 31. [x] 11498fb As a user, I want an idle chain (screensaver and lock together, then suspend) with my old timeouts so that an unattended session locks and sleeps on its own. Requires: #30, #12
 32. [x] 6e7946a As a user, I want every suspend to lock the notch session first so that my session is already protected when it resumes. Requires: #30

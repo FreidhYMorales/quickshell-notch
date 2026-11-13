@@ -77,6 +77,10 @@ ShellRoot {
                 console.error("keybinds view: key label or description missing");
                 return Qt.exit(1);
             }
+            if (Visual.findText(root.target.content, "Not available yet")) {
+                console.error("keybinds view: unavailable notice still shown");
+                return Qt.exit(1);
+            }
             console.log("keybinds view: rows with keys and description");
             Qt.exit(0);
         }
