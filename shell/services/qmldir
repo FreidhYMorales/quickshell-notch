@@ -21,3 +21,4 @@ singleton Idle Idle.qml
 singleton SleepLock SleepLock.qml
 singleton Requests Requests.qml
 singleton Theme Theme.qml
+singleton Keybinds Keybinds.qml

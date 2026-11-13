@@ -62,6 +62,8 @@ qml-test:
 	node --test --test-concurrency=1 tests/qml/polkit-*.mjs
 	# Serial: each launcher probe takes the exclusive keyboard.
 	node --test --test-concurrency=1 tests/qml/launcher-*.mjs
+	# Serial: the keybinds service probe stubs `hyprctl` on PATH.
+	node --test --test-concurrency=1 tests/qml/keybinds-*.mjs
 	# Serial: the launcher-driven theme probes press keys too.
 	node --test --test-concurrency=1 $(THEME_KEYS)
 
