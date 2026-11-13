@@ -24,6 +24,7 @@ Singleton {
     readonly property string wallpaperHint: "← → Browse · Enter Apply · Esc Back"
     readonly property string themeTitle: "Theme"
     readonly property string keybindsTitle: "Keybinds"
+    readonly property string keybindsUnavailable: "Keybinds unavailable"
     readonly property string themeHint: "↑ ↓ Choose · Enter Apply · Esc Back"
     readonly property string themeActiveMark: "✓"
     // Friendly names for the nine matugen scheme types, keyed by id.

@@ -35,6 +35,7 @@ Item {
 
             width: parent.width
             height: parent.height - title.height - Layout.launcherGap
+            visible: Keybinds.available
             model: Keybinds.rows
             clip: true
 
@@ -85,6 +86,16 @@ Item {
                     font.pixelSize: Fonts.launcherItem
                 }
             }
+        }
+        Text {
+            id: unavailable
+
+            width: parent.width
+            visible: !Keybinds.available
+            text: Strings.keybindsUnavailable
+            color: root.scheme.muted
+            font.family: Fonts.family
+            font.pixelSize: Fonts.launcherItem
         }
     }
 }
