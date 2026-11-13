@@ -8,6 +8,7 @@ ShellRoot {
     id: root
     property var target: null
     property var center: Qt.createQmlObject('import QtQuick; import "' + Quickshell.env("NOTCH_CENTER_URL") + '" as Center; QtObject { property var store: Center.CenterStore }', root)
+    readonly property bool failing: Quickshell.env("NOTCH_FAKE_KEYBINDS") === "fail"
 
     function findCallback(items, name) {
         for (const item of items) {
@@ -64,6 +65,18 @@ ShellRoot {
             if (root.center.store.state.global.keyboard?.sub !== "keybinds") {
                 console.error("keybinds view: not open");
                 return Qt.exit(1);
+            }
+            if (root.failing) {
+                if (Visual.findNamed(root.target.content, "keybinds-row-0")) {
+                    console.error("keybinds view: broken registry still shows rows");
+                    return Qt.exit(1);
+                }
+                if (!Visual.findText(root.target.content, "Keybinds unavailable")) {
+                    console.error("keybinds view: unavailable line missing");
+                    return Qt.exit(1);
+                }
+                console.log("keybinds view: unavailable line shown");
+                return Qt.exit(0);
             }
             if (!Visual.findNamed(root.target.content, "keybinds-row-0") || !Visual.findNamed(root.target.content, "keybinds-row-1")) {
                 console.error("keybinds view: registry rows missing");
