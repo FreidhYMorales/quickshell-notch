@@ -20,3 +20,14 @@ test("binds map to a key label and keep only described ones", () => {
     ],
   });
 });
+
+test("an unreadable registry is reported instead of thrown", () => {
+  assert.deepEqual(bindsFromJson("hyprctl: compositor not running"), {
+    available: false,
+    rows: [],
+  });
+  assert.deepEqual(bindsFromJson('{"error":"unknown request"}'), {
+    available: false,
+    rows: [],
+  });
+});
