@@ -22,7 +22,14 @@ function keyLabel(bind) {
 // hardware or self-evident ones and stay out, like the old bar did.
 export function bindsFromJson(text) {
   const rows = [];
-  for (const bind of JSON.parse(text)) {
+  let binds;
+  try {
+    binds = JSON.parse(text);
+  } catch (_e) {
+    return { available: false, rows: [] };
+  }
+  if (!Array.isArray(binds)) return { available: false, rows: [] };
+  for (const bind of binds) {
     if (!bind?.description) continue;
     rows.push({ keys: keyLabel(bind), description: bind.description });
   }
