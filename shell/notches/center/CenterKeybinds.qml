@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../config"
 import "../../services"
+import "../../logic/keybinds.mjs" as KeybindsLogic
 
 // Keybinds sub-view of the launcher: the live Hyprland bind registry, one row
 // per shortcut with its key label and description.
@@ -11,6 +12,8 @@ Item {
 
     required property var screen
     readonly property var scheme: Colours.paletteFor(screen)
+    property string query: ""
+    readonly property var rows: KeybindsLogic.filterKeybinds(Keybinds.rows, query)
 
     signal back
 
@@ -30,13 +33,41 @@ Item {
             font.pixelSize: Fonts.launcherItem
         }
 
+        TextInput {
+            id: field
+
+            objectName: "keybinds-field"
+            width: parent.width
+            focus: root.visible
+            color: root.scheme.onSurface
+            font.family: Fonts.family
+            font.pixelSize: Fonts.launcherItem
+            // Each opening starts from the whole list.
+            onVisibleChanged: if (visible) {
+                clear();
+                forceActiveFocus();
+            }
+            onTextChanged: root.query = text
+        }
+
+        Text {
+            id: noMatches
+
+            width: parent.width
+            visible: Keybinds.available && root.rows.length === 0
+            text: Strings.noMatches
+            color: root.scheme.muted
+            font.family: Fonts.family
+            font.pixelSize: Fonts.launcherItem
+        }
+
         ListView {
             id: list
 
             width: parent.width
-            height: parent.height - title.height - Layout.launcherGap
+            height: parent.height - title.height - field.height - noMatches.height - Layout.launcherGap * 3
             visible: Keybinds.available
-            model: Keybinds.rows
+            model: root.rows
             clip: true
 
             delegate: Item {
