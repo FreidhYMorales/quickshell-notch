@@ -802,3 +802,17 @@ test("theme subview cannot open without the launcher", () => {
   const initial = two();
   assert.equal(reduce(initial, { type: "ThemeOpen" }).state, initial);
 });
+
+test("keybinds command opens a launcher subview and returns to commands", () => {
+  const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
+  const keybinds = reduce(opened, { type: "KeybindsOpen" }).state;
+  assert.equal(keybinds.global.keyboard.sub, "keybinds");
+  assert.equal(keybinds.global.keyboard.kind, "launcher");
+  const returned = reduce(keybinds, { type: "KeybindsBack" }).state;
+  assert.equal(returned.global.keyboard.sub, null);
+});
+
+test("keybinds subview cannot open without the launcher", () => {
+  const initial = two();
+  assert.equal(reduce(initial, { type: "KeybindsOpen" }).state, initial);
+});
