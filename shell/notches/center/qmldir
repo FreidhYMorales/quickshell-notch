@@ -10,3 +10,4 @@ CenterLauncher CenterLauncher.qml
 CenterWallpaper CenterWallpaper.qml
 CenterTheme CenterTheme.qml
 QuickWallpaperSurface QuickWallpaperSurface.qml
+CenterKeybinds CenterKeybinds.qml
