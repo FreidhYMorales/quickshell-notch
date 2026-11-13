@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bindsFromJson } from "../shell/logic/keybinds.mjs";
+import { bindsFromJson, filterKeybinds } from "../shell/logic/keybinds.mjs";
 
 const registry = (binds) => JSON.stringify(binds);
 
@@ -30,4 +30,16 @@ test("an unreadable registry is reported instead of thrown", () => {
     available: false,
     rows: [],
   });
+});
+
+test("the query filters rows by key label or description", () => {
+  const rows = [
+    { keys: "Super + RETURN", description: "Open Terminal" },
+    { keys: "Super + B", description: "Open or focus Browser" },
+    { keys: "XF86AudioMute", description: "Mute" },
+  ];
+  assert.deepEqual(filterKeybinds(rows, "browser"), [rows[1]]);
+  assert.deepEqual(filterKeybinds(rows, "super + return"), [rows[0]]);
+  assert.deepEqual(filterKeybinds(rows, ""), rows);
+  assert.deepEqual(filterKeybinds(rows, "xyz"), []);
 });
