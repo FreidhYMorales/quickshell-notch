@@ -36,7 +36,7 @@ export function bindsFromJson(text) {
   return { available: true, rows: rows };
 }
 
-// Scaffold only: the behaviour lands with the next commit.
+// Rows whose key label or description contains the query, case-insensitively.
 export function filterKeybinds(rows, query) {
   const q = (query ?? "").toLowerCase();
   if (!q) return rows;
