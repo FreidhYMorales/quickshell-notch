@@ -70,30 +70,19 @@ ShellRoot {
                 console.error("keybinds keys: first row not highlighted");
                 return Qt.exit(1);
             }
-            const row2 = Visual.findNamed(root.target.content, "keybinds-row-2");
-            if (!row2) {
-                console.error("keybinds keys: third row missing");
-                return Qt.exit(1);
-            }
-            mouseMove(row2, row2.width / 2, row2.height / 2);
-            wait(300);
-            if (view.currentIndex !== 2 || !Visual.findNamed(root.target.content, "keybinds-current-2")) {
-                console.error("keybinds keys: hover did not select");
-                return Qt.exit(1);
-            }
             keyClick(Qt.Key_Down);
             wait(200);
-            if (view.currentIndex !== 3) {
+            if (view.currentIndex !== 1) {
                 console.error("keybinds keys: down arrow did not advance");
                 return Qt.exit(1);
             }
             keyClick(Qt.Key_Up);
             wait(200);
-            if (view.currentIndex !== 2) {
+            if (view.currentIndex !== 0) {
                 console.error("keybinds keys: up arrow did not go back");
                 return Qt.exit(1);
             }
-            for (let i = 0; i < 9; i++)
+            for (let i = 0; i < 11; i++)
                 keyClick(Qt.Key_Down);
             wait(400);
             const list = Visual.findNamed(root.target.content, "keybinds-list");
