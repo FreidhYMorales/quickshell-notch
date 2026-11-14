@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell.Io
 import "../../config"
 import "../../services"
+import "../../logic/webapp.mjs" as WebappLogic
 
 // Webapp sub-view of the launcher: the name and the URL of the site to turn
 // into a desktop web app, the action that installs it and one status line.
@@ -16,18 +17,41 @@ Item {
     signal back
     signal applied
 
-    // Empty while the form waits; otherwise the line under the fields.
+    // Empty while the form waits; otherwise the line beside the action.
     property string status: ""
+    property bool statusError: false
 
     implicitHeight: Layout.webappViewHeight
+
+    // What each refused field says: the name never reaches the helper with a
+    // path in it, and the URL must be one a browser opens.
+    function message(error) {
+        switch (error) {
+        case "nameMissing":
+            return Strings.webappNameMissing;
+        case "nameUnsafe":
+            return Strings.webappNameUnsafe;
+        case "urlMissing":
+            return Strings.webappUrlMissing;
+        case "urlInvalid":
+            return Strings.webappUrlInvalid;
+        }
+        return "";
+    }
 
     // The helper writes the desktop entry and fetches the favicon; it gets the
     // name and the URL as separate arguments, never through a shell.
     function submit() {
         if (install.running)
             return;
+        const checked = WebappLogic.validateInstall(nameField.text, urlField.text);
+        statusError = checked.error !== "";
+        if (statusError) {
+            status = message(checked.error);
+            return;
+        }
         status = "";
-        install.command = [Strings.webappHelper, nameField.text.trim(), urlField.text.trim()];
+        install.command = [Strings.webappHelper, checked.name, checked.url];
         install.running = true;
     }
 
@@ -172,7 +196,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.status !== ""
                 text: root.status
-                color: root.scheme.primary
+                color: root.statusError ? root.scheme.onSurface : root.scheme.primary
                 font.family: Fonts.family
                 font.pixelSize: Fonts.launcherItem
             }
