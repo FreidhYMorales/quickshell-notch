@@ -25,6 +25,8 @@ Singleton {
     readonly property string themeTitle: "Theme"
     readonly property string keybindsTitle: "Keybinds"
     readonly property string keybindsUnavailable: "Keybinds unavailable"
+    readonly property string webappTitle: "Webapp"
+    readonly property string webappInstall: "Install"
     readonly property string themeHint: "↑ ↓ Choose · Enter Apply · Esc Back"
     readonly property string themeActiveMark: "✓"
     // Friendly names for the nine matugen scheme types, keyed by id.
@@ -57,6 +59,11 @@ Singleton {
             name: "Keybinds",
             glyph: "󰌌",
             description: "View keyboard shortcuts."
+        },
+        {
+            name: "Webapp",
+            glyph: "󰖟",
+            description: "Install a website as a desktop web app."
         }
     ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,
