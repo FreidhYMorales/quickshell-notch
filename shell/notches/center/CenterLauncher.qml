@@ -112,9 +112,6 @@ Item {
         x: Layout.earRadius + Layout.launcherPad
         y: Layout.launcherPad
         width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
-        focus: root.keybindsMode
-        onVisibleChanged: if (visible)
-            forceActiveFocus()
         onBack: root.send({
             type: "KeybindsBack"
         })

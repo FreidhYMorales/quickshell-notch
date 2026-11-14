@@ -14,8 +14,25 @@ Item {
     readonly property var scheme: Colours.paletteFor(screen)
     property string query: ""
     readonly property var rows: KeybindsLogic.filterKeybinds(Keybinds.rows, query)
+    // The row the arrows and the pointer move over.
+    property int currentIndex: 0
 
     signal back
+
+    function selectRow(index) {
+        if (index < 0 || index >= rows.length)
+            return;
+        currentIndex = index;
+        list.positionViewAtIndex(currentIndex, ListView.Contain);
+    }
+
+    onVisibleChanged: {
+        if (!visible)
+            return;
+        selectRow(0);
+        field.forceActiveFocus();
+    }
+    onQueryChanged: selectRow(0)
 
     implicitHeight: Layout.keybindsViewHeight
 
@@ -48,6 +65,23 @@ Item {
                 forceActiveFocus();
             }
             onTextChanged: root.query = text
+            Keys.onPressed: event => {
+                switch (event.key) {
+                case Qt.Key_Up:
+                    root.selectRow(root.currentIndex - 1);
+                    break;
+                case Qt.Key_Down:
+                    root.selectRow(root.currentIndex + 1);
+                    break;
+                case Qt.Key_Escape:
+                    root.back();
+                    break;
+                default:
+                    event.accepted = false;
+                    return;
+                }
+                event.accepted = true;
+            }
         }
 
         Text {
@@ -64,11 +98,22 @@ Item {
         ListView {
             id: list
 
+            objectName: "keybinds-list"
             width: parent.width
             height: parent.height - title.height - field.height - noMatches.height - Layout.launcherGap * 3
             visible: Keybinds.available
             model: root.rows
             clip: true
+
+            // The wheel scrolls the rows; the pointer never moves the cursor,
+            // so a still pointer cannot fight the arrows.
+            WheelHandler {
+                onWheel: event => {
+                    const limit = Math.max(0, list.contentHeight - list.height);
+                    list.contentY = Math.max(0, Math.min(limit, list.contentY - event.angleDelta.y));
+                    event.accepted = true;
+                }
+            }
 
             delegate: Item {
                 id: row
@@ -79,6 +124,13 @@ Item {
                 objectName: "keybinds-row-" + index
                 width: list.width
                 height: Layout.keybindsRowHeight
+
+                Rectangle {
+                    objectName: "keybinds-current-" + row.index
+                    anchors.fill: parent
+                    visible: row.index === root.currentIndex
+                    color: Colours.cardFor(root.screen)
+                }
 
                 Rectangle {
                     id: pill
