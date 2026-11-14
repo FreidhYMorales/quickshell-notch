@@ -32,6 +32,7 @@ Singleton {
     readonly property string webappNameUnsafe: "Use a name without / or a leading dot"
     readonly property string webappUrlMissing: "URL is required"
     readonly property string webappUrlInvalid: "Use an http or https URL"
+    readonly property string webappUnavailable: "Webapp unavailable"
     // The helper the form runs, as the old shell did: it writes the desktop
     // entry and fetches the favicon.
     readonly property string webappHelper: "webapp-install"

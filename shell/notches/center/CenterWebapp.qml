@@ -51,6 +51,7 @@ Item {
             return;
         }
         status = "";
+        install.didStart = false;
         install.command = [Strings.webappHelper, checked.name, checked.url];
         install.running = true;
     }
@@ -87,6 +88,17 @@ Item {
     Process {
         id: install
 
+        // A helper that cannot start never emits `exited`: `onStarted` stays
+        // false and `running` drops back, which is the unavailable signal.
+        property bool didStart: false
+
+        onStarted: didStart = true
+        onRunningChanged: {
+            if (running || didStart)
+                return;
+            root.statusError = true;
+            root.status = Strings.webappUnavailable;
+        }
         onExited: code => {
             if (code !== 0)
                 return;
