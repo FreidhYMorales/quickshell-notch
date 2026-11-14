@@ -83,6 +83,7 @@ Item {
         if (!visible)
             return;
         status = "";
+        urlField.clear();
     }
 
     Process {
