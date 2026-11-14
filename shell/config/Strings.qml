@@ -28,6 +28,7 @@ Singleton {
     readonly property string webappTitle: "Webapp"
     readonly property string webappInstall: "Install"
     readonly property string webappInstalled: "Installed"
+    readonly property string webappInstallFailed: "Installation failed"
     readonly property string webappNameMissing: "Name is required"
     readonly property string webappNameUnsafe: "Use a name without / or a leading dot"
     readonly property string webappUrlMissing: "URL is required"

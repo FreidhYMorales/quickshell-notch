@@ -100,8 +100,11 @@ Item {
             root.status = Strings.webappUnavailable;
         }
         onExited: code => {
-            if (code !== 0)
+            if (code !== 0) {
+                root.statusError = true;
+                root.status = Strings.webappInstallFailed;
                 return;
+            }
             root.status = Strings.webappInstalled;
             confirm.restart();
         }
