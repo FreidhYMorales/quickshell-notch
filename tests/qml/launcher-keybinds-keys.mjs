@@ -11,7 +11,7 @@ for (let i = 1; i <= 12; i++) {
 }
 const rows = JSON.stringify(binds);
 
-test("the keybinds cursor follows the pointer and arrows and Esc leaves", () => {
+test("the keybinds cursor follows the arrows and Esc leaves", () => {
   const dir = mkdtempSync("/tmp/opencode/notch-keybinds-keys-");
   const bin = join(dir, "bin");
   try {
