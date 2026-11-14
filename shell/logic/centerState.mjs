@@ -164,6 +164,24 @@ const handlers = {
       keyboard: merge(keyboard, { sub: null }),
     });
   },
+  WebappOpen(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub === "webapp") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: "webapp" }),
+    });
+  },
+  WebappBack(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub !== "webapp") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: null }),
+    });
+  },
   LauncherQuery(state, { text }) {
     const { keyboard } = state.global;
     if (keyboard?.kind !== "launcher") return unchanged(state);
