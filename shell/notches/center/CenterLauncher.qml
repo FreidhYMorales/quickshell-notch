@@ -18,6 +18,7 @@ Item {
     readonly property var scheme: Colours.paletteFor(screen)
     readonly property bool wallpaperMode: view.sub === "wallpaper"
     readonly property bool themeMode: view.sub === "theme"
+    readonly property bool keybindsMode: view.sub === "keybinds"
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
     readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
@@ -45,6 +46,11 @@ Item {
                 send({
                     type: "ThemeOpen"
                 });
+            } else if (results[index]?.name === Strings.keybindsTitle) {
+                Keybinds.refresh();
+                send({
+                    type: "KeybindsOpen"
+                });
             }
             return;
         }
@@ -55,7 +61,7 @@ Item {
     }
 
     // The same padding on every side of the content (inside the ears).
-    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
+    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.keybindsMode ? keybindsView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
 
     NotchEarShape {
         anchors.fill: parent
@@ -99,9 +105,21 @@ Item {
         })
     }
 
+    CenterKeybinds {
+        id: keybindsView
+        visible: root.keybindsMode
+        screen: root.screen
+        x: Layout.earRadius + Layout.launcherPad
+        y: Layout.launcherPad
+        width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
+        onBack: root.send({
+            type: "KeybindsBack"
+        })
+    }
+
     Column {
         id: column
-        visible: !root.wallpaperMode && !root.themeMode
+        visible: !root.wallpaperMode && !root.themeMode && !root.keybindsMode
 
         anchors.left: parent.left
         anchors.right: parent.right
@@ -306,7 +324,7 @@ Item {
                 anchors.right: description.right
                 anchors.top: description.bottom
                 anchors.topMargin: Layout.launcherGap
-                visible: description.visible && root.results[root.view.index ?? 0]?.name !== Strings.wallpaperTitle
+                visible: description.visible && root.results[root.view.index ?? 0]?.name !== Strings.wallpaperTitle && root.results[root.view.index ?? 0]?.name !== Strings.keybindsTitle
                 text: Strings.launcherUnavailable
                 color: root.scheme.muted
                 font.family: Fonts.family

@@ -99,6 +99,12 @@ Singleton {
     readonly property int themeRowHeight: 36
     readonly property int themePreview: 18
 
+    // Keybinds sub-view: fixed height so filtering never resizes the notch.
+    readonly property int keybindsViewHeight: 420
+    readonly property int keybindsRowHeight: 40
+    readonly property int keybindsPillHeight: 24
+    readonly property int keybindsPillPad: 8
+
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
     readonly property int expandedPad: 10
