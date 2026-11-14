@@ -816,3 +816,17 @@ test("keybinds subview cannot open without the launcher", () => {
   const initial = two();
   assert.equal(reduce(initial, { type: "KeybindsOpen" }).state, initial);
 });
+
+test("webapp command opens a launcher subview and returns to commands", () => {
+  const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
+  const webapp = reduce(opened, { type: "WebappOpen" }).state;
+  assert.equal(webapp.global.keyboard.sub, "webapp");
+  assert.equal(webapp.global.keyboard.kind, "launcher");
+  const returned = reduce(webapp, { type: "WebappBack" }).state;
+  assert.equal(returned.global.keyboard.sub, null);
+});
+
+test("webapp subview cannot open without the launcher", () => {
+  const initial = two();
+  assert.equal(reduce(initial, { type: "WebappOpen" }).state, initial);
+});
