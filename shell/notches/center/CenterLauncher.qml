@@ -135,6 +135,10 @@ Item {
         onBack: root.send({
             type: "WebappBack"
         })
+        onApplied: root.send({
+            type: "Close",
+            monitor: root.screen.name
+        })
     }
 
     Column {

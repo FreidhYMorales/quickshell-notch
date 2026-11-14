@@ -1,11 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell.Io
 import "../../config"
 import "../../services"
 
 // Webapp sub-view of the launcher: the name and the URL of the site to turn
-// into a desktop web app, with the action that installs it.
+// into a desktop web app, the action that installs it and one status line.
 Item {
     id: root
 
@@ -13,19 +14,68 @@ Item {
     readonly property var scheme: Colours.paletteFor(screen)
 
     signal back
+    signal applied
+
+    // Empty while the form waits; otherwise the line under the fields.
+    property string status: ""
 
     implicitHeight: Layout.webappViewHeight
+
+    // The helper writes the desktop entry and fetches the favicon; it gets the
+    // name and the URL as separate arguments, never through a shell.
+    function submit() {
+        if (install.running)
+            return;
+        status = "";
+        install.command = [Strings.webappHelper, nameField.text.trim(), urlField.text.trim()];
+        install.running = true;
+    }
 
     Keys.onPressed: event => {
         switch (event.key) {
         case Qt.Key_Escape:
             back();
             break;
+        case Qt.Key_Tab:
+            // Focus starts on the view, so Tab enters the form at the name.
+            if (nameField.activeFocus)
+                urlField.forceActiveFocus();
+            else
+                nameField.forceActiveFocus();
+            break;
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+            submit();
+            break;
         default:
             event.accepted = false;
             return;
         }
         event.accepted = true;
+    }
+
+    onVisibleChanged: {
+        if (!visible)
+            return;
+        status = "";
+    }
+
+    Process {
+        id: install
+
+        onExited: code => {
+            if (code !== 0)
+                return;
+            root.status = Strings.webappInstalled;
+            confirm.restart();
+        }
+    }
+
+    Timer {
+        id: confirm
+
+        interval: Timings.webappConfirm
+        onTriggered: root.applied()
     }
 
     Column {
@@ -62,6 +112,8 @@ Item {
                 urlField.forceActiveFocus();
                 event.accepted = true;
             }
+            Keys.onReturnPressed: root.submit()
+            Keys.onEnterPressed: root.submit()
         }
 
         TextInput {
@@ -78,6 +130,8 @@ Item {
                 nameField.forceActiveFocus();
                 event.accepted = true;
             }
+            Keys.onReturnPressed: root.submit()
+            Keys.onEnterPressed: root.submit()
         }
 
         Item {
@@ -85,6 +139,8 @@ Item {
             height: Layout.webappFieldHeight
 
             Rectangle {
+                id: installButton
+
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: installLabel.width + 2 * Layout.webappButtonPad
@@ -102,6 +158,23 @@ Item {
                     font.family: Fonts.family
                     font.pixelSize: Fonts.launcherItem
                 }
+
+                TapHandler {
+                    onTapped: root.submit()
+                }
+            }
+
+            Text {
+                objectName: "webapp-status"
+                anchors.left: installButton.right
+                anchors.leftMargin: Layout.launcherGap
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.status !== ""
+                text: root.status
+                color: root.scheme.primary
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
             }
         }
     }

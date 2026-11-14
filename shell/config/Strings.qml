@@ -27,6 +27,10 @@ Singleton {
     readonly property string keybindsUnavailable: "Keybinds unavailable"
     readonly property string webappTitle: "Webapp"
     readonly property string webappInstall: "Install"
+    readonly property string webappInstalled: "Installed"
+    // The helper the form runs, as the old shell did: it writes the desktop
+    // entry and fetches the favicon.
+    readonly property string webappHelper: "webapp-install"
     readonly property string themeHint: "↑ ↓ Choose · Enter Apply · Esc Back"
     readonly property string themeActiveMark: "✓"
     // Friendly names for the nine matugen scheme types, keyed by id.
