@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Io
 import "../../config"
-import "../../services"
 import "../../logic/webapp.mjs" as WebappLogic
 
 // Webapp sub-view of the launcher: the name and the URL of the site to turn
