@@ -105,6 +105,11 @@ Singleton {
     readonly property int keybindsPillHeight: 24
     readonly property int keybindsPillPad: 8
 
+    // Webapp sub-view: fixed height so typing never resizes the notch.
+    readonly property int webappViewHeight: 220
+    readonly property int webappFieldHeight: 40
+    readonly property int webappButtonPad: 16
+
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.
     readonly property int expandedPad: 10

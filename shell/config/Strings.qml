@@ -25,6 +25,18 @@ Singleton {
     readonly property string themeTitle: "Theme"
     readonly property string keybindsTitle: "Keybinds"
     readonly property string keybindsUnavailable: "Keybinds unavailable"
+    readonly property string webappTitle: "Webapp"
+    readonly property string webappInstall: "Install"
+    readonly property string webappInstalled: "Installed"
+    readonly property string webappInstallFailed: "Installation failed"
+    readonly property string webappNameMissing: "Name is required"
+    readonly property string webappNameUnsafe: "Use a name without / or a leading dot"
+    readonly property string webappUrlMissing: "URL is required"
+    readonly property string webappUrlInvalid: "Use an http or https URL"
+    readonly property string webappUnavailable: "Webapp unavailable"
+    // The helper the form runs, as the old shell did: it writes the desktop
+    // entry and fetches the favicon.
+    readonly property string webappHelper: "webapp-install"
     readonly property string themeHint: "↑ ↓ Choose · Enter Apply · Esc Back"
     readonly property string themeActiveMark: "✓"
     // Friendly names for the nine matugen scheme types, keyed by id.
@@ -57,6 +69,11 @@ Singleton {
             name: "Keybinds",
             glyph: "󰌌",
             description: "View keyboard shortcuts."
+        },
+        {
+            name: "Webapp",
+            glyph: "󰖟",
+            description: "Install a website as a desktop web app."
         }
     ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,

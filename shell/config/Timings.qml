@@ -30,6 +30,8 @@ Singleton {
     readonly property int recordingReadyTimeout: 15000
     // A recording helper (mkdir, mktemp, ln, sh) is killed after this long.
     readonly property int recordingHelperTimeout: 5000
+    // The notch holds the install confirmation this long before it closes.
+    readonly property int webappConfirm: 1200
 
     // Unread dot blink half-period (milliseconds).
     readonly property int blink: Motion.blink

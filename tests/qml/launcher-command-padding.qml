@@ -22,10 +22,19 @@ ShellRoot {
         interval: 800
         onTriggered: {
             const text = Visual.findText(root.target.content, "Wallpaper");
-            if (!text) { console.error("launcher padding: missing last command"); return Qt.exit(2); }
+            if (!text) {
+                console.error("launcher padding: missing last command");
+                return Qt.exit(2);
+            }
             const row = text.parent.parent;
             const list = row.parent.parent;
-            const blank = list.height - row.mapToItem(list, 0, row.height).y;
+            // The last row by index, whichever command ends the list.
+            const last = list.itemAtIndex(list.count - 1);
+            if (!last) {
+                console.error("launcher padding: no last row");
+                return Qt.exit(2);
+            }
+            const blank = list.height - last.mapToItem(list, 0, last.height).y;
             if (Math.abs(blank) > 1) { console.error("launcher padding: empty space " + blank); return Qt.exit(1); }
             console.log("launcher padding: no empty rows");
             Qt.exit(0);
