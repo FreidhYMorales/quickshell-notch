@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the launcher is in command mode, when I activate Webapp, then the notch shows a name field, a URL field and an Install action, with Esc returning to the command list and closing the view.
-- [ ] Given a name and a URL, when I install, then a desktop entry under that name exists afterwards, opens the site in app mode, and I see the install confirmed.
-- [ ] Given an empty field, a name with a path separator or a leading dot, a URL that is not http(s), or a missing install helper, when I install, then no file is written and the status line says which input or helper is at fault.
+- [x] Given the launcher is in command mode, when I activate Webapp, then the notch shows a name field, a URL field and an Install action, with Esc returning to the command list and closing the view.
+- [x] Given a name and a URL, when I install, then a desktop entry under that name exists afterwards, opens the site in app mode, and I see the install confirmed.
+- [x] Given an empty field, a name with a path separator or a leading dot, a URL that is not http(s), or a missing install helper, when I install, then no file is written and the status line says which input or helper is at fault.
 
 ## Plan
 
@@ -49,3 +49,6 @@ Risk: item 2 (a user-typed name and URL reach an install script that writes a de
 - L9 stop: before testing stale URL on reopen, the safety net `node --test --test-concurrency=1 tests/qml/launcher-webapp-back.mjs tests/qml/launcher-command-webapp.mjs` failed in the existing command probe with `webapp view: command missing from the list`; the back probe passed. No new stale-URL test or production change was made.
 - L10 correction: the user attributed that failure to unintended keystrokes; the rerun passed. The reopen probe `5d2486d` failed because the URL survived leaving and reopening the form, and `1145d8d` clears it whenever the view becomes visible. Full check passed, tamper diff empty.
 - L11 correction: `d4d18da` isolates the missing-helper probe — `qs` is resolved before spawning and the child gets one empty directory as its whole `PATH`, so no system directory can ever supply the helper; a manual contrast run with a stub helper in that directory made the probe fail as expected. `0b75aa7` drops the unused `../../services` import from `CenterWebapp.qml`. Full check passed.
+- L12 verification recheck: NEEDS DECISION at `2f7112b`; `git for-each-ref` and `HEAD` identical before and after the run. `make check` green (662 tests), the eight webapp probes pass, all three criteria are pinned by mutation-sensitive tests, no assertion was weakened (the only non-empty test diffs are the approved `2af2bb8` reformat and the PATH isolation in `d4d18da`), and the security boundary keeps its own red tests. The verifier corrected its first report: F1 was wrong, and every step is `test → feat` except the two below. **Accepted exceptions (user decision):** `7cf424c` was green on introduction because Escape already shipped in `9bfb3b4`, so no red was possible; `c93b2d5` first failed with `ERR_MODULE_NOT_FOUND` because `webapp.mjs` did not exist yet, which the TDD rules refuse as red. Both are process deviations with the behaviour now genuinely pinned, not coverage holes; `ee9e33c` stays a mutation-sensitive regression pin, disclosed as such. Manual checks still owed: success versus error colour (no error role in the palette), no resize while typing on a real screen, and a real browser app-mode launch with a favicon download.
+- Risk: item 2 (a user-typed name and URL reach an install script that writes a desktop file under a path built from that name and fetches it).
+
