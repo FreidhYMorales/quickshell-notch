@@ -30,3 +30,17 @@ export function movedPast(base, point, threshold) {
   const dy = point.y - base.y;
   return Math.sqrt(dx * dx + dy * dy) >= threshold;
 }
+
+// What each stage asks of the shell and the compositor: the layer painted over
+// the lock look (null on the normal lock), whether the pointer is hidden, and
+// whether the outputs stay on. The black stage leaves them off (DPMS) with the
+// session still locked.
+export function stageEffects(stage) {
+  return {
+    overlay: stage === "normal"
+      ? null
+      : (stage === "screensaver" ? "wallpaper" : "black"),
+    pointerHidden: stage !== "normal",
+    outputsOn: stage !== "black",
+  };
+}
