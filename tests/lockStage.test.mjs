@@ -5,6 +5,7 @@ import {
   inputEnds,
   lockLooks,
   movedPast,
+  stageEffects,
 } from "../shell/logic/lockStage.mjs";
 
 test("the screensaver shows the wallpaper and the padlock notch, never the form", () => {
@@ -65,4 +66,25 @@ test("a pointer that only lands on the surface is not a move", () => {
 test("a pointer that moves a few pixels past the base is a real move", () => {
   assert.equal(movedPast({ x: 100, y: 100 }, { x: 105, y: 100 }, 4), true);
   assert.equal(movedPast({ x: 100, y: 100 }, { x: 100, y: 96 }, 4), true);
+});
+
+test("the screensaver hides the pointer and the black stage turns the outputs off", () => {
+  assert.deepEqual(stageEffects("screensaver"), {
+    overlay: "wallpaper",
+    pointerHidden: true,
+    outputsOn: true,
+  });
+  assert.deepEqual(stageEffects("black"), {
+    overlay: "black",
+    pointerHidden: true,
+    outputsOn: false,
+  });
+});
+
+test("a normal lock has no overlay and asks for neither the pointer nor the outputs", () => {
+  assert.deepEqual(stageEffects("normal"), {
+    overlay: null,
+    pointerHidden: false,
+    outputsOn: true,
+  });
 });
