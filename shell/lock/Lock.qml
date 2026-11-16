@@ -23,6 +23,8 @@ Scope {
     property bool exiting: false
     property bool entering: false
     property bool notchShown: false
+    // One black frame between an input in the black stage and its reveal.
+    property bool wakingBlack: false
     // Screen name -> LockFrame. Filled by the hidden capture hosts below.
     property var frames: ({})
     readonly property int morphDuration: 520
@@ -60,6 +62,23 @@ Scope {
             return;
         root.exiting = true;
         exitMorph.restart();
+    }
+
+    // Any input ends a screensaver or black stage. The black stage paints one
+    // black frame first, then replays the usual reveal so nothing flashes.
+    function wakeStage(): void {
+        const stage = Session.stage;
+        if (stage === "normal")
+            return;
+        Session.endStage();
+        if (stage === "black") {
+            root.wakingBlack = true;
+            root.notchShown = false;
+            root.reveal = 0;
+            blackFrame.restart();
+            return;
+        }
+        content.wake();
     }
 
     LockPam {
@@ -154,6 +173,22 @@ Scope {
         easing.type: Easing.InOutCubic
     }
 
+    // The black stage ends with one painted black frame and then the usual
+    // reveal, with the padlock notch dropping back in.
+    Timer {
+        id: blackFrame
+        interval: 40
+        repeat: false
+        onTriggered: {
+            if (!lock.locked || root.exiting)
+                return;
+            root.wakingBlack = false;
+            root.notchShown = true;
+            content.wake();
+            enterMorph.restart();
+        }
+    }
+
     Timer {
         id: curtainEntrance
         interval: 440
@@ -204,9 +239,11 @@ Scope {
             } else {
                 enterMorph.stop();
                 exitMorph.stop();
+                blackFrame.stop();
                 sharedAuth.stop();
                 root.exiting = false;
                 root.entering = false;
+                root.wakingBlack = false;
                 root.reveal = 1;
                 root.notchShown = false;
                 curtainEntrance.stop();
@@ -236,6 +273,10 @@ Scope {
             property bool videoFrameReady: false
             onVideoWallpaperChanged: videoFrameReady = false
             readonly property bool videoWallpaper: WallpaperState.isVideoPath(wallpaperPath)
+            // The black stage leaves the surface's own black: no wallpaper,
+            // captured frame, dim layer or padlock, but the content stays
+            // alive so it can catch the input that ends the stage.
+            readonly property bool blackLook: Session.stage === "black" || root.wakingBlack
             readonly property bool gifWallpaper: /\.gif$/i.test(wallpaperPath)
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
@@ -251,7 +292,7 @@ Scope {
             Item {
                 id: captureLayer
                 anchors.fill: parent
-                visible: surface.captureShown
+                visible: surface.captureShown && !surface.blackLook
 
                 Component.onDestruction: if (surface.lockFrame && surface.lockFrame.visualParent === captureLayer)
                     surface.lockFrame.release()
@@ -260,7 +301,7 @@ Scope {
             Image {
                 anchors.fill: parent
                 source: surface.wallpaperSource
-                visible: !surface.captureShown
+                visible: !surface.captureShown && !surface.blackLook
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: false
             }
@@ -340,7 +381,7 @@ Scope {
                     Image {
                         anchors.fill: parent
                         source: surface.wallpaperSource
-                        visible: !surface.gifWallpaper && (!surface.videoWallpaper || !surface.videoFrameReady)
+                        visible: !surface.gifWallpaper && (!surface.videoWallpaper || !surface.videoFrameReady) && !surface.blackLook
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                     }
@@ -348,8 +389,8 @@ Scope {
                     AnimatedImage {
                         anchors.fill: parent
                         source: surface.gifWallpaper ? "file://" + surface.wallpaperPath : ""
-                        visible: surface.gifWallpaper
-                        playing: surface.gifWallpaper && lock.locked
+                        visible: surface.gifWallpaper && !surface.blackLook
+                        playing: surface.gifWallpaper && lock.locked && !surface.blackLook
                         fillMode: Image.PreserveAspectCrop
                         onStatusChanged: if (status === Image.Error)
                             console.warn("Lock GIF: cannot load " + surface.wallpaperPath)
@@ -387,7 +428,7 @@ Scope {
                     VideoOutput {
                         id: lockVideoOutput
                         anchors.fill: parent
-                        visible: surface.videoWallpaper && surface.videoFrameReady
+                        visible: surface.videoWallpaper && surface.videoFrameReady && !surface.blackLook
                         fillMode: VideoOutput.PreserveAspectCrop
                     }
 
@@ -401,15 +442,20 @@ Scope {
 
                     Rectangle {
                         anchors.fill: parent
+                        visible: !surface.blackLook
                         color: "#44000000"
                     }
 
                     LockContent {
+                        id: content
+
                         anchors.fill: parent
                         auth: sharedAuth
                         screen: surface.screen
+                        stage: Session.stage
                         enabled: !root.exiting && root.reveal >= 0.98
                         opacity: Math.max(0, Math.min(1, (root.reveal - 0.5) * 2))
+                        onWoke: root.wakeStage()
                     }
                 }
             }
@@ -440,7 +486,7 @@ Scope {
                 width: surface.idleWidth
                 height: Layout.idleHeight
                 y: root.notchShown ? 0 : -height
-                visible: root.notchShown || notchDrop.running
+                visible: (root.notchShown || notchDrop.running) && !surface.blackLook
                 z: 10
 
                 Behavior on y {

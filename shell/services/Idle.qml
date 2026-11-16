@@ -9,7 +9,8 @@ import "../logic/idleState.mjs" as IdleState
 
 // Idle timeouts (minutes), kept in the notch's own state dir. On first run
 // the old shell's idle.json is imported once; its file is only read.
-// Two idle watchers lock and then suspend; caffeine's inhibitor pauses both.
+// Three idle watchers start the screensaver, then darken the lock and finally
+// suspend; caffeine's inhibitor pauses all of them.
 Singleton {
     id: root
 
@@ -25,12 +26,22 @@ Singleton {
     // Enabled only once the timeouts are settled: a watcher created with the
     // default timeout and changed a moment later could never fire (old shell).
     IdleMonitor {
+        enabled: !Flags.smoke && root.saved && root.delays.screensaverSec !== null
+        timeout: root.delays.screensaverSec ?? 0
+        respectInhibitors: true
+        onIsIdleChanged: {
+            if (isIdle)
+                Session.requestIdleLock();
+        }
+    }
+
+    IdleMonitor {
         enabled: !Flags.smoke && root.saved && root.delays.lockSec !== null
         timeout: root.delays.lockSec ?? 0
         respectInhibitors: true
         onIsIdleChanged: {
             if (isIdle)
-                Session.requestLock();
+                Session.beginBlack();
         }
     }
 
