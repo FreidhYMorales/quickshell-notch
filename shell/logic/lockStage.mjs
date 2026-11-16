@@ -1,0 +1,24 @@
+// What the lock shows and what an input does while it was locked from
+// idleness. Stages: "normal" (the usual lock), "screensaver" (the wallpaper
+// alone with the padlock notch) and "black" (nothing: the OLED is off).
+
+export function lockLooks(stage) {
+  return {
+    wallpaper: stage !== "black",
+    content: stage === "normal",
+    notch: stage !== "black",
+  };
+}
+
+// Any input in the screensaver or black stage leaves it for the lock form;
+// the black stage paints one black frame first so nothing flashes. In the
+// normal lock the input keeps its usual meaning.
+export function inputEnds(stage) {
+  return { stage: "normal", blackFrame: stage === "black" };
+}
+
+// The black stage only darkens a session that is already locked; without a
+// lock it asks for the usual one (screensaver minutes at zero).
+export function idleStageAction(locked) {
+  return locked ? "black" : "lock";
+}
