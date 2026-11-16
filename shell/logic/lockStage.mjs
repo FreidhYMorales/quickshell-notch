@@ -22,3 +22,11 @@ export function inputEnds(stage) {
 export function idleStageAction(locked) {
   return locked ? "black" : "lock";
 }
+
+// A surface that has just gained pointer focus reports the pointer's resting
+// position as movement; only a real move past the threshold ends a stage.
+export function movedPast(base, point, threshold) {
+  const dx = point.x - base.x;
+  const dy = point.y - base.y;
+  return Math.sqrt(dx * dx + dy * dy) >= threshold;
+}
