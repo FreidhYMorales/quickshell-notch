@@ -1,6 +1,7 @@
 import QtQuick
 import "../config"
 import "../logic/format.mjs" as Format
+import "../logic/lockStage.mjs" as LockStage
 import "../services"
 
 // Visual lock content. Authentication stays in the shared LockPam instance;
@@ -9,6 +10,12 @@ Item {
     id: root
 
     required property var auth
+    // "normal" keeps today's lock. "screensaver" and "black" belong to a lock
+    // that came from idleness: they show no clock, hint or form until an input
+    // ends them, which the surface that owns the stage then does.
+    property string stage: "normal"
+    readonly property bool contentShown: LockStage.lockLooks(stage).content
+    signal woke
     property var screen: null
     readonly property var scheme: Colours.paletteFor(root.screen)
     property bool showingLogin: false
@@ -32,6 +39,13 @@ Item {
         root.forceActiveFocus();
     }
 
+    // Called by the surface once it ends a screensaver or black stage.
+    function wake() {
+        showLogin();
+    }
+
+    onStageChanged: pointer.base = null
+
     function submitPassword() {
         if (field.text.length === 0)
             return;
@@ -41,7 +55,10 @@ Item {
 
     focus: true
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_Escape && root.showingLogin) {
+        if (!root.contentShown) {
+            root.woke();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Escape && root.showingLogin) {
             root.showClock();
             event.accepted = true;
         } else if (!root.showingLogin && event.key !== Qt.Key_Control && event.key !== Qt.Key_Shift && event.key !== Qt.Key_Alt && event.key !== Qt.Key_Meta) {
@@ -50,8 +67,39 @@ Item {
         }
     }
 
+    // Hover-only catcher for the stages without content: a real pointer move
+    // ends them, while the pointer merely landing on the surface does not.
+    MouseArea {
+        id: pointer
+
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        property var base: null
+
+        onPositionChanged: mouse => {
+            if (root.contentShown)
+                return;
+            if (pointer.base === null) {
+                pointer.base = {
+                    x: mouse.x,
+                    y: mouse.y
+                };
+                return;
+            }
+            if (LockStage.movedPast(pointer.base, {
+                x: mouse.x,
+                y: mouse.y
+            }, Layout.lockMoveThreshold))
+                root.woke();
+        }
+    }
+
     Item {
         id: clockGroup
+
+        objectName: "lock-clock"
+        visible: root.contentShown
         width: Math.min(parent.width, 650)
         height: 170
         anchors.horizontalCenter: parent.horizontalCenter
@@ -86,6 +134,8 @@ Item {
 
     Column {
         id: loginPanel
+
+        objectName: "lock-form"
         width: Math.min(284, root.width - 32)
         anchors.horizontalCenter: parent.horizontalCenter
         y: root.height * (0.46 + 0.035 * (1 - root.loginProgress))
@@ -197,10 +247,11 @@ Item {
     }
 
     Text {
+        objectName: "lock-hint"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 32
-        visible: !root.showingLogin
+        visible: !root.showingLogin && root.contentShown
         text: "Presiona una tecla para continuar"
         color: root.scheme.onSurface
         font.family: Fonts.family
@@ -209,7 +260,12 @@ Item {
 
     TapHandler {
         enabled: !root.showingLogin
-        onTapped: root.showLogin()
+        onTapped: {
+            if (root.contentShown)
+                root.showLogin();
+            else
+                root.woke();
+        }
     }
 
     Connections {

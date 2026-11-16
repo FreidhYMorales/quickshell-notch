@@ -73,6 +73,9 @@ Singleton {
     readonly property int lockFieldHeight: 36
     readonly property int lockFieldPad: 14
     readonly property int lockGap: 16
+    // Pointer movement that counts as a real input on the lock: a surface
+    // that has just gained pointer focus reports its resting position.
+    readonly property int lockMoveThreshold: 4
     readonly property int polkitButton: 28
     // Thickness of the fingerprint scan line.
     readonly property int polkitScanLine: 2
