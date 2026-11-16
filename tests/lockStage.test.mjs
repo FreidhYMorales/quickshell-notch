@@ -4,6 +4,7 @@ import {
   idleStageAction,
   inputEnds,
   lockLooks,
+  movedPast,
 } from "../shell/logic/lockStage.mjs";
 
 test("the screensaver shows the wallpaper and the padlock notch, never the form", () => {
@@ -54,4 +55,14 @@ test("an input in a normal lock changes nothing", () => {
 test("the black stage darkens a locked session and locks an unlocked one", () => {
   assert.equal(idleStageAction(true), "black");
   assert.equal(idleStageAction(false), "lock");
+});
+
+test("a pointer that only lands on the surface is not a move", () => {
+  assert.equal(movedPast({ x: 100, y: 100 }, { x: 100, y: 100 }, 4), false);
+  assert.equal(movedPast({ x: 100, y: 100 }, { x: 102, y: 103 }, 4), false);
+});
+
+test("a pointer that moves a few pixels past the base is a real move", () => {
+  assert.equal(movedPast({ x: 100, y: 100 }, { x: 105, y: 100 }, 4), true);
+  assert.equal(movedPast({ x: 100, y: 100 }, { x: 100, y: 96 }, 4), true);
 });
