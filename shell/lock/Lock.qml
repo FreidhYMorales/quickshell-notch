@@ -23,8 +23,14 @@ Scope {
     property bool exiting: false
     property bool entering: false
     property bool notchShown: false
-    // One black frame between an input in the black stage and its reveal.
-    property bool wakingBlack: false
+    // The layer painted over the lock look while the idle stages are up:
+    // 1 is fullscreen and 0 has contracted into the notch. `overlayKind` keeps
+    // what it paints once the stage itself is already gone.
+    property real overlay: 0
+    property string overlayKind: ""
+    readonly property string stage: Session.stage
+    // Last outputs state handed to the compositor (they start on).
+    property bool outputsOn: true
     // Screen name -> LockFrame. Filled by the hidden capture hosts below.
     property var frames: ({})
     readonly property int morphDuration: 520
@@ -64,22 +70,35 @@ Scope {
         exitMorph.restart();
     }
 
-    // Any input ends a screensaver or black stage. The black stage paints one
-    // black frame first, then replays the usual reveal so nothing flashes.
+    // What an idle stage asks of the shell: hide the pointer, keep or drop the
+    // outputs, and paint its layer over the lock look.
+    function applyStage(): void {
+        const effects = LockStage.stageEffects(root.stage);
+        Hypr.setPointerHidden(effects.pointerHidden);
+        if (effects.outputsOn !== root.outputsOn) {
+            Hypr.dispatch("dpms", [effects.outputsOn ? "on" : "off"]);
+            root.outputsOn = effects.outputsOn;
+        }
+        if (effects.overlay !== null) {
+            root.overlayKind = effects.overlay;
+            root.overlay = 1;
+        }
+    }
+
+    // Any input ends a screensaver or black stage. The lock look is already
+    // painted underneath, so it comes out as that layer contracts into the
+    // notch with the lock's own morph.
     function wakeStage(): void {
-        const stage = Session.stage;
-        if (stage === "normal")
+        if (root.stage === "normal")
             return;
         Session.endStage();
-        if (stage === "black") {
-            root.wakingBlack = true;
-            root.notchShown = false;
-            root.reveal = 0;
-            blackFrame.restart();
-            return;
-        }
         content.wake();
+        root.notchShown = true;
+        overlayExit.restart();
     }
+
+    onStageChanged: root.applyStage()
+    Component.onCompleted: root.applyStage()
 
     LockPam {
         id: sharedAuth
@@ -173,22 +192,18 @@ Scope {
         easing.type: Easing.InOutCubic
     }
 
-    // The black stage ends with one painted black frame and then the usual
-    // reveal, with the padlock notch dropping back in.
-    Timer {
-        id: blackFrame
-        interval: 40
-        repeat: false
-        onTriggered: {
-            if (!lock.locked || root.exiting)
-                return;
-            root.wakingBlack = false;
-            root.notchShown = true;
-            content.wake();
-            enterMorph.restart();
-        }
+    // The idle layer contracts into the notch, uncovering the lock form that
+    // was already painted underneath.
+    NumberAnimation {
+        id: overlayExit
+        target: root
+        property: "overlay"
+        from: 1
+        to: 0
+        duration: root.morphDuration
+        easing.type: Easing.InOutCubic
+        onFinished: root.overlayKind = ""
     }
-
     Timer {
         id: curtainEntrance
         interval: 440
@@ -239,16 +254,21 @@ Scope {
             } else {
                 enterMorph.stop();
                 exitMorph.stop();
-                blackFrame.stop();
+                overlayExit.stop();
                 sharedAuth.stop();
                 root.exiting = false;
                 root.entering = false;
-                root.wakingBlack = false;
                 root.reveal = 1;
+                root.overlay = 0;
+                root.overlayKind = "";
                 root.notchShown = false;
                 curtainEntrance.stop();
                 notchRetreat.stop();
                 root.releaseFrames();
+                // A lock that ends outside the idle chain must not leave the
+                // pointer hidden or the outputs off.
+                if (root.stage !== "normal")
+                    Session.endStage();
             }
         }
         onSecureChanged: {
@@ -274,9 +294,9 @@ Scope {
             onVideoWallpaperChanged: videoFrameReady = false
             readonly property bool videoWallpaper: WallpaperState.isVideoPath(wallpaperPath)
             // The black stage leaves the surface's own black: no wallpaper,
-            // captured frame, dim layer or padlock, but the content stays
-            // alive so it can catch the input that ends the stage.
-            readonly property bool blackLook: Session.stage === "black" || root.wakingBlack
+            // captured frame or padlock. The lock look stays painted
+            // underneath so the layer above can contract over it.
+            readonly property bool blackLook: Session.stage === "black"
             readonly property bool gifWallpaper: /\.gif$/i.test(wallpaperPath)
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
@@ -292,7 +312,7 @@ Scope {
             Item {
                 id: captureLayer
                 anchors.fill: parent
-                visible: surface.captureShown && !surface.blackLook
+                visible: surface.captureShown
 
                 Component.onDestruction: if (surface.lockFrame && surface.lockFrame.visualParent === captureLayer)
                     surface.lockFrame.release()
@@ -301,7 +321,7 @@ Scope {
             Image {
                 anchors.fill: parent
                 source: surface.wallpaperSource
-                visible: !surface.captureShown && !surface.blackLook
+                visible: !surface.captureShown
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: false
             }
@@ -381,7 +401,7 @@ Scope {
                     Image {
                         anchors.fill: parent
                         source: surface.wallpaperSource
-                        visible: !surface.gifWallpaper && (!surface.videoWallpaper || !surface.videoFrameReady) && !surface.blackLook
+                        visible: !surface.gifWallpaper && (!surface.videoWallpaper || !surface.videoFrameReady)
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                     }
@@ -389,8 +409,8 @@ Scope {
                     AnimatedImage {
                         anchors.fill: parent
                         source: surface.gifWallpaper ? "file://" + surface.wallpaperPath : ""
-                        visible: surface.gifWallpaper && !surface.blackLook
-                        playing: surface.gifWallpaper && lock.locked && !surface.blackLook
+                        visible: surface.gifWallpaper
+                        playing: surface.gifWallpaper && lock.locked
                         fillMode: Image.PreserveAspectCrop
                         onStatusChanged: if (status === Image.Error)
                             console.warn("Lock GIF: cannot load " + surface.wallpaperPath)
@@ -428,7 +448,7 @@ Scope {
                     VideoOutput {
                         id: lockVideoOutput
                         anchors.fill: parent
-                        visible: surface.videoWallpaper && surface.videoFrameReady && !surface.blackLook
+                        visible: surface.videoWallpaper && surface.videoFrameReady
                         fillMode: VideoOutput.PreserveAspectCrop
                     }
 
@@ -442,7 +462,6 @@ Scope {
 
                     Rectangle {
                         anchors.fill: parent
-                        visible: !surface.blackLook
                         color: "#44000000"
                     }
 
@@ -459,6 +478,74 @@ Scope {
                     }
                 }
             }
+
+            // The idle stage layer: the monitor's own wallpaper for the
+            // screensaver, pure black for the stage with the outputs off. It
+            // follows the entrance morph and contracts into the notch when an
+            // input ends the stage, uncovering the lock look below.
+            readonly property bool overlayShown: root.overlayKind !== "" && Math.min(root.reveal, root.overlay) > 0.001
+            readonly property real overlayMorph: Math.min(root.reveal, root.overlay)
+            readonly property real overlayWidth: surface.idleWidth + (surface.width - surface.idleWidth) * surface.overlayMorph
+            readonly property real overlayHeight: Layout.idleHeight + (surface.height - Layout.idleHeight) * surface.overlayMorph
+
+            Shape {
+                id: overlayMask
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                width: overlayFrame.width
+                height: overlayFrame.height
+                visible: false
+                layer.enabled: true
+                preferredRendererType: Shape.CurveRenderer
+
+                ShapePath {
+                    fillColor: "white"
+                    strokeWidth: -1
+                    PathSvg {
+                        path: EarGeometry.notchPath(overlayMask.width, overlayMask.height, Layout.earRadius * (1 - surface.overlayMorph), Layout.cornerRadius * (1 - surface.overlayMorph))
+                    }
+                }
+            }
+
+            Rectangle {
+                id: overlayFrame
+                width: surface.overlayWidth
+                height: surface.overlayHeight
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                color: Colours.background
+                clip: true
+                layer.enabled: surface.overlayShown
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: overlayMask
+                }
+
+                Item {
+                    width: surface.width
+                    height: surface.height
+                    x: -overlayFrame.x
+
+                    Image {
+                        anchors.fill: parent
+                        source: root.overlayKind === "wallpaper" ? surface.wallpaperSource : ""
+                        visible: root.overlayKind === "wallpaper" && !surface.gifWallpaper
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+
+                    AnimatedImage {
+                        anchors.fill: parent
+                        source: root.overlayKind === "wallpaper" && surface.gifWallpaper ? "file://" + surface.wallpaperPath : ""
+                        visible: root.overlayKind === "wallpaper" && surface.gifWallpaper
+                        playing: surface.overlayShown
+                        fillMode: Image.PreserveAspectCrop
+                        onStatusChanged: if (status === Image.Error)
+                            console.warn("Lock screensaver GIF: cannot load " + surface.wallpaperPath)
+                    }
+                }
+            }
+
             // A separate secure notch drops from the top after the reveal.
             // Keep it above the contracting frame until the compositor unlocks.
             // The desktop notch is hidden by the secure compositor layer.

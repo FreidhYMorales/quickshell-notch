@@ -6,23 +6,23 @@
 
 ## Acceptance criteria
 
-- [ ] Given I have been idle for my screensaver minutes, when that time is reached, then the session locks with the same animation as today and every monitor shows only the wallpaper, with no clock, no password form and no hint, keeping the padlock notch.
-- [ ] Given the screensaver is showing, when I move the mouse more than a few pixels or press a key, then the lock form appears with the usual animation and only a correct password returns me to my session.
-- [ ] Given I stay away, when my lock minutes pass since the screensaver appeared, then the screen turns pure black (monitors still on, machine awake, session still locked: no DPMS), and the first input paints a black frame and then replays the same animation into the lock form; suspend still fires my suspend minutes after that, and caffeine still stops the whole chain.
+- [ ] Given I have been idle for my screensaver minutes, when that time is reached, then the session locks with the same animation as today and every monitor shows only the wallpaper, with no clock, no password form, no hint and no pointer, keeping the padlock notch.
+- [ ] Given the screensaver is showing, when I move the mouse more than a few pixels or press a key, then that layer contracts into the notch with the lock's own animation while the lock form is already painted underneath, and only a correct password returns me to my session.
+- [ ] Given I stay away, when my lock minutes pass since the screensaver appeared, then the outputs turn off (DPMS, the session still locked) over a pure black frame, and the first input turns them back on and contracts that black frame into the notch revealing the lock form, never a desktop capture; suspend still fires my suspend minutes after that, and caffeine still stops the whole chain.
 
 ## Plan
 
 - Three sequential stages on the idle watchers, still inhibitor-aware and disabled under smoke: screensaver at its minutes, black at screensaver + lock, suspend at the full sum. The stored values and the sums stay as they are; only what each stage does changes.
-- A lock request can say it came from idleness, so the lock after its usual morph enters the screensaver state: clock, hint and login panel hidden, wallpaper alone with the padlock notch; a manual lock, the sleep lock and a polkit flow behave exactly as today.
-- The first real input leaves that state with the usual transition into the lock form, with the movement threshold the old shell needed so a pointer that merely lands on the surface does not count; no input unlocks without the password.
-- The black stage paints the lock surface pure black and keeps the session locked and the outputs untouched; waking paints black first and then replays the existing reveal into the form, so an OLED never flashes the wallpaper or a stale frame.
-- Tests: pure stage logic (each stage off at 0, sums unchanged, screensaver before black before suspend) plus QML probes for the three looks (wallpaper only with padlock, pure black with nothing, and the form after input).
+- A lock request can say it came from idleness, so the lock after its usual morph enters the screensaver state: clock, hint and login panel hidden, wallpaper alone with the padlock notch and the pointer hidden; a manual lock, the sleep lock and a polkit flow behave exactly as today.
+- The first real input ends that state the way the lock ends: the wallpaper layer contracts into the notch with the lock's own morph while the lock form, painted underneath, comes out; the movement threshold the old shell needed keeps a pointer that merely lands on the surface from counting. No input unlocks without the password.
+- The black stage paints the lock surface pure black and turns the outputs off (Hyprland's DPMS, no external idle daemon) with the session still locked; the first input turns them back on and contracts that black frame into the notch over the already painted lock form, so nothing of the desktop is ever shown.
+- Tests: pure stage logic (each stage off at 0, sums unchanged, screensaver before black before suspend, what each stage asks of the compositor) plus QML probes for the looks (wallpaper only with padlock, nothing while the outputs are off, and the form once the layer contracts).
 
 ## Out of scope
 
 - Choosing a screensaver image other than the desktop wallpaper, and the command view that edits the three times: both are #51. Here the screensaver shows each monitor's own wallpaper.
 - Free dismissal without a password during the lock minutes (the old shell's grace): any input leads to the password.
-- Turning the monitors off by DPMS, hypridle or any external idle daemon, and any separate screensaver surface, preview button or animation beyond the lock's existing morph.
+- Turning the outputs off through hypridle or any external idle daemon, and any separate screensaver surface, preview button or animation beyond the lock's existing morph.
 - The keybinds, security and webapp views (#29, #36, #37).
 
 ## Suggestions (your call)
@@ -43,4 +43,6 @@ Risk: item 6 (screensaver timing, the black stage and the wake are only verifiab
 - L3 decision (user): the phase reuses the lock's animation and flow and locks at the screensaver time; it shows the wallpaper (the same as the desktop or another one, as the old config allowed) with no clock and nothing else, keeps the padlock notch, and nothing suspends or turns the machine off until the times are met.
 - L4 decision (user): any input while the screensaver shows brings up the lock form as it is today, with no password-free dismissal. The second time is how long the screensaver stays before the screen goes black; the third is the wait before suspending.
 - L5 decision (user): the blackening is Quickshell painting a black frame, not DPMS (the screen is OLED); on the first input it paints a black frame and then runs the existing lock animation into the form.
-- L6 assumptions: the screensaver shows each monitor's own desktop wallpaper and the choice of another image belongs to #51; the black stage keeps the monitors on and the machine awake with the session locked; the sums stay exactly as #31 defined them (screensaver + lock + suspend).
+- L6 assumptions: the screensaver shows each monitor's own desktop wallpaper and the choice of another image belongs to #51; the sums stay exactly as #31 defined them (screensaver + lock + suspend).
+- L7 decision (user, live test): the screensaver hides the pointer; the way into the lock form is the lock's contract — the wallpaper (or the black frame) contracts into the notch while the lock form is already painted underneath, so the desktop capture is never shown; and the black stage does turn the outputs off (DPMS through Hyprland), still with caffeine stopping the chain.
+- L8: criteria 2 and 3 and the plan rewritten for L7; the black stage keeps the session locked and lets the compositor bring the outputs back on the input that ends it.
