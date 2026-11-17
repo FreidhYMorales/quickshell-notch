@@ -101,6 +101,11 @@ Scope {
 
     onStageChanged: root.applyStage()
     Component.onCompleted: root.applyStage()
+    // Never leave the pointer hidden or the outputs off behind us.
+    Component.onDestruction: {
+        Hypr.setPointerHidden(false);
+        Hypr.dispatch("dpms", ["on"]);
+    }
 
     LockPam {
         id: sharedAuth

@@ -8,19 +8,16 @@ import "../logic/hyprDsp.mjs" as HyprDsp
 // dispatchers and a hl.config eval for the few options the shell owns.
 Singleton {
     // Hides or shows the compositor's pointer. A lock surface cannot set a
-    // cursor of its own, so the screensaver asks the compositor instead.
+    // cursor of its own, so the screensaver asks the compositor instead. The
+    // call is unconditional: a shell killed while the pointer was hidden
+    // leaves the compositor in that state, and only a fresh call undoes it.
     // Never throws. Inert (returns false, no compositor call) under smoke.
-    property bool pointerHidden: false
-
     function setPointerHidden(hidden: bool): bool {
-        if (hidden === pointerHidden)
-            return true;
         if (Flags.smoke)
             return false;
         const config = hidden ? "hl.config({ cursor = { invisible = true } })" : "hl.config({ cursor = { invisible = false } })";
         try {
             Quickshell.execDetached(["hyprctl", "eval", config]);
-            pointerHidden = hidden;
             return true;
         } catch (e) {
             console.warn("Hypr.setPointerHidden: failed", e);
