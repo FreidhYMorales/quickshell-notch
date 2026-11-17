@@ -20,10 +20,14 @@ Singleton {
     readonly property int lockFingerprintRetry: 300
     // Screenshot is cosmetic: do not let it delay a lock indefinitely.
     readonly property int lockCaptureTimeout: 500
+    // The black stage paints its frame first and turns the outputs off only
+    // after this pause, so the screen blackens visibly instead of vanishing
+    // in the same frame.
+    readonly property int lockBlackDelay: 300
     // The black stage keeps its frame full screen this long after the input
     // that turns the outputs back on, so the contraction into the notch plays
     // over a lit panel instead of finishing while it is still waking.
-    readonly property int lockWakeDelay: 900
+    readonly property int lockWakeDelay: 1000
     // Give up waiting for the outputs and contract anyway after this long.
     readonly property int lockWakeTimeout: 5000
     // How often the lock asks the compositor whether the outputs are back.

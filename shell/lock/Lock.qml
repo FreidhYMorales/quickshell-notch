@@ -76,13 +76,19 @@ Scope {
     }
 
     // What an idle stage asks of the shell: hide the pointer, keep or drop the
-    // outputs, and paint its layer over the lock look.
+    // outputs, and paint its layer over the lock look. The black stage paints
+    // first and lets `blackOut` drop the outputs once the frame is up.
     function applyStage(): void {
         const effects = LockStage.stageEffects(root.stage);
         Hypr.setPointerHidden(effects.pointerHidden);
-        if (effects.outputsOn !== root.outputsOn) {
-            Hypr.dispatch("dpms", [effects.outputsOn ? "on" : "off"]);
-            root.outputsOn = effects.outputsOn;
+        if (effects.outputsOn) {
+            blackOut.stop();
+            if (!root.outputsOn) {
+                Hypr.dispatch("dpms", ["on"]);
+                root.outputsOn = true;
+            }
+        } else if (root.outputsOn) {
+            blackOut.restart();
         }
         if (effects.overlay !== null) {
             root.overlayKind = effects.overlay;
@@ -271,6 +277,19 @@ Scope {
             }
             if (!dpmsProbe.running)
                 dpmsProbe.running = true;
+        }
+    }
+
+    // The outputs go off only once the black frame has been up for a moment.
+    Timer {
+        id: blackOut
+        interval: Timings.lockBlackDelay
+        repeat: false
+        onTriggered: {
+            if (root.stage !== "black")
+                return;
+            Hypr.dispatch("dpms", ["off"]);
+            root.outputsOn = false;
         }
     }
 
