@@ -44,7 +44,11 @@ Item {
         showLogin();
     }
 
-    onStageChanged: pointer.base = null
+    onStageChanged: {
+        pointer.base = null;
+        if (root.stage !== "normal")
+            root.forceActiveFocus();
+    }
 
     function submitPassword() {
         if (field.text.length === 0)
