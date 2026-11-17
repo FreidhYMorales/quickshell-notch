@@ -7,6 +7,7 @@ import {
   movedPast,
   outputsAwake,
   stageEffects,
+  wakeReady,
 } from "../shell/logic/lockStage.mjs";
 
 test("the screensaver shows the wallpaper and the padlock notch, never the form", () => {
@@ -105,4 +106,18 @@ test("unreadable output state counts as awake so the lock never stalls", () => {
   assert.equal(outputsAwake("not json"), true);
   assert.equal(outputsAwake("[]"), true);
   assert.equal(outputsAwake('[{"name":"DP-1"}]'), true);
+});
+
+test("the black stage waits for the panel and for the outputs to be back", () => {
+  const off = '[{"name":"DP-1","dpmsStatus":false}]';
+  const on = '[{"name":"DP-1","dpmsStatus":true}]';
+  // Still inside the panel's wake time: never contract yet.
+  assert.equal(wakeReady(0, on, 900, 5000), false);
+  assert.equal(wakeReady(899, on, 900, 5000), false);
+  // Panel had its time, but the compositor says the outputs are still off.
+  assert.equal(wakeReady(900, off, 900, 5000), false);
+  // Both conditions met.
+  assert.equal(wakeReady(900, on, 900, 5000), true);
+  // A compositor that never reports on does not hold the lock black forever.
+  assert.equal(wakeReady(5000, off, 900, 5000), true);
 });
