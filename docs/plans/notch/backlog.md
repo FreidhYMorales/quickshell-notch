@@ -6,7 +6,7 @@
 - Stack: QML + Quickshell 0.3 (Qt 6.12), pure JS ES modules in shell/logic, matugen.
 - Expensive decisions: none
 - Test command: make check
-- Single test: node --test tests/<name>.test.mjs
+- Single test: node --test <test file>
 
 ## Backlog
 
