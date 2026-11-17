@@ -24,3 +24,11 @@ test("check-fast runs only the format check and the lint", () => {
   assert.doesNotMatch(out, /\bqs -p\b/);
   assert.doesNotMatch(out, /smoke/);
 });
+
+test("check still runs the tests, the QML probes and the smoke", () => {
+  const { status, out } = dryRun("check");
+  assert.equal(status, 0, out);
+  assert.match(out, /node --test tests\/(\n|$)/);
+  assert.match(out, /node --test .*tests\/qml\/lock-/);
+  assert.match(out, /qs -p shell\/shell\.qml/);
+});
