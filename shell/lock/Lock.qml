@@ -71,7 +71,7 @@ Scope {
     }
 
     function startExit() {
-        if (!lock.locked || root.exiting)
+        if (!lock.locked || root.exiting || root.stage !== "normal")
             return;
         root.exiting = true;
         exitMorph.restart();
@@ -173,6 +173,7 @@ Scope {
 
     LockPam {
         id: sharedAuth
+        stage: root.stage
         fingerprintEnabled: LockSecurity.fingerprintEnabled(notchSecurity.loaded ? notchSecurity.text() : null, oldSecurity.loaded ? oldSecurity.text() : null)
         onUnlocked: root.startExit()
     }

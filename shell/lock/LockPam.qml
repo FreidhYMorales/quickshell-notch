@@ -13,7 +13,9 @@ Scope {
     property string passwordConfig: "quickshell-password"
     property string fingerprintConfig: "quickshell-fprint"
     property bool fingerprintEnabled: false
+    property string stage: "normal"
     property string user: Quickshell.env("USER") || Quickshell.env("LOGNAME") || ""
+    property bool listening: false
 
     property string pendingPassword: ""
     // Last failed attempt, shown by the lock UI; cleared on a new attempt.
@@ -24,7 +26,7 @@ Scope {
     signal unlocked
 
     function submit(password: string) {
-        if (password.length === 0 || passwordPam.active)
+        if (root.stage !== "normal" || password.length === 0 || passwordPam.active)
             return;
         root.pendingPassword = password;
         root.error = "";
@@ -34,6 +36,7 @@ Scope {
     // Ends any running conversation once the session is unlocked, so the
     // fingerprint reader is released.
     function stop() {
+        root.listening = false;
         fingerprintRetry.stop();
         if (fingerprintPam.active)
             fingerprintPam.abort();
@@ -46,8 +49,24 @@ Scope {
     // Starts the fingerprint listener when enabled; it runs beside the
     // password, and whichever succeeds first unlocks.
     function listen() {
-        if (root.fingerprintEnabled && !fingerprintPam.active)
-            fingerprintPam.start();
+        root.listening = true;
+        if (root.stage === "normal" && root.fingerprintEnabled && !fingerprintPam.active && !fingerprintPam.start())
+            fingerprintRetry.restart();
+    }
+
+    onStageChanged: {
+        if (stage === "normal") {
+            if (root.listening)
+                root.listen();
+        } else {
+            fingerprintRetry.stop();
+            if (fingerprintPam.active)
+                fingerprintPam.abort();
+            if (passwordPam.active)
+                passwordPam.abort();
+            root.pendingPassword = "";
+            root.error = "";
+        }
     }
 
     PamContext {
@@ -63,6 +82,8 @@ Scope {
         }
 
         onCompleted: result => {
+            if (!root.listening || root.stage !== "normal")
+                return;
             if (result === PamResult.Success) {
                 root.unlocked();
             } else {
@@ -79,7 +100,7 @@ Scope {
 
         interval: Timings.lockFingerprintRetry
         onTriggered: {
-            if (!root.fingerprintEnabled)
+            if (!root.listening || root.stage !== "normal" || !root.fingerprintEnabled)
                 return;
             root.fingerprintState = "listening";
             if (!fingerprintPam.start())
@@ -102,6 +123,8 @@ Scope {
         }
 
         onCompleted: result => {
+            if (root.stage !== "normal")
+                return;
             if (result === PamResult.Success)
                 root.unlocked();
             else
