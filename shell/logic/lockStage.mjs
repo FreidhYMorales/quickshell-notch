@@ -44,3 +44,25 @@ export function stageEffects(stage) {
     outputsOn: stage !== "black",
   };
 }
+
+// Whether `hyprctl monitors -j` says every output is back on after the black
+// stage turned them off. Anything unreadable counts as awake: the lock must
+// never stay black because a monitor failed to report.
+export function outputsAwake(json) {
+  let monitors;
+  try {
+    monitors = JSON.parse(json);
+  } catch (_e) {
+    return true;
+  }
+  if (!Array.isArray(monitors)) {
+    return true;
+  }
+  for (let i = 0; i < monitors.length; ++i) {
+    const monitor = monitors[i];
+    if (monitor && monitor.dpmsStatus === false) {
+      return false;
+    }
+  }
+  return true;
+}
