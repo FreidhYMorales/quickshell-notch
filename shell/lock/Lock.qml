@@ -668,6 +668,7 @@ Scope {
                 anchors.top: parent.top
                 color: Colours.background
                 clip: true
+                visible: surface.overlayShown
                 layer.enabled: surface.overlayShown
                 layer.effect: MultiEffect {
                     maskEnabled: true
