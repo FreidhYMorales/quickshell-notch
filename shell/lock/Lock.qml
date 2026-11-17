@@ -13,6 +13,7 @@ import "../notches/center"
 import "../logic/earGeometry.mjs" as EarGeometry
 import "../logic/wallpaperState.mjs" as WallpaperState
 import "../logic/lockSecurity.mjs" as LockSecurity
+import "../logic/lockStage.mjs" as LockStage
 
 // The compositor keeps every monitor covered by WlSessionLockSurface for the
 // entire morph. Only successful PAM authentication may begin the exit.
@@ -87,8 +88,9 @@ Scope {
 
     // Any input ends a screensaver or black stage. The lock look is already
     // painted underneath, so it comes out as that layer contracts into the
-    // notch with the lock's own morph.
-    function wakeStage(): void {
+    // notch with the lock's own morph. The surface passes its content item:
+    // ids declared inside WlSessionLockSurface are not visible out here.
+    function wakeStage(content: var): void {
         if (root.stage === "normal")
             return;
         Session.endStage();
@@ -474,7 +476,7 @@ Scope {
                         stage: Session.stage
                         enabled: !root.exiting && root.reveal >= 0.98
                         opacity: Math.max(0, Math.min(1, (root.reveal - 0.5) * 2))
-                        onWoke: root.wakeStage()
+                        onWoke: root.wakeStage(content)
                     }
                 }
             }
