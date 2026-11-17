@@ -135,12 +135,7 @@ Scope {
 
     // A probe only counts once the panel has had `lockWakeDelay` to light up.
     function wakeReady(json: string): bool {
-        const elapsed = Date.now() - root.wakeStarted;
-        if (elapsed < Timings.lockWakeDelay)
-            return false;
-        if (elapsed >= Timings.lockWakeTimeout)
-            return true;
-        return LockStage.outputsAwake(json);
+        return LockStage.wakeReady(Date.now() - root.wakeStarted, json, Timings.lockWakeDelay, Timings.lockWakeTimeout);
     }
 
     onStageChanged: root.applyStage()

@@ -66,3 +66,17 @@ export function outputsAwake(json) {
   }
   return true;
 }
+
+// The black frame must not contract while the panel is still waking: it waits
+// out `delay` ms from the input and then for every output to report on. The
+// deadline wins over a compositor that never reports, so the lock cannot stay
+// black forever.
+export function wakeReady(elapsed, json, delay, timeout) {
+  if (elapsed < delay) {
+    return false;
+  }
+  if (elapsed >= timeout) {
+    return true;
+  }
+  return outputsAwake(json);
+}
