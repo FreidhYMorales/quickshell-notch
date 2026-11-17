@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -31,4 +32,18 @@ test("check still runs the tests, the QML probes and the smoke", () => {
   assert.match(out, /node --test tests\/(\n|$)/);
   assert.match(out, /node --test .*tests\/qml\/lock-/);
   assert.match(out, /qs -p shell\/shell\.qml/);
+});
+
+const rule =
+  "A story, a ship and CI are done when `make check` passes. Between turns the hook runs `check-fast`.";
+
+function read(path) {
+  return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+}
+
+test("AGENTS.md teaches both tiers and make fmt as the hook's fix", () => {
+  const agents = read("AGENTS.md");
+  assert.ok(agents.includes(rule), "AGENTS.md lacks the two-tier rule");
+  assert.match(agents, /hook[^.\n]*format[^.\n]*`make fmt`/);
+  assert.doesNotMatch(agents, /Stop hook runs it before/);
 });
