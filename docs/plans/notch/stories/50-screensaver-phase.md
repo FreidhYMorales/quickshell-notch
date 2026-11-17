@@ -34,7 +34,7 @@
 ## Size
 
 normal
-Risk: item 6 (screensaver timing, the black stage and the wake are only verifiable manually on the live session)
+Risk: item 2, 6 (authentication and live screensaver, black-stage and wake behavior)
 
 ## Log
 
@@ -51,3 +51,5 @@ Risk: item 6 (screensaver timing, the black stage and the wake are only verifiab
 - L11 (live test, root cause): the wake still stayed dark. Hyprland 0.57's Lua bridge parses `hl.dsp.dpms("on")` as a **toggle**: the string is ignored and every call flips the output, so the input that already woke the panel (the compositor's own wake) was turned back off by the shell's `dpms on`, and the retries alternated on/off. `hyprDsp.dpmsExpr` now emits the idempotent table form, `hl.dsp.dpms({action="enable"|"disable"})`, and `Hypr.setOutputsOn` is the only way the lock and the session ask for the outputs. With that, the probe sees `dpmsStatus` true at ~600 ms, the black frame holds until `lockWakeDelay` and the contraction runs in the light; captured mid-contraction to confirm the sheet shrinks and uncovers the already-painted lock form.
 - L12 (user, live test): block fingerprint authentication during the screensaver, expand the black frame from the notch before DPMS-off, and match the desktop notch shape. PAM stage test `1623613` and fix `e55e3a4` pass the focused integration probe and five existing PAM/load probes; the real fingerprint reader and lock wiring still require a live check. Black-entry test `03a6019` and fix `2cd072e` pass 17 focused tests; visual entry, interruption and wake remain unverified. The story remains open.
 - L13 (shape test): the probable rectangular artifact is `overlayFrame` remaining visible when its masking layer is disabled. A source-pattern test fails but only asserts implementation, not rendered behavior, so it was discarded rather than used as Strict TDD evidence. A rendered probe using the actual secure surface requires a real session lock; ask before running it. No shape fix has been applied.
+- L14: manual shape probe `52cfaa8` and fix `f1d773e` removed the rectangular artifact; the user accepted the shape and reported that the screensaver flow works. `make check` passed after the formatting-only commit `80745a8`; two existing nested Cage tests were skipped by configuration.
+- L15 (independent verifier: FAIL): refs and HEAD did not move during review. The verifier reported a potentially stuck overlay after a manual lock request, a wake key lost to an already-focused password field, and insufficient behavioral coverage of the authentication integration, pointer/DPMS effects, in-flight attempts and inhibition. It also flagged the combined test-and-fix commit `1563020` and implementation-coupled assertions. These findings need reproduction and a correction batch before one verifier recheck; history must not be rewritten.
