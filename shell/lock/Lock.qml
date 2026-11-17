@@ -36,6 +36,8 @@ Scope {
     // back: the frame stays full screen black meanwhile.
     property bool wakingBlack: false
     property double wakeStarted: 0
+    // Last `dpms on` sent while waking, so the retries cannot chain forever.
+    property double dpmsOnAt: 0
     // Screen name -> LockFrame. Filled by the hidden capture hosts below.
     property var frames: ({})
     readonly property int morphDuration: 520
@@ -84,7 +86,7 @@ Scope {
         if (effects.outputsOn) {
             blackOut.stop();
             if (!root.outputsOn) {
-                Hypr.dispatch("dpms", ["on"]);
+                Hypr.setOutputsOn(true);
                 root.outputsOn = true;
             }
         } else if (root.outputsOn) {
@@ -117,11 +119,25 @@ Scope {
         if (black) {
             root.wakingBlack = true;
             root.wakeStarted = Date.now();
+            root.dpmsOnAt = 0;
+            root.wakeOutputs();
             wakePoll.restart();
             return;
         }
         root.notchShown = true;
         overlayExit.restart();
+    }
+
+    // Asks the compositor for the outputs again, at most every other poll.
+    // The `dpms off` of the black stage and the `dpms on` of the wake are two
+    // detached hyprctl calls: when they land out of order the panel stays
+    // dark, so the wake keeps insisting until the probe sees it lit.
+    function wakeOutputs(): void {
+        const now = Date.now();
+        if (now - root.dpmsOnAt < Timings.lockWakePoll * 2)
+            return;
+        root.dpmsOnAt = now;
+        Hypr.setOutputsOn(true);
     }
 
     // The black frame contracts once the outputs are lit (or once waiting for
@@ -133,6 +149,9 @@ Scope {
         root.wakingBlack = false;
         wakePoll.stop();
         dpmsProbe.running = false;
+        // One last idempotent wake in case the black stage's `dpms off` was
+        // still in flight when the probe first saw the panel lit.
+        Hypr.setOutputsOn(true);
         if (!lock.locked || root.exiting)
             return;
         root.notchShown = true;
@@ -149,7 +168,7 @@ Scope {
     // Never leave the pointer hidden or the outputs off behind us.
     Component.onDestruction: {
         Hypr.setPointerHidden(false);
-        Hypr.dispatch("dpms", ["on"]);
+        Hypr.setOutputsOn(true);
     }
 
     LockPam {
@@ -257,7 +276,9 @@ Scope {
         to: 0
         duration: root.morphDuration
         easing.type: Easing.InOutCubic
-        onFinished: root.overlayKind = ""
+        onFinished: {
+            root.overlayKind = "";
+        }
     }
 
     // While the black stage wakes, ask the compositor every `lockWakePoll` ms
@@ -272,9 +293,11 @@ Scope {
                 return;
             }
             if (Date.now() - root.wakeStarted >= Timings.lockWakeTimeout) {
+                console.warn("Lock: the outputs did not come back before the wake deadline");
                 root.finishWake();
                 return;
             }
+            root.wakeOutputs();
             if (!dpmsProbe.running)
                 dpmsProbe.running = true;
         }
@@ -288,7 +311,7 @@ Scope {
         onTriggered: {
             if (root.stage !== "black")
                 return;
-            Hypr.dispatch("dpms", ["off"]);
+            Hypr.setOutputsOn(false);
             root.outputsOn = false;
         }
     }

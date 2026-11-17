@@ -33,13 +33,28 @@ Singleton {
             console.warn("Hypr.dispatch: rejected dispatcher", name);
             return false;
         }
+        return send(expr);
+    }
+
+    // Turns the outputs on or off. `hl.dsp.dpms("on")` is a toggle on 0.57:
+    // the string is ignored and every call flips the panel, so a wake that
+    // follows the compositor's own wake would blacken it again. The table form
+    // names the state and is idempotent.
+    function setOutputsOn(on: bool): bool {
+        const expr = HyprDsp.dpmsExpr(on);
+        if (expr === null)
+            return false;
+        return send(expr);
+    }
+
+    function send(expr: string): bool {
         if (Flags.smoke)
             return false;
         try {
             Quickshell.execDetached(["hyprctl", "dispatch", expr]);
             return true;
         } catch (e) {
-            console.warn("Hypr.dispatch: failed", name, e);
+            console.warn("Hypr.dispatch: failed", expr, e);
             return false;
         }
     }
