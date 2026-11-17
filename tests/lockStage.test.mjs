@@ -5,6 +5,7 @@ import {
   inputEnds,
   lockLooks,
   movedPast,
+  outputsAwake,
   stageEffects,
 } from "../shell/logic/lockStage.mjs";
 
@@ -87,4 +88,21 @@ test("a normal lock has no overlay and asks for neither the pointer nor the outp
     pointerHidden: false,
     outputsOn: true,
   });
+});
+
+test("the outputs are awake only when every monitor reports dpms on", () => {
+  assert.equal(outputsAwake('[{"name":"DP-1","dpmsStatus":true}]'), true);
+  assert.equal(
+    outputsAwake(
+      '[{"name":"DP-1","dpmsStatus":true},{"name":"HDMI-A-1","dpmsStatus":false}]',
+    ),
+    false,
+  );
+});
+
+test("unreadable output state counts as awake so the lock never stalls", () => {
+  assert.equal(outputsAwake(""), true);
+  assert.equal(outputsAwake("not json"), true);
+  assert.equal(outputsAwake("[]"), true);
+  assert.equal(outputsAwake('[{"name":"DP-1"}]'), true);
 });
