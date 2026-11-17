@@ -32,6 +32,10 @@ Scope {
     readonly property string stage: Session.stage
     // Last outputs state handed to the compositor (they start on).
     property bool outputsOn: true
+    // True from the input that ends the black stage until the outputs are
+    // back: the frame stays full screen black meanwhile.
+    property bool wakingBlack: false
+    property double wakeStarted: 0
     // Screen name -> LockFrame. Filled by the hidden capture hosts below.
     property var frames: ({})
     readonly property int morphDuration: 520
@@ -83,6 +87,9 @@ Scope {
         if (effects.overlay !== null) {
             root.overlayKind = effects.overlay;
             root.overlay = 1;
+            // The black stage shows no notch until the input that ends it.
+            if (effects.overlay === "black")
+                root.notchShown = false;
         }
     }
 
@@ -90,13 +97,50 @@ Scope {
     // painted underneath, so it comes out as that layer contracts into the
     // notch with the lock's own morph. The surface passes its content item:
     // ids declared inside WlSessionLockSurface are not visible out here.
+    //
+    // The black stage first has to bring the outputs back: the frame stays
+    // full screen while the panel wakes, so the contraction is not spent in
+    // the dark. `wakingBlack` keeps that wait apart from the stage itself,
+    // which the lock has already left.
     function wakeStage(content: var): void {
         if (root.stage === "normal")
             return;
+        const black = root.stage === "black";
         Session.endStage();
         content.wake();
+        if (black) {
+            root.wakingBlack = true;
+            root.wakeStarted = Date.now();
+            wakePoll.restart();
+            return;
+        }
         root.notchShown = true;
         overlayExit.restart();
+    }
+
+    // The black frame contracts once the outputs are lit (or once waiting for
+    // them would be worse than a missed animation). The notch drops in with
+    // the contraction, so the black sheet is what forms it.
+    function finishWake(): void {
+        if (!root.wakingBlack)
+            return;
+        root.wakingBlack = false;
+        wakePoll.stop();
+        dpmsProbe.running = false;
+        if (!lock.locked || root.exiting)
+            return;
+        root.notchShown = true;
+        overlayExit.restart();
+    }
+
+    // A probe only counts once the panel has had `lockWakeDelay` to light up.
+    function wakeReady(json: string): bool {
+        const elapsed = Date.now() - root.wakeStarted;
+        if (elapsed < Timings.lockWakeDelay)
+            return false;
+        if (elapsed >= Timings.lockWakeTimeout)
+            return true;
+        return LockStage.outputsAwake(json);
     }
 
     onStageChanged: root.applyStage()
@@ -134,6 +178,9 @@ Scope {
                 return;
             exitMorph.stop();
             notchRetreat.stop();
+            root.wakingBlack = false;
+            wakePoll.stop();
+            dpmsProbe.running = false;
             root.exiting = false;
             curtainEntrance.stop();
             root.notchShown = false;
@@ -211,6 +258,39 @@ Scope {
         easing.type: Easing.InOutCubic
         onFinished: root.overlayKind = ""
     }
+
+    // While the black stage wakes, ask the compositor every `lockWakePoll` ms
+    // whether every output is back on. The frame stays put until it is.
+    Timer {
+        id: wakePoll
+        interval: Timings.lockWakePoll
+        repeat: true
+        onTriggered: {
+            if (!root.wakingBlack) {
+                stop();
+                return;
+            }
+            if (Date.now() - root.wakeStarted >= Timings.lockWakeTimeout) {
+                root.finishWake();
+                return;
+            }
+            if (!dpmsProbe.running)
+                dpmsProbe.running = true;
+        }
+    }
+
+    Process {
+        id: dpmsProbe
+        command: ["hyprctl", "monitors", "-j"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root.wakingBlack && root.wakeReady(text))
+                    root.finishWake();
+            }
+        }
+    }
+
     Timer {
         id: curtainEntrance
         interval: 440
@@ -262,9 +342,12 @@ Scope {
                 enterMorph.stop();
                 exitMorph.stop();
                 overlayExit.stop();
+                wakePoll.stop();
+                dpmsProbe.running = false;
                 sharedAuth.stop();
                 root.exiting = false;
                 root.entering = false;
+                root.wakingBlack = false;
                 root.reveal = 1;
                 root.overlay = 0;
                 root.overlayKind = "";
