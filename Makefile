@@ -42,6 +42,7 @@ test:
 	node --test tests/
 
 qml-test:
+	node --test tests/qml/lint-unqualified.mjs
 	node --test tests/qml/sddm-timeout.mjs
 	node --test tests/qml/greetd-preview.mjs
 	node --test tests/qml/greetd-protocol.mjs
