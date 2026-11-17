@@ -59,3 +59,8 @@ test("development and architecture docs name both tiers and the rule", () => {
   );
   assert.match(architecture, /Make targets: `check`, `check-fast`/);
 });
+
+test("the backlog's single test command covers QML probes", () => {
+  const backlog = read("docs/plans/notch/backlog.md");
+  assert.match(backlog, /^- Single test: node --test <test file>$/m);
+});
