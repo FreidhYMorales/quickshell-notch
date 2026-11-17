@@ -85,19 +85,22 @@ Scope {
         Hypr.setPointerHidden(effects.pointerHidden);
         if (effects.outputsOn) {
             blackOut.stop();
+            overlayEnter.stop();
             if (!root.outputsOn) {
                 Hypr.setOutputsOn(true);
                 root.outputsOn = true;
             }
-        } else if (root.outputsOn) {
-            blackOut.restart();
         }
         if (effects.overlay !== null) {
+            overlayExit.stop();
             root.overlayKind = effects.overlay;
-            root.overlay = 1;
-            // The black stage shows no notch until the input that ends it.
-            if (effects.overlay === "black")
+            if (effects.overlay === "black") {
                 root.notchShown = false;
+                root.overlay = 0;
+                overlayEnter.restart();
+            } else {
+                root.overlay = 1;
+            }
         }
     }
 
@@ -114,9 +117,16 @@ Scope {
         if (root.stage === "normal")
             return;
         const black = root.stage === "black";
+        const blackComplete = root.overlay >= 0.999;
         Session.endStage();
         content.wake();
         if (black) {
+            if (!blackComplete) {
+                root.overlay = 1;
+                root.notchShown = true;
+                overlayExit.restart();
+                return;
+            }
             root.wakingBlack = true;
             root.wakeStarted = Date.now();
             root.dpmsOnAt = 0;
@@ -270,6 +280,20 @@ Scope {
     // The idle layer contracts into the notch, uncovering the lock form that
     // was already painted underneath.
     NumberAnimation {
+        id: overlayEnter
+        target: root
+        property: "overlay"
+        from: 0
+        to: 1
+        duration: root.morphDuration
+        easing.type: Easing.InOutCubic
+        onFinished: {
+            if (root.stage === "black" && root.outputsOn)
+                blackOut.restart();
+        }
+    }
+
+    NumberAnimation {
         id: overlayExit
         target: root
         property: "overlay"
@@ -380,6 +404,7 @@ Scope {
                 enterMorph.stop();
                 exitMorph.stop();
                 overlayExit.stop();
+                overlayEnter.stop();
                 wakePoll.stop();
                 dpmsProbe.running = false;
                 sharedAuth.stop();
