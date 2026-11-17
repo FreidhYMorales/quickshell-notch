@@ -106,7 +106,8 @@ Strict TDD: write the failing test first for every `logic/` change. `qmltestrunn
   3. Typecheck: n/a (no type system; qmllint covers QML types)
   4. Tests: `node --test tests/`
   5. Smoke: `make smoke` = `timeout 10 qs -p shell/shell.qml` with output captured; fail if the log contains `ERROR` or a load error (exit code 124 from timeout is the expected success path).
-- Make targets: `check`, `fmt` (writes: `qmlformat -i`, `deno fmt`), `fmt-check`, `lint`, `test`, `smoke`.
+- Fast tier: `make check-fast` = steps 1 and 2 only (format check and lint), run by the toolkit Stop hook between turns. A story, a ship and CI are done when `make check` passes. Between turns the hook runs `check-fast`.
+- Make targets: `check`, `check-fast`, `fmt` (writes: `qmlformat -i`, `deno fmt`), `fmt-check`, `lint`, `test`, `smoke`.
 - CI (GitHub Actions) on push and PR: `node --test tests/`, `deno fmt --check` + `deno lint`, qmlformat check. qmllint with Quickshell types and the smoke test run only locally (they would need `quickshell-git` built and a Wayland session).
 - Deploy target: local only. The dotfiles submodule pins a commit; `main` becomes live after a `git submodule update --remote` and a notch restart.
 

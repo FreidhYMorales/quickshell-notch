@@ -12,10 +12,14 @@ THEME_KEYS := tests/qml/theme-back.mjs tests/qml/theme-keys.mjs
 # Deployment tree for the greetd greeter; the file list lives in greetd/tree.txt.
 GREETER_DEST ?= /usr/local/share/quickshell-notch-greetd
 
-.PHONY: check ci fmt fmt-check lint lint-qml lint-js test qml-test smoke deploy-greeter
+.PHONY: check check-fast ci fmt fmt-check lint lint-qml lint-js test qml-test smoke deploy-greeter
 
 # Full local quality gate (read-only).
 check: fmt-check lint test qml-test smoke
+
+# Fast tier the Stop hook runs between turns: static checks only, no probe
+# takes the keyboard.
+check-fast: fmt-check lint
 
 # Subset that runs in GitHub Actions (no Quickshell types, no Wayland session).
 ci: fmt-check lint-js test

@@ -32,7 +32,8 @@ docs/                  architecture, development, ADRs, plans
 - Format/lint: run `make fmt` and `make lint` before committing (Qt 6 tools in `/usr/lib/qt6/bin`, not `/usr/bin`).
 - Commits: conventional commits; no AI attribution, no `Co-Authored-By` lines.
 - Tests first (Strict TDD) for `shell/logic/`. Run `make test`; typecheck: n/a. UI is verified manually with `qs -c notch`.
-- Work is done only when `make check` passes; never weaken or skip checks to make it pass. (The toolkit Stop hook runs it before an agent may finish.)
+- A story, a ship and CI are done when `make check` passes. Between turns the hook runs `check-fast`. Never weaken or skip checks to make them pass.
+- The hook's `check-fast` checks formatting and lint only; when it fails on formatting, `make fmt` is the fix.
 
 ## Gotchas (from the old config)
 

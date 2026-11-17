@@ -115,7 +115,11 @@ on logind's `PrepareForSleep` (see below).
 | Lint | `make lint` |
 | Smoke | `make smoke` |
 | Format | `make fmt` |
+| Fast checks (the hook) | `make check-fast` |
 | Full quality gate | `make check` |
+
+A story, a ship and CI are done when `make check` passes. Between turns the hook runs `check-fast`.
+`check-fast` is the format check and the lint, with no tests, QML probes or smoke, so it never takes the keyboard; `make fmt` fixes its formatting failures.
 
 ## Lock before suspend
 
