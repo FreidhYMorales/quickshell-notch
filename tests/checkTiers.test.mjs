@@ -47,3 +47,15 @@ test("AGENTS.md teaches both tiers and make fmt as the hook's fix", () => {
   assert.match(agents, /hook[^.\n]*format[^.\n]*`make fmt`/);
   assert.doesNotMatch(agents, /Stop hook runs it before/);
 });
+
+test("development and architecture docs name both tiers and the rule", () => {
+  const development = read("docs/development.md");
+  const architecture = read("docs/architecture.md");
+  assert.ok(development.includes(rule), "development.md lacks the rule");
+  assert.ok(architecture.includes(rule), "architecture.md lacks the rule");
+  assert.match(
+    development,
+    /\| Fast checks \(the hook\) \| `make check-fast` \|/,
+  );
+  assert.match(architecture, /Make targets: `check`, `check-fast`/);
+});
