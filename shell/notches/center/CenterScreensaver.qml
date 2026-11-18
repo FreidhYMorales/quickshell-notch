@@ -19,9 +19,12 @@ Item {
 
     Keys.onEscapePressed: back()
 
-    implicitHeight: Layout.screensaverViewHeight
+    // Grows with the picker when the switch is off.
+    implicitHeight: content.implicitHeight
 
     Column {
+        id: content
+
         anchors.fill: parent
         spacing: Layout.launcherGap
 
@@ -104,6 +107,28 @@ Item {
                     }
                 }
             }
+        }
+
+        Text {
+            objectName: "screensaver-same"
+            text: (Idle.choice.sameAsDesktop ? Strings.idleSwitchOn : Strings.idleSwitchOff) + "  " + Strings.idleSameAsDesktop
+            color: root.scheme.onSurface
+            font.family: Fonts.family
+            font.pixelSize: Fonts.launcherItem
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Idle.setSameAsDesktop(!Idle.choice.sameAsDesktop)
+            }
+        }
+
+        // The screensaver's own wallpaper, only while the switch is off.
+        Item {
+            objectName: "screensaver-picker"
+            visible: !Idle.choice.sameAsDesktop
+            width: parent.width
+            height: Layout.screensaverPickerHeight
         }
     }
 }

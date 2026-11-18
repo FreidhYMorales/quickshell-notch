@@ -35,6 +35,19 @@ Singleton {
         const next = Object.assign({}, timeouts);
         next[stage] = minutes;
         timeouts = next;
+        save();
+    }
+
+    // "Same as desktop wallpaper" on or off; the chosen path is kept.
+    function setSameAsDesktop(on: bool) {
+        choice = {
+            sameAsDesktop: on,
+            path: choice.path
+        };
+        save();
+    }
+
+    function save() {
         saved = false;
         writer.setText(JSON.stringify(IdleState.serialiseIdle(timeouts, choice)));
     }
@@ -82,6 +95,7 @@ Singleton {
         const notch = readText(notchDir + "/idle.json");
         if (notch !== null) {
             timeouts = IdleState.parseIdle(notch);
+            choice = IdleState.parseScreensaverChoice(notch);
             saved = true;
             return;
         }
