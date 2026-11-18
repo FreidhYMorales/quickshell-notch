@@ -39,3 +39,4 @@ Risk: item 6 (live idle re-arming and the screensaver image are only checkable i
 
 - L1 request: "si, arranquemos con la 51" (chat in Spanish, story file in English).
 - L2 assumptions (from the old config's ScreensaverForm and #50's out of scope): same three times with 0 = Off and a 0-60 minute range in 1-minute steps; a "Same as desktop wallpaper" switch, on by default, with one chosen wallpaper for every monitor when off; no Preview button.
+- L3 (pair): tests 1-2 green (`7022514`/`a82269f` routing, `0089341`/`b413745` stepper clamp). Test 3 red `11f933a`; its uncommitted green code passes the new probe, but the existing probe `launcher-command-description-switch` turns red: the empty command query ranks alphabetically (Keybinds, Screensaver, Theme, Wallpaper, Webapp), so its `LauncherSelect` index 1 is no longer Theme. Stop rule 3: changing that probe needs the user's call.
