@@ -68,6 +68,14 @@ try {
     );
     compositor.once("error", reject);
   });
+  const socketInfo = lstatSync(join(runtime, env.WAYLAND_DISPLAY), {
+    throwIfNoEntry: false,
+  });
+  if (
+    !socketInfo || !socketInfo.isSocket() || socketInfo.uid !== process.getuid()
+  ) {
+    throw new Error("Unsafe isolated socket");
+  }
   const result = spawnSync("qs", ["-p", probe], {
     env,
     encoding: "utf8",
