@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   idleDelays,
   parseIdle,
+  serialiseIdle,
   stepMinutes,
 } from "../shell/logic/idleState.mjs";
 
