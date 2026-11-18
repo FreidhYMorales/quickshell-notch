@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { lstatSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -16,6 +16,13 @@ const flags = spawnSync("pkg-config", [
 ], { encoding: "utf8" });
 if (flags.status !== 0) {
   throw new Error("Install wlroots 0.20 development headers and pkg-config");
+}
+const runtimeInfo = lstatSync(runtime);
+if (
+  !runtimeInfo.isDirectory() || runtimeInfo.uid !== process.getuid() ||
+  (runtimeInfo.mode & 0o7777) !== 0o700
+) {
+  throw new Error("Unsafe isolated runtime directory");
 }
 const compiled = spawnSync("cc", [
   "-Wall",
