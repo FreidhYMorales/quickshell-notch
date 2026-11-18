@@ -46,6 +46,16 @@ const compiled = spawnSync("cc", [
   ...flags.stdout.trim().split(/\s+/),
 ], { encoding: "utf8" });
 if (compiled.status !== 0) throw new Error(compiled.stderr);
+const afterCompile = lstatSync(runtime, { throwIfNoEntry: false });
+if (
+  !afterCompile || !afterCompile.isDirectory() ||
+  afterCompile.uid !== process.getuid() ||
+  (afterCompile.mode & 0o7777) !== 0o700 ||
+  afterCompile.dev !== initialRuntimeInfo.dev ||
+  afterCompile.ino !== initialRuntimeInfo.ino
+) {
+  throw new Error("Unsafe isolated runtime directory");
+}
 const env = {
   PATH: process.env.PATH,
   HOME: runtime,
