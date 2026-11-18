@@ -31,6 +31,8 @@ Singleton {
     readonly property var idleStageNames: ["Screensaver", "Lock", "Suspend"]
     readonly property string idleOff: "Off"
     readonly property string idleMinutes: "%1 min"
+    readonly property string idleLess: "−"
+    readonly property string idleMore: "+"
     readonly property string webappInstall: "Install"
     readonly property string webappInstalled: "Installed"
     readonly property string webappInstallFailed: "Installation failed"

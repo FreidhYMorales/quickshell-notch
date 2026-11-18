@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../config"
 import "../../services"
+import "../../logic/idleState.mjs" as IdleState
 
 // Screensaver sub-view of the launcher: the screensaver, lock and suspend
 // minutes the idle chain uses.
@@ -11,6 +12,7 @@ Item {
 
     required property var screen
     readonly property var scheme: Colours.paletteFor(screen)
+    readonly property var stageKeys: ["screensaver", "lock", "suspend"]
     readonly property var minutes: [Idle.timeouts.screensaver, Idle.timeouts.lock, Idle.timeouts.suspend]
 
     signal back
@@ -46,6 +48,7 @@ Item {
                     required property string modelData
                     required property int index
                     readonly property int value: root.minutes[index]
+                    readonly property string key: root.stageKeys[index]
 
                     width: (stages.width - 2 * stages.spacing) / 3
                     spacing: Layout.launcherGap
@@ -59,13 +62,45 @@ Item {
                         font.pixelSize: Fonts.launcherItem
                     }
 
-                    Text {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        text: stage.value > 0 ? Strings.idleMinutes.arg(stage.value) : Strings.idleOff
-                        color: root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.launcherItem
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: Layout.launcherGap
+
+                        Text {
+                            objectName: "idle-" + stage.key + "-less"
+                            text: Strings.idleLess
+                            color: root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.launcherItem
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Idle.setMinutes(stage.key, IdleState.stepMinutes(stage.value, -1))
+                            }
+                        }
+
+                        Text {
+                            objectName: "idle-" + stage.key + "-value"
+                            text: stage.value > 0 ? Strings.idleMinutes.arg(stage.value) : Strings.idleOff
+                            color: root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.launcherItem
+                        }
+
+                        Text {
+                            objectName: "idle-" + stage.key + "-more"
+                            text: Strings.idleMore
+                            color: root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.launcherItem
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Idle.setMinutes(stage.key, IdleState.stepMinutes(stage.value, 1))
+                            }
+                        }
                     }
                 }
             }
