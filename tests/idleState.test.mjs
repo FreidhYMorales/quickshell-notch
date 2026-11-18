@@ -4,6 +4,7 @@ import {
   idleDelays,
   parseIdle,
   parseScreensaverChoice,
+  screensaverImage,
   serialiseIdle,
   stepMinutes,
 } from "../shell/logic/idleState.mjs";
@@ -117,5 +118,33 @@ test("the wallpaper choice defaults to same-as-desktop and reads a saved path", 
       '{"screensaverUseWallpaper":false,"screensaverPath":"/w/x.png"}',
     ),
     { sameAsDesktop: false, path: "/w/x.png" },
+  );
+});
+
+test("the screensaver image is the chosen wallpaper when the switch is off, and each monitor's own otherwise", () => {
+  assert.equal(
+    screensaverImage("/w/desk-a.png", {
+      sameAsDesktop: true,
+      path: "/w/x.png",
+    }),
+    "/w/desk-a.png",
+  );
+  assert.equal(
+    screensaverImage("/w/desk-a.png", {
+      sameAsDesktop: false,
+      path: "/w/x.png",
+    }),
+    "/w/x.png",
+  );
+  assert.equal(
+    screensaverImage("/w/desk-b.mp4", {
+      sameAsDesktop: false,
+      path: "/w/x.png",
+    }),
+    "/w/x.png",
+  );
+  assert.equal(
+    screensaverImage("/w/desk-a.png", { sameAsDesktop: false, path: "" }),
+    "/w/desk-a.png",
   );
 });
