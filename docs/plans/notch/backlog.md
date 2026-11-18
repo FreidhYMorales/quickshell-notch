@@ -59,7 +59,7 @@
 47. [ ] As a user, I want a cross-fade between idle and expanded notch content so that opening and closing the expanded view feels smooth.
 48. [ ] As a user, I want the idle content to shift by one pixel every few minutes so that the screen is less prone to OLED burn-in.
 49. [ ] As a user, I want a permanent, subtle luminous outline along the notch's lower edge so that its geometry is distinct while its background remains black.
-50. [~] As a user, I want the screensaver phase so that my session locks at my screensaver time showing only my wallpaper and the screen goes dark before suspending. Requires: #30, #31
+50. [x] 4dfc7a3 As a user, I want the screensaver phase so that my session locks at my screensaver time showing only my wallpaper and the screen goes dark before suspending. Requires: #30, #31
 51. [ ] As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend times and pick the screensaver wallpaper from the notch. Requires: #26, #50
 
 ## Wallpaper work status
@@ -68,6 +68,6 @@
 - #34: fullscreen Quick Wallpaper picker implemented and merged into `main` via PR #27 (squash commit `1c7a44e`). The maintainer confirmed that both CI jobs passed and that local image/video preview, transitions and persistence worked.
 - #34 validation limitations: multi-monitor behavior was not tested because a second monitor was unavailable. Other unconfirmed manual edge cases (Escape/persistence, lock/session interactions, focus and click-through restoration, missing files and decoder failures) are not marked as passed; issues discovered later can be handled in follow-up stories.
 - The unreliable nested Hyprland compositor CI probe was removed. Functional validation was performed on the maintainer's own environment, not through that hosted compositor probe.
-- Remaining open stories: #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #29, #36, #38–#49, #50–#51; #35 was split into #50 (screensaver phase, in progress) and #51 (screensaver command view), and #44 is parked mid-flight.
+- Remaining open stories: #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #29, #36, #38–#49, #51; #35 was split into #50 (screensaver phase, done) and #51 (screensaver command view), and #44 is parked mid-flight.
 - #35-#39 cover plan SHOULD items that had no backlog entry: the screensaver, security and webapp command views (plan line 335), the calendar month view (line 337) and the notification glow pulse (line 338).
 - #41 comes from a question after #28 shipped: on the host one dry-run takes ~130 ms, the nine in series ~1.1 s and unbounded ~0.18 s at ~5.7 cores, so a disk cache plus a prefetch when the launcher opens (and three dry-runs at a time) removes most of the wait.
