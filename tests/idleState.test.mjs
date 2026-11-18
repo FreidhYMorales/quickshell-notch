@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   idleDelays,
   parseIdle,
+  parseScreensaverChoice,
   serialiseIdle,
   stepMinutes,
 } from "../shell/logic/idleState.mjs";
@@ -100,5 +101,21 @@ test("saving idle state keeps the old field names and adds the wallpaper choice"
       screensaverUseWallpaper: true,
       screensaverPath: "",
     },
+  );
+});
+
+test("the wallpaper choice defaults to same-as-desktop and reads a saved path", () => {
+  const sameAsDesktop = { sameAsDesktop: true, path: "" };
+  assert.deepEqual(parseScreensaverChoice(null), sameAsDesktop);
+  assert.deepEqual(parseScreensaverChoice("not json"), sameAsDesktop);
+  assert.deepEqual(
+    parseScreensaverChoice('{"screensaverTimeoutMin":2}'),
+    sameAsDesktop,
+  );
+  assert.deepEqual(
+    parseScreensaverChoice(
+      '{"screensaverUseWallpaper":false,"screensaverPath":"/w/x.png"}',
+    ),
+    { sameAsDesktop: false, path: "/w/x.png" },
   );
 });
