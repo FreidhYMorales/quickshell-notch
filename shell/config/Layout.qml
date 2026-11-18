@@ -110,6 +110,11 @@ Singleton {
 
     // Webapp sub-view: fixed height so typing never resizes the notch.
     readonly property int webappViewHeight: 220
+    // Screensaver sub-view: its wallpaper picker, a row of thumbnails under
+    // the switch.
+    readonly property int screensaverPickerHeight: 72
+    readonly property int screensaverPickerWidth: 128
+    readonly property int screensaverChosenBorder: 2
     readonly property int webappFieldHeight: 40
     readonly property int webappButtonPad: 16
 

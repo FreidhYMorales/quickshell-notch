@@ -20,6 +20,7 @@ Item {
     readonly property bool themeMode: view.sub === "theme"
     readonly property bool keybindsMode: view.sub === "keybinds"
     readonly property bool webappMode: view.sub === "webapp"
+    readonly property bool screensaverMode: view.sub === "screensaver"
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
     readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
@@ -56,6 +57,10 @@ Item {
                 send({
                     type: "WebappOpen"
                 });
+            } else if (results[index]?.name === Strings.screensaverTitle) {
+                send({
+                    type: "ScreensaverOpen"
+                });
             }
             return;
         }
@@ -66,7 +71,7 @@ Item {
     }
 
     // The same padding on every side of the content (inside the ears).
-    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.keybindsMode ? keybindsView.implicitHeight : root.webappMode ? webappView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
+    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.keybindsMode ? keybindsView.implicitHeight : root.webappMode ? webappView.implicitHeight : root.screensaverMode ? screensaverView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
 
     NotchEarShape {
         anchors.fill: parent
@@ -141,9 +146,24 @@ Item {
         })
     }
 
+    CenterScreensaver {
+        id: screensaverView
+        visible: root.screensaverMode
+        screen: root.screen
+        x: Layout.earRadius + Layout.launcherPad
+        y: Layout.launcherPad
+        width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
+        focus: root.screensaverMode
+        onVisibleChanged: if (visible)
+            forceActiveFocus()
+        onBack: root.send({
+            type: "ScreensaverBack"
+        })
+    }
+
     Column {
         id: column
-        visible: !root.wallpaperMode && !root.themeMode && !root.keybindsMode && !root.webappMode
+        visible: !root.wallpaperMode && !root.themeMode && !root.keybindsMode && !root.webappMode && !root.screensaverMode
 
         anchors.left: parent.left
         anchors.right: parent.right

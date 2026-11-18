@@ -22,6 +22,44 @@ Singleton {
     // true once the notch state on disk holds the current timeouts.
     property bool saved: false
     readonly property var delays: IdleState.idleDelays(timeouts)
+    // The screensaver wallpaper choice, written beside the times.
+    property var choice: ({
+            sameAsDesktop: true,
+            path: ""
+        })
+
+    // A new time for one stage ("screensaver", "lock" or "suspend"). Clearing
+    // `saved` until the file is written switches the watchers off and on
+    // again, which re-arms them with the new timeout.
+    function setMinutes(stage: string, minutes: int) {
+        const next = Object.assign({}, timeouts);
+        next[stage] = minutes;
+        timeouts = next;
+        save();
+    }
+
+    // "Same as desktop wallpaper" on or off; the chosen path is kept.
+    function setSameAsDesktop(on: bool) {
+        choice = {
+            sameAsDesktop: on,
+            path: choice.path
+        };
+        save();
+    }
+
+    // The screensaver's own wallpaper, used while the switch is off.
+    function setScreensaverPath(path: string) {
+        choice = {
+            sameAsDesktop: choice.sameAsDesktop,
+            path: path
+        };
+        save();
+    }
+
+    function save() {
+        saved = false;
+        writer.setText(JSON.stringify(IdleState.serialiseIdle(timeouts, choice)));
+    }
 
     // Enabled only once the timeouts are settled: a watcher created with the
     // default timeout and changed a moment later could never fire (old shell).
@@ -66,6 +104,7 @@ Singleton {
         const notch = readText(notchDir + "/idle.json");
         if (notch !== null) {
             timeouts = IdleState.parseIdle(notch);
+            choice = IdleState.parseScreensaverChoice(notch);
             saved = true;
             return;
         }

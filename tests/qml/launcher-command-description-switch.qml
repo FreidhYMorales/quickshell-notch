@@ -6,6 +6,29 @@ ShellRoot {
     id: root
     property var target: null
     property var center: Qt.createQmlObject('import QtQuick; import "' + Quickshell.env("NOTCH_CENTER_URL") + '" as Center; QtObject { property var store: Center.CenterStore }', root)
+
+    // The row of a command by its name, so adding a command never moves the
+    // rows this probe selects.
+    function indexOf(items, name) {
+        for (const item of items) {
+            if (item.visible && typeof item.launch === "function" && item.results)
+                return item.results.findIndex(command => command.name === name);
+            const found = item.children && item.children.length !== undefined ? indexOf(item.children, name) : -1;
+            if (found !== -1)
+                return found;
+        }
+        return -1;
+    }
+
+    function select(name) {
+        const index = indexOf(root.target.content, name);
+        if (index === -1) {
+            console.error("launcher commands: " + name + " missing");
+            return Qt.exit(1);
+        }
+        root.center.store.dispatch({ type: "LauncherSelect", index: index });
+    }
+
     Timer {
         interval: 2500
         running: true
@@ -17,7 +40,14 @@ ShellRoot {
             root.target = component.createObject(null, { screen: screen });
             root.center.store.dispatch({ type: "LauncherToggle", monitor: screen.name });
             root.center.store.dispatch({ type: "LauncherQuery", text: ">" });
-            root.center.store.dispatch({ type: "LauncherSelect", index: 1 });
+            first.start();
+        }
+    }
+    Timer {
+        id: first
+        interval: 300
+        onTriggered: {
+            root.select("Theme");
             check.start();
         }
     }
@@ -29,7 +59,7 @@ ShellRoot {
                 console.error("launcher commands: theme description missing");
                 return Qt.exit(1);
             }
-            root.center.store.dispatch({ type: "LauncherSelect", index: 2 });
+            root.select("Wallpaper");
             next.start();
         }
     }

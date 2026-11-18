@@ -14,6 +14,7 @@ import "../logic/earGeometry.mjs" as EarGeometry
 import "../logic/wallpaperState.mjs" as WallpaperState
 import "../logic/lockSecurity.mjs" as LockSecurity
 import "../logic/lockStage.mjs" as LockStage
+import "../logic/idleState.mjs" as IdleState
 
 // The compositor keeps every monitor covered by WlSessionLockSurface for the
 // entire morph. Only successful PAM authentication may begin the exit.
@@ -29,6 +30,12 @@ Scope {
     // what it paints once the stage itself is already gone.
     property real overlay: 0
     property string overlayKind: ""
+
+    // The image a monitor's screensaver layer paints: the wallpaper chosen in
+    // the screensaver view, or that monitor's own desktop wallpaper.
+    function screensaverPathFor(screenName: string): string {
+        return IdleState.screensaverImage(Wallpapers.pathFor(screenName), Idle.choice);
+    }
     readonly property string stage: Session.stage
     // Last outputs state handed to the compositor (they start on).
     property bool outputsOn: true
@@ -461,6 +468,9 @@ Scope {
             readonly property bool blackLook: Session.stage === "black"
             readonly property bool gifWallpaper: /\.gif$/i.test(wallpaperPath)
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
+            readonly property string screensaverPath: surface.screen ? root.screensaverPathFor(surface.screen.name) : ""
+            readonly property bool gifScreensaver: /\.gif$/i.test(screensaverPath)
+            readonly property string screensaverSource: WallpaperState.isVideoPath(screensaverPath) ? Wallpapers.thumbnailFor(screensaverPath) : (screensaverPath === "" ? "" : "file://" + screensaverPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
             readonly property real morphWidth: idleWidth + (width - idleWidth) * root.reveal
             readonly property real morphHeight: Layout.idleHeight + (height - Layout.idleHeight) * root.reveal
@@ -691,20 +701,20 @@ Scope {
 
                     Image {
                         anchors.fill: parent
-                        source: root.overlayKind === "wallpaper" ? surface.wallpaperSource : ""
-                        visible: root.overlayKind === "wallpaper" && !surface.gifWallpaper
+                        source: root.overlayKind === "wallpaper" ? surface.screensaverSource : ""
+                        visible: root.overlayKind === "wallpaper" && !surface.gifScreensaver
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                     }
 
                     AnimatedImage {
                         anchors.fill: parent
-                        source: root.overlayKind === "wallpaper" && surface.gifWallpaper ? "file://" + surface.wallpaperPath : ""
-                        visible: root.overlayKind === "wallpaper" && surface.gifWallpaper
+                        source: root.overlayKind === "wallpaper" && surface.gifScreensaver ? "file://" + surface.screensaverPath : ""
+                        visible: root.overlayKind === "wallpaper" && surface.gifScreensaver
                         playing: surface.overlayShown
                         fillMode: Image.PreserveAspectCrop
                         onStatusChanged: if (status === Image.Error)
-                            console.warn("Lock screensaver GIF: cannot load " + surface.wallpaperPath)
+                            console.warn("Lock screensaver GIF: cannot load " + surface.screensaverPath)
                     }
                 }
             }

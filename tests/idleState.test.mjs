@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { idleDelays, parseIdle } from "../shell/logic/idleState.mjs";
+import {
+  idleDelays,
+  parseIdle,
+  parseScreensaverChoice,
+  screensaverImage,
+  serialiseIdle,
+  stepMinutes,
+} from "../shell/logic/idleState.mjs";
 
 test("the screensaver starts at its minutes, the black stage waits screensaver + lock and suspend waits all three", () => {
   assert.deepEqual(
@@ -59,5 +66,85 @@ test("a zero screensaver timeout turns the screensaver phase off but still locks
   assert.deepEqual(
     idleDelays({ screensaver: 0, lock: 5, suspend: 15 }),
     { screensaverSec: null, lockSec: 300, suspendSec: 1200 },
+  );
+});
+
+test("a step keeps the minutes between 0 and 60", () => {
+  assert.equal(stepMinutes(5, 1), 6);
+  assert.equal(stepMinutes(5, -1), 4);
+  assert.equal(stepMinutes(60, 1), 60);
+  assert.equal(stepMinutes(0, -1), 0);
+});
+
+test("saving idle state keeps the old field names and adds the wallpaper choice", () => {
+  assert.deepEqual(
+    serialiseIdle({ screensaver: 2, lock: 4, suspend: 0 }, {
+      sameAsDesktop: false,
+      path: "/w/a.png",
+    }),
+    {
+      screensaverTimeoutMin: 2,
+      lockTimeoutMin: 4,
+      suspendTimeoutMin: 0,
+      screensaverUseWallpaper: false,
+      screensaverPath: "/w/a.png",
+    },
+  );
+  assert.deepEqual(
+    serialiseIdle({ screensaver: 3, lock: 5, suspend: 15 }, {
+      sameAsDesktop: true,
+      path: "",
+    }),
+    {
+      screensaverTimeoutMin: 3,
+      lockTimeoutMin: 5,
+      suspendTimeoutMin: 15,
+      screensaverUseWallpaper: true,
+      screensaverPath: "",
+    },
+  );
+});
+
+test("the wallpaper choice defaults to same-as-desktop and reads a saved path", () => {
+  const sameAsDesktop = { sameAsDesktop: true, path: "" };
+  assert.deepEqual(parseScreensaverChoice(null), sameAsDesktop);
+  assert.deepEqual(parseScreensaverChoice("not json"), sameAsDesktop);
+  assert.deepEqual(
+    parseScreensaverChoice('{"screensaverTimeoutMin":2}'),
+    sameAsDesktop,
+  );
+  assert.deepEqual(
+    parseScreensaverChoice(
+      '{"screensaverUseWallpaper":false,"screensaverPath":"/w/x.png"}',
+    ),
+    { sameAsDesktop: false, path: "/w/x.png" },
+  );
+});
+
+test("the screensaver image is the chosen wallpaper when the switch is off, and each monitor's own otherwise", () => {
+  assert.equal(
+    screensaverImage("/w/desk-a.png", {
+      sameAsDesktop: true,
+      path: "/w/x.png",
+    }),
+    "/w/desk-a.png",
+  );
+  assert.equal(
+    screensaverImage("/w/desk-a.png", {
+      sameAsDesktop: false,
+      path: "/w/x.png",
+    }),
+    "/w/x.png",
+  );
+  assert.equal(
+    screensaverImage("/w/desk-b.mp4", {
+      sameAsDesktop: false,
+      path: "/w/x.png",
+    }),
+    "/w/x.png",
+  );
+  assert.equal(
+    screensaverImage("/w/desk-a.png", { sameAsDesktop: false, path: "" }),
+    "/w/desk-a.png",
   );
 });
