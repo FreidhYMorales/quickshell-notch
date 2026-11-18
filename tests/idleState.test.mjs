@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { idleDelays, parseIdle } from "../shell/logic/idleState.mjs";
+import {
+  idleDelays,
+  parseIdle,
+  stepMinutes,
+} from "../shell/logic/idleState.mjs";
 
 test("the screensaver starts at its minutes, the black stage waits screensaver + lock and suspend waits all three", () => {
   assert.deepEqual(
@@ -60,4 +64,11 @@ test("a zero screensaver timeout turns the screensaver phase off but still locks
     idleDelays({ screensaver: 0, lock: 5, suspend: 15 }),
     { screensaverSec: null, lockSec: 300, suspendSec: 1200 },
   );
+});
+
+test("a step keeps the minutes between 0 and 60", () => {
+  assert.equal(stepMinutes(5, 1), 6);
+  assert.equal(stepMinutes(5, -1), 4);
+  assert.equal(stepMinutes(60, 1), 60);
+  assert.equal(stepMinutes(0, -1), 0);
 });
