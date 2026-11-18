@@ -830,3 +830,17 @@ test("webapp subview cannot open without the launcher", () => {
   const initial = two();
   assert.equal(reduce(initial, { type: "WebappOpen" }).state, initial);
 });
+
+test("screensaver command opens a launcher subview and returns to commands", () => {
+  const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
+  const screensaver = reduce(opened, { type: "ScreensaverOpen" }).state;
+  assert.equal(screensaver.global.keyboard.sub, "screensaver");
+  assert.equal(screensaver.global.keyboard.kind, "launcher");
+  const returned = reduce(screensaver, { type: "ScreensaverBack" }).state;
+  assert.equal(returned.global.keyboard.sub, null);
+});
+
+test("screensaver subview cannot open without the launcher", () => {
+  const initial = two();
+  assert.equal(reduce(initial, { type: "ScreensaverOpen" }).state, initial);
+});
