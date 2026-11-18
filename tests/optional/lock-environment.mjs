@@ -30,8 +30,12 @@ shift
     writeFileSync(
       join(dir, "server-fixture"),
       `#!${process.execPath}
-console.log("isolated: ready");
-setInterval(() => {}, 1000);
+const net = require("node:net");
+const path = require("node:path");
+net.createServer().listen(
+  path.join(process.env.XDG_RUNTIME_DIR, process.env.WAYLAND_DISPLAY),
+  () => console.log("isolated: ready"),
+);
 `,
       { mode: 0o755 },
     );
