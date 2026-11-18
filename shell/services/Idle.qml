@@ -47,6 +47,15 @@ Singleton {
         save();
     }
 
+    // The screensaver's own wallpaper, used while the switch is off.
+    function setScreensaverPath(path: string) {
+        choice = {
+            sameAsDesktop: choice.sameAsDesktop,
+            path: path
+        };
+        save();
+    }
+
     function save() {
         saved = false;
         writer.setText(JSON.stringify(IdleState.serialiseIdle(timeouts, choice)));

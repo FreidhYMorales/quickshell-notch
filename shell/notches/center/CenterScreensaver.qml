@@ -124,11 +124,47 @@ Item {
         }
 
         // The screensaver's own wallpaper, only while the switch is off.
-        Item {
+        ListView {
             objectName: "screensaver-picker"
             visible: !Idle.choice.sameAsDesktop
             width: parent.width
             height: Layout.screensaverPickerHeight
+            orientation: ListView.Horizontal
+            spacing: Layout.launcherGap
+            clip: true
+            model: Wallpapers.entries
+
+            delegate: Item {
+                id: card
+
+                required property var modelData
+                readonly property bool chosen: modelData.path === Idle.choice.path
+
+                objectName: "screensaver-wallpaper-" + modelData.name
+                width: Layout.screensaverPickerWidth
+                height: Layout.screensaverPickerHeight
+
+                Image {
+                    anchors.fill: parent
+                    source: card.modelData.video ? Wallpapers.thumbnailFor(card.modelData.path) : "file://" + card.modelData.path
+                    sourceSize.height: Layout.screensaverPickerHeight
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.width: card.chosen ? Layout.screensaverChosenBorder : 0
+                    border.color: root.scheme.primary
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Idle.setScreensaverPath(card.modelData.path)
+                }
+            }
         }
     }
 }

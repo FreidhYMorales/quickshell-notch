@@ -113,6 +113,8 @@ Singleton {
     // Screensaver sub-view: its wallpaper picker, a row of thumbnails under
     // the switch.
     readonly property int screensaverPickerHeight: 72
+    readonly property int screensaverPickerWidth: 128
+    readonly property int screensaverChosenBorder: 2
     readonly property int webappFieldHeight: 40
     readonly property int webappButtonPad: 16
 
