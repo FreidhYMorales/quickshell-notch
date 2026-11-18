@@ -9,6 +9,7 @@ import {
   stageEffects,
   wakeReady,
 } from "../shell/logic/lockStage.mjs";
+import * as LockStageModule from "../shell/logic/lockStage.mjs";
 
 test("the screensaver shows the wallpaper and the padlock notch, never the form", () => {
   assert.deepEqual(lockLooks("screensaver"), {
@@ -89,6 +90,32 @@ test("a normal lock has no overlay and asks for neither the pointer nor the outp
     pointerHidden: false,
     outputsOn: true,
   });
+});
+
+test("a manual lock during the screensaver takes the wallpaper layer down", () => {
+  // The session stays locked and the stage goes back to normal without an
+  // input, so nothing may keep covering the form.
+  assert.equal(
+    LockStageModule.overlayMustContract("wallpaper", "normal"),
+    true,
+  );
+  assert.equal(LockStageModule.overlayMustContract("black", "normal"), true);
+});
+
+test("a stage that paints its own layer does not need a contraction", () => {
+  assert.equal(LockStageModule.overlayMustContract("", "screensaver"), false);
+  assert.equal(
+    LockStageModule.overlayMustContract("wallpaper", "screensaver"),
+    false,
+  );
+  assert.equal(
+    LockStageModule.overlayMustContract("wallpaper", "black"),
+    false,
+  );
+});
+
+test("nothing is contracted when no layer was painted", () => {
+  assert.equal(LockStageModule.overlayMustContract("", "normal"), false);
 });
 
 test("the outputs are awake only when every monitor reports dpms on", () => {
