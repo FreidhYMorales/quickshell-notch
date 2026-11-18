@@ -37,3 +37,10 @@ export function parseIdle(text) {
   }
   return timeouts;
 }
+
+const MAX_MINUTES = 60;
+
+// One stepper press: 0 is Off and 60 the most the view offers.
+export function stepMinutes(value, step) {
+  return Math.min(MAX_MINUTES, Math.max(0, value + step));
+}
