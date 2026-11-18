@@ -45,6 +45,14 @@ export function stageEffects(stage) {
   };
 }
 
+// A stage that paints no layer still has to take down the one the previous
+// stage left: a manual lock request during the screensaver returns the stage to
+// normal with the session still locked, so the wallpaper must contract into the
+// notch instead of staying over the form.
+export function overlayMustContract(previousKind, stage) {
+  return stageEffects(stage).overlay === null && previousKind !== "";
+}
+
 // Whether `hyprctl monitors -j` says every output is back on after the black
 // stage turned them off. Anything unreadable counts as awake: the lock must
 // never stay black because a monitor failed to report.

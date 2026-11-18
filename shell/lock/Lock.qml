@@ -101,6 +101,11 @@ Scope {
             } else {
                 root.overlay = 1;
             }
+        } else if (!root.wakingBlack && LockStage.overlayMustContract(root.overlayKind, root.stage)) {
+            // The stage left without an input (a manual lock request while the
+            // screensaver is up): contract the layer it left over the form.
+            root.notchShown = true;
+            overlayExit.restart();
         }
     }
 
@@ -118,6 +123,13 @@ Scope {
             return;
         const black = root.stage === "black";
         const blackComplete = root.overlay >= 0.999;
+        if (black && blackComplete) {
+            // Flag the wake before the stage goes away, so the stage change does
+            // not contract the frame before the outputs are back.
+            root.wakingBlack = true;
+            root.wakeStarted = Date.now();
+            root.dpmsOnAt = 0;
+        }
         Session.endStage();
         content.wake();
         if (black) {
@@ -127,9 +139,6 @@ Scope {
                 overlayExit.restart();
                 return;
             }
-            root.wakingBlack = true;
-            root.wakeStarted = Date.now();
-            root.dpmsOnAt = 0;
             root.wakeOutputs();
             wakePoll.restart();
             return;
