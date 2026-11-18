@@ -44,3 +44,13 @@ const MAX_MINUTES = 60;
 export function stepMinutes(value, step) {
   return Math.min(MAX_MINUTES, Math.max(0, value + step));
 }
+
+// The idle.json object: the old shell's field names, including its wallpaper
+// choice, so either shell reads the other's file.
+export function serialiseIdle(timeouts, choice) {
+  const saved = {};
+  for (const key in FIELDS) saved[FIELDS[key]] = timeouts[key];
+  saved.screensaverUseWallpaper = choice.sameAsDesktop;
+  saved.screensaverPath = choice.path;
+  return saved;
+}
