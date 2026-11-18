@@ -39,6 +39,7 @@ const env = {
   NOTCH_SMOKE: "1",
   QS_DISABLE_CRASH_HANDLER: "1",
 };
+delete env.WAYLAND_SOCKET;
 const compositor = spawn(server, { env });
 try {
   await new Promise((resolve, reject) => {
