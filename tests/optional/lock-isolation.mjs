@@ -16,6 +16,7 @@ const flags = spawnSync("pkg-config", [
   "wayland-server",
 ], { encoding: "utf8" });
 if (flags.status !== 0) {
+  rmSync(runtime, { recursive: true, force: true });
   throw new Error("Install wlroots 0.20 development headers and pkg-config");
 }
 const runtimeInfo = lstatSync(runtime);
