@@ -2,25 +2,25 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { idleDelays, parseIdle } from "../shell/logic/idleState.mjs";
 
-test("the lock waits screensaver + lock minutes and suspend waits all three", () => {
+test("the screensaver starts at its minutes, the black stage waits screensaver + lock and suspend waits all three", () => {
   assert.deepEqual(
     idleDelays({ screensaver: 1, lock: 5, suspend: 15 }),
-    { lockSec: 360, suspendSec: 1260 },
+    { screensaverSec: 60, lockSec: 360, suspendSec: 1260 },
   );
   assert.deepEqual(
     idleDelays({ screensaver: 3, lock: 5, suspend: 15 }),
-    { lockSec: 480, suspendSec: 1380 },
+    { screensaverSec: 180, lockSec: 480, suspendSec: 1380 },
   );
 });
 
 test("a zero stage turns its step off without stopping the other", () => {
   assert.deepEqual(
     idleDelays({ screensaver: 1, lock: 5, suspend: 0 }),
-    { lockSec: 360, suspendSec: null },
+    { screensaverSec: 60, lockSec: 360, suspendSec: null },
   );
   assert.deepEqual(
     idleDelays({ screensaver: 0, lock: 0, suspend: 15 }),
-    { lockSec: null, suspendSec: 900 },
+    { screensaverSec: null, lockSec: null, suspendSec: 900 },
   );
 });
 
@@ -48,9 +48,16 @@ test("a missing or broken idle state uses the defaults 3/5/15", () => {
   assert.deepEqual(parseIdle("not json"), defaults);
 });
 
-test("a zero lock timeout turns the lock off even with screensaver minutes", () => {
+test("a zero lock timeout turns the black stage off even with screensaver minutes", () => {
   assert.deepEqual(
     idleDelays({ screensaver: 3, lock: 0, suspend: 15 }),
-    { lockSec: null, suspendSec: 1080 },
+    { screensaverSec: 180, lockSec: null, suspendSec: 1080 },
+  );
+});
+
+test("a zero screensaver timeout turns the screensaver phase off but still locks and suspends", () => {
+  assert.deepEqual(
+    idleDelays({ screensaver: 0, lock: 5, suspend: 15 }),
+    { screensaverSec: null, lockSec: 300, suspendSec: 1200 },
   );
 });

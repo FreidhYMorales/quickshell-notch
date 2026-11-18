@@ -1,10 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dspExpr } from "../shell/logic/hyprDsp.mjs";
+import { dpmsExpr, dspExpr } from "../shell/logic/hyprDsp.mjs";
 
 test("valid name without args builds a bare call", () => {
   assert.equal(dspExpr("exit"), "hl.dsp.exit()");
   assert.equal(dspExpr("exit", []), "hl.dsp.exit()");
+});
+
+// Hyprland 0.57 parses `hl.dsp.dpms("on")` as a toggle and ignores the
+// string, so asking twice turns the panel back off. The table form is the
+// only idempotent way to ask for a state.
+test("dpms asks for an explicit state, never for a toggle", () => {
+  assert.equal(dpmsExpr(true), 'hl.dsp.dpms({action="enable"})');
+  assert.equal(dpmsExpr(false), 'hl.dsp.dpms({action="disable"})');
+  assert.notEqual(dpmsExpr(true), 'hl.dsp.dpms("on")');
+  assert.notEqual(dpmsExpr(false), 'hl.dsp.dpms("off")');
 });
 
 test("dotted names are accepted", () => {

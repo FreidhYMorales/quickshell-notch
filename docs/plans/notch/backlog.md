@@ -24,7 +24,7 @@
 12. [x] 00e135c As a user, I want the notch shell to render my wallpaper (including video) and keep caffeine working so that it can replace the old shell.
 13. [-] split → #30, #31, #32
 14. [x] faf97ed As a user, I want Hyprland to start the notch shell with my keybinds remapped and a rollback so that it becomes my daily shell. Requires: #08, #10, #12, #13
-15. [ ] As a user, I want polished animations (charging glow, low-battery pulse, workspace fly, expanded cross-fade, OLED pixel shift) so that the notch feels alive.
+15. [-] split → #44, #45, #46, #47, #48
 16. [x] f3fb555 As a user, I want a hover control center in the top-right with my profile (avatar, name, uptime) so that I have a home for system controls in the notch. Requires: #02
 17. [x] c683110 As a user, I want toggle tiles for WiFi, Bluetooth and DND in the control center so that I switch them without leaving my work. Requires: #16
 18. [x] 71f319f As a user, I want a power row in the control center (lock, suspend, logout, reboot, shutdown) so that I reach session actions from the notch. Requires: #16, #10
@@ -44,7 +44,7 @@
 32. [x] 6e7946a As a user, I want every suspend to lock the notch session first so that my session is already protected when it resumes. Requires: #30
 33. [x] 2094096 As a user, I want a lock screen redesigned in the notch style so that my lock matches my shell and no longer depends on the SDDM theme. Requires: #30
 34. [x] 1c7a44e (PR #27, squash-merged into main; CI green as reported by maintainer) As a user, I want a fullscreen Quick Wallpaper picker expanding from the centre notch, with a bottom portrait coverflow (at most one third of screen height), clock/date and live preview, opened by keybind. Requires: #27
-35. [ ] As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend timeouts from the notch. Requires: #26, #31
+35. [-] split → #50, #51
 36. [ ] As a user, I want the security command view in the launcher so that I can enable fingerprint unlock and manage my registered fingers. Requires: #26, #30
 37. [x] 0b75aa7 As a user, I want the webapp command view in the launcher so that I can install a website as a desktop web app. Requires: #26
 38. [ ] As a user, I want a month view in the expanded notch calendar with week/month scrolling and a jump back to today so that I can look beyond the current week. Requires: —
@@ -53,6 +53,14 @@
 41. [ ] As a user, I want the theme view's colour swatches to be there the moment I open it so that browsing schemes feels instant instead of filling in over a second. Requires: #28
 42. [ ] As a user who works with external monitors, I want every notch surface and session behaviour checked on more than one screen so that multi-monitor use is verified once, as a whole, instead of finding defects one at a time. Requires: #30, #33
 43. [ ] As a user, I want the SDDM greeter to compress into the central notch when I log in, exactly like the notch shell's unlock morph, so that logging in feels like one continuous motion instead of the greeter disappearing. Requires: #33
+44. [~] As a user, I want an exterior battery-coloured glow around the notch while power is connected so that I can see charging and charge level at a glance.
+45. [ ] As a user, I want an intermittent low-battery glow pulse so that I notice the battery is low without a permanent glow.
+46. [ ] As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move.
+47. [ ] As a user, I want a cross-fade between idle and expanded notch content so that opening and closing the expanded view feels smooth.
+48. [ ] As a user, I want the idle content to shift by one pixel every few minutes so that the screen is less prone to OLED burn-in.
+49. [ ] As a user, I want a permanent, subtle luminous outline along the notch's lower edge so that its geometry is distinct while its background remains black.
+50. [x] 4dfc7a3 As a user, I want the screensaver phase so that my session locks at my screensaver time showing only my wallpaper and the screen goes dark before suspending. Requires: #30, #31
+51. [ ] As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend times and pick the screensaver wallpaper from the notch. Requires: #26, #50
 
 ## Wallpaper work status
 
@@ -60,6 +68,6 @@
 - #34: fullscreen Quick Wallpaper picker implemented and merged into `main` via PR #27 (squash commit `1c7a44e`). The maintainer confirmed that both CI jobs passed and that local image/video preview, transitions and persistence worked.
 - #34 validation limitations: multi-monitor behavior was not tested because a second monitor was unavailable. Other unconfirmed manual edge cases (Escape/persistence, lock/session interactions, focus and click-through restoration, missing files and decoder failures) are not marked as passed; issues discovered later can be handled in follow-up stories.
 - The unreliable nested Hyprland compositor CI probe was removed. Functional validation was performed on the maintainer's own environment, not through that hosted compositor probe.
-- Remaining open stories: #15, #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #33, #35, #36, #37, #38, #39, #40, #41, #42 and #43.
+- Remaining open stories: #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #29, #36, #38–#49, #51; #35 was split into #50 (screensaver phase, done) and #51 (screensaver command view), and #44 is parked mid-flight.
 - #35-#39 cover plan SHOULD items that had no backlog entry: the screensaver, security and webapp command views (plan line 335), the calendar month view (line 337) and the notification glow pulse (line 338).
 - #41 comes from a question after #28 shipped: on the host one dry-run takes ~130 ms, the nine in series ~1.1 s and unbounded ~0.18 s at ~5.7 cores, so a disk cache plus a prefetch when the launcher opens (and three dry-runs at a time) removes most of the wait.

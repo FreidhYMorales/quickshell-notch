@@ -13,6 +13,7 @@ import "../notches/center"
 import "../logic/earGeometry.mjs" as EarGeometry
 import "../logic/wallpaperState.mjs" as WallpaperState
 import "../logic/lockSecurity.mjs" as LockSecurity
+import "../logic/lockStage.mjs" as LockStage
 
 // The compositor keeps every monitor covered by WlSessionLockSurface for the
 // entire morph. Only successful PAM authentication may begin the exit.
@@ -23,6 +24,20 @@ Scope {
     property bool exiting: false
     property bool entering: false
     property bool notchShown: false
+    // The layer painted over the lock look while the idle stages are up:
+    // 1 is fullscreen and 0 has contracted into the notch. `overlayKind` keeps
+    // what it paints once the stage itself is already gone.
+    property real overlay: 0
+    property string overlayKind: ""
+    readonly property string stage: Session.stage
+    // Last outputs state handed to the compositor (they start on).
+    property bool outputsOn: true
+    // True from the input that ends the black stage until the outputs are
+    // back: the frame stays full screen black meanwhile.
+    property bool wakingBlack: false
+    property double wakeStarted: 0
+    // Last `dpms on` sent while waking, so the retries cannot chain forever.
+    property double dpmsOnAt: 0
     // Screen name -> LockFrame. Filled by the hidden capture hosts below.
     property var frames: ({})
     readonly property int morphDuration: 520
@@ -56,14 +71,128 @@ Scope {
     }
 
     function startExit() {
-        if (!lock.locked || root.exiting)
+        if (!lock.locked || root.exiting || root.stage !== "normal")
             return;
         root.exiting = true;
         exitMorph.restart();
     }
 
+    // What an idle stage asks of the shell: hide the pointer, keep or drop the
+    // outputs, and paint its layer over the lock look. The black stage paints
+    // first and lets `blackOut` drop the outputs once the frame is up.
+    function applyStage(): void {
+        const effects = LockStage.stageEffects(root.stage);
+        Hypr.setPointerHidden(effects.pointerHidden);
+        if (effects.outputsOn) {
+            blackOut.stop();
+            overlayEnter.stop();
+            if (!root.outputsOn) {
+                Hypr.setOutputsOn(true);
+                root.outputsOn = true;
+            }
+        }
+        if (effects.overlay !== null) {
+            overlayExit.stop();
+            root.overlayKind = effects.overlay;
+            if (effects.overlay === "black") {
+                root.notchShown = false;
+                root.overlay = 0;
+                overlayEnter.restart();
+            } else {
+                root.overlay = 1;
+            }
+        } else if (!root.wakingBlack && LockStage.overlayMustContract(root.overlayKind, root.stage)) {
+            // The stage left without an input (a manual lock request while the
+            // screensaver is up): contract the layer it left over the form.
+            root.notchShown = true;
+            overlayExit.restart();
+        }
+    }
+
+    // Any input ends a screensaver or black stage. The lock look is already
+    // painted underneath, so it comes out as that layer contracts into the
+    // notch with the lock's own morph. The surface passes its content item:
+    // ids declared inside WlSessionLockSurface are not visible out here.
+    //
+    // The black stage first has to bring the outputs back: the frame stays
+    // full screen while the panel wakes, so the contraction is not spent in
+    // the dark. `wakingBlack` keeps that wait apart from the stage itself,
+    // which the lock has already left.
+    function wakeStage(content: var): void {
+        if (root.stage === "normal")
+            return;
+        const black = root.stage === "black";
+        const blackComplete = root.overlay >= 0.999;
+        if (black && blackComplete) {
+            // Flag the wake before the stage goes away, so the stage change does
+            // not contract the frame before the outputs are back.
+            root.wakingBlack = true;
+            root.wakeStarted = Date.now();
+            root.dpmsOnAt = 0;
+        }
+        Session.endStage();
+        content.wake();
+        if (black) {
+            if (!blackComplete) {
+                root.overlay = 1;
+                root.notchShown = true;
+                overlayExit.restart();
+                return;
+            }
+            root.wakeOutputs();
+            wakePoll.restart();
+            return;
+        }
+        root.notchShown = true;
+        overlayExit.restart();
+    }
+
+    // Asks the compositor for the outputs again, at most every other poll.
+    // The `dpms off` of the black stage and the `dpms on` of the wake are two
+    // detached hyprctl calls: when they land out of order the panel stays
+    // dark, so the wake keeps insisting until the probe sees it lit.
+    function wakeOutputs(): void {
+        const now = Date.now();
+        if (now - root.dpmsOnAt < Timings.lockWakePoll * 2)
+            return;
+        root.dpmsOnAt = now;
+        Hypr.setOutputsOn(true);
+    }
+
+    // The black frame contracts once the outputs are lit (or once waiting for
+    // them would be worse than a missed animation). The notch drops in with
+    // the contraction, so the black sheet is what forms it.
+    function finishWake(): void {
+        if (!root.wakingBlack)
+            return;
+        root.wakingBlack = false;
+        wakePoll.stop();
+        dpmsProbe.running = false;
+        // One last idempotent wake in case the black stage's `dpms off` was
+        // still in flight when the probe first saw the panel lit.
+        Hypr.setOutputsOn(true);
+        if (!lock.locked || root.exiting)
+            return;
+        root.notchShown = true;
+        overlayExit.restart();
+    }
+
+    // A probe only counts once the panel has had `lockWakeDelay` to light up.
+    function wakeReady(json: string): bool {
+        return LockStage.wakeReady(Date.now() - root.wakeStarted, json, Timings.lockWakeDelay, Timings.lockWakeTimeout);
+    }
+
+    onStageChanged: root.applyStage()
+    Component.onCompleted: root.applyStage()
+    // Never leave the pointer hidden or the outputs off behind us.
+    Component.onDestruction: {
+        Hypr.setPointerHidden(false);
+        Hypr.setOutputsOn(true);
+    }
+
     LockPam {
         id: sharedAuth
+        stage: root.stage
         fingerprintEnabled: LockSecurity.fingerprintEnabled(notchSecurity.loaded ? notchSecurity.text() : null, oldSecurity.loaded ? oldSecurity.text() : null)
         onUnlocked: root.startExit()
     }
@@ -89,6 +218,9 @@ Scope {
                 return;
             exitMorph.stop();
             notchRetreat.stop();
+            root.wakingBlack = false;
+            wakePoll.stop();
+            dpmsProbe.running = false;
             root.exiting = false;
             curtainEntrance.stop();
             root.notchShown = false;
@@ -154,6 +286,82 @@ Scope {
         easing.type: Easing.InOutCubic
     }
 
+    // The idle layer contracts into the notch, uncovering the lock form that
+    // was already painted underneath.
+    NumberAnimation {
+        id: overlayEnter
+        target: root
+        property: "overlay"
+        from: 0
+        to: 1
+        duration: root.morphDuration
+        easing.type: Easing.InOutCubic
+        onFinished: {
+            if (root.stage === "black" && root.outputsOn)
+                blackOut.restart();
+        }
+    }
+
+    NumberAnimation {
+        id: overlayExit
+        target: root
+        property: "overlay"
+        from: 1
+        to: 0
+        duration: root.morphDuration
+        easing.type: Easing.InOutCubic
+        onFinished: {
+            root.overlayKind = "";
+        }
+    }
+
+    // While the black stage wakes, ask the compositor every `lockWakePoll` ms
+    // whether every output is back on. The frame stays put until it is.
+    Timer {
+        id: wakePoll
+        interval: Timings.lockWakePoll
+        repeat: true
+        onTriggered: {
+            if (!root.wakingBlack) {
+                stop();
+                return;
+            }
+            if (Date.now() - root.wakeStarted >= Timings.lockWakeTimeout) {
+                console.warn("Lock: the outputs did not come back before the wake deadline");
+                root.finishWake();
+                return;
+            }
+            root.wakeOutputs();
+            if (!dpmsProbe.running)
+                dpmsProbe.running = true;
+        }
+    }
+
+    // The outputs go off only once the black frame has been up for a moment.
+    Timer {
+        id: blackOut
+        interval: Timings.lockBlackDelay
+        repeat: false
+        onTriggered: {
+            if (root.stage !== "black")
+                return;
+            Hypr.setOutputsOn(false);
+            root.outputsOn = false;
+        }
+    }
+
+    Process {
+        id: dpmsProbe
+        command: ["hyprctl", "monitors", "-j"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root.wakingBlack && root.wakeReady(text))
+                    root.finishWake();
+            }
+        }
+    }
+
     Timer {
         id: curtainEntrance
         interval: 440
@@ -204,14 +412,25 @@ Scope {
             } else {
                 enterMorph.stop();
                 exitMorph.stop();
+                overlayExit.stop();
+                overlayEnter.stop();
+                wakePoll.stop();
+                dpmsProbe.running = false;
                 sharedAuth.stop();
                 root.exiting = false;
                 root.entering = false;
+                root.wakingBlack = false;
                 root.reveal = 1;
+                root.overlay = 0;
+                root.overlayKind = "";
                 root.notchShown = false;
                 curtainEntrance.stop();
                 notchRetreat.stop();
                 root.releaseFrames();
+                // A lock that ends outside the idle chain must not leave the
+                // pointer hidden or the outputs off.
+                if (root.stage !== "normal")
+                    Session.endStage();
             }
         }
         onSecureChanged: {
@@ -236,6 +455,10 @@ Scope {
             property bool videoFrameReady: false
             onVideoWallpaperChanged: videoFrameReady = false
             readonly property bool videoWallpaper: WallpaperState.isVideoPath(wallpaperPath)
+            // The black stage leaves the surface's own black: no wallpaper,
+            // captured frame or padlock. The lock look stays painted
+            // underneath so the layer above can contract over it.
+            readonly property bool blackLook: Session.stage === "black"
             readonly property bool gifWallpaper: /\.gif$/i.test(wallpaperPath)
             readonly property string wallpaperSource: WallpaperState.isVideoPath(wallpaperPath) ? Wallpapers.thumbnailFor(wallpaperPath) : (wallpaperPath === "" ? "" : "file://" + wallpaperPath)
             readonly property real idleWidth: Math.max(80, CenterStore.idleNotchWidths[surface.screen?.name] || 300)
@@ -405,14 +628,87 @@ Scope {
                     }
 
                     LockContent {
+                        id: content
+
                         anchors.fill: parent
                         auth: sharedAuth
                         screen: surface.screen
+                        stage: Session.stage
                         enabled: !root.exiting && root.reveal >= 0.98
                         opacity: Math.max(0, Math.min(1, (root.reveal - 0.5) * 2))
+                        onWoke: root.wakeStage(content)
                     }
                 }
             }
+
+            // The idle stage layer: the monitor's own wallpaper for the
+            // screensaver, pure black for the stage with the outputs off. It
+            // follows the entrance morph and contracts into the notch when an
+            // input ends the stage, uncovering the lock look below.
+            readonly property bool overlayShown: root.overlayKind !== "" && Math.min(root.reveal, root.overlay) > 0.001
+            readonly property real overlayMorph: Math.min(root.reveal, root.overlay)
+            readonly property real overlayWidth: surface.idleWidth + (surface.width - surface.idleWidth) * surface.overlayMorph
+            readonly property real overlayHeight: Layout.idleHeight + (surface.height - Layout.idleHeight) * surface.overlayMorph
+
+            Shape {
+                id: overlayMask
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                width: overlayFrame.width
+                height: overlayFrame.height
+                visible: false
+                layer.enabled: true
+                preferredRendererType: Shape.CurveRenderer
+
+                ShapePath {
+                    fillColor: "white"
+                    strokeWidth: -1
+                    PathSvg {
+                        path: EarGeometry.notchPath(overlayMask.width, overlayMask.height, Layout.earRadius * (1 - surface.overlayMorph), Layout.cornerRadius * (1 - surface.overlayMorph))
+                    }
+                }
+            }
+
+            Rectangle {
+                id: overlayFrame
+                width: surface.overlayWidth
+                height: surface.overlayHeight
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                color: Colours.background
+                clip: true
+                visible: surface.overlayShown
+                layer.enabled: surface.overlayShown
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: overlayMask
+                }
+
+                Item {
+                    width: surface.width
+                    height: surface.height
+                    x: -overlayFrame.x
+
+                    Image {
+                        anchors.fill: parent
+                        source: root.overlayKind === "wallpaper" ? surface.wallpaperSource : ""
+                        visible: root.overlayKind === "wallpaper" && !surface.gifWallpaper
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+
+                    AnimatedImage {
+                        anchors.fill: parent
+                        source: root.overlayKind === "wallpaper" && surface.gifWallpaper ? "file://" + surface.wallpaperPath : ""
+                        visible: root.overlayKind === "wallpaper" && surface.gifWallpaper
+                        playing: surface.overlayShown
+                        fillMode: Image.PreserveAspectCrop
+                        onStatusChanged: if (status === Image.Error)
+                            console.warn("Lock screensaver GIF: cannot load " + surface.wallpaperPath)
+                    }
+                }
+            }
+
             // A separate secure notch drops from the top after the reveal.
             // Keep it above the contracting frame until the compositor unlocks.
             // The desktop notch is hidden by the secure compositor layer.
@@ -440,7 +736,7 @@ Scope {
                 width: surface.idleWidth
                 height: Layout.idleHeight
                 y: root.notchShown ? 0 : -height
-                visible: root.notchShown || notchDrop.running
+                visible: (root.notchShown || notchDrop.running) && !surface.blackLook
                 z: 10
 
                 Behavior on y {
