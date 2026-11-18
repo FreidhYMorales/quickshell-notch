@@ -68,3 +68,11 @@ export function parseScreensaverChoice(text) {
       : "",
   };
 }
+
+// The image a monitor shows during the screensaver: the chosen wallpaper when
+// the "same as desktop" switch is off and one is chosen, else its own.
+export function screensaverImage(monitorPath, choice) {
+  return !choice.sameAsDesktop && choice.path !== ""
+    ? choice.path
+    : monitorPath;
+}
