@@ -103,5 +103,12 @@ try {
   if (compositor.exitCode === null && compositor.signalCode === null) {
     await new Promise((resolve) => compositor.once("exit", resolve));
   }
-  rmSync(runtime, { recursive: true, force: true });
+  const current = lstatSync(runtime, { throwIfNoEntry: false });
+  if (
+    current && current.isDirectory() &&
+    current.dev === initialRuntimeInfo.dev &&
+    current.ino === initialRuntimeInfo.ino
+  ) {
+    rmSync(runtime, { recursive: true, force: true });
+  }
 }
