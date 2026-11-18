@@ -29,7 +29,7 @@ const compiled = spawnSync("cc", [
 ], { encoding: "utf8" });
 if (compiled.status !== 0) throw new Error(compiled.stderr);
 const env = {
-  ...process.env,
+  PATH: process.env.PATH,
   HOME: runtime,
   XDG_RUNTIME_DIR: runtime,
   WAYLAND_DISPLAY: "notch-test",
@@ -39,7 +39,6 @@ const env = {
   NOTCH_SMOKE: "1",
   QS_DISABLE_CRASH_HANDLER: "1",
 };
-delete env.WAYLAND_SOCKET;
 const compositor = spawn(server, { env });
 try {
   await new Promise((resolve, reject) => {
