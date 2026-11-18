@@ -21,15 +21,17 @@ const FIELDS = {
 
 // Timeouts from an idle.json text (the old shell's format); a missing or
 // non-numeric field takes its default, an unreadable file all of them.
-export function parseIdle(text) {
-  let saved = {};
-  if (typeof text === "string") {
-    try {
-      saved = JSON.parse(text) || {};
-    } catch (_e) {
-      saved = {};
-    }
+function readSaved(text) {
+  if (typeof text !== "string") return {};
+  try {
+    return JSON.parse(text) || {};
+  } catch (_e) {
+    return {};
   }
+}
+
+export function parseIdle(text) {
+  const saved = readSaved(text);
   const timeouts = {};
   for (const key in FIELDS) {
     const value = saved[FIELDS[key]];
@@ -53,4 +55,16 @@ export function serialiseIdle(timeouts, choice) {
   saved.screensaverUseWallpaper = choice.sameAsDesktop;
   saved.screensaverPath = choice.path;
   return saved;
+}
+
+// The screensaver wallpaper choice from an idle.json text: the desktop
+// wallpaper unless the file turns it off, and the chosen path when it has one.
+export function parseScreensaverChoice(text) {
+  const saved = readSaved(text);
+  return {
+    sameAsDesktop: saved.screensaverUseWallpaper !== false,
+    path: typeof saved.screensaverPath === "string"
+      ? saved.screensaverPath
+      : "",
+  };
 }
