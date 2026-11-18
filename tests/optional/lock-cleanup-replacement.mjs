@@ -12,14 +12,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-test("preserves a replacement runtime on prerequisite failure", () => {
+test("preserves a replacement runtime on compilation failure", () => {
   const parent = mkdtempSync(join(tmpdir(), "notch-cleanup-swap-"));
   const runner = fileURLToPath(
     new URL("./lock-isolation.mjs", import.meta.url),
   );
   try {
+    writeFileSync(join(parent, "pkg-config"), "#!/bin/sh\nexit 0\n", {
+      mode: 0o755,
+    });
     writeFileSync(
-      join(parent, "pkg-config"),
+      join(parent, "cc"),
       `#!${process.execPath}
 const fs = require("node:fs");
 const path = require("node:path");
