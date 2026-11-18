@@ -4,9 +4,6 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
-const runtime = mkdtempSync(join(tmpdir(), "notch-lock-isolated-"));
-const initialRuntimeInfo = lstatSync(runtime);
-const server = join(runtime, "server");
 const source = fileURLToPath(new URL("./lock-compositor.c", import.meta.url));
 const probe = fileURLToPath(new URL("./lock-protocol.qml", import.meta.url));
 const flags = spawnSync("pkg-config", [
@@ -16,16 +13,11 @@ const flags = spawnSync("pkg-config", [
   "wayland-server",
 ], { encoding: "utf8" });
 if (flags.status !== 0) {
-  const current = lstatSync(runtime, { throwIfNoEntry: false });
-  if (
-    current && current.isDirectory() &&
-    current.dev === initialRuntimeInfo.dev &&
-    current.ino === initialRuntimeInfo.ino
-  ) {
-    rmSync(runtime, { recursive: true, force: true });
-  }
   throw new Error("Install wlroots 0.20 development headers and pkg-config");
 }
+const runtime = mkdtempSync(join(tmpdir(), "notch-lock-isolated-"));
+const initialRuntimeInfo = lstatSync(runtime);
+const server = join(runtime, "server");
 const runtimeInfo = lstatSync(runtime);
 if (
   !runtimeInfo.isDirectory() || runtimeInfo.uid !== process.getuid() ||
