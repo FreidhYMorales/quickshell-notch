@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const runtime = mkdtempSync(join(tmpdir(), "notch-lock-isolated-"));
+const initialRuntimeInfo = lstatSync(runtime);
 const server = join(runtime, "server");
 const source = fileURLToPath(new URL("./lock-compositor.c", import.meta.url));
 const probe = fileURLToPath(new URL("./lock-protocol.qml", import.meta.url));
@@ -20,7 +21,9 @@ if (flags.status !== 0) {
 const runtimeInfo = lstatSync(runtime);
 if (
   !runtimeInfo.isDirectory() || runtimeInfo.uid !== process.getuid() ||
-  (runtimeInfo.mode & 0o7777) !== 0o700
+  (runtimeInfo.mode & 0o7777) !== 0o700 ||
+  runtimeInfo.dev !== initialRuntimeInfo.dev ||
+  runtimeInfo.ino !== initialRuntimeInfo.ino
 ) {
   throw new Error("Unsafe isolated runtime directory");
 }
