@@ -60,7 +60,7 @@
 48. [ ] As a user, I want the idle content to shift by one pixel every few minutes so that the screen is less prone to OLED burn-in.
 49. [-] dropped (glow direction abandoned) As a user, I want a permanent, subtle luminous outline along the notch's lower edge so that its geometry is distinct while its background remains black.
 50. [x] 4dfc7a3 As a user, I want the screensaver phase so that my session locks at my screensaver time showing only my wallpaper and the screen goes dark before suspending. Requires: #30, #31
-51. [ ] As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend times and pick the screensaver wallpaper from the notch. Requires: #26, #50
+51. [~] As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend times and pick the screensaver wallpaper from the notch. Requires: #26, #50
 
 ## Wallpaper work status
 
