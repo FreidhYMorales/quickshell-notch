@@ -110,6 +110,8 @@ Singleton {
 
     // Webapp sub-view: fixed height so typing never resizes the notch.
     readonly property int webappViewHeight: 220
+    // Screensaver sub-view: title plus one row of idle stage cards.
+    readonly property int screensaverViewHeight: 120
     readonly property int webappFieldHeight: 40
     readonly property int webappButtonPad: 16
 

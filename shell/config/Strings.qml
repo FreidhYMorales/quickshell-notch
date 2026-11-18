@@ -26,6 +26,11 @@ Singleton {
     readonly property string keybindsTitle: "Keybinds"
     readonly property string keybindsUnavailable: "Keybinds unavailable"
     readonly property string webappTitle: "Webapp"
+    readonly property string screensaverTitle: "Screensaver"
+    // Screensaver view: the three idle stages and their minutes (%1).
+    readonly property var idleStageNames: ["Screensaver", "Lock", "Suspend"]
+    readonly property string idleOff: "Off"
+    readonly property string idleMinutes: "%1 min"
     readonly property string webappInstall: "Install"
     readonly property string webappInstalled: "Installed"
     readonly property string webappInstallFailed: "Installation failed"
@@ -74,6 +79,11 @@ Singleton {
             name: "Webapp",
             glyph: "󰖟",
             description: "Install a website as a desktop web app."
+        },
+        {
+            name: "Screensaver",
+            glyph: "󰒲",
+            description: "Set the screensaver, lock and suspend times and the screensaver wallpaper."
         }
     ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,
