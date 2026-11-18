@@ -72,3 +72,32 @@ test("a step keeps the minutes between 0 and 60", () => {
   assert.equal(stepMinutes(60, 1), 60);
   assert.equal(stepMinutes(0, -1), 0);
 });
+
+test("saving idle state keeps the old field names and adds the wallpaper choice", () => {
+  assert.deepEqual(
+    serialiseIdle({ screensaver: 2, lock: 4, suspend: 0 }, {
+      sameAsDesktop: false,
+      path: "/w/a.png",
+    }),
+    {
+      screensaverTimeoutMin: 2,
+      lockTimeoutMin: 4,
+      suspendTimeoutMin: 0,
+      screensaverUseWallpaper: false,
+      screensaverPath: "/w/a.png",
+    },
+  );
+  assert.deepEqual(
+    serialiseIdle({ screensaver: 3, lock: 5, suspend: 15 }, {
+      sameAsDesktop: true,
+      path: "",
+    }),
+    {
+      screensaverTimeoutMin: 3,
+      lockTimeoutMin: 5,
+      suspendTimeoutMin: 15,
+      screensaverUseWallpaper: true,
+      screensaverPath: "",
+    },
+  );
+});
