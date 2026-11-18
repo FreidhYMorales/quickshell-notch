@@ -15,6 +15,8 @@ Item {
 
     signal back
 
+    Keys.onEscapePressed: back()
+
     implicitHeight: Layout.screensaverViewHeight
 
     Column {
