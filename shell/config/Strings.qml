@@ -44,6 +44,7 @@ Singleton {
             "remove-and-retry": "Remove your finger and try again"
         })
     readonly property string enrollRetry: "Try again"
+    readonly property string securityCancel: "Cancel"
     // fprintd finger names as the security view shows them.
     readonly property var fingerLabels: ({
             "left-thumb": "Left thumb",

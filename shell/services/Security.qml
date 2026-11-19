@@ -55,6 +55,15 @@ Singleton {
         enroll.running = true;
     }
 
+    // Stopping fprintd-enroll leaves at worst an incomplete enrollment.
+    function cancelEnroll() {
+        if (!enrolling)
+            return;
+        enroll.running = false;
+        enrolling = false;
+        refresh();
+    }
+
     Process {
         id: enroll
         stdout: SplitParser {
