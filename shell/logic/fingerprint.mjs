@@ -12,6 +12,29 @@ export function enrolledFingers(text) {
   return names;
 }
 
-export function enrollResult(_line) {
-  return null;
+// fprintd-enroll statuses that end the enrollment without success.
+const failures = [
+  "enroll-failed",
+  "enroll-disconnected",
+  "enroll-unknown-error",
+  "enroll-data-full",
+  "enroll-duplicate",
+];
+
+// One "Enroll result: <status>" line: a counted touch, a hint key for the
+// view (the status without its "enroll-" prefix) or the end of the enrollment.
+export function enrollResult(line) {
+  const match = /Enroll result:\s*(\S+)/.exec(line);
+  if (match === null) return null;
+  const status = match[1];
+  if (status === "enroll-stage-passed") {
+    return { touch: true, hint: "again", end: "" };
+  }
+  if (status === "enroll-completed") {
+    return { touch: false, hint: "", end: "completed" };
+  }
+  if (failures.indexOf(status) !== -1) {
+    return { touch: false, hint: "", end: "failed" };
+  }
+  return { touch: false, hint: status.replace(/^enroll-/, ""), end: "" };
 }
