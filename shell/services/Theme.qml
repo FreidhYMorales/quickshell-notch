@@ -702,6 +702,10 @@ Singleton {
                 root.appFinished();
                 return;
             }
+            // A dark colors.json fits the notch again; dropping the shared
+            // palette only now keeps the light one from flashing meanwhile.
+            if (variant === "dark")
+                root.sharedPalette = null;
             postHook.pending = true;
             postHook.didStart = false;
             postHook.command = [root.postHookPath, variant];
