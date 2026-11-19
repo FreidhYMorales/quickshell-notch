@@ -170,6 +170,7 @@ NotchSurface {
         CenterIdle {
             id: idle
 
+            objectName: "center-idle"
             anchors.fill: parent
             visible: !root.expanded && !root.toast && !root.power && !root.launcher && !root.polkit
             screen: root.screen
@@ -381,6 +382,7 @@ NotchSurface {
         CenterExpanded {
             id: expandedView
 
+            objectName: "center-expanded"
             anchors.fill: parent
             visible: root.expanded
             screen: root.screen
