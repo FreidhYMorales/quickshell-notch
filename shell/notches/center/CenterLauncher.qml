@@ -21,6 +21,7 @@ Item {
     readonly property bool keybindsMode: view.sub === "keybinds"
     readonly property bool webappMode: view.sub === "webapp"
     readonly property bool screensaverMode: view.sub === "screensaver"
+    readonly property bool securityMode: view.sub === "security"
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
     readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
 
@@ -61,6 +62,10 @@ Item {
                 send({
                     type: "ScreensaverOpen"
                 });
+            } else if (results[index]?.name === Strings.securityTitle) {
+                send({
+                    type: "SecurityOpen"
+                });
             }
             return;
         }
@@ -71,7 +76,7 @@ Item {
     }
 
     // The same padding on every side of the content (inside the ears).
-    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.keybindsMode ? keybindsView.implicitHeight : root.webappMode ? webappView.implicitHeight : root.screensaverMode ? screensaverView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
+    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.keybindsMode ? keybindsView.implicitHeight : root.webappMode ? webappView.implicitHeight : root.screensaverMode ? screensaverView.implicitHeight : root.securityMode ? securityView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
 
     NotchEarShape {
         anchors.fill: parent
@@ -161,9 +166,24 @@ Item {
         })
     }
 
+    CenterSecurity {
+        id: securityView
+        visible: root.securityMode
+        screen: root.screen
+        x: Layout.earRadius + Layout.launcherPad
+        y: Layout.launcherPad
+        width: parent.width - 2 * (Layout.earRadius + Layout.launcherPad)
+        focus: root.securityMode
+        onVisibleChanged: if (visible)
+            forceActiveFocus()
+        onBack: root.send({
+            type: "SecurityBack"
+        })
+    }
+
     Column {
         id: column
-        visible: !root.wallpaperMode && !root.themeMode && !root.keybindsMode && !root.webappMode && !root.screensaverMode
+        visible: !root.wallpaperMode && !root.themeMode && !root.keybindsMode && !root.webappMode && !root.screensaverMode && !root.securityMode
 
         anchors.left: parent.left
         anchors.right: parent.right
@@ -239,7 +259,7 @@ Item {
         // Fixed per mode, so filtering does not resize the notch.
         Item {
             width: parent.width
-            height: (root.commandMode ? Math.min(Layout.launcherRows, Strings.launcherCommands.length) : Layout.launcherRows) * Layout.launcherRowHeight
+            height: (root.commandMode ? Strings.launcherCommands.length : Layout.launcherRows) * Layout.launcherRowHeight
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter

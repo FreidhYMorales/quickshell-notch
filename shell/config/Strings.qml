@@ -27,6 +27,8 @@ Singleton {
     readonly property string keybindsUnavailable: "Keybinds unavailable"
     readonly property string webappTitle: "Webapp"
     readonly property string screensaverTitle: "Screensaver"
+    readonly property string securityTitle: "Security"
+    readonly property string securityFingerprintUnlock: "Fingerprint unlock"
     // Screensaver view: the three idle stages and their minutes (%1).
     readonly property var idleStageNames: ["Screensaver", "Lock", "Suspend"]
     readonly property string idleOff: "Off"
@@ -89,6 +91,11 @@ Singleton {
             name: "Screensaver",
             glyph: "󰒲",
             description: "Set the screensaver, lock and suspend times and the screensaver wallpaper."
+        },
+        {
+            name: "Security",
+            glyph: "󰈷",
+            description: "Turn fingerprint unlock on or off and manage your registered fingers."
         }
     ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,

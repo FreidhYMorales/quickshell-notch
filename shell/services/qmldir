@@ -22,3 +22,4 @@ singleton SleepLock SleepLock.qml
 singleton Requests Requests.qml
 singleton Theme Theme.qml
 singleton Keybinds Keybinds.qml
+singleton Security Security.qml
