@@ -62,7 +62,7 @@ test("arrows move through the theme list and Enter chooses", () => {
     assert.match(output, /theme keys: chose scheme-neutral, closed true/);
     assert.deepEqual(
       JSON.parse(readFileSync(join(notch, "theme.json"), "utf8")),
-      { mode: "scheme-neutral" },
+      { mode: "scheme-neutral", variant: "dark" },
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });

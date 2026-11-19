@@ -68,7 +68,7 @@ test("the theme view lists the modes, marks the active one and closes on choose"
     assert.match(output, /theme view: closed after choose/);
     assert.deepEqual(
       JSON.parse(readFileSync(join(notch, "theme.json"), "utf8")),
-      { mode: "scheme-vibrant" },
+      { mode: "scheme-vibrant", variant: "dark" },
     );
     assert.match(
       readFileSync(matugenLog, "utf8"),

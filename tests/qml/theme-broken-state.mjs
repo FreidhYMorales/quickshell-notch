@@ -47,7 +47,7 @@ test("a broken theme file is rewritten instead of trusted", () => {
     assert.match(output, /broken state: mode scheme-content, saved true/);
     assert.equal(
       readFileSync(join(notch, "theme.json"), "utf8"),
-      '{"mode":"scheme-content"}',
+      '{"mode":"scheme-content","variant":"dark"}',
     );
     assert.equal(readFileSync(join(old, "theme.json"), "utf8"), oldTheme);
   } finally {
