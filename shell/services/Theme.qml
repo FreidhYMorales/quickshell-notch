@@ -242,8 +242,9 @@ Singleton {
         if (notch !== null) {
             const stored = ThemeLogic.savedMode(notch);
             mode = stored ?? ThemeLogic.DEFAULT_MODE;
-            // A broken file is replaced by the default instead of keeping it.
-            if (stored === null)
+            // A broken file is replaced by the default instead of keeping it;
+            // a file without a variant is written once with the imported one.
+            if (stored === null || ThemeLogic.savedVariant(notch) === null)
                 persist();
             else
                 saved = true;
