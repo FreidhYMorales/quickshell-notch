@@ -37,6 +37,7 @@ Scope {
         return IdleState.screensaverImage(Wallpapers.pathFor(screenName), Idle.choice);
     }
     readonly property string stage: Session.stage
+    readonly property bool fingerprintEnabled: false
     // Last outputs state handed to the compositor (they start on).
     property bool outputsOn: true
     // True from the input that ends the black stage until the outputs are
