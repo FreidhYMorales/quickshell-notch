@@ -11,6 +11,7 @@ import {
   parseDryPalette,
   probeArgs,
   savedMode,
+  savedVariant,
   themeState,
   themeVariant,
 } from "../shell/logic/theme.mjs";
@@ -263,4 +264,19 @@ test("a broken or unknown variant falls back to dark", () => {
   assert.equal(themeVariant('{"variant":"sepia"}', oldLight), "dark");
   assert.equal(themeVariant(null, '{"isLight":"yes"}'), "dark");
   assert.equal(themeVariant(null, null), "dark");
+});
+
+test("only a notch state that holds a known variant counts as saved", () => {
+  assert.equal(
+    savedVariant('{"mode":"scheme-content","variant":"light"}'),
+    "light",
+  );
+  assert.equal(
+    savedVariant('{"mode":"scheme-content","variant":"dark"}'),
+    "dark",
+  );
+  assert.equal(savedVariant('{"mode":"scheme-content"}'), null);
+  assert.equal(savedVariant('{"variant":"sepia"}'), null);
+  assert.equal(savedVariant("not json"), null);
+  assert.equal(savedVariant(null), null);
 });
