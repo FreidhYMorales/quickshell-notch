@@ -44,10 +44,13 @@ ShellRoot {
             const named = name => Visual.findNamed(surface.content, name);
             const centre = () => named("calendar-centre") ? named("calendar-centre").text : "none";
             const title = () => named("calendar-title") ? named("calendar-title").text : "none";
+            // QtTest's synthetic wheel never reaches this layer-shell surface,
+            // so the probe calls the function the WheelHandler calls; the real
+            // wheel is part of the manual check.
             const scroll = name => {
                 const item = named(name);
                 if (item)
-                    mouseWheel(item, item.width / 2, item.height / 2, 0, -120);
+                    item.scroll(-120);
                 wait(400);
             };
             const click = name => {
@@ -57,12 +60,12 @@ ShellRoot {
                 wait(400);
             };
             const start = centre();
-            scroll("calendar-week");
+            scroll("calendar-card");
             const nextWeek = centre();
             click("calendar-clock");
             const backWeek = centre();
             click("calendar-week");
-            scroll("calendar-grid");
+            scroll("calendar-month-view");
             const nextMonth = title();
             click("calendar-title");
             const backMonth = title();
