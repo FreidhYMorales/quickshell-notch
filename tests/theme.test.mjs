@@ -212,3 +212,31 @@ test("a broken theme state is rewritten, never trusted", () => {
     DEFAULT_MODE,
   );
 });
+
+test("the app run follows the light/dark variant, the dry-run stays dark", () => {
+  assert.deepEqual(appArgs("/w/a.png", "scheme-vibrant", "light"), [
+    "matugen",
+    "image",
+    "/w/a.png",
+    "--type",
+    "scheme-vibrant",
+    "--mode",
+    "light",
+    "--source-color-index",
+    "0",
+    "--quiet",
+  ]);
+  assert.deepEqual(appArgs("/w/b.png", "scheme-neutral", "dark"), [
+    "matugen",
+    "image",
+    "/w/b.png",
+    "--type",
+    "scheme-neutral",
+    "--mode",
+    "dark",
+    "--source-color-index",
+    "0",
+    "--quiet",
+  ]);
+  assert.equal(dryArgs("/w/a.png", "scheme-vibrant", "light")[6], "dark");
+});
