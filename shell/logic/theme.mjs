@@ -170,3 +170,14 @@ function parseState(text) {
     return null;
   }
 }
+
+// The variant a notch theme.json holds, or null when it has none yet (a file
+// from before the switch, or a broken one): such a file is written once so
+// the imported variant stops depending on the old shell's file.
+export function savedVariant(text) {
+  const saved = parseState(text);
+  if (saved === null) return null;
+  return saved.variant === "light" || saved.variant === "dark"
+    ? saved.variant
+    : null;
+}
