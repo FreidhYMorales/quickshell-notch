@@ -111,13 +111,21 @@ Singleton {
         previewBusy = true;
         previewProc.pendingScreen = job.screen;
         previewProc.pendingMode = job.mode;
-        previewProc.epoch = root.previewEpoch;
+        const epoch = root.previewEpoch;
+        previewProc.epoch = epoch;
+        // A commit may land while the frame is still being extracted: by then
+        // a newer job owns previewProc, so the stale callback does nothing.
         frameFor(job.path, "preview", path => {
+            if (epoch !== root.previewEpoch)
+                return;
             previewProc.pending = true;
             previewProc.didStart = false;
             previewProc.command = ThemeLogic.dryArgs(path, job.mode);
             previewProc.running = true;
-        }, reason => root.previewFailed(reason));
+        }, reason => {
+            if (epoch === root.previewEpoch)
+                root.previewFailed(reason);
+        });
     }
 
     // --- video wallpapers ---------------------------------------------------
