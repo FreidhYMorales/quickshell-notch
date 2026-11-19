@@ -172,9 +172,15 @@ NotchSurface {
 
             objectName: "center-idle"
             anchors.fill: parent
-            visible: !root.expanded && !root.toast && !root.power && !root.launcher && !root.polkit
+            // Cross-fades with the expanded layer while the shape morphs.
+            opacity: root.expanded ? 0 : 1
+            visible: opacity > 0 && !root.toast && !root.power && !root.launcher && !root.polkit
             screen: root.screen
             view: root.view
+
+            Behavior on opacity {
+                Anim {}
+            }
         }
 
         CenterToast {
@@ -384,9 +390,14 @@ NotchSurface {
 
             objectName: "center-expanded"
             anchors.fill: parent
-            visible: root.expanded
+            opacity: root.expanded ? 1 : 0
+            visible: opacity > 0
             screen: root.screen
             calendar: root.view.calendar ?? null
+
+            Behavior on opacity {
+                Anim {}
+            }
         }
     }
 
