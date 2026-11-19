@@ -36,3 +36,6 @@ Risk: item 4 (background preview queue racing wallpaper commits and the startup 
 ## Log
 
 - L1 request: "/flow:story 41"
+- L2 build: 3838f99/e44e195 (warmupPath), b6d9570/3531800 (ThemeWarmup per monitor, wired in shell.qml), bc38e73 (shared commit rewarms), adabd76 (per-monitor commit rewarms only that monitor).
+- L3 green on arrival: bc38e73 and adabd76 passed when written because the warm-up handler landed in 3531800. Mutation evidence: removing `onWallpaperChanged` turns bc38e73 red (`after: DP-1 0 | DP-2 0`); making it synchronous stays green because `Wallpapers.commit`'s save toggles `saved` and re-fires the warm-up, so the `Qt.callLater` is kept as an unpinned ordering guard. In adabd76 `warmupPath` is only the trigger (`generatePreviews` reads `Wallpapers.pathFor`); the case pins that DP-2 is left alone.
+- L4 correction (verifier FAIL): a per-monitor commit while another monitor was still warming cleared the preview queue, and the one-mode cache check then blocked any rewarm (DP-2 stuck at 2 of 9). 97efa4d red (`settled: DP-1 9 #bbbbbb | DP-2 2 #aaaaaa`) → 6df1826 (cache hit needs all nine modes).
