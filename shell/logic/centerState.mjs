@@ -37,6 +37,18 @@ const withMonitor = (state, name, patch) =>
 
 const unchanged = (state) => ({ state, effects: [] });
 
+// The calendar slice lives on a monitor only while it differs from the week
+// centred on today, so an untouched monitor keeps its plain shape.
+const withoutCalendar = (state, name) => {
+  const monitor = {};
+  for (const key in state.monitors[name]) {
+    if (key !== "calendar") monitor[key] = state.monitors[name][key];
+  }
+  return merge(state, {
+    monitors: merge(state.monitors, { [name]: monitor }),
+  });
+};
+
 const setGlobal = (state, patch) => ({
   state: merge(state, { global: merge(state.global, patch) }),
   effects: [],
@@ -100,6 +112,19 @@ const handlers = {
       }),
       effects: [],
     };
+  },
+  CalendarMonth(state, { monitor }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    return {
+      state: withMonitor(state, monitor, {
+        calendar: { view: "month", offset: 0 },
+      }),
+      effects: [],
+    };
+  },
+  CalendarBack(state, { monitor }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    return { state: withoutCalendar(state, monitor), effects: [] };
   },
   LauncherToggle(state, { monitor, sub = null }) {
     const { keyboard } = state.global;
