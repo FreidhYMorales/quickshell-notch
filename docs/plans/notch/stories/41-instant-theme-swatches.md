@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the shell has started and a monitor has a wallpaper, when I open the theme view on that monitor after the background work settles, then all nine swatches show their colours at once, with no placeholder filling in.
-- [ ] Given I commit a new wallpaper (shared or for one monitor), when I open the theme view on an affected monitor after the background work settles, then the swatches already match the new wallpaper and never show the old one's colours.
-- [ ] Given the swatches are still being computed or matugen is missing, when I open the theme view, then it behaves as today: placeholders for missing swatches, finished ones fill in, and nothing else in the view waits.
+- [x] Given the shell has started and a monitor has a wallpaper, when I open the theme view on that monitor after the background work settles, then all nine swatches show their colours at once, with no placeholder filling in.
+- [x] Given I commit a new wallpaper (shared or for one monitor), when I open the theme view on an affected monitor after the background work settles, then the swatches already match the new wallpaper and never show the old one's colours.
+- [x] Given the swatches are still being computed or matugen is missing, when I open the theme view, then it behaves as today: placeholders for missing swatches, finished ones fill in, and nothing else in the view waits.
 
 ## Plan
 
@@ -22,6 +22,8 @@
 - Persisting swatches to disk across restarts (assumption: one background warm-up per start is enough).
 - Making each dry-run faster, running them in parallel, or changing the swatch's look.
 - Video wallpapers beyond what the existing middle-frame path already does.
+- A cancelled preview matugen that outlives SIGTERM past the wallpaper save (L14): needs a stuck process; deferred as tech debt by the user.
+- Cleaning up the per-video frame files that accumulate in the cache.
 
 ## Suggestions (your call)
 
@@ -49,3 +51,6 @@ Risk: item 4 (background preview queue racing wallpaper commits and the startup 
 - L12 user decision: "si, arréglalo aquí" (fix the root cause: one frame file per video).
 - L13 correction: ff0964d red (`settled: DP-1 9 #aaaaaa,#bbbbbb`, a → b → a → a commits during extractions) → 37d5540: frame files are named `<md5 of the video path>-theme-frame-<role>.png` and the frame cache marks files, not roles, so two videos never share a file; this replaces 38e1ff8's role clearing. `startFrame` also skips a queued job whose file already landed so a frame a dry-run may be reading is never rewritten; that guard is not pinned (a mutation removing it stays green, the stub writes the frame in one step). `make check` on 37d5540: exit 0, "smoke: config loaded".
 - L14 verifier NEEDS DECISION on 5b6b17b: C1, C2, C3, commit order, tamper and `make check` PASS; the frame-file races are closed. Open: a cancelled `previewProc` run only gets SIGTERM, so if that matugen outlives the wallpaper save its late output is taken as the next job's first mode (scratch repro with a TERM-ignoring stub: `settled: DP-1 9 #aaaaaa,#bbbbbb | DP-2 9 #aaaaaa`); real matugen exits on SIGTERM at once. Minor: per-video frame files accumulate in the cache. Waiting on the user.
+- L15 user decision: "si, déjalo fuera de alcance y cierra la 41". The SIGTERM hand-off race and the frame-file cleanup are out of scope.
+- L16 close: last code commit 37d5540; tests 3 `warmupPath` units plus probes theme-warmup, theme-warmup-commit (2), theme-warmup-race, theme-warmup-video, theme-warmup-video-back, theme-warmup-video-again. `make check` on 37d5540: exit 0, "smoke: config loaded" (only docs changed since). Verifier: FAIL ×4 corrected (L4, L7, L10, L13), final NEEDS DECISION resolved by L15. Manual check (open the theme view after start and after a wallpaper change) left to the user.
+- Risk: item 4 (background preview queue racing wallpaper commits and the startup restore)
