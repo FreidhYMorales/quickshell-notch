@@ -35,29 +35,46 @@ Item {
             anchors.right: card.left
             anchors.rightMargin: Layout.expandedGap
             anchors.verticalCenter: parent.verticalCenter
-            visible: Mpris.hasPlayer && !root.month
+            opacity: root.month ? 0 : 1
+            visible: Mpris.hasPlayer && opacity > 0
             scheme: root.scheme
+
+            Behavior on opacity {
+                Anim {}
+            }
         }
 
+        // Grows from its column to the whole notch while the month opens,
+        // and shrinks back when it closes.
         CenterClockCard {
             id: card
 
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            width: Mpris.hasPlayer ? Layout.clockCardWidth : parent.width
-            visible: !root.month
+            x: parent.width - width
+            width: root.month || !Mpris.hasPlayer ? parent.width : Layout.clockCardWidth
+            open: root.month
             scheme: root.scheme
+
+            Behavior on width {
+                Anim {}
+            }
             monitor: root.screen ? root.screen.name : ""
             offset: root.calendar !== null && root.calendar.view === "week" ? root.calendar.offset : 0
             cardColor: Colours.cardFor(root.screen)
         }
 
-        // An open month replaces both columns.
+        // The month fades in over the grown card; Esc closes it.
         CenterMonth {
             anchors.fill: parent
-            visible: root.month
+            opacity: root.month ? 1 : 0
+            visible: opacity > 0
+            focus: root.month
             scheme: root.scheme
+
+            Behavior on opacity {
+                Anim {}
+            }
             monitor: root.screen ? root.screen.name : ""
             offset: root.month ? root.calendar.offset : 0
         }

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../../components"
 import "../../config"
 import "../../services"
 import "../../logic/calendar.mjs" as Calendar
@@ -9,6 +10,9 @@ import "../../logic/format.mjs" as Format
 // Clock card: large 24-hour clock above a week strip centred on today. The
 // strip depends on Time's date fields, so it rolls over at midnight; days
 // fade towards both edges and today is marked by its text colour (no pill).
+// The whole card is the calendar's button: hovering highlights it, a click
+// opens the month, and while `open` the clock and strip fade out as the card
+// grows into the month's frame.
 Rectangle {
     id: root
 
@@ -20,6 +24,8 @@ Rectangle {
     property color cardColor: Colours.background
     // Whole weeks the strip is scrolled away from today; scrolling down is later.
     property int offset: 0
+    // True while the month view fills the card.
+    property bool open: false
 
     readonly property var today: ({
             year: Time.year,
@@ -29,7 +35,28 @@ Rectangle {
     readonly property var week: Calendar.weekStrip(Calendar.shiftDays(today, 7 * offset), Limits.weekRadius, today)
 
     radius: Layout.cardRadius
-    color: cardColor
+    color: hover.hovered && !open ? Qt.rgba(Qt.color(scheme.primary).r, Qt.color(scheme.primary).g, Qt.color(scheme.primary).b, Colours.tileOffAlpha) : cardColor
+
+    Behavior on color {
+        ColorAnimation {
+            duration: Timings.animFast
+        }
+    }
+
+    HoverHandler {
+        id: hover
+
+        cursorShape: root.open ? Qt.ArrowCursor : Qt.PointingHandCursor
+    }
+
+    // A click anywhere on the card opens the month.
+    TapHandler {
+        enabled: !root.open
+        onTapped: CenterStore.dispatch({
+            type: "CalendarMonth",
+            monitor: root.monitor
+        })
+    }
 
     // Scrolling anywhere over the card moves the calendar: down is later.
     function scroll(dy: real) {
@@ -48,6 +75,12 @@ Rectangle {
     Column {
         anchors.centerIn: parent
         spacing: Layout.rowGap
+        opacity: root.open ? 0 : 1
+        visible: opacity > 0
+
+        Behavior on opacity {
+            Anim {}
+        }
 
         Text {
             objectName: "calendar-clock"
@@ -56,27 +89,11 @@ Rectangle {
             color: root.scheme.onSurface
             font.family: Fonts.family
             font.pixelSize: Fonts.display
-
-            // Clicking the clock brings the strip back to today.
-            TapHandler {
-                onTapped: CenterStore.dispatch({
-                    type: "CalendarToday",
-                    monitor: root.monitor
-                })
-            }
         }
 
         Row {
             objectName: "calendar-week"
             anchors.horizontalCenter: parent.horizontalCenter
-
-            // Clicking the strip opens the month view.
-            TapHandler {
-                onTapped: CenterStore.dispatch({
-                    type: "CalendarMonth",
-                    monitor: root.monitor
-                })
-            }
 
             Repeater {
                 model: root.week

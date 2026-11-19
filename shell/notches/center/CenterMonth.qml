@@ -50,6 +50,14 @@ Item {
         onWheel: event => root.scroll(event.angleDelta.y)
     }
 
+    // Esc is the only way back to the media and week view.
+    Keys.onEscapePressed: CenterStore.dispatch({
+        type: "CalendarBack",
+        monitor: root.monitor
+    })
+    onVisibleChanged: if (visible)
+        forceActiveFocus()
+
     Column {
         anchors.fill: parent
         spacing: Layout.monthGap
@@ -62,24 +70,6 @@ Item {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Layout.monthGap
-
-                // Back to the media and week view.
-                Text {
-                    objectName: "calendar-back"
-                    width: Layout.monthArrow
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Strings.glyphClose
-                    color: root.scheme.muted
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.body
-
-                    TapHandler {
-                        onTapped: CenterStore.dispatch({
-                            type: "CalendarBack",
-                            monitor: root.monitor
-                        })
-                    }
-                }
 
                 Text {
                     objectName: "calendar-prev"
