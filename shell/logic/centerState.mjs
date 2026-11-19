@@ -49,6 +49,15 @@ const withoutCalendar = (state, name) => {
   });
 };
 
+// Once the expanded notch closes (neither hovered nor pinned) a browsed date
+// or an open month is forgotten: it reopens on the week around today.
+const closeCalendar = (state, name) => {
+  const monitor = state.monitors[name];
+  return monitor.calendar && !monitor.hovered && !monitor.pinned
+    ? withoutCalendar(state, name)
+    : state;
+};
+
 const setGlobal = (state, patch) => ({
   state: merge(state, { global: merge(state.global, patch) }),
   effects: [],
@@ -100,16 +109,22 @@ const handlers = {
   Hover(state, { monitor, on }) {
     if (!state.monitors[monitor]) return unchanged(state);
     return {
-      state: withMonitor(state, monitor, { hovered: on }),
+      state: closeCalendar(
+        withMonitor(state, monitor, { hovered: on }),
+        monitor,
+      ),
       effects: [],
     };
   },
   ExpandedToggle(state, { monitor }) {
     if (!state.monitors[monitor]) return unchanged(state);
     return {
-      state: withMonitor(state, monitor, {
-        pinned: !state.monitors[monitor].pinned,
-      }),
+      state: closeCalendar(
+        withMonitor(state, monitor, {
+          pinned: !state.monitors[monitor].pinned,
+        }),
+        monitor,
+      ),
       effects: [],
     };
   },
