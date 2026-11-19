@@ -30,6 +30,7 @@ Singleton {
     readonly property string securityTitle: "Security"
     readonly property string securityFingerprintUnlock: "Fingerprint unlock"
     readonly property string securityRegistered: "Registered fingers"
+    readonly property string securityAdd: "Add a finger"
     // fprintd finger names as the security view shows them.
     readonly property var fingerLabels: ({
             "left-thumb": "Left thumb",

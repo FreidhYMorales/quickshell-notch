@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../config"
 import "../../services"
+import "../../logic/fingerprint.mjs" as Fingerprint
 
 // Security sub-view of the launcher: fingerprint unlock for the lock screen.
 Item {
@@ -67,6 +68,38 @@ Item {
                     color: root.scheme.onSurface
                     font.family: Fonts.family
                     font.pixelSize: Fonts.launcherItem
+                }
+            }
+        }
+
+        Column {
+            objectName: "security-free"
+            width: parent.width
+            spacing: Layout.launcherGap
+
+            Text {
+                text: Strings.securityAdd
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+
+            Flow {
+                width: parent.width
+                spacing: Layout.launcherGap
+
+                Repeater {
+                    model: Fingerprint.freeFingers(Security.enrolled)
+
+                    Text {
+                        required property string modelData
+
+                        objectName: "security-add-" + modelData
+                        text: Strings.fingerLabels[modelData] ?? modelData
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.launcherItem
+                    }
                 }
             }
         }
