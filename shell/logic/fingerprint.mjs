@@ -11,3 +11,7 @@ export function enrolledFingers(text) {
   }
   return names;
 }
+
+export function enrollResult(_line) {
+  return null;
+}
