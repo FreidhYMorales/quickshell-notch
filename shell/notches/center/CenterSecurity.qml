@@ -37,6 +37,12 @@ Item {
             color: root.scheme.onSurface
             font.family: Fonts.family
             font.pixelSize: Fonts.launcherItem
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Security.setFingerprintEnabled(!Security.fingerprintEnabled)
+            }
         }
 
         Column {
