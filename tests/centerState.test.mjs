@@ -892,3 +892,44 @@ test("calendar events for an unknown monitor change nothing", () => {
   assert.deepEqual(reduce(s, { type: "CalendarMonth", monitor: "Z" }).state, s);
   assert.deepEqual(reduce(s, { type: "CalendarBack", monitor: "Z" }).state, s);
 });
+
+const plainHovered = { hovered: true, pinned: false, toastHovered: false };
+
+test("CalendarScroll moves the week strip by whole weeks", () => {
+  const hovered = run(two(), { type: "Hover", monitor: "A", on: true });
+  const ahead = run(
+    hovered,
+    { type: "CalendarScroll", monitor: "A", steps: 1 },
+    { type: "CalendarScroll", monitor: "A", steps: 1 },
+  );
+  assert.deepEqual(ahead.monitors.A.calendar, { view: "week", offset: 2 });
+  const back = run(ahead, { type: "CalendarScroll", monitor: "A", steps: -2 });
+  assert.deepEqual(back.monitors.A, plainHovered);
+});
+
+test("CalendarScroll moves the month grid by whole months", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarScroll", monitor: "A", steps: -3 },
+  );
+  assert.deepEqual(state.monitors.A.calendar, { view: "month", offset: -3 });
+});
+
+test("CalendarToday jumps back to today in either view", () => {
+  const hovered = run(two(), { type: "Hover", monitor: "A", on: true });
+  const week = run(
+    hovered,
+    { type: "CalendarScroll", monitor: "A", steps: 4 },
+    { type: "CalendarToday", monitor: "A" },
+  );
+  assert.deepEqual(week.monitors.A, plainHovered);
+  const month = run(
+    hovered,
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarScroll", monitor: "A", steps: 5 },
+    { type: "CalendarToday", monitor: "A" },
+  );
+  assert.deepEqual(month.monitors.A.calendar, { view: "month", offset: 0 });
+});
