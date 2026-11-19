@@ -61,13 +61,33 @@ Item {
             Repeater {
                 model: Security.enrolled
 
-                Text {
+                Row {
+                    id: finger
+
                     required property string modelData
 
-                    text: Strings.fingerLabels[modelData] ?? modelData
-                    color: root.scheme.onSurface
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.launcherItem
+                    spacing: Layout.launcherGap
+
+                    Text {
+                        text: Strings.fingerLabels[finger.modelData] ?? finger.modelData
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.launcherItem
+                    }
+
+                    Text {
+                        objectName: "security-remove-" + finger.modelData
+                        text: Strings.securityRemove
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.launcherItem
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Security.removeFinger(finger.modelData)
+                        }
+                    }
                 }
             }
         }

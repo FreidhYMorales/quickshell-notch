@@ -64,6 +64,19 @@ Singleton {
         refresh();
     }
 
+    // fprintd-delete -f removes that one finger, not every registered one.
+    function removeFinger(finger: string) {
+        if (enrolled.indexOf(finger) === -1)
+            return;
+        remove.command = ["fprintd-delete", root.userName, "-f", finger];
+        remove.running = true;
+    }
+
+    Process {
+        id: remove
+        onExited: root.refresh()
+    }
+
     Process {
         id: enroll
         stdout: SplitParser {
