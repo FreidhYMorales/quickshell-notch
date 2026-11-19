@@ -154,3 +154,14 @@ test("shapeFor gives the launcher its own size", () => {
     height: 300,
   });
 });
+
+test("shapeFor gives an open month its own taller size", () => {
+  assert.deepEqual(
+    shapeFor("month", { idle: 380, expanded: 560, month: 560 }, {
+      idle: 32,
+      expanded: 112,
+      month: 300,
+    }),
+    { width: 560, height: 300 },
+  );
+});
