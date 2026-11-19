@@ -6,18 +6,18 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
+  "January",
+  "February",
+  "March",
+  "April",
   "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 test("an open month grows the notch and fills it with this month's grid", () => {
@@ -47,7 +47,7 @@ test("an open month grows the notch and fills it with this month's grid", () => 
     assert.match(
       output,
       new RegExp(
-        "calendar month: week 112, month 260, title " + title +
+        "calendar month: week 112, month 274, title " + title +
           ", days 42, today " + now.getDate() + ", week strip false",
       ),
     );

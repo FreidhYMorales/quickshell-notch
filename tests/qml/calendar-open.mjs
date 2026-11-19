@@ -6,18 +6,18 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
+  "January",
+  "February",
+  "March",
+  "April",
   "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 test("clicking the week strip opens the month and back returns to the week", () => {
@@ -47,7 +47,7 @@ test("clicking the week strip opens the month and back returns to the week", () 
     assert.match(
       output,
       new RegExp(
-        "calendar open: before 112 no-title strip; opened 260 " + title +
+        "calendar open: before 112 no-title strip; opened 274 " + title +
           " no-strip; back 112 no-title strip",
       ),
     );
