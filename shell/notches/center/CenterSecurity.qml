@@ -99,8 +99,44 @@ Item {
                         color: root.scheme.onSurface
                         font.family: Fonts.family
                         font.pixelSize: Fonts.launcherItem
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Security.startEnroll(parent.modelData)
+                        }
                     }
                 }
+            }
+        }
+
+        Column {
+            visible: Security.enrolling
+            width: parent.width
+            spacing: Layout.launcherGap
+
+            Text {
+                objectName: "security-enroll-title"
+                text: Strings.securityEnrolling.arg(Strings.fingerLabels[Security.enrollingFinger] ?? Security.enrollingFinger)
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+
+            Text {
+                objectName: "security-enroll-hint"
+                text: Strings.enrollHints[Security.enrollHint] ?? Strings.enrollRetry
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+
+            Text {
+                objectName: "security-enroll-touches"
+                text: Strings.securityTouches.arg(Security.enrollTouches)
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
             }
         }
     }

@@ -31,6 +31,19 @@ Singleton {
     readonly property string securityFingerprintUnlock: "Fingerprint unlock"
     readonly property string securityRegistered: "Registered fingers"
     readonly property string securityAdd: "Add a finger"
+    readonly property string securityEnrolling: "Enrolling %1"
+    readonly property string securityTouches: "Touches: %1"
+    // Enrollment hints keyed by fprintd-enroll's status (without "enroll-").
+    readonly property var enrollHints: ({
+            start: "Touch the fingerprint sensor",
+            again: "Touch the sensor again",
+            "retry-scan": "Try scanning again",
+            "swipe-too-short": "Swipe was too short, try again",
+            "too-fast": "Too fast, try again slower",
+            "finger-not-centered": "Center your finger on the sensor",
+            "remove-and-retry": "Remove your finger and try again"
+        })
+    readonly property string enrollRetry: "Try again"
     // fprintd finger names as the security view shows them.
     readonly property var fingerLabels: ({
             "left-thumb": "Left thumb",

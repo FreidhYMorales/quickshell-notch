@@ -37,6 +37,39 @@ Singleton {
     readonly property string userName: Quickshell.env("USER") || Quickshell.env("LOGNAME") || ""
     property var enrolled: []
 
+    property bool enrolling: false
+    property string enrollingFinger: ""
+    property int enrollTouches: 0
+    // A key of Strings.enrollHints.
+    property string enrollHint: ""
+
+    // Only the ten fprintd finger names reach fprintd-enroll, as one argument.
+    function startEnroll(finger: string) {
+        if (enrolling || Fingerprint.freeFingers(enrolled).indexOf(finger) === -1)
+            return;
+        enrollingFinger = finger;
+        enrollTouches = 0;
+        enrollHint = "start";
+        enrolling = true;
+        enroll.command = ["fprintd-enroll", "-f", finger, root.userName];
+        enroll.running = true;
+    }
+
+    Process {
+        id: enroll
+        stdout: SplitParser {
+            onRead: line => {
+                const result = Fingerprint.enrollResult(line);
+                if (result === null)
+                    return;
+                if (result.touch)
+                    root.enrollTouches++;
+                if (result.hint !== "")
+                    root.enrollHint = result.hint;
+            }
+        }
+    }
+
     function refresh() {
         list.running = false;
         list.running = true;
