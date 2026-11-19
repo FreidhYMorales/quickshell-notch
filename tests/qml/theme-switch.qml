@@ -4,7 +4,7 @@ import Quickshell
 import "visual.mjs" as Visual
 
 // Opens the theme view from the launcher, flips the Light/Dark switch with Tab
-// and back with a click, reading the variant and the switch label each time.
+// and back with a click, reading the variant and the switch's knob each time.
 ShellRoot {
     id: root
     property var center: Qt.createQmlObject('import QtQuick; import "' + Quickshell.env("NOTCH_CENTER_URL") + '" as Center; QtObject { property var store: Center.CenterStore }', root)
@@ -68,16 +68,22 @@ ShellRoot {
                 return Qt.exit(3);
             // Let the view settle before it takes key events.
             wait(400);
+            // Which side the knob sits on and the icon it carries.
             const label = () => {
-                const item = Visual.findNamed(surface.content, "theme-variant-switch");
-                return item ? item.text : "none";
+                const track = Visual.findNamed(surface.content, "theme-variant-switch");
+                const knob = Visual.findNamed(surface.content, "theme-variant-knob");
+                const icon = Visual.findNamed(surface.content, "theme-variant-icon");
+                if (!track || !knob || !icon)
+                    return "none";
+                const side = knob.x + knob.width / 2 > track.width / 2 ? "right" : "left";
+                return side + " " + icon.text;
             };
             const before = theme.variant + " " + label();
             keyClick(Qt.Key_Tab);
             waitFor(function () {
                 return theme.saved && theme.applied;
             }, 200);
-            wait(200);
+            wait(600);
             const tab = theme.variant + " " + label();
             const item = Visual.findNamed(surface.content, "theme-variant-switch");
             if (item)
@@ -85,7 +91,7 @@ ShellRoot {
             waitFor(function () {
                 return theme.saved && theme.applied;
             }, 200);
-            wait(200);
+            wait(600);
             const click = theme.variant + " " + label();
             console.log("theme switch: start " + before + ", tab " + tab + ", click " + click);
             Qt.exit(0);

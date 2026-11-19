@@ -19,7 +19,7 @@ case " $* " in
 esac
 `;
 
-test("Tab and a click flip the Light/Dark switch in the theme view", () => {
+test("Tab and a click slide the Light/Dark switch in the theme view", () => {
   const dir = mkdtempSync("/tmp/opencode/notch-theme-switch-");
   const state = join(dir, "state");
   const config = join(dir, "config");
@@ -61,7 +61,7 @@ test("Tab and a click flip the Light/Dark switch in the theme view", () => {
     assert.equal(result.status, 0, output);
     assert.match(
       output,
-      /theme switch: start dark Dark, tab light Light, click dark Dark/,
+      /theme switch: start dark left 󰽥, tab light right 󰖨, click dark left 󰽥/,
     );
     assert.equal(
       JSON.parse(readFileSync(join(notch, "theme.json"), "utf8")).variant,
