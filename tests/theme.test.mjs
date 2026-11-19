@@ -11,7 +11,9 @@ import {
   parseDryPalette,
   probeArgs,
   savedMode,
+  savedVariant,
   themeState,
+  themeVariant,
 } from "../shell/logic/theme.mjs";
 
 test("theme modes are the nine matugen scheme types in display order", () => {
@@ -211,4 +213,70 @@ test("a broken theme state is rewritten, never trusted", () => {
     themeState("not json", '{"mode":"scheme-vibrant"}').mode,
     DEFAULT_MODE,
   );
+});
+
+test("the app run follows the light/dark variant, the dry-run stays dark", () => {
+  assert.deepEqual(appArgs("/w/a.png", "scheme-vibrant", "light"), [
+    "matugen",
+    "image",
+    "/w/a.png",
+    "--type",
+    "scheme-vibrant",
+    "--mode",
+    "light",
+    "--source-color-index",
+    "0",
+    "--quiet",
+  ]);
+  assert.deepEqual(appArgs("/w/b.png", "scheme-neutral", "dark"), [
+    "matugen",
+    "image",
+    "/w/b.png",
+    "--type",
+    "scheme-neutral",
+    "--mode",
+    "dark",
+    "--source-color-index",
+    "0",
+    "--quiet",
+  ]);
+  assert.equal(dryArgs("/w/a.png", "scheme-vibrant", "light")[6], "dark");
+});
+
+test("the saved variant wins; the old isLight is imported only when the notch has none", () => {
+  const oldLight = '{"mode":"scheme-rainbow","isLight":true}';
+  assert.equal(
+    themeVariant('{"mode":"scheme-content","variant":"light"}', null),
+    "light",
+  );
+  assert.equal(
+    themeVariant('{"mode":"scheme-content","variant":"dark"}', oldLight),
+    "dark",
+  );
+  assert.equal(themeVariant('{"mode":"scheme-content"}', oldLight), "light");
+  assert.equal(themeVariant(null, oldLight), "light");
+  assert.equal(themeVariant(null, '{"isLight":false}'), "dark");
+});
+
+test("a broken or unknown variant falls back to dark", () => {
+  const oldLight = '{"isLight":true}';
+  assert.equal(themeVariant("not json", oldLight), "dark");
+  assert.equal(themeVariant('{"variant":"sepia"}', oldLight), "dark");
+  assert.equal(themeVariant(null, '{"isLight":"yes"}'), "dark");
+  assert.equal(themeVariant(null, null), "dark");
+});
+
+test("only a notch state that holds a known variant counts as saved", () => {
+  assert.equal(
+    savedVariant('{"mode":"scheme-content","variant":"light"}'),
+    "light",
+  );
+  assert.equal(
+    savedVariant('{"mode":"scheme-content","variant":"dark"}'),
+    "dark",
+  );
+  assert.equal(savedVariant('{"mode":"scheme-content"}'), null);
+  assert.equal(savedVariant('{"variant":"sepia"}'), null);
+  assert.equal(savedVariant("not json"), null);
+  assert.equal(savedVariant(null), null);
 });

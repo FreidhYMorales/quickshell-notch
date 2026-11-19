@@ -82,7 +82,7 @@ test("choosing a theme mode reruns the pipeline and saves the mode", () => {
     assert.match(output, /theme mode: scheme-vibrant/);
     assert.deepEqual(
       JSON.parse(readFileSync(join(notch, "theme.json"), "utf8")),
-      { mode: "scheme-vibrant" },
+      { mode: "scheme-vibrant", variant: "dark" },
     );
     assert.equal(readFileSync(join(old, "theme.json"), "utf8"), oldTheme);
     const log = readFileSync(matugenLog, "utf8");

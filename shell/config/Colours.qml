@@ -13,6 +13,9 @@ Singleton {
     readonly property real cardMix: 0.08
     // Control center toggle button fill while off (primary at this alpha).
     readonly property real tileOffAlpha: 0.18
+    // A tile-off tint laid over another one, like a notification row inside
+    // its card: the lighter accent fill for controls straight on the notch.
+    readonly property real raisedAlpha: 1 - (1 - tileOffAlpha) * (1 - tileOffAlpha)
     // Divider lines inside control center cards (muted at this opacity).
     readonly property real dividerAlpha: 0.3
 
@@ -40,8 +43,12 @@ Singleton {
             muted: "#b0b0b0"
         })
 
-    // Palette parsed from matugen's dark scheme, shared by every monitor.
-    property var global: fallback
+    // Palette parsed from the apps' colors.json: dark unless the apps are light.
+    property var appPalette: fallback
+    // Dark dry-run palette the theme service sets while the apps are light.
+    property var shared: null
+    // The notch's dark palette shared by every monitor.
+    readonly property var global: shared ?? appPalette
     // Per-monitor palettes keyed by screen name; filled in once wallpapers exist.
     property var overrides: ({})
 
@@ -62,7 +69,7 @@ Singleton {
         path: root.palettePath
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: root.global = PaletteLogic.parsePalette(text()) ?? root.fallback
-        onLoadFailed: root.global = root.fallback
+        onLoaded: root.appPalette = PaletteLogic.parsePalette(text()) ?? root.fallback
+        onLoadFailed: root.appPalette = root.fallback
     }
 }

@@ -101,6 +101,11 @@ Singleton {
     readonly property int themeViewHeight: 420
     readonly property int themeRowHeight: 36
     readonly property int themePreview: 18
+    // App Light/Dark switch in the theme header: pill track, round knob.
+    readonly property int themeSwitchWidth: 48
+    readonly property int themeSwitchHeight: 24
+    readonly property int themeSwitchInset: 2
+    readonly property int themeSwitchBorder: 1
 
     // Keybinds sub-view: fixed height so filtering never resizes the notch.
     readonly property int keybindsViewHeight: 420

@@ -16,26 +16,31 @@ export const MODES = [
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 // Argv arrays, no shell. The app-facing run writes colors.json and runs the
-// post-hook; the dry-run only dumps one monitor's palette. The notch stays
-// dark in this story: #40 adds the app-only light/dark axis.
-const baseArgs = (path, mode) => [
+// post-hook in the chosen light/dark variant; the dry-run only dumps a
+// notch palette, which is always dark.
+const baseArgs = (path, mode, variant) => [
   "matugen",
   "image",
   path,
   "--type",
   mode,
   "--mode",
-  "dark",
+  variant === "light" ? "light" : "dark",
   "--source-color-index",
   "0",
 ];
 
-export function appArgs(path, mode) {
-  return baseArgs(path, mode).concat(["--quiet"]);
+export function appArgs(path, mode, variant) {
+  return baseArgs(path, mode, variant).concat(["--quiet"]);
 }
 
 export function dryArgs(path, mode) {
-  return baseArgs(path, mode).concat(["--dry-run", "--quiet", "--json", "hex"]);
+  return baseArgs(path, mode, "dark").concat([
+    "--dry-run",
+    "--quiet",
+    "--json",
+    "hex",
+  ]);
 }
 
 export const DEFAULT_MODE = "scheme-content";
@@ -141,4 +146,38 @@ export function midpoint(text) {
   const duration = Number.parseFloat(text);
   if (!Number.isFinite(duration) || duration <= 0) return null;
   return duration / 2;
+}
+
+// The app-facing light/dark variant. The notch's theme.json wins once it has
+// a `variant`; until then the old shell's `isLight` is imported. A broken file
+// or an unknown value stays dark, the notch's own look.
+export function themeVariant(notchText, oldText) {
+  const notch = parseState(notchText);
+  if (typeof notchText === "string" && notch === null) return "dark";
+  if (notch !== null && "variant" in notch) {
+    return notch.variant === "light" ? "light" : "dark";
+  }
+  const old = parseState(oldText);
+  return old !== null && old.isLight === true ? "light" : "dark";
+}
+
+function parseState(text) {
+  if (typeof text !== "string") return null;
+  try {
+    const value = JSON.parse(text);
+    return typeof value === "object" && value !== null ? value : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+// The variant a notch theme.json holds, or null when it has none yet (a file
+// from before the switch, or a broken one): such a file is written once so
+// the imported variant stops depending on the old shell's file.
+export function savedVariant(text) {
+  const saved = parseState(text);
+  if (saved === null) return null;
+  return saved.variant === "light" || saved.variant === "dark"
+    ? saved.variant
+    : null;
 }

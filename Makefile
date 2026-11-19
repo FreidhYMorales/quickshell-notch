@@ -8,7 +8,7 @@ JS_PATHS  := shell/logic shell/config tests
 THEME_PROBES := $(wildcard tests/qml/theme-*.mjs)
 # Probes that open the launcher and press keys need the keyboard to
 # themselves, so they cannot share the parallel theme run.
-THEME_KEYS := tests/qml/theme-back.mjs tests/qml/theme-keys.mjs
+THEME_KEYS := tests/qml/theme-back.mjs tests/qml/theme-keys.mjs tests/qml/theme-switch.mjs
 # Deployment tree for the greetd greeter; the file list lives in greetd/tree.txt.
 GREETER_DEST ?= /usr/local/share/quickshell-notch-greetd
 
