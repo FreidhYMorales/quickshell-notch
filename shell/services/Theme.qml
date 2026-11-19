@@ -267,6 +267,13 @@ Singleton {
                 path: Wallpapers.perScreen[screen]
             });
         }
+        // Light apps left a light colors.json: the shared notch palette is
+        // rebuilt dark from the shared wallpaper.
+        if (variant === "light" && Wallpapers.fallback)
+            jobs.push({
+                screen: "",
+                path: Wallpapers.fallback
+            });
         if (jobs.length === 0)
             return;
         restored = true;
