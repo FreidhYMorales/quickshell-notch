@@ -39,6 +39,20 @@ export function enrollResult(line) {
   return { touch: false, hint: status.replace(/^enroll-/, ""), end: "" };
 }
 
-export function freeFingers(_enrolled) {
-  return [];
+// The ten finger names fprintd-enroll accepts, in the order the view lists them.
+const fingers = [
+  "left-thumb",
+  "left-index-finger",
+  "left-middle-finger",
+  "left-ring-finger",
+  "left-little-finger",
+  "right-thumb",
+  "right-index-finger",
+  "right-middle-finger",
+  "right-ring-finger",
+  "right-little-finger",
+];
+
+export function freeFingers(enrolled) {
+  return fingers.filter((name) => enrolled.indexOf(name) === -1);
 }
