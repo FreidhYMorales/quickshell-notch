@@ -13,6 +13,12 @@ Item {
 
     required property var screen
     readonly property var scheme: Colours.paletteFor(screen)
+    // Fill of the highlighted row and the switch track, as light as a
+    // notification row so both stand out from the black notch.
+    readonly property color raised: {
+        const p = Qt.color(scheme.primary);
+        return Qt.rgba(p.r, p.g, p.b, Colours.raisedAlpha);
+    }
 
     signal back
     signal applied
@@ -115,15 +121,9 @@ Item {
                 width: Layout.themeSwitchWidth
                 height: Layout.themeSwitchHeight
                 radius: height / 2
-                // The same accent tint as the control center's notification
-                // card, so the track reads against the black notch.
-                readonly property color tint: {
-                    const p = Qt.color(root.scheme.primary);
-                    return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
-                }
-                color: tint
+                color: root.raised
                 border.width: Layout.themeSwitchBorder
-                border.color: tint
+                border.color: root.raised
 
                 Rectangle {
                     objectName: "theme-variant-knob"
@@ -177,7 +177,7 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: row.current ? Colours.cardFor(root.screen) : "transparent"
+                    color: row.current ? root.raised : "transparent"
                 }
 
                 Row {

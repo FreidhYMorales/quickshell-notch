@@ -13,6 +13,9 @@ Singleton {
     readonly property real cardMix: 0.08
     // Control center toggle button fill while off (primary at this alpha).
     readonly property real tileOffAlpha: 0.18
+    // A tile-off tint laid over another one, like a notification row inside
+    // its card: the lighter accent fill for controls straight on the notch.
+    readonly property real raisedAlpha: 1 - (1 - tileOffAlpha) * (1 - tileOffAlpha)
     // Divider lines inside control center cards (muted at this opacity).
     readonly property real dividerAlpha: 0.3
 
