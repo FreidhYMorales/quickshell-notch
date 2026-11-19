@@ -12,6 +12,7 @@ import {
   probeArgs,
   savedMode,
   themeState,
+  themeVariant,
 } from "../shell/logic/theme.mjs";
 
 test("theme modes are the nine matugen scheme types in display order", () => {
@@ -239,4 +240,27 @@ test("the app run follows the light/dark variant, the dry-run stays dark", () =>
     "--quiet",
   ]);
   assert.equal(dryArgs("/w/a.png", "scheme-vibrant", "light")[6], "dark");
+});
+
+test("the saved variant wins; the old isLight is imported only when the notch has none", () => {
+  const oldLight = '{"mode":"scheme-rainbow","isLight":true}';
+  assert.equal(
+    themeVariant('{"mode":"scheme-content","variant":"light"}', null),
+    "light",
+  );
+  assert.equal(
+    themeVariant('{"mode":"scheme-content","variant":"dark"}', oldLight),
+    "dark",
+  );
+  assert.equal(themeVariant('{"mode":"scheme-content"}', oldLight), "light");
+  assert.equal(themeVariant(null, oldLight), "light");
+  assert.equal(themeVariant(null, '{"isLight":false}'), "dark");
+});
+
+test("a broken or unknown variant falls back to dark", () => {
+  const oldLight = '{"isLight":true}';
+  assert.equal(themeVariant("not json", oldLight), "dark");
+  assert.equal(themeVariant('{"variant":"sepia"}', oldLight), "dark");
+  assert.equal(themeVariant(null, '{"isLight":"yes"}'), "dark");
+  assert.equal(themeVariant(null, null), "dark");
 });
