@@ -49,6 +49,7 @@ Item {
             visible: !root.month
             scheme: root.scheme
             monitor: root.screen ? root.screen.name : ""
+            offset: root.calendar !== null && root.calendar.view === "week" ? root.calendar.offset : 0
             cardColor: Colours.cardFor(root.screen)
         }
 

@@ -11,6 +11,8 @@ import "../../logic/calendar.mjs" as Calendar
 Item {
     id: root
 
+    objectName: "calendar-month-view"
+
     property var scheme: Colours.fallback
     // Monitor this view's clicks are dispatched for.
     property string monitor: ""
@@ -27,6 +29,20 @@ Item {
     }, offset)
     readonly property var grid: Calendar.monthGrid(shown, today)
     readonly property real cellWidth: width / 7
+
+    // Scrolling anywhere over the card moves the calendar: down is later.
+    function scroll(dy: real) {
+        if (dy !== 0)
+            CenterStore.dispatch({
+                type: "CalendarScroll",
+                monitor: root.monitor,
+                steps: dy < 0 ? 1 : -1
+            });
+    }
+
+    WheelHandler {
+        onWheel: event => root.scroll(event.angleDelta.y)
+    }
 
     Column {
         anchors.fill: parent
@@ -58,6 +74,14 @@ Item {
                 font.family: Fonts.family
                 font.pixelSize: Fonts.body
                 font.bold: true
+
+                // Clicking the title brings the grid back to this month.
+                TapHandler {
+                    onTapped: CenterStore.dispatch({
+                        type: "CalendarToday",
+                        monitor: root.monitor
+                    })
+                }
             }
         }
 
@@ -79,6 +103,7 @@ Item {
         }
 
         Grid {
+            objectName: "calendar-grid"
             columns: 7
 
             Repeater {

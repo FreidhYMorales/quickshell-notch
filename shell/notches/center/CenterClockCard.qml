@@ -12,30 +12,58 @@ import "../../logic/format.mjs" as Format
 Rectangle {
     id: root
 
+    objectName: "calendar-card"
+
     property var scheme: Colours.fallback
     // Monitor this card's clicks are dispatched for.
     property string monitor: ""
     property color cardColor: Colours.background
+    // Whole weeks the strip is scrolled away from today; scrolling down is later.
+    property int offset: 0
 
-    readonly property var week: Calendar.weekStrip({
-        year: Time.year,
-        month: Time.month,
-        day: Time.dayOfMonth
-    }, Limits.weekRadius)
+    readonly property var today: ({
+            year: Time.year,
+            month: Time.month,
+            day: Time.dayOfMonth
+        })
+    readonly property var week: Calendar.weekStrip(Calendar.shiftDays(today, 7 * offset), Limits.weekRadius, today)
 
     radius: Layout.cardRadius
     color: cardColor
+
+    // Scrolling anywhere over the card moves the calendar: down is later.
+    function scroll(dy: real) {
+        if (dy !== 0)
+            CenterStore.dispatch({
+                type: "CalendarScroll",
+                monitor: root.monitor,
+                steps: dy < 0 ? 1 : -1
+            });
+    }
+
+    WheelHandler {
+        onWheel: event => root.scroll(event.angleDelta.y)
+    }
 
     Column {
         anchors.centerIn: parent
         spacing: Layout.rowGap
 
         Text {
+            objectName: "calendar-clock"
             anchors.horizontalCenter: parent.horizontalCenter
             text: Format.clock(Time.hours, Time.minutes)
             color: root.scheme.onSurface
             font.family: Fonts.family
             font.pixelSize: Fonts.display
+
+            // Clicking the clock brings the strip back to today.
+            TapHandler {
+                onTapped: CenterStore.dispatch({
+                    type: "CalendarToday",
+                    monitor: root.monitor
+                })
+            }
         }
 
         Row {
@@ -78,6 +106,7 @@ Rectangle {
                         }
 
                         Text {
+                            objectName: cell.index === Limits.weekRadius ? "calendar-centre" : ""
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: cell.modelData.day
                             color: cell.modelData.today ? root.scheme.primary : root.scheme.onSurface
