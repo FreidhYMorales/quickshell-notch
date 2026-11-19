@@ -56,7 +56,7 @@
 44. [-] dropped (glow direction abandoned; WIP kept in stash only) As a user, I want an exterior battery-coloured glow around the notch while power is connected so that I can see charging and charge level at a glance.
 45. [-] dropped (glow direction abandoned) As a user, I want an intermittent low-battery glow pulse so that I notice the battery is low without a permanent glow.
 46. [ ] As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move.
-47. [ ] As a user, I want a cross-fade between idle and expanded notch content so that opening and closing the expanded view feels smooth.
+47. [x] 21fb951 As a user, I want a cross-fade between idle and expanded notch content so that opening and closing the expanded view feels smooth.
 48. [ ] As a user, I want the idle content to shift by one pixel every few minutes so that the screen is less prone to OLED burn-in.
 49. [-] dropped (glow direction abandoned) As a user, I want a permanent, subtle luminous outline along the notch's lower edge so that its geometry is distinct while its background remains black.
 50. [x] 4dfc7a3 As a user, I want the screensaver phase so that my session locks at my screensaver time showing only my wallpaper and the screen goes dark before suspending. Requires: #30, #31
