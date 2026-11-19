@@ -130,32 +130,29 @@ Singleton {
 
     // --- video wallpapers ---------------------------------------------------
     // matugen only reads images: a video wallpaper is themed from the frame in
-    // its middle, extracted once per role so no two jobs share a file.
-    function framePath(role: string): string {
-        return Quickshell.cachePath("theme-frame-" + role + ".png");
+    // its middle, extracted once per role and video so no two jobs, and no
+    // two videos, ever share a file.
+    function framePath(role: string, path: string): string {
+        return Quickshell.cachePath(Qt.md5(path) + "-theme-frame-" + role + ".png");
     }
 
     function frameFor(path: string, role: string, run: var, fail: var) {
         // One frame per role and video per session: the nine previews share it
         // instead of re-extracting the same still nine times.
-        if (frames[role] === path) {
-            run(framePath(role));
+        const output = framePath(role, path);
+        if (frames[output]) {
+            run(output);
             return;
         }
         if (!WallpaperState.needsThemeFrame(path)) {
             run(path);
             return;
         }
-        // The role's file is about to be overwritten: until this job lands no
-        // later call may trust what the file holds now.
-        const pending = Object.assign({}, frames);
-        delete pending[role];
-        frames = pending;
         frameQueue = frameQueue.concat([
             {
                 path: path,
                 role: role,
-                output: framePath(role),
+                output: output,
                 run: run,
                 fail: fail
             }
@@ -166,8 +163,16 @@ Singleton {
     function startFrame() {
         if (frameBusy || frameQueue.length === 0)
             return;
-        frameJob = frameQueue[0];
+        const next = frameQueue[0];
         frameQueue = frameQueue.slice(1);
+        // Queued twice before the first landed: never rewrite a frame a
+        // dry-run may be reading.
+        if (frames[next.output]) {
+            next.run(next.output);
+            startFrame();
+            return;
+        }
+        frameJob = next;
         frameBusy = true;
         probe.pending = true;
         probe.didStart = false;
@@ -190,7 +195,7 @@ Singleton {
         frameBusy = false;
         if (job) {
             const done = Object.assign({}, frames);
-            done[job.role] = job.path;
+            done[job.output] = true;
             frames = done;
             job.run(job.output);
         }
