@@ -29,3 +29,31 @@ export function weekStrip(date, radius) {
   }
   return out;
 }
+
+const GRID_DAYS = 42;
+
+// Six Monday-first weeks around `view` = { year, month }, so the grid keeps
+// one height whatever the month; `today` = { year, month, day } is flagged.
+export function monthGrid(view, today) {
+  const first = Date.UTC(view.year, view.month - 1, 1);
+  const lead = (new Date(first).getUTCDay() + 6) % 7;
+  const start = first - lead * DAY_MS;
+  const todayKey = dayKey(today);
+  const out = [];
+  for (let i = 0; i < GRID_DAYS; i++) {
+    const d = new Date(start + i * DAY_MS);
+    const cell = {
+      year: d.getUTCFullYear(),
+      month: d.getUTCMonth() + 1,
+      day: d.getUTCDate(),
+    };
+    out.push({
+      year: cell.year,
+      month: cell.month,
+      day: cell.day,
+      inMonth: cell.month === view.month && cell.year === view.year,
+      today: dayKey(cell) === todayKey,
+    });
+  }
+  return out;
+}
