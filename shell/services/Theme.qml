@@ -146,6 +146,11 @@ Singleton {
             run(path);
             return;
         }
+        // The role's file is about to be overwritten: until this job lands no
+        // later call may trust what the file holds now.
+        const pending = Object.assign({}, frames);
+        delete pending[role];
+        frames = pending;
         frameQueue = frameQueue.concat([
             {
                 path: path,
