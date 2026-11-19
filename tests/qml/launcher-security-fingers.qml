@@ -70,7 +70,7 @@ ShellRoot {
             }
             const shown = [];
             for (const label of ["Left thumb", "Right index"]) {
-                if (Visual.findText(registered, label))
+                if (Visual.findText([registered], label))
                     shown.push(label);
             }
             console.log("security fingers: [" + shown.join(", ") + "]");
