@@ -69,6 +69,8 @@ NotchSurface {
     readonly property bool power: view.mode === "power"
     readonly property bool launcher: view.mode === "launcher"
     readonly property bool polkit: view.mode === "polkit"
+    // These modes switch in at once and hide the idle and expanded layers.
+    readonly property bool takenOver: toast || power || launcher || polkit
     readonly property var scheme: Colours.paletteFor(screen)
     // The current polkit request wants typed input (false: fingerprint and the like).
     readonly property bool polkitNeedsResponse: polkit && CenterStore.state.global.polkit.flowId.isResponseRequired === true
@@ -174,7 +176,7 @@ NotchSurface {
             anchors.fill: parent
             // Cross-fades with the expanded layer while the shape morphs.
             opacity: root.expanded ? 0 : 1
-            visible: opacity > 0 && !root.toast && !root.power && !root.launcher && !root.polkit
+            visible: opacity > 0 && !root.takenOver
             screen: root.screen
             view: root.view
 
@@ -391,7 +393,7 @@ NotchSurface {
             objectName: "center-expanded"
             anchors.fill: parent
             opacity: root.expanded ? 1 : 0
-            visible: opacity > 0
+            visible: opacity > 0 && !root.takenOver
             screen: root.screen
             calendar: root.view.calendar ?? null
 
