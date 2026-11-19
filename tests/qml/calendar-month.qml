@@ -33,6 +33,12 @@ ShellRoot {
             const surface = component.createObject(null, {
                 screen: screen
             });
+            // A real notification arriving mid-probe would show as a toast
+            // over the expanded notch: mute them.
+            root.center.store.dispatch({
+                type: "Dnd",
+                on: true
+            });
             root.center.store.dispatch({
                 type: "Hover",
                 monitor: screen.name,
