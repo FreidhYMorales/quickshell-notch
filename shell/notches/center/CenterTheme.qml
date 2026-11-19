@@ -48,10 +48,18 @@ Item {
         applied();
     }
 
+    // Only the apps follow the switch; the notch stays dark.
+    function toggleVariant() {
+        Theme.setVariant(Theme.variant === "light" ? "dark" : "light");
+    }
+
     Keys.onPressed: event => {
         switch (event.key) {
         case Qt.Key_Escape:
             back();
+            break;
+        case Qt.Key_Tab:
+            root.toggleVariant();
             break;
         case Qt.Key_Up:
         case Qt.Key_K:
@@ -78,21 +86,40 @@ Item {
         anchors.fill: parent
         spacing: Layout.launcherGap
 
-        Text {
-            id: title
+        Item {
+            id: header
 
             width: parent.width
-            text: Strings.themeTitle
-            color: root.scheme.onSurface
-            font.family: Fonts.family
-            font.pixelSize: Fonts.launcherItem
+            height: title.implicitHeight
+
+            Text {
+                id: title
+
+                text: Strings.themeTitle
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+
+            Text {
+                objectName: "theme-variant-switch"
+                anchors.right: parent.right
+                text: Theme.variant === "light" ? Strings.themeLight : Strings.themeDark
+                color: root.scheme.primary
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+
+                TapHandler {
+                    onTapped: root.toggleVariant()
+                }
+            }
         }
 
         ListView {
             id: list
 
             width: parent.width
-            height: parent.height - title.height - hint.height - Layout.launcherGap * 2
+            height: parent.height - header.height - hint.height - Layout.launcherGap * 2
             model: ThemeLogic.MODES
             clip: true
 
