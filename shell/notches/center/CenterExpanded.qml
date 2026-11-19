@@ -40,7 +40,15 @@ Item {
             scheme: root.scheme
 
             Behavior on opacity {
-                Anim {}
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: !root.month ? Timings.calendarMorph / 2 : 0
+                    }
+                    NumberAnimation {
+                        duration: Timings.calendarMorph / 2
+                        easing.type: Easing.InOutCubic
+                    }
+                }
             }
         }
 
@@ -57,7 +65,10 @@ Item {
             scheme: root.scheme
 
             Behavior on width {
-                Anim {}
+                Anim {
+                    duration: Timings.calendarMorph
+                    easing.type: Easing.InOutCubic
+                }
             }
             monitor: root.screen ? root.screen.name : ""
             offset: root.calendar !== null && root.calendar.view === "week" ? root.calendar.offset : 0
@@ -72,8 +83,17 @@ Item {
             focus: root.month
             scheme: root.scheme
 
+            // Shows in the second half of opening; leaves first when closing.
             Behavior on opacity {
-                Anim {}
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: root.month ? Timings.calendarMorph / 2 : 0
+                    }
+                    NumberAnimation {
+                        duration: Timings.calendarMorph / 2
+                        easing.type: Easing.InOutCubic
+                    }
+                }
             }
             monitor: root.screen ? root.screen.name : ""
             offset: root.month ? root.calendar.offset : 0

@@ -60,4 +60,8 @@ Singleton {
     readonly property int animFast: Motion.animFast
     readonly property int animNormal: Motion.animNormal
     readonly property int animSlow: Motion.animSlow
+    // Clock card growing into the month (and back): the card and the notch
+    // height take the whole span; the clock and the month each fade during
+    // one half, so they never cross-fade on top of each other.
+    readonly property int calendarMorph: Motion.animSlow
 }

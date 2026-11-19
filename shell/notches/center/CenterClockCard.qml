@@ -35,7 +35,9 @@ Rectangle {
     readonly property var week: Calendar.weekStrip(Calendar.shiftDays(today, 7 * offset), Limits.weekRadius, today)
 
     radius: Layout.cardRadius
-    color: hover.hovered && !open ? Qt.rgba(Qt.color(scheme.primary).r, Qt.color(scheme.primary).g, Qt.color(scheme.primary).b, Colours.tileOffAlpha) : cardColor
+    // Opaque, so the colour animation only travels between two dark tones
+    // instead of flashing through a translucent accent.
+    color: hover.hovered && !open ? Qt.tint(cardColor, Qt.rgba(Qt.color(scheme.primary).r, Qt.color(scheme.primary).g, Qt.color(scheme.primary).b, Colours.tileOffAlpha)) : cardColor
 
     Behavior on color {
         ColorAnimation {
@@ -78,8 +80,17 @@ Rectangle {
         opacity: root.open ? 0 : 1
         visible: opacity > 0
 
+        // Fades out first while opening; fades back in last while closing.
         Behavior on opacity {
-            Anim {}
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: !root.open ? Timings.calendarMorph / 2 : 0
+                }
+                NumberAnimation {
+                    duration: Timings.calendarMorph / 2
+                    easing.type: Easing.InOutCubic
+                }
+            }
         }
 
         Text {

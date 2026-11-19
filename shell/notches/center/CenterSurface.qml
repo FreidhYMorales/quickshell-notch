@@ -159,8 +159,12 @@ NotchSurface {
             Anim {}
         }
 
+        // The month morph is slower than the other shape changes.
         Behavior on height {
-            Anim {}
+            Anim {
+                duration: root.month || shape.height > Layout.expandedHeight ? Timings.calendarMorph : Timings.animNormal
+                easing.type: root.month || shape.height > Layout.expandedHeight ? Easing.InOutCubic : Easing.OutCubic
+            }
         }
 
         CenterIdle {
