@@ -206,3 +206,10 @@ test("an open month gives the notch its month shape, the week keeps expanded", (
   assert.equal(shapeMode(month), "month");
   assert.equal(shapeMode(viewFor(play([]), "A")), "idle");
 });
+
+test("an open month takes the keyboard so Esc can close it, the week does not", () => {
+  assert.equal(viewFor(play([hoverA]), "A").keyboardFocus, "none");
+  const month = play([hoverA, { type: "CalendarMonth", monitor: "A" }]);
+  assert.equal(viewFor(month, "A").keyboardFocus, "exclusive");
+  assert.equal(viewFor(month, "B").keyboardFocus, "none");
+});
