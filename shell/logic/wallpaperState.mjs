@@ -7,6 +7,13 @@ export function wallpaperFor(perScreen, fallback, screen) {
   return own ? own : fallback;
 }
 
+// The committed wallpaper the theme swatches are precomputed against, or ""
+// while the theme and wallpaper state are still loading.
+export function warmupPath(ready, perScreen, fallback, screen) {
+  if (!ready) return "";
+  return wallpaperFor(perScreen, fallback, screen) || "";
+}
+
 // The old shell's state is imported once: only while the notch state holds
 // neither a default nor any per-screen wallpaper.
 export function shouldImport(perScreen, fallback) {
