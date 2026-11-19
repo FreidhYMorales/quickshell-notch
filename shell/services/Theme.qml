@@ -736,7 +736,10 @@ Singleton {
             if (!running && pending && !didStart) {
                 pending = false;
                 console.warn("Theme: can't run the matugen post-hook");
-                root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
+                // Light apps leave colors.json light: the greeter is staged from
+                // the shared dark dry-run instead.
+                if (appProc.variant === "dark")
+                    root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
                 root.appFinished();
             }
         }
@@ -744,7 +747,8 @@ Singleton {
             pending = false;
             if (code !== 0)
                 console.warn("Theme: post-hook exited with " + code);
-            root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
+            if (appProc.variant === "dark")
+                root.stageSddm(root.appBackground, root.configHome + "/matugen/colors.json");
             root.appFinished();
         }
     }
@@ -821,12 +825,15 @@ Singleton {
                 }
                 const palette = ThemeLogic.parseDryPalette(paletteOut.text);
                 // The empty screen is the shared wallpaper's notch palette.
-                if (palette && paletteProc.pendingScreen === "") {
-                    root.sharedPalette = palette;
-                } else if (palette) {
-                    const next = Object.assign({}, root.palettes);
-                    next[paletteProc.pendingScreen] = palette;
-                    root.palettes = next;
+                if (palette) {
+                    if (paletteProc.pendingScreen === "") {
+                        root.sharedPalette = palette;
+                    } else {
+                        const next = Object.assign({}, root.palettes);
+                        next[paletteProc.pendingScreen] = palette;
+                        root.palettes = next;
+                    }
+                    // The greeter shows the notch look: always a dark palette.
                     if (paletteProc.pendingPath === root.sddmWallpaper)
                         root.stageSddm(paletteProc.pendingPath, JSON.stringify({
                             colors: {
