@@ -303,12 +303,7 @@ Singleton {
         persist();
         apply({
             app: Wallpapers.fallback,
-            palettes: nextVariant === "light" ? [
-                {
-                    screen: "",
-                    path: Wallpapers.fallback
-                }
-            ] : []
+            palettes: []
         });
     }
 
@@ -385,6 +380,15 @@ Singleton {
             runApp(jobs.app);
         appDone = !appBusy && appNext === null;
         paletteQueue = paletteQueue.concat(jobs.palettes);
+        // Light apps leave colors.json unfit for the notch: every app run
+        // also dry-runs the same wallpaper dark for the shared notch palette.
+        if (jobs.app && variant === "light")
+            paletteQueue = paletteQueue.concat([
+                {
+                    screen: "",
+                    path: jobs.app
+                }
+            ]);
         startPalette();
         checkApplied();
     }
