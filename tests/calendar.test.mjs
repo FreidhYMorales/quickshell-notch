@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dayKey, weekStrip } from "../shell/logic/calendar.mjs";
+import { dayKey, monthGrid, weekStrip } from "../shell/logic/calendar.mjs";
 
 const days = (strip) => strip.map((d) => d.day);
 
@@ -83,4 +83,69 @@ test("midnight rollover recentres the strip on the next day", () => {
   const next = weekStrip({ year: 2026, month: 3, day: 21 }, 3);
   assert.deepEqual(days(next), [18, 19, 20, 21, 22, 23, 24]);
   assert.equal(next[3].today, true);
+});
+
+test("the month grid starts on Monday, fills from the neighbouring months and marks today", () => {
+  const grid = monthGrid({ year: 2026, month: 11 }, {
+    year: 2026,
+    month: 11,
+    day: 19,
+  });
+  assert.equal(grid.length, 42);
+  // November 2026 starts on a Sunday: Mon 26 Oct opens the grid.
+  assert.deepEqual(grid[0], {
+    year: 2026,
+    month: 10,
+    day: 26,
+    inMonth: false,
+    today: false,
+  });
+  assert.deepEqual(grid[6], {
+    year: 2026,
+    month: 11,
+    day: 1,
+    inMonth: true,
+    today: false,
+  });
+  assert.deepEqual(grid[24], {
+    year: 2026,
+    month: 11,
+    day: 19,
+    inMonth: true,
+    today: true,
+  });
+  assert.deepEqual(grid[41], {
+    year: 2026,
+    month: 12,
+    day: 6,
+    inMonth: false,
+    today: false,
+  });
+  assert.equal(grid.filter((d) => d.today).length, 1);
+  assert.equal(grid.filter((d) => d.inMonth).length, 30);
+});
+
+test("a month starting on Monday opens the grid with its first day and has no today elsewhere", () => {
+  const grid = monthGrid({ year: 2027, month: 2 }, {
+    year: 2026,
+    month: 11,
+    day: 19,
+  });
+  assert.equal(grid.length, 42);
+  assert.deepEqual(grid[0], {
+    year: 2027,
+    month: 2,
+    day: 1,
+    inMonth: true,
+    today: false,
+  });
+  assert.deepEqual(grid[28], {
+    year: 2027,
+    month: 3,
+    day: 1,
+    inMonth: false,
+    today: false,
+  });
+  assert.equal(grid.filter((d) => d.today).length, 0);
+  assert.equal(grid.filter((d) => d.inMonth).length, 28);
 });
