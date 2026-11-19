@@ -16,6 +16,8 @@ Item {
 
     property var screen: null
     property var view: null
+    // OLED pixel shift: which spot of the one-pixel cycle the content is at.
+    property int shiftStep: 0
     // none, charging, plugged, full, low or media (CenterStore.sideLayer).
     property string batteryLayer: CenterStore.sideLayer
     readonly property int baseWidth: CenterLayout.idleBase({
@@ -61,12 +63,14 @@ Item {
     }
 
     NotchEarShape {
+        objectName: "idle-shape"
         anchors.fill: parent
     }
 
     Row {
         id: row
 
+        objectName: "idle-row"
         anchors.centerIn: parent
         spacing: Layout.rowGap
         visible: Recorder.countdown === 0
