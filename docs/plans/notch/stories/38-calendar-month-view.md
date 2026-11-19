@@ -46,3 +46,5 @@ Risk: none
 
 - L1 request: "/flow:story 38"
 - L2 resolution: the month grid does not fit the 112 px expanded notch, so opening the month grows the notch downwards and the month fills the whole notch, with or without a player ("si, que crezca hacia abajo y ocupe todo el notch").
+- L3 build: test list approved (9 items). Green: cc7bf9e/244cd8e (month grid), 2ab3106/1c5ed04 (week/month stepping, real today mark), bde0d19/f69cccb (open month, back), d0d3f83/f231176 (scroll, today), ea06aaf/b5a132b (close forgets the calendar), eeffe5a/6c2070d (view exposes the calendar, month shape).
+- L4 stop (rule 5): test 7 needs the month view, its height token, the expanded switch, the surface shape and the week-strip click (about 5 files, over 50 lines). Proposed split: 7a the surface shows the month at its height when the store has it open; 7b the week-strip click opens it and back closes it.
