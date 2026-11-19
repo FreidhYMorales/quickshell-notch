@@ -66,7 +66,7 @@ Singleton {
                     root.enrollTouches++;
                 if (result.hint !== "")
                     root.enrollHint = result.hint;
-                if (result.end === "completed") {
+                if (result.end !== "") {
                     root.enrolling = false;
                     root.refresh();
                 }
