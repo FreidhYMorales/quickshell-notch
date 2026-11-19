@@ -40,8 +40,12 @@ Singleton {
             muted: "#b0b0b0"
         })
 
-    // Palette parsed from matugen's dark scheme, shared by every monitor.
-    property var global: fallback
+    // Palette parsed from the apps' colors.json: dark unless the apps are light.
+    property var appPalette: fallback
+    // Dark dry-run palette the theme service sets while the apps are light.
+    property var shared: null
+    // The notch's dark palette shared by every monitor.
+    readonly property var global: shared ?? appPalette
     // Per-monitor palettes keyed by screen name; filled in once wallpapers exist.
     property var overrides: ({})
 
@@ -62,7 +66,7 @@ Singleton {
         path: root.palettePath
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: root.global = PaletteLogic.parsePalette(text()) ?? root.fallback
-        onLoadFailed: root.global = root.fallback
+        onLoaded: root.appPalette = PaletteLogic.parsePalette(text()) ?? root.fallback
+        onLoadFailed: root.appPalette = root.fallback
     }
 }

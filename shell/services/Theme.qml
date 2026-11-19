@@ -32,6 +32,9 @@ Singleton {
     // true once the app pipeline and the queued monitor palettes are done.
     property bool applied: true
     property var palettes: ({})
+    // Dark dry-run palette of the shared wallpaper, only while the apps are
+    // light: their colors.json then no longer fits the notch.
+    property var sharedPalette: null
     // One dry-run palette per scheme mode for the launcher previews, keyed by
     // screen so each monitor previews against its own wallpaper.
     property var previews: ({})
@@ -300,7 +303,12 @@ Singleton {
         persist();
         apply({
             app: Wallpapers.fallback,
-            palettes: []
+            palettes: nextVariant === "light" ? [
+                {
+                    screen: "",
+                    path: Wallpapers.fallback
+                }
+            ] : []
         });
     }
 
@@ -365,6 +373,7 @@ Singleton {
 
     // Colours.paletteFor(screen) prefers these over the global colors.json.
     onPalettesChanged: Colours.overrides = palettes
+    onSharedPaletteChanged: Colours.shared = sharedPalette
 
     function apply(jobs: var) {
         if (Flags.smoke)
@@ -796,7 +805,10 @@ Singleton {
                     return;
                 }
                 const palette = ThemeLogic.parseDryPalette(paletteOut.text);
-                if (palette) {
+                // The empty screen is the shared wallpaper's notch palette.
+                if (palette && paletteProc.pendingScreen === "") {
+                    root.sharedPalette = palette;
+                } else if (palette) {
                     const next = Object.assign({}, root.palettes);
                     next[paletteProc.pendingScreen] = palette;
                     root.palettes = next;
