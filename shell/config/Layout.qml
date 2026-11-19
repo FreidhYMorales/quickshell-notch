@@ -44,6 +44,10 @@ Singleton {
     readonly property int expandedHeight: 112
     readonly property int expandedWidth: 500
     readonly property int expandedClockWidth: 250
+    // An open calendar month grows the expanded notch downwards to fit the
+    // title, the weekday header and six weeks of cells.
+    readonly property int monthHeight: 260
+    readonly property int monthCellHeight: 26
 
     // Power menu in the centre notch: one row of actions over the hold bar.
     readonly property int powerWidth: 360

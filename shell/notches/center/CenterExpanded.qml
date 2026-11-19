@@ -9,6 +9,9 @@ Item {
     id: root
 
     property var screen: null
+    // The expanded view's calendar: { view: "week" | "month", offset }.
+    property var calendar: null
+    readonly property bool month: calendar !== null && calendar.view === "month"
 
     readonly property var scheme: Colours.paletteFor(screen)
     // What a visible `!` adds on each side (CenterLayout.expandedWidth).
@@ -32,7 +35,7 @@ Item {
             anchors.right: card.left
             anchors.rightMargin: Layout.expandedGap
             anchors.verticalCenter: parent.verticalCenter
-            visible: Mpris.hasPlayer
+            visible: Mpris.hasPlayer && !root.month
             scheme: root.scheme
         }
 
@@ -43,8 +46,17 @@ Item {
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             width: Mpris.hasPlayer ? Layout.clockCardWidth : parent.width
+            visible: !root.month
             scheme: root.scheme
             cardColor: Colours.cardFor(root.screen)
+        }
+
+        // An open month replaces both columns.
+        CenterMonth {
+            anchors.fill: parent
+            visible: root.month
+            scheme: root.scheme
+            offset: root.month ? root.calendar.offset : 0
         }
     }
 

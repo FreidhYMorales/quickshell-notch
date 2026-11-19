@@ -2,6 +2,7 @@ import QtQuick
 import "../../components"
 import "../../config"
 import "../../logic/centerLayout.mjs" as CenterLayout
+import "../../logic/centerView.mjs" as CenterView
 import "../../services"
 
 // Centre notch (slot c), one per monitor. The view comes from the shared
@@ -42,24 +43,29 @@ NotchSurface {
     }) : view.mode === "polkit" ? {
         width: root.polkitWidth,
         height: Math.max(Layout.polkitMinHeight, polkitForm.implicitHeight + 2 * Layout.polkitPad)
-    } : CenterLayout.shapeFor(view.mode, {
+    } : CenterLayout.shapeFor(CenterView.shapeMode(view), {
         idle: idleW,
-        expanded: CenterLayout.expandedWidth({
-            hasPlayer: Mpris.hasPlayer,
-            full: Layout.expandedWidth,
-            clockOnly: Layout.expandedClockWidth,
-            mark: expandedView.markExtent,
-            max: slot.width
-        }),
+        expanded: expandedW,
+        month: expandedW,
         power: Layout.powerWidth,
         launcher: Layout.launcherWidth
     }, {
         idle: Layout.idleHeight,
         expanded: Layout.expandedHeight,
+        month: Layout.monthHeight,
         power: Layout.powerHeight,
         launcher: launcherView.implicitHeight
     })
     readonly property bool expanded: view.mode === "expanded"
+    readonly property bool month: CenterView.shapeMode(view) === "month"
+    // An open month keeps the expanded width and only grows downwards.
+    readonly property int expandedW: CenterLayout.expandedWidth({
+        hasPlayer: Mpris.hasPlayer,
+        full: Layout.expandedWidth,
+        clockOnly: Layout.expandedClockWidth,
+        mark: expandedView.markExtent,
+        max: slot.width
+    })
     readonly property bool power: view.mode === "power"
     readonly property bool launcher: view.mode === "launcher"
     readonly property bool polkit: view.mode === "polkit"
@@ -76,7 +82,7 @@ NotchSurface {
     slotName: "c"
     // The launcher is taller than the expanded slot; the window is masked, so
     // the extra height is invisible until the launcher fills it.
-    minHeight: Math.max(launcherView.implicitHeight, root.polkit ? root.size.height : 0)
+    minHeight: Math.max(launcherView.implicitHeight, root.polkit || root.month ? root.size.height : 0)
     wantsKeyboard: view.keyboardFocus === "exclusive"
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
@@ -374,6 +380,7 @@ NotchSurface {
             anchors.fill: parent
             visible: root.expanded
             screen: root.screen
+            calendar: root.view.calendar ?? null
         }
     }
 
