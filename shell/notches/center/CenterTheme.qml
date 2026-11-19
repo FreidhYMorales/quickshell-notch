@@ -115,7 +115,15 @@ Item {
                 width: Layout.themeSwitchWidth
                 height: Layout.themeSwitchHeight
                 radius: height / 2
-                color: Colours.cardFor(root.screen)
+                // The same accent tint as the control center's notification
+                // card, so the track reads against the black notch.
+                readonly property color tint: {
+                    const p = Qt.color(root.scheme.primary);
+                    return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
+                }
+                color: tint
+                border.width: Layout.themeSwitchBorder
+                border.color: tint
 
                 Rectangle {
                     objectName: "theme-variant-knob"

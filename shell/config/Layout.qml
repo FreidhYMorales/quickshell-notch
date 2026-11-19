@@ -105,6 +105,7 @@ Singleton {
     readonly property int themeSwitchWidth: 48
     readonly property int themeSwitchHeight: 24
     readonly property int themeSwitchInset: 2
+    readonly property int themeSwitchBorder: 1
 
     // Keybinds sub-view: fixed height so filtering never resizes the notch.
     readonly property int keybindsViewHeight: 420
