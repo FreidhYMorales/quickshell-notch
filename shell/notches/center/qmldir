@@ -1,6 +1,7 @@
 singleton CenterStore CenterStore.qml
 CenterClockCard CenterClockCard.qml
 CenterExpanded CenterExpanded.qml
+CenterMonth CenterMonth.qml
 CenterIdle CenterIdle.qml
 CenterMedia CenterMedia.qml
 CenterSurface CenterSurface.qml

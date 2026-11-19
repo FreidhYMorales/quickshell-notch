@@ -47,7 +47,7 @@
 35. [-] split → #50, #51
 36. [x] d6ef4b1 As a user, I want the security command view in the launcher so that I can enable fingerprint unlock and manage my registered fingers. Requires: #26, #30
 37. [x] 0b75aa7 As a user, I want the webapp command view in the launcher so that I can install a website as a desktop web app. Requires: #26
-38. [ ] As a user, I want a month view in the expanded notch calendar with week/month scrolling and a jump back to today so that I can look beyond the current week. Requires: —
+38. [x] 4bd5aad As a user, I want a month view in the expanded notch calendar with week/month scrolling and a jump back to today so that I can look beyond the current week. Requires: —
 39. [-] dropped (glow direction abandoned) As a user, I want a glow pulse when a notification arrives so that I notice it without being interrupted. Requires: #01
 40. [x] 1a84fdb As a user, I want a Light/Dark switch in the theme view that re-themes my apps without changing the notch so that I get the old view's light mode while the notch keeps its black look. Requires: #28
 41. [x] 37d5540 As a user, I want the theme view's colour swatches to be there the moment I open it so that browsing schemes feels instant instead of filling in over a second. Requires: #28

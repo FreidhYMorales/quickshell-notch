@@ -71,6 +71,8 @@ qml-test:
 	node --test --test-concurrency=1 tests/qml/keybinds-*.mjs
 	# Serial: the launcher-driven theme probes press keys too.
 	node --test --test-concurrency=1 $(THEME_KEYS)
+	# Serial: an open calendar month takes the exclusive keyboard.
+	node --test --test-concurrency=1 tests/qml/calendar-*.mjs
 
 # Installs the greeter tree that greetd runs. Needs root:
 #   sudo make deploy-greeter

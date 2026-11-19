@@ -858,3 +858,104 @@ test("security subview cannot open without the launcher", () => {
   const initial = two();
   assert.equal(reduce(initial, { type: "SecurityOpen" }).state, initial);
 });
+
+test("CalendarMonth opens this month's grid on that monitor only", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+  );
+  assert.deepEqual(state.monitors.A.calendar, { view: "month", offset: 0 });
+  assert.deepEqual(state.monitors.B, {
+    hovered: false,
+    pinned: false,
+    toastHovered: false,
+  });
+});
+
+test("CalendarBack returns to the week centred on today", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarBack", monitor: "A" },
+  );
+  assert.deepEqual(state.monitors.A, {
+    hovered: true,
+    pinned: false,
+    toastHovered: false,
+  });
+});
+
+test("calendar events for an unknown monitor change nothing", () => {
+  const s = two();
+  assert.deepEqual(reduce(s, { type: "CalendarMonth", monitor: "Z" }).state, s);
+  assert.deepEqual(reduce(s, { type: "CalendarBack", monitor: "Z" }).state, s);
+});
+
+const plainHovered = { hovered: true, pinned: false, toastHovered: false };
+
+test("CalendarScroll moves the week strip by whole weeks", () => {
+  const hovered = run(two(), { type: "Hover", monitor: "A", on: true });
+  const ahead = run(
+    hovered,
+    { type: "CalendarScroll", monitor: "A", steps: 1 },
+    { type: "CalendarScroll", monitor: "A", steps: 1 },
+  );
+  assert.deepEqual(ahead.monitors.A.calendar, { view: "week", offset: 2 });
+  const back = run(ahead, { type: "CalendarScroll", monitor: "A", steps: -2 });
+  assert.deepEqual(back.monitors.A, plainHovered);
+});
+
+test("CalendarScroll moves the month grid by whole months", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarScroll", monitor: "A", steps: -3 },
+  );
+  assert.deepEqual(state.monitors.A.calendar, { view: "month", offset: -3 });
+});
+
+test("CalendarToday jumps back to today in either view", () => {
+  const hovered = run(two(), { type: "Hover", monitor: "A", on: true });
+  const week = run(
+    hovered,
+    { type: "CalendarScroll", monitor: "A", steps: 4 },
+    { type: "CalendarToday", monitor: "A" },
+  );
+  assert.deepEqual(week.monitors.A, plainHovered);
+  const month = run(
+    hovered,
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarScroll", monitor: "A", steps: 5 },
+    { type: "CalendarToday", monitor: "A" },
+  );
+  assert.deepEqual(month.monitors.A.calendar, { view: "month", offset: 0 });
+});
+
+const plainIdle = { hovered: false, pinned: false, toastHovered: false };
+
+test("closing the expanded notch on hover-out forgets the browsed calendar", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarScroll", monitor: "A", steps: 2 },
+    { type: "Hover", monitor: "A", on: false },
+  );
+  assert.deepEqual(state.monitors.A, plainIdle);
+});
+
+test("a pinned notch keeps the calendar until it is unpinned and left", () => {
+  const pinned = run(
+    two(),
+    { type: "ExpandedToggle", monitor: "A" },
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarScroll", monitor: "A", steps: 1 },
+    { type: "Hover", monitor: "A", on: false },
+  );
+  assert.deepEqual(pinned.monitors.A.calendar, { view: "week", offset: 1 });
+  const closed = run(pinned, { type: "ExpandedToggle", monitor: "A" });
+  assert.deepEqual(closed.monitors.A, plainIdle);
+});

@@ -42,7 +42,21 @@ export function viewFor(state, name) {
     view.query = keyboard.query ?? "";
     view.index = keyboard.index ?? 0;
   }
+  // Only the expanded notch carries its calendar: the week around today
+  // unless the monitor browsed away or opened the month. An open month takes
+  // the keyboard, like the launcher, so Esc can close it.
+  if (mode === "expanded") {
+    view.calendar = monitor.calendar ?? { view: "week", offset: 0 };
+    if (view.calendar.view === "month") view.keyboardFocus = "exclusive";
+  }
   return view;
+}
+
+// The shape key the notch sizes by: an open month is taller than the week.
+export function shapeMode(view) {
+  return view.mode === "expanded" && view.calendar.view === "month"
+    ? "month"
+    : view.mode;
 }
 
 // The toast timer is global: a hover on any monitor pauses it everywhere.

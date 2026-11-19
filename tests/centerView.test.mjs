@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initialState, reduce } from "../shell/logic/centerState.mjs";
-import { toastPaused, unreadDot, viewFor } from "../shell/logic/centerView.mjs";
+import {
+  shapeMode,
+  toastPaused,
+  unreadDot,
+  viewFor,
+} from "../shell/logic/centerView.mjs";
 
 const play = (events) =>
   events.reduce((s, ev) => reduce(s, ev).state, initialState(["A", "B"]));
@@ -175,4 +180,36 @@ test("launcher: exposes the query and selection, empty and first by default", ()
   ]);
   assert.equal(viewFor(typed, "A").query, "fire");
   assert.equal(viewFor(typed, "A").index, 1);
+});
+
+test("expanded: the view carries the calendar, the week on today by default", () => {
+  assert.deepEqual(viewFor(play([hoverA]), "A").calendar, {
+    view: "week",
+    offset: 0,
+  });
+  const month = play([
+    hoverA,
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarScroll", monitor: "A", steps: 2 },
+  ]);
+  assert.deepEqual(viewFor(month, "A").calendar, { view: "month", offset: 2 });
+  assert.equal("calendar" in viewFor(month, "B"), false);
+});
+
+test("an open month gives the notch its month shape, the week keeps expanded", () => {
+  const week = viewFor(play([hoverA]), "A");
+  assert.equal(shapeMode(week), "expanded");
+  const month = viewFor(
+    play([hoverA, { type: "CalendarMonth", monitor: "A" }]),
+    "A",
+  );
+  assert.equal(shapeMode(month), "month");
+  assert.equal(shapeMode(viewFor(play([]), "A")), "idle");
+});
+
+test("an open month takes the keyboard so Esc can close it, the week does not", () => {
+  assert.equal(viewFor(play([hoverA]), "A").keyboardFocus, "none");
+  const month = play([hoverA, { type: "CalendarMonth", monitor: "A" }]);
+  assert.equal(viewFor(month, "A").keyboardFocus, "exclusive");
+  assert.equal(viewFor(month, "B").keyboardFocus, "none");
 });

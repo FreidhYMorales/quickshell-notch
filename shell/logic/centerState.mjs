@@ -37,6 +37,27 @@ const withMonitor = (state, name, patch) =>
 
 const unchanged = (state) => ({ state, effects: [] });
 
+// The calendar slice lives on a monitor only while it differs from the week
+// centred on today, so an untouched monitor keeps its plain shape.
+const withoutCalendar = (state, name) => {
+  const monitor = {};
+  for (const key in state.monitors[name]) {
+    if (key !== "calendar") monitor[key] = state.monitors[name][key];
+  }
+  return merge(state, {
+    monitors: merge(state.monitors, { [name]: monitor }),
+  });
+};
+
+// Once the expanded notch closes (neither hovered nor pinned) a browsed date
+// or an open month is forgotten: it reopens on the week around today.
+const closeCalendar = (state, name) => {
+  const monitor = state.monitors[name];
+  return monitor.calendar && !monitor.hovered && !monitor.pinned
+    ? withoutCalendar(state, name)
+    : state;
+};
+
 const setGlobal = (state, patch) => ({
   state: merge(state, { global: merge(state.global, patch) }),
   effects: [],
@@ -88,18 +109,66 @@ const handlers = {
   Hover(state, { monitor, on }) {
     if (!state.monitors[monitor]) return unchanged(state);
     return {
-      state: withMonitor(state, monitor, { hovered: on }),
+      state: closeCalendar(
+        withMonitor(state, monitor, { hovered: on }),
+        monitor,
+      ),
       effects: [],
     };
   },
   ExpandedToggle(state, { monitor }) {
     if (!state.monitors[monitor]) return unchanged(state);
     return {
+      state: closeCalendar(
+        withMonitor(state, monitor, {
+          pinned: !state.monitors[monitor].pinned,
+        }),
+        monitor,
+      ),
+      effects: [],
+    };
+  },
+  CalendarMonth(state, { monitor }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    return {
       state: withMonitor(state, monitor, {
-        pinned: !state.monitors[monitor].pinned,
+        calendar: { view: "month", offset: 0 },
       }),
       effects: [],
     };
+  },
+  CalendarBack(state, { monitor }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    return { state: withoutCalendar(state, monitor), effects: [] };
+  },
+  // Weeks in the week strip, months in the month grid; positive is later.
+  CalendarScroll(state, { monitor, steps }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    const calendar = state.monitors[monitor].calendar ??
+      { view: "week", offset: 0 };
+    const offset = calendar.offset + steps;
+    // A week strip back on today is the plain monitor again.
+    if (calendar.view === "week" && offset === 0) {
+      return { state: withoutCalendar(state, monitor), effects: [] };
+    }
+    return {
+      state: withMonitor(state, monitor, {
+        calendar: { view: calendar.view, offset },
+      }),
+      effects: [],
+    };
+  },
+  CalendarToday(state, { monitor }) {
+    const calendar = state.monitors[monitor]?.calendar;
+    if (!calendar) return unchanged(state);
+    return calendar.view === "month"
+      ? {
+        state: withMonitor(state, monitor, {
+          calendar: { view: "month", offset: 0 },
+        }),
+        effects: [],
+      }
+      : { state: withoutCalendar(state, monitor), effects: [] };
   },
   LauncherToggle(state, { monitor, sub = null }) {
     const { keyboard } = state.global;
