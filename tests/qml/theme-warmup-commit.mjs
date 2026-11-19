@@ -75,3 +75,9 @@ test("a shared commit rewarms every monitor on the new wallpaper", () => {
   assert.match(output, /before: DP-1 9 #aaaaaa \| DP-2 9 #aaaaaa/);
   assert.match(output, /after: DP-1 9 #bbbbbb \| DP-2 9 #bbbbbb/);
 });
+
+test("a per-monitor commit rewarms only that monitor", () => {
+  const output = run(false);
+  assert.match(output, /before: DP-1 9 #aaaaaa \| DP-2 9 #aaaaaa/);
+  assert.match(output, /after: DP-1 9 #bbbbbb \| DP-2 9 #aaaaaa/);
+});
