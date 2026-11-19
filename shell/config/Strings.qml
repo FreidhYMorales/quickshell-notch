@@ -165,6 +165,11 @@ Singleton {
     // Calendar names (index 0 = January, 0 = Monday).
     readonly property var months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     readonly property var weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    // Full names for the expanded month view's title.
+    readonly property var monthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    // Month view header arrows, as in the old bar's calendar.
+    readonly property string glyphMonthPrev: "󰅁"
+    readonly property string glyphMonthNext: "󰅂"
 
     // Player text fallbacks.
     readonly property string unknownTitle: "Unknown title"

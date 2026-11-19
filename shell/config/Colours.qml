@@ -27,6 +27,8 @@ Singleton {
     readonly property real trackAlpha: 0.2
     // Opacity of secondary text and of disabled controls.
     readonly property real dimAlpha: 0.6
+    // Opacity of calendar days outside the shown month.
+    readonly property real outsideAlpha: 0.35
     // Opacity of a muted slider fill: higher than dimAlpha so it still reads
     // on the black notch.
     readonly property real mutedAlpha: 0.8
