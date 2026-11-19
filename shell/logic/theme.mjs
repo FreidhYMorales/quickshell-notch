@@ -16,26 +16,31 @@ export const MODES = [
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 // Argv arrays, no shell. The app-facing run writes colors.json and runs the
-// post-hook; the dry-run only dumps one monitor's palette. The notch stays
-// dark in this story: #40 adds the app-only light/dark axis.
-const baseArgs = (path, mode) => [
+// post-hook in the chosen light/dark variant; the dry-run only dumps a
+// notch palette, which is always dark.
+const baseArgs = (path, mode, variant) => [
   "matugen",
   "image",
   path,
   "--type",
   mode,
   "--mode",
-  "dark",
+  variant === "light" ? "light" : "dark",
   "--source-color-index",
   "0",
 ];
 
-export function appArgs(path, mode) {
-  return baseArgs(path, mode).concat(["--quiet"]);
+export function appArgs(path, mode, variant) {
+  return baseArgs(path, mode, variant).concat(["--quiet"]);
 }
 
 export function dryArgs(path, mode) {
-  return baseArgs(path, mode).concat(["--dry-run", "--quiet", "--json", "hex"]);
+  return baseArgs(path, mode, "dark").concat([
+    "--dry-run",
+    "--quiet",
+    "--json",
+    "hex",
+  ]);
 }
 
 export const DEFAULT_MODE = "scheme-content";
