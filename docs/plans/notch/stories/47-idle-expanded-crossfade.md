@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the idle centre notch, when I hover it and it expands, then the idle content fades out while the expanded content fades in over the same time the shape takes to grow, instead of swapping in one frame.
-- [ ] Given the expanded centre notch, when the hover leaves and it collapses, then the expanded content fades out while the idle content fades back in over the shape's shrink, and a hover that comes back mid-fade reverses it from where it is, with no jump.
-- [ ] Given a toast, the power menu, the launcher or polkit takes the notch, when it opens or closes, then it behaves as today: neither the idle nor the expanded content shows through it.
+- [x] Given the idle centre notch, when I hover it and it expands, then the idle content fades out while the expanded content fades in over the same time the shape takes to grow, instead of swapping in one frame.
+- [x] Given the expanded centre notch, when the hover leaves and it collapses, then the expanded content fades out while the idle content fades back in over the shape's shrink, and a hover that comes back mid-fade reverses it from where it is, with no jump.
+- [x] Given a toast, the power menu, the launcher or polkit takes the notch, when it opens or closes, then it behaves as today: neither the idle nor the expanded content shows through it.
 
 ## Plan
 
