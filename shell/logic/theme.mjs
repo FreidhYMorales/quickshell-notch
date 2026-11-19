@@ -147,3 +147,26 @@ export function midpoint(text) {
   if (!Number.isFinite(duration) || duration <= 0) return null;
   return duration / 2;
 }
+
+// The app-facing light/dark variant. The notch's theme.json wins once it has
+// a `variant`; until then the old shell's `isLight` is imported. A broken file
+// or an unknown value stays dark, the notch's own look.
+export function themeVariant(notchText, oldText) {
+  const notch = parseState(notchText);
+  if (typeof notchText === "string" && notch === null) return "dark";
+  if (notch !== null && "variant" in notch) {
+    return notch.variant === "light" ? "light" : "dark";
+  }
+  const old = parseState(oldText);
+  return old !== null && old.isLight === true ? "light" : "dark";
+}
+
+function parseState(text) {
+  if (typeof text !== "string") return null;
+  try {
+    const value = JSON.parse(text);
+    return typeof value === "object" && value !== null ? value : null;
+  } catch (_error) {
+    return null;
+  }
+}
