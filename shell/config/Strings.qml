@@ -80,9 +80,9 @@ Singleton {
     // entry and fetches the favicon.
     readonly property string webappHelper: "webapp-install"
     readonly property string themeHint: "↑ ↓ Choose · Enter Apply · Tab Light/Dark · Esc Back"
-    // Labels of the theme view's app Light/Dark switch.
-    readonly property string themeLight: "Light"
-    readonly property string themeDark: "Dark"
+    // Icons on the knob of the theme view's app Light/Dark switch.
+    readonly property string themeLight: "󰖨"
+    readonly property string themeDark: "󰽥"
     readonly property string themeActiveMark: "✓"
     // Friendly names for the nine matugen scheme types, keyed by id.
     readonly property var themeModeNames: ({

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../../components"
 import "../../config"
 import "../../services"
 import "../../logic/theme.mjs" as ThemeLogic
@@ -90,24 +91,54 @@ Item {
             id: header
 
             width: parent.width
-            height: title.implicitHeight
+            height: Math.max(title.implicitHeight, Layout.themeSwitchHeight)
 
             Text {
                 id: title
 
+                anchors.verticalCenter: parent.verticalCenter
                 text: Strings.themeTitle
                 color: root.scheme.onSurface
                 font.family: Fonts.family
                 font.pixelSize: Fonts.launcherItem
             }
 
-            Text {
+            // Knob on the left is Dark, on the right Light.
+            Rectangle {
+                id: track
+
+                readonly property bool light: Theme.variant === "light"
+
                 objectName: "theme-variant-switch"
                 anchors.right: parent.right
-                text: Theme.variant === "light" ? Strings.themeLight : Strings.themeDark
-                color: root.scheme.primary
-                font.family: Fonts.family
-                font.pixelSize: Fonts.launcherItem
+                anchors.verticalCenter: parent.verticalCenter
+                width: Layout.themeSwitchWidth
+                height: Layout.themeSwitchHeight
+                radius: height / 2
+                color: Colours.cardFor(root.screen)
+
+                Rectangle {
+                    objectName: "theme-variant-knob"
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: track.height - Layout.themeSwitchInset * 2
+                    height: width
+                    radius: width / 2
+                    x: track.light ? track.width - width - Layout.themeSwitchInset : Layout.themeSwitchInset
+                    color: root.scheme.primary
+
+                    Behavior on x {
+                        Anim {}
+                    }
+
+                    Text {
+                        objectName: "theme-variant-icon"
+                        anchors.centerIn: parent
+                        text: track.light ? Strings.themeLight : Strings.themeDark
+                        color: Colours.background
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
 
                 TapHandler {
                     onTapped: root.toggleVariant()
