@@ -3,8 +3,8 @@ import QtTest
 import Quickshell
 import "visual.mjs" as Visual
 
-// Scrolls the week strip and the month grid, then jumps back to today with the
-// clock and the title, reading the strip's centre day and the month title.
+// Scrolls the week strip forward and back, then opens the month, scrolls it and
+// jumps back to today with the title, reading the centre day and the title.
 ShellRoot {
     id: root
     property var center: Qt.createQmlObject('import QtQuick; import "' + Quickshell.env("NOTCH_CENTER_URL") + '" as Center; QtObject { property var store: Center.CenterStore }', root)
@@ -47,10 +47,10 @@ ShellRoot {
             // QtTest's synthetic wheel never reaches this layer-shell surface,
             // so the probe calls the function the WheelHandler calls; the real
             // wheel is part of the manual check.
-            const scroll = name => {
+            const scroll = (name, dy) => {
                 const item = named(name);
                 if (item)
-                    item.scroll(-120);
+                    item.scroll(dy);
                 wait(400);
             };
             const click = name => {
@@ -60,12 +60,13 @@ ShellRoot {
                 wait(400);
             };
             const start = centre();
-            scroll("calendar-card");
+            scroll("calendar-card", -120);
             const nextWeek = centre();
-            click("calendar-clock");
+            // Scrolling back up returns the strip to today.
+            scroll("calendar-card", 120);
             const backWeek = centre();
             click("calendar-week");
-            scroll("calendar-month-view");
+            scroll("calendar-month-view", -120);
             const nextMonth = title();
             click("calendar-title");
             const backMonth = title();

@@ -20,7 +20,7 @@ const MONTHS = [
   "December",
 ];
 
-test("scrolling moves weeks and months and the clock and title jump back to today", () => {
+test("scrolling moves weeks and months, scrolling back and the title return to today", () => {
   mkdirSync("/tmp/opencode", { recursive: true });
   const dir = mkdtempSync("/tmp/opencode/notch-calendar-scroll-");
   try {
