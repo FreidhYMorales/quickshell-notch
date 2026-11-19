@@ -858,3 +858,37 @@ test("security subview cannot open without the launcher", () => {
   const initial = two();
   assert.equal(reduce(initial, { type: "SecurityOpen" }).state, initial);
 });
+
+test("CalendarMonth opens this month's grid on that monitor only", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+  );
+  assert.deepEqual(state.monitors.A.calendar, { view: "month", offset: 0 });
+  assert.deepEqual(state.monitors.B, {
+    hovered: false,
+    pinned: false,
+    toastHovered: false,
+  });
+});
+
+test("CalendarBack returns to the week centred on today", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarBack", monitor: "A" },
+  );
+  assert.deepEqual(state.monitors.A, {
+    hovered: true,
+    pinned: false,
+    toastHovered: false,
+  });
+});
+
+test("calendar events for an unknown monitor change nothing", () => {
+  const s = two();
+  assert.deepEqual(reduce(s, { type: "CalendarMonth", monitor: "Z" }).state, s);
+  assert.deepEqual(reduce(s, { type: "CalendarBack", monitor: "Z" }).state, s);
+});
