@@ -45,7 +45,7 @@
 33. [x] 2094096 As a user, I want a lock screen redesigned in the notch style so that my lock matches my shell and no longer depends on the SDDM theme. Requires: #30
 34. [x] 1c7a44e (PR #27, squash-merged into main; CI green as reported by maintainer) As a user, I want a fullscreen Quick Wallpaper picker expanding from the centre notch, with a bottom portrait coverflow (at most one third of screen height), clock/date and live preview, opened by keybind. Requires: #27
 35. [-] split → #50, #51
-36. [ ] As a user, I want the security command view in the launcher so that I can enable fingerprint unlock and manage my registered fingers. Requires: #26, #30
+36. [~] As a user, I want the security command view in the launcher so that I can enable fingerprint unlock and manage my registered fingers. Requires: #26, #30
 37. [x] 0b75aa7 As a user, I want the webapp command view in the launcher so that I can install a website as a desktop web app. Requires: #26
 38. [ ] As a user, I want a month view in the expanded notch calendar with week/month scrolling and a jump back to today so that I can look beyond the current week. Requires: —
 39. [-] dropped (glow direction abandoned) As a user, I want a glow pulse when a notification arrives so that I notice it without being interrupted. Requires: #01

@@ -1,0 +1,43 @@
+# Story 36: Security command view
+
+## Story
+
+36. As a user, I want the security command view in the launcher so that I can enable fingerprint unlock and manage my registered fingers. Requires: #26, #30.
+
+## Acceptance criteria
+
+- [ ] Given the launcher in command mode, when I choose Security, then the notch shows a "Fingerprint unlock" switch in its current state and my registered fingers as fprintd reports them, Esc goes back to the command list, and flipping the switch decides whether the next lock listens for my finger, a choice that survives a restart.
+- [ ] Given a finger that is not registered, when I pick it and touch the sensor until enrollment ends, then the view shows each touch's progress and hint with a Cancel, and afterwards the finger appears in the registered list; a failed or cancelled enrollment leaves the list as it was.
+- [ ] Given a registered finger, when I remove it from the view, then it disappears from the list and no longer unlocks the session.
+
+## Plan
+
+- A new "Security" entry in the launcher's command list opens its own sub-view in the centre notch, with the same open/back flow as the other command views.
+- A security service owns the switch (saved to the notch's own `security.json`, falling back to the old shell's value until first saved, the same rule the lock already uses) and the live fprintd state: the registered list, enrollment progress and removal, never cached.
+- The lock reads the switch from that service, so a change applies to the next lock without a restart.
+- The view paints: switch, registered fingers with a remove action, the free fingers to add, and an enrollment panel while enrolling.
+- Tests: pure logic for parsing the fprintd list, mapping enrollment results to progress/hint/end, and the free-finger list; QML probes with a fake fprintd that the view opens, shows the stored switch and fingers, and goes back on Esc.
+
+## Out of scope
+
+- Changing how the lock or polkit authenticate (PAM stacks, the fingerprint listener, `quickshell-fprint`).
+- Installing or configuring fprintd, PAM or the sensor.
+- Password management or any other unlock method.
+- A confirmation step for removing a finger (the old view removes on one press).
+- Visual polish beyond the existing command views' style.
+
+## Suggestions (your call)
+
+- Port the old `services/Security.qml` (fprintd-list/-enroll/-delete, the 10 finger names, the enroll-status table) and move its parsing into `shell/logic/` so it is testable; the old view's layout (`SecurityForm.qml`) is the functional reference.
+- Finger names reach `fprintd-*` only from the fixed list of 10, passed as argv entries, never through a shell.
+- No reader or no fprintd: hide the finger section and `console.warn`, keep the switch.
+
+## Size
+
+normal
+Risk: item 1, 2, 6 (removes enrolled fingerprints; unlock method; enrollment only checkable on the real sensor)
+
+## Log
+
+- L1 request: "/flow:story 36" (chat in Spanish, story file in English).
+- L2 assumptions (from the old config's SecurityForm and Security service): same features as the old view (switch, per-finger enroll and remove for any of the 10 fprintd finger names, live progress with Cancel); removal is one press with no confirmation; the switch keeps the old default (off when neither state file has it, as `lockSecurity.mjs` already decides).
