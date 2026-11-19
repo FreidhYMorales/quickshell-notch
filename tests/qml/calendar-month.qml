@@ -34,11 +34,19 @@ ShellRoot {
                 screen: screen
             });
             // A real notification arriving mid-probe would show as a toast
-            // over the expanded notch: mute them.
+            // over the expanded notch: mute them, and dismiss a critical one
+            // already up (the low-battery warning shows at startup).
             root.center.store.dispatch({
                 type: "Dnd",
                 on: true
             });
+            wait(300);
+            const shown = root.center.store.state.global.toast;
+            if (shown)
+                root.center.store.dispatch({
+                    type: "ToastDismissed",
+                    id: shown.id
+                });
             root.center.store.dispatch({
                 type: "Hover",
                 monitor: screen.name,
