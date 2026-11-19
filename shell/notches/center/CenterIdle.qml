@@ -4,6 +4,7 @@ import "../../config"
 import "../../services"
 import "../../logic/centerLayout.mjs" as CenterLayout
 import "../../logic/format.mjs" as Format
+import "../../logic/pixelShift.mjs" as PixelShift
 import "../../logic/sideLayer.mjs" as SideLayer
 
 // Idle centre notch content: `(cpu) date . time (ram)` centred, so the clock
@@ -18,6 +19,7 @@ Item {
     property var view: null
     // OLED pixel shift: which spot of the one-pixel cycle the content is at.
     property int shiftStep: 0
+    readonly property var shiftOffset: PixelShift.shiftOffset(shiftStep)
     // none, charging, plugged, full, low or media (CenterStore.sideLayer).
     property string batteryLayer: CenterStore.sideLayer
     readonly property int baseWidth: CenterLayout.idleBase({
@@ -62,6 +64,21 @@ Item {
         }
     }
 
+    // Moves every content item but the black shape, so the notch stays put.
+    Translate {
+        id: shift
+
+        x: root.shiftOffset.x
+        y: root.shiftOffset.y
+    }
+
+    Timer {
+        interval: Timings.pixelShift
+        running: true
+        repeat: true
+        onTriggered: root.shiftStep++
+    }
+
     NotchEarShape {
         objectName: "idle-shape"
         anchors.fill: parent
@@ -69,6 +86,7 @@ Item {
 
     Row {
         id: row
+        transform: shift
 
         objectName: "idle-row"
         anchors.centerIn: parent
@@ -99,6 +117,7 @@ Item {
     }
 
     Text {
+        transform: shift
         anchors.centerIn: parent
         visible: Recorder.countdown > 0
         text: Recorder.countdown
@@ -109,6 +128,7 @@ Item {
 
     // Recording dot, left of the row; it never changes the width.
     Rectangle {
+        transform: shift
         anchors.right: root.leftEdge.left
         anchors.rightMargin: Layout.rowGap
         anchors.verticalCenter: parent.verticalCenter
@@ -122,6 +142,7 @@ Item {
     // Unread dot, right of the row; it blinks only while a keyboard state mutes toasts.
     Rectangle {
         id: unread
+        transform: shift
 
         anchors.left: root.rightEdge.right
         anchors.leftMargin: Layout.rowGap
@@ -152,6 +173,7 @@ Item {
     // Waiting criticals take the unread dot's place.
     CriticalMark {
         id: critical
+        transform: shift
 
         anchors.left: root.rightEdge.right
         anchors.leftMargin: Layout.rowGap
@@ -162,6 +184,7 @@ Item {
 
     ArtThumb {
         id: art
+        transform: shift
 
         anchors.right: row.left
         anchors.rightMargin: Layout.rowGap
@@ -175,6 +198,7 @@ Item {
 
     Visualizer {
         id: viz
+        transform: shift
 
         anchors.left: row.right
         anchors.leftMargin: Layout.rowGap
@@ -185,6 +209,7 @@ Item {
 
     Text {
         id: layerGlyph
+        transform: shift
 
         anchors.right: row.left
         anchors.rightMargin: Layout.rowGap
@@ -198,6 +223,7 @@ Item {
 
     Text {
         id: layerPercent
+        transform: shift
 
         anchors.left: row.right
         anchors.leftMargin: Layout.rowGap
