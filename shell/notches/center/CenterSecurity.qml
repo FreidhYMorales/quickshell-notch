@@ -38,5 +38,31 @@ Item {
             font.family: Fonts.family
             font.pixelSize: Fonts.launcherItem
         }
+
+        Column {
+            objectName: "security-registered"
+            width: parent.width
+            spacing: Layout.launcherGap
+
+            Text {
+                text: Strings.securityRegistered
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
+
+            Repeater {
+                model: Security.enrolled
+
+                Text {
+                    required property string modelData
+
+                    text: Strings.fingerLabels[modelData] ?? modelData
+                    color: root.scheme.onSurface
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.launcherItem
+                }
+            }
+        }
     }
 }

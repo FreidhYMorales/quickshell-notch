@@ -29,6 +29,20 @@ Singleton {
     readonly property string screensaverTitle: "Screensaver"
     readonly property string securityTitle: "Security"
     readonly property string securityFingerprintUnlock: "Fingerprint unlock"
+    readonly property string securityRegistered: "Registered fingers"
+    // fprintd finger names as the security view shows them.
+    readonly property var fingerLabels: ({
+            "left-thumb": "Left thumb",
+            "left-index-finger": "Left index",
+            "left-middle-finger": "Left middle",
+            "left-ring-finger": "Left ring",
+            "left-little-finger": "Left little",
+            "right-thumb": "Right thumb",
+            "right-index-finger": "Right index",
+            "right-middle-finger": "Right middle",
+            "right-ring-finger": "Right ring",
+            "right-little-finger": "Right little"
+        })
     // Screensaver view: the three idle stages and their minutes (%1).
     readonly property var idleStageNames: ["Screensaver", "Lock", "Suspend"]
     readonly property string idleOff: "Off"
