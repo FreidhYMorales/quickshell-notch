@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fingerprintEnabled } from "../shell/logic/lockSecurity.mjs";
+import {
+  fingerprintEnabled,
+  serialiseSecurity,
+} from "../shell/logic/lockSecurity.mjs";
 
 const on = '{"fingerprintEnabled":true}';
 const off = '{"fingerprintEnabled":false}';
@@ -18,4 +21,11 @@ test("without a notch state the old shell's state decides", () => {
 test("without any readable state the fingerprint stays off", () => {
   assert.equal(fingerprintEnabled(null, null), false);
   assert.equal(fingerprintEnabled("{}", "garbage"), false);
+});
+
+test("the saved switch keeps the old field name and reads back the same", () => {
+  assert.equal(serialiseSecurity(false), off);
+  assert.equal(serialiseSecurity(true), on);
+  assert.equal(fingerprintEnabled(serialiseSecurity(false), on), false);
+  assert.equal(fingerprintEnabled(serialiseSecurity(true), off), true);
 });

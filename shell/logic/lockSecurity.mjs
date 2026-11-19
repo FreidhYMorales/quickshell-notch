@@ -16,3 +16,7 @@ export function fingerprintEnabled(notchText, oldText) {
   const old = readFlag(oldText);
   return old === null ? false : old;
 }
+
+export function serialiseSecurity(_enabled) {
+  return "";
+}
