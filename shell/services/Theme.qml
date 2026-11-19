@@ -85,7 +85,9 @@ Singleton {
         const path = Wallpapers.pathFor(screen);
         if (!path)
             return;
-        if (previewPaths[screen] === path && previewFor(screen, ThemeLogic.MODES[0]))
+        // Only a full set is a cache hit: a commit elsewhere may have dropped
+        // the rest of this monitor's queued jobs.
+        if (previewPaths[screen] === path && ThemeLogic.MODES.every(mode => previewFor(screen, mode)))
             return;
         const paths = Object.assign({}, previewPaths);
         paths[screen] = path;
@@ -109,27 +111,37 @@ Singleton {
         previewBusy = true;
         previewProc.pendingScreen = job.screen;
         previewProc.pendingMode = job.mode;
-        previewProc.epoch = root.previewEpoch;
+        const epoch = root.previewEpoch;
+        previewProc.epoch = epoch;
+        // A commit may land while the frame is still being extracted: by then
+        // a newer job owns previewProc, so the stale callback does nothing.
         frameFor(job.path, "preview", path => {
+            if (epoch !== root.previewEpoch)
+                return;
             previewProc.pending = true;
             previewProc.didStart = false;
             previewProc.command = ThemeLogic.dryArgs(path, job.mode);
             previewProc.running = true;
-        }, reason => root.previewFailed(reason));
+        }, reason => {
+            if (epoch === root.previewEpoch)
+                root.previewFailed(reason);
+        });
     }
 
     // --- video wallpapers ---------------------------------------------------
     // matugen only reads images: a video wallpaper is themed from the frame in
-    // its middle, extracted once per role so no two jobs share a file.
-    function framePath(role: string): string {
-        return Quickshell.cachePath("theme-frame-" + role + ".png");
+    // its middle, extracted once per role and video so no two jobs, and no
+    // two videos, ever share a file.
+    function framePath(role: string, path: string): string {
+        return Quickshell.cachePath(Qt.md5(path) + "-theme-frame-" + role + ".png");
     }
 
     function frameFor(path: string, role: string, run: var, fail: var) {
         // One frame per role and video per session: the nine previews share it
         // instead of re-extracting the same still nine times.
-        if (frames[role] === path) {
-            run(framePath(role));
+        const output = framePath(role, path);
+        if (frames[output]) {
+            run(output);
             return;
         }
         if (!WallpaperState.needsThemeFrame(path)) {
@@ -140,7 +152,7 @@ Singleton {
             {
                 path: path,
                 role: role,
-                output: framePath(role),
+                output: output,
                 run: run,
                 fail: fail
             }
@@ -151,8 +163,16 @@ Singleton {
     function startFrame() {
         if (frameBusy || frameQueue.length === 0)
             return;
-        frameJob = frameQueue[0];
+        const next = frameQueue[0];
         frameQueue = frameQueue.slice(1);
+        // Queued twice before the first landed: never rewrite a frame a
+        // dry-run may be reading.
+        if (frames[next.output]) {
+            next.run(next.output);
+            startFrame();
+            return;
+        }
+        frameJob = next;
         frameBusy = true;
         probe.pending = true;
         probe.didStart = false;
@@ -175,7 +195,7 @@ Singleton {
         frameBusy = false;
         if (job) {
             const done = Object.assign({}, frames);
-            done[job.role] = job.path;
+            done[job.output] = true;
             frames = done;
             job.run(job.output);
         }

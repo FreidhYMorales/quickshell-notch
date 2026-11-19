@@ -1,0 +1,56 @@
+# Story 41: Instant theme swatches
+
+## Story
+
+41. As a user, I want the theme view's colour swatches to be there the moment I open it so that browsing schemes feels instant instead of filling in over a second. Requires: #28
+
+## Acceptance criteria
+
+- [x] Given the shell has started and a monitor has a wallpaper, when I open the theme view on that monitor after the background work settles, then all nine swatches show their colours at once, with no placeholder filling in.
+- [x] Given I commit a new wallpaper (shared or for one monitor), when I open the theme view on an affected monitor after the background work settles, then the swatches already match the new wallpaper and never show the old one's colours.
+- [x] Given the swatches are still being computed or matugen is missing, when I open the theme view, then it behaves as today: placeholders for missing swatches, finished ones fill in, and nothing else in the view waits.
+
+## Plan
+
+- Move swatch generation from "when the view opens" to "when the inputs change": once after startup restores the palettes, and after each wallpaper commit for the monitors it affects.
+- Reuse the existing one-at-a-time preview queue, its cache and its epoch, so background work never runs in parallel and a commit still discards stale results.
+- Opening the view keeps its current call as a fallback; with a warm cache it is a no-op.
+- Tests: pure logic for which monitors need warming after startup and after a shared or per-monitor commit; a QML probe that the cache is filled before the view opens and that a commit replaces it.
+
+## Out of scope
+
+- Persisting swatches to disk across restarts (assumption: one background warm-up per start is enough).
+- Making each dry-run faster, running them in parallel, or changing the swatch's look.
+- Video wallpapers beyond what the existing middle-frame path already does.
+- A cancelled preview matugen that outlives SIGTERM past the wallpaper save (L14): needs a stuck process; deferred as tech debt by the user.
+- Cleaning up the per-video frame files that accumulate in the cache.
+
+## Suggestions (your call)
+
+- Start the warm-up after the startup palette restore finishes, so the per-monitor palettes the notch actually paints are never queued behind nine previews.
+- Keep the warm-up off under `Flags.smoke`, as `generatePreviews` already is.
+
+## Size
+
+normal
+Risk: item 4 (background preview queue racing wallpaper commits and the startup restore)
+
+## Log
+
+- L1 request: "/flow:story 41"
+- L2 build: 3838f99/e44e195 (warmupPath), b6d9570/3531800 (ThemeWarmup per monitor, wired in shell.qml), bc38e73 (shared commit rewarms), adabd76 (per-monitor commit rewarms only that monitor).
+- L3 green on arrival: bc38e73 and adabd76 passed when written because the warm-up handler landed in 3531800. Mutation evidence: removing `onWallpaperChanged` turns bc38e73 red (`after: DP-1 0 | DP-2 0`); making it synchronous stays green because `Wallpapers.commit`'s save toggles `saved` and re-fires the warm-up, so the `Qt.callLater` is kept as an unpinned ordering guard. In adabd76 `warmupPath` is only the trigger (`generatePreviews` reads `Wallpapers.pathFor`); the case pins that DP-2 is left alone.
+- L4 correction (verifier FAIL): a per-monitor commit while another monitor was still warming cleared the preview queue, and the one-mode cache check then blocked any rewarm (DP-2 stuck at 2 of 9). 97efa4d red (`settled: DP-1 9 #bbbbbb | DP-2 2 #aaaaaa`) → 6df1826 (cache hit needs all nine modes).
+- L5 verifier recheck FAIL → NEEDS DECISION: the image race is closed (C1, C3 PASS; commit order and tamper PASS), but with video wallpapers a commit during the warm-up's frame extraction lets the old frame's callback start a dry-run under the new job's epoch, screen and mode, so one old colour lands in a full nine-mode set and is never recomputed (scratch repro: `scheme-tonal-spot=#aaaaaa`, the other eight `#bbbbbb`). Proposed fix: tag preview frame callbacks with `previewEpoch` or drop preview-role frame jobs in `commitWallpaper`, pinned first by a red video probe. Waiting on the user.
+- L6 user decision: "si, arréglalo aquí" (fix the video race inside this story).
+- L7 correction: 48b65bb red (`settled: DP-1 9 #aaaaaa,#bbbbbb`, commit landed while a.mp4's frame was extracting) → ee0e580 (the preview frame callbacks capture `previewEpoch` and do nothing once a commit has bumped it). The fail callback got the same guard so a stale extraction failure cannot free `previewBusy` under a newer job; that branch is not pinned by a test. `make check` on ee0e580: exit 0, "smoke: config loaded".
+- L8 verifier FAIL on ddf8ae7: C1, C3, commit order and tamper PASS; the video race of L5 is fixed. Remaining item-4 path: `frameFor` treats `frames[role] === path` as a cache hit while a same-role extraction for another video is still pending, so A→B→A commits within one extraction let B's stale frame overwrite `theme-frame-preview.png` under A's current-epoch dry-runs (scratch repro: `settled: DP-1 9 #aaaaaa,#bbbbbb`). The app/palette roles share the pattern but predate this story. Its `make check` hit 3 lock-screen probe failures that passed when rerun alone (flaky, outside the story). Waiting on the user.
+- L9 user decision: "si, arréglalo aquí" (fix the A→B→A frame race inside this story).
+- L10 correction: 79f41b1 red (`settled: DP-1 9 #aaaaaa,#bbbbbb`, back to a.mp4 while b.mp4's preview frame was extracting) → 38e1ff8 (`frameFor` forgets `frames[role]` when it queues an extraction for that role). The change sits in the shared `frameFor`, so the app and palette roles get the same guard; only the preview role is pinned by a test. `make check` on 38e1ff8: exit 0, "smoke: config loaded".
+- L11 verifier FAIL on 135251a: C1, C3, commit order, tamper and `make check` PASS. Remaining item-4 path: `frameReady` marks `frames[role]` cached when an earlier same-role job lands even though a later one is queued to overwrite the shared file (A1 extracting → commit B → commit A → commit again while B extracts; scratch repro `settled: DP-1 9 #aaaaaa,#bbbbbb`). Root cause shared by L8: one frame file per role, overwritten by different videos. Waiting on the user.
+- L12 user decision: "si, arréglalo aquí" (fix the root cause: one frame file per video).
+- L13 correction: ff0964d red (`settled: DP-1 9 #aaaaaa,#bbbbbb`, a → b → a → a commits during extractions) → 37d5540: frame files are named `<md5 of the video path>-theme-frame-<role>.png` and the frame cache marks files, not roles, so two videos never share a file; this replaces 38e1ff8's role clearing. `startFrame` also skips a queued job whose file already landed so a frame a dry-run may be reading is never rewritten; that guard is not pinned (a mutation removing it stays green, the stub writes the frame in one step). `make check` on 37d5540: exit 0, "smoke: config loaded".
+- L14 verifier NEEDS DECISION on 5b6b17b: C1, C2, C3, commit order, tamper and `make check` PASS; the frame-file races are closed. Open: a cancelled `previewProc` run only gets SIGTERM, so if that matugen outlives the wallpaper save its late output is taken as the next job's first mode (scratch repro with a TERM-ignoring stub: `settled: DP-1 9 #aaaaaa,#bbbbbb | DP-2 9 #aaaaaa`); real matugen exits on SIGTERM at once. Minor: per-video frame files accumulate in the cache. Waiting on the user.
+- L15 user decision: "si, déjalo fuera de alcance y cierra la 41". The SIGTERM hand-off race and the frame-file cleanup are out of scope.
+- L16 close: last code commit 37d5540; tests 3 `warmupPath` units plus probes theme-warmup, theme-warmup-commit (2), theme-warmup-race, theme-warmup-video, theme-warmup-video-back, theme-warmup-video-again. `make check` on 37d5540: exit 0, "smoke: config loaded" (only docs changed since). Verifier: FAIL ×4 corrected (L4, L7, L10, L13), final NEEDS DECISION resolved by L15. Manual check (open the theme view after start and after a wallpaper change) left to the user.
+- Risk: item 4 (background preview queue racing wallpaper commits and the startup restore)

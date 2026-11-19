@@ -9,5 +9,6 @@ NotchZone NotchZone.qml
 NotifIcon NotifIcon.qml
 Slider Slider.qml
 SpacerSurface SpacerSurface.qml
+ThemeWarmup ThemeWarmup.qml
 Visualizer Visualizer.qml
 WallpaperSurface WallpaperSurface.qml

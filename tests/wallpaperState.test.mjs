@@ -7,6 +7,7 @@ import {
   shouldImport,
   videoShouldPlay,
   wallpaperFor,
+  warmupPath,
 } from "../shell/logic/wallpaperState.mjs";
 
 test("animated GIFs and videos need a frame for their theme", () => {
@@ -139,5 +140,26 @@ test("shared commit replaces all monitor overrides and updates fallback", async 
   assert.equal(
     wallpaperFor(next.perScreen, next.fallback, "HDMI-A-1"),
     "/w/shared.mp4",
+  );
+});
+
+test("theme swatches warm against nothing until both services loaded", () => {
+  assert.equal(
+    warmupPath(false, { "DP-1": "/w/own.png" }, "/w/a.png", "DP-1"),
+    "",
+  );
+});
+
+test("theme swatches warm against the monitor's own committed wallpaper", () => {
+  assert.equal(
+    warmupPath(true, { "DP-1": "/w/own.png" }, "/w/a.png", "DP-1"),
+    "/w/own.png",
+  );
+});
+
+test("theme swatches warm against the shared wallpaper without an override", () => {
+  assert.equal(
+    warmupPath(true, { "DP-1": "/w/own.png" }, "/w/a.png", "DP-2"),
+    "/w/a.png",
   );
 });

@@ -50,6 +50,10 @@ Scope {
                 screen: perScreen.modelData
             }
 
+            ThemeWarmup {
+                monitorName: perScreen.modelData.name
+            }
+
             LazyLoader {
                 active: !Flags.smoke
 
