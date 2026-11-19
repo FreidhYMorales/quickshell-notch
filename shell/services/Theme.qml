@@ -85,7 +85,9 @@ Singleton {
         const path = Wallpapers.pathFor(screen);
         if (!path)
             return;
-        if (previewPaths[screen] === path && previewFor(screen, ThemeLogic.MODES[0]))
+        // Only a full set is a cache hit: a commit elsewhere may have dropped
+        // the rest of this monitor's queued jobs.
+        if (previewPaths[screen] === path && ThemeLogic.MODES.every(mode => previewFor(screen, mode)))
             return;
         const paths = Object.assign({}, previewPaths);
         paths[screen] = path;
