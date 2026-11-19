@@ -13,3 +13,4 @@ QuickWallpaperSurface QuickWallpaperSurface.qml
 CenterKeybinds CenterKeybinds.qml
 CenterWebapp CenterWebapp.qml
 CenterScreensaver CenterScreensaver.qml
+CenterSecurity CenterSecurity.qml

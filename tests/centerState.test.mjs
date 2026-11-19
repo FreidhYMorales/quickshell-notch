@@ -844,3 +844,17 @@ test("screensaver subview cannot open without the launcher", () => {
   const initial = two();
   assert.equal(reduce(initial, { type: "ScreensaverOpen" }).state, initial);
 });
+
+test("security command opens a launcher subview and returns to commands", () => {
+  const opened = reduce(two(), { type: "LauncherToggle", monitor: "A" }).state;
+  const security = reduce(opened, { type: "SecurityOpen" }).state;
+  assert.equal(security.global.keyboard.sub, "security");
+  assert.equal(security.global.keyboard.kind, "launcher");
+  const returned = reduce(security, { type: "SecurityBack" }).state;
+  assert.equal(returned.global.keyboard.sub, null);
+});
+
+test("security subview cannot open without the launcher", () => {
+  const initial = two();
+  assert.equal(reduce(initial, { type: "SecurityOpen" }).state, initial);
+});

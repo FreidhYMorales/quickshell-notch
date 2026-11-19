@@ -16,3 +16,8 @@ export function fingerprintEnabled(notchText, oldText) {
   const old = readFlag(oldText);
   return old === null ? false : old;
 }
+
+// The notch's security.json keeps the old shell's field name.
+export function serialiseSecurity(enabled) {
+  return JSON.stringify({ fingerprintEnabled: enabled === true });
+}

@@ -200,6 +200,24 @@ const handlers = {
       keyboard: merge(keyboard, { sub: null }),
     });
   },
+  SecurityOpen(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub === "security") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: "security" }),
+    });
+  },
+  SecurityBack(state) {
+    const keyboard = state.global.keyboard;
+    if (keyboard?.kind !== "launcher" || keyboard.sub !== "security") {
+      return unchanged(state);
+    }
+    return setGlobal(state, {
+      keyboard: merge(keyboard, { sub: null }),
+    });
+  },
   LauncherQuery(state, { text }) {
     const { keyboard } = state.global;
     if (keyboard?.kind !== "launcher") return unchanged(state);

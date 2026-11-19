@@ -27,6 +27,38 @@ Singleton {
     readonly property string keybindsUnavailable: "Keybinds unavailable"
     readonly property string webappTitle: "Webapp"
     readonly property string screensaverTitle: "Screensaver"
+    readonly property string securityTitle: "Security"
+    readonly property string securityFingerprintUnlock: "Fingerprint unlock"
+    readonly property string securityRegistered: "Registered fingers"
+    readonly property string securityAdd: "Add a finger"
+    readonly property string securityEnrolling: "Enrolling %1"
+    readonly property string securityTouches: "Touches: %1"
+    // Enrollment hints keyed by fprintd-enroll's status (without "enroll-").
+    readonly property var enrollHints: ({
+            start: "Touch the fingerprint sensor",
+            again: "Touch the sensor again",
+            "retry-scan": "Try scanning again",
+            "swipe-too-short": "Swipe was too short, try again",
+            "too-fast": "Too fast, try again slower",
+            "finger-not-centered": "Center your finger on the sensor",
+            "remove-and-retry": "Remove your finger and try again"
+        })
+    readonly property string enrollRetry: "Try again"
+    readonly property string securityCancel: "Cancel"
+    readonly property string securityRemove: "Remove"
+    // fprintd finger names as the security view shows them.
+    readonly property var fingerLabels: ({
+            "left-thumb": "Left thumb",
+            "left-index-finger": "Left index",
+            "left-middle-finger": "Left middle",
+            "left-ring-finger": "Left ring",
+            "left-little-finger": "Left little",
+            "right-thumb": "Right thumb",
+            "right-index-finger": "Right index",
+            "right-middle-finger": "Right middle",
+            "right-ring-finger": "Right ring",
+            "right-little-finger": "Right little"
+        })
     // Screensaver view: the three idle stages and their minutes (%1).
     readonly property var idleStageNames: ["Screensaver", "Lock", "Suspend"]
     readonly property string idleOff: "Off"
@@ -89,6 +121,11 @@ Singleton {
             name: "Screensaver",
             glyph: "󰒲",
             description: "Set the screensaver, lock and suspend times and the screensaver wallpaper."
+        },
+        {
+            name: "Security",
+            glyph: "󰈷",
+            description: "Turn fingerprint unlock on or off and manage your registered fingers."
         }
     ]
     // Launcher glyph before the field, keyed by mode: magnify for apps,
