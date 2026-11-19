@@ -44,3 +44,5 @@ Risk: item 5 (runs matugen and its post-hook, rewriting the shared app theming),
 
 - L1 request: "/flow:story 40"
 - L2 resolution: the scheme swatches stay dark when the switch is Light ("si, que se queden en dark").
+- L3 build: test list approved (9 items, greeter stays dark). Green: 91b0174/b0b4536 (app argv takes the variant), 1007cf4/07b04e0 (restore the variant, old `isLight` imported while the notch file has no `variant`). Red: d2262b0 (switching to light reruns only the apps in light and saves `{mode, variant}`).
+- L4 stop (rule 3): saving the variant beside the mode changes `theme.json`, which four existing probes pin as `{mode}` only (`theme-select`, `theme-view`, `theme-keys`, `theme-broken-state`). Waiting for the user's call.
