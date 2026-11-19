@@ -38,3 +38,7 @@ export function enrollResult(line) {
   }
   return { touch: false, hint: status.replace(/^enroll-/, ""), end: "" };
 }
+
+export function freeFingers(_enrolled) {
+  return [];
+}

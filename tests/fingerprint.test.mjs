@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { enrolledFingers, enrollResult } from "../shell/logic/fingerprint.mjs";
+import {
+  enrolledFingers,
+  enrollResult,
+  freeFingers,
+} from "../shell/logic/fingerprint.mjs";
 
 const header = "found 1 devices\n" +
   "Device at /net/reactivated/Fprint/Device/0\n" +
@@ -88,4 +92,35 @@ test("lines without an enroll result change nothing", () => {
     hint: "again",
     end: "",
   });
+});
+
+const allFingers = [
+  "left-thumb",
+  "left-index-finger",
+  "left-middle-finger",
+  "left-ring-finger",
+  "left-little-finger",
+  "right-thumb",
+  "right-index-finger",
+  "right-middle-finger",
+  "right-ring-finger",
+  "right-little-finger",
+];
+
+test("every finger is free while none is registered", () => {
+  assert.deepEqual(freeFingers([]), allFingers);
+});
+
+test("registered fingers are not offered again", () => {
+  assert.deepEqual(freeFingers(["right-index-finger", "left-thumb"]), [
+    "left-index-finger",
+    "left-middle-finger",
+    "left-ring-finger",
+    "left-little-finger",
+    "right-thumb",
+    "right-middle-finger",
+    "right-ring-finger",
+    "right-little-finger",
+  ]);
+  assert.deepEqual(freeFingers(allFingers), []);
 });
