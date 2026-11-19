@@ -12,6 +12,8 @@ Item {
     id: root
 
     property var scheme: Colours.fallback
+    // Monitor this view's clicks are dispatched for.
+    property string monitor: ""
     property int offset: 0
 
     readonly property var today: ({
@@ -30,13 +32,33 @@ Item {
         anchors.fill: parent
         spacing: Layout.rowGap
 
-        Text {
-            objectName: "calendar-title"
-            text: Strings.months[root.shown.month - 1] + " " + root.shown.year
-            color: root.scheme.onSurface
-            font.family: Fonts.family
-            font.pixelSize: Fonts.body
-            font.bold: true
+        Row {
+            spacing: Layout.rowGap
+
+            // Back to the media and week view.
+            Text {
+                objectName: "calendar-back"
+                text: Strings.glyphChevronLeft
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.body
+
+                TapHandler {
+                    onTapped: CenterStore.dispatch({
+                        type: "CalendarBack",
+                        monitor: root.monitor
+                    })
+                }
+            }
+
+            Text {
+                objectName: "calendar-title"
+                text: Strings.months[root.shown.month - 1] + " " + root.shown.year
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.body
+                font.bold: true
+            }
         }
 
         Row {

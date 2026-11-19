@@ -13,6 +13,8 @@ Rectangle {
     id: root
 
     property var scheme: Colours.fallback
+    // Monitor this card's clicks are dispatched for.
+    property string monitor: ""
     property color cardColor: Colours.background
 
     readonly property var week: Calendar.weekStrip({
@@ -37,7 +39,16 @@ Rectangle {
         }
 
         Row {
+            objectName: "calendar-week"
             anchors.horizontalCenter: parent.horizontalCenter
+
+            // Clicking the strip opens the month view.
+            TapHandler {
+                onTapped: CenterStore.dispatch({
+                    type: "CalendarMonth",
+                    monitor: root.monitor
+                })
+            }
 
             Repeater {
                 model: root.week

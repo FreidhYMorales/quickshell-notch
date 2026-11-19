@@ -48,6 +48,7 @@ Item {
             width: Mpris.hasPlayer ? Layout.clockCardWidth : parent.width
             visible: !root.month
             scheme: root.scheme
+            monitor: root.screen ? root.screen.name : ""
             cardColor: Colours.cardFor(root.screen)
         }
 
@@ -56,6 +57,7 @@ Item {
             anchors.fill: parent
             visible: root.month
             scheme: root.scheme
+            monitor: root.screen ? root.screen.name : ""
             offset: root.month ? root.calendar.offset : 0
         }
     }
