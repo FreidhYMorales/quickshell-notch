@@ -38,6 +38,8 @@ Scope {
     readonly property string stage: Session.stage
     // The security view's switch, followed live.
     readonly property bool fingerprintEnabled: Security.fingerprintEnabled
+    // The shared PAM listener, so a probe can read what it waits for.
+    readonly property alias auth: sharedAuth
     // Last outputs state handed to the compositor (they start on).
     property bool outputsOn: true
     // True from the input that ends the black stage until the outputs are
