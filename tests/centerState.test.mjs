@@ -933,3 +933,29 @@ test("CalendarToday jumps back to today in either view", () => {
   );
   assert.deepEqual(month.monitors.A.calendar, { view: "month", offset: 0 });
 });
+
+const plainIdle = { hovered: false, pinned: false, toastHovered: false };
+
+test("closing the expanded notch on hover-out forgets the browsed calendar", () => {
+  const state = run(
+    two(),
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarMonth", monitor: "A" },
+    { type: "CalendarScroll", monitor: "A", steps: 2 },
+    { type: "Hover", monitor: "A", on: false },
+  );
+  assert.deepEqual(state.monitors.A, plainIdle);
+});
+
+test("a pinned notch keeps the calendar until it is unpinned and left", () => {
+  const pinned = run(
+    two(),
+    { type: "ExpandedToggle", monitor: "A" },
+    { type: "Hover", monitor: "A", on: true },
+    { type: "CalendarScroll", monitor: "A", steps: 1 },
+    { type: "Hover", monitor: "A", on: false },
+  );
+  assert.deepEqual(pinned.monitors.A.calendar, { view: "week", offset: 1 });
+  const closed = run(pinned, { type: "ExpandedToggle", monitor: "A" });
+  assert.deepEqual(closed.monitors.A, plainIdle);
+});
