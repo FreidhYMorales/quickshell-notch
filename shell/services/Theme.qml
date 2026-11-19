@@ -25,6 +25,8 @@ Singleton {
 
     // scheme-* id; DEFAULT_MODE until a saved state says otherwise.
     property string mode: ThemeLogic.DEFAULT_MODE
+    // "light" or "dark": only the apps follow it, the notch stays dark.
+    property string variant: "dark"
     // true once the notch state on disk holds the current mode.
     property bool saved: false
     // true once the app pipeline and the queued monitor palettes are done.
@@ -232,6 +234,8 @@ Singleton {
             }
         }
         const notch = readText(notchDir + "/theme.json");
+        const old = readText(oldDir + "/theme.json");
+        variant = ThemeLogic.themeVariant(notch, old);
         if (notch !== null) {
             const stored = ThemeLogic.savedMode(notch);
             mode = stored ?? ThemeLogic.DEFAULT_MODE;
@@ -241,7 +245,7 @@ Singleton {
             else
                 saved = true;
         } else {
-            mode = ThemeLogic.themeState(null, readText(oldDir + "/theme.json")).mode;
+            mode = ThemeLogic.themeState(null, old).mode;
             persist();
         }
         loaded = true;
@@ -285,6 +289,19 @@ Singleton {
             wallpaper: Wallpapers.fallback,
             perScreen: Wallpapers.perScreen
         }));
+    }
+
+    // Called by the theme view's switch: only the apps are rethemed, from the
+    // shared wallpaper; the notch palettes never depend on the variant.
+    function setVariant(nextVariant: string) {
+        if (nextVariant !== "light" && nextVariant !== "dark")
+            return;
+        variant = nextVariant;
+        persist();
+        apply({
+            app: Wallpapers.fallback,
+            palettes: []
+        });
     }
 
     // Called by Wallpapers.commit once its state holds the new path.
@@ -389,10 +406,12 @@ Singleton {
         appBusy = true;
         root.appBackground = job.path;
         const mode = root.mode;
+        const variant = root.variant;
         frameFor(job.path, "app", path => {
             appProc.pending = true;
             appProc.didStart = false;
-            appProc.command = ThemeLogic.appArgs(path, mode);
+            appProc.variant = variant;
+            appProc.command = ThemeLogic.appArgs(path, mode, variant);
             appProc.running = true;
         }, reason => {
             console.warn("Theme: " + reason);
@@ -575,7 +594,8 @@ Singleton {
             if (code !== 0)
                 return console.warn("Theme: cannot create " + root.notchDir);
             writer.setText(JSON.stringify({
-                mode: root.mode
+                mode: root.mode,
+                variant: root.variant
             }));
         }
     }
@@ -655,6 +675,8 @@ Singleton {
         // false and `running` drops back, which is the only failure signal.
         property bool pending: false
         property bool didStart: false
+        // The variant this run themes the apps in; the post-hook gets the same.
+        property string variant: "dark"
 
         onStarted: didStart = true
         onRunningChanged: {
@@ -673,6 +695,7 @@ Singleton {
             }
             postHook.pending = true;
             postHook.didStart = false;
+            postHook.command = [root.postHookPath, variant];
             postHook.running = true;
         }
     }
