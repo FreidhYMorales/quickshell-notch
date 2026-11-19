@@ -12,7 +12,6 @@ import "../services"
 import "../notches/center"
 import "../logic/earGeometry.mjs" as EarGeometry
 import "../logic/wallpaperState.mjs" as WallpaperState
-import "../logic/lockSecurity.mjs" as LockSecurity
 import "../logic/lockStage.mjs" as LockStage
 import "../logic/idleState.mjs" as IdleState
 
@@ -37,7 +36,8 @@ Scope {
         return IdleState.screensaverImage(Wallpapers.pathFor(screenName), Idle.choice);
     }
     readonly property string stage: Session.stage
-    readonly property bool fingerprintEnabled: false
+    // The security view's switch, followed live.
+    readonly property bool fingerprintEnabled: Security.fingerprintEnabled
     // Last outputs state handed to the compositor (they start on).
     property bool outputsOn: true
     // True from the input that ends the black stage until the outputs are
@@ -201,22 +201,8 @@ Scope {
     LockPam {
         id: sharedAuth
         stage: root.stage
-        fingerprintEnabled: LockSecurity.fingerprintEnabled(notchSecurity.loaded ? notchSecurity.text() : null, oldSecurity.loaded ? oldSecurity.text() : null)
+        fingerprintEnabled: root.fingerprintEnabled
         onUnlocked: root.startExit()
-    }
-
-    FileView {
-        id: notchSecurity
-        path: Wallpapers.notchDir + "/security.json"
-        blockLoading: true
-        printErrors: false
-    }
-
-    FileView {
-        id: oldSecurity
-        path: Wallpapers.oldDir + "/security.json"
-        blockLoading: true
-        printErrors: false
     }
 
     Connections {
