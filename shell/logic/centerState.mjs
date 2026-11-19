@@ -126,6 +126,35 @@ const handlers = {
     if (!state.monitors[monitor]) return unchanged(state);
     return { state: withoutCalendar(state, monitor), effects: [] };
   },
+  // Weeks in the week strip, months in the month grid; positive is later.
+  CalendarScroll(state, { monitor, steps }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    const calendar = state.monitors[monitor].calendar ??
+      { view: "week", offset: 0 };
+    const offset = calendar.offset + steps;
+    // A week strip back on today is the plain monitor again.
+    if (calendar.view === "week" && offset === 0) {
+      return { state: withoutCalendar(state, monitor), effects: [] };
+    }
+    return {
+      state: withMonitor(state, monitor, {
+        calendar: { view: calendar.view, offset },
+      }),
+      effects: [],
+    };
+  },
+  CalendarToday(state, { monitor }) {
+    const calendar = state.monitors[monitor]?.calendar;
+    if (!calendar) return unchanged(state);
+    return calendar.view === "month"
+      ? {
+        state: withMonitor(state, monitor, {
+          calendar: { view: "month", offset: 0 },
+        }),
+        effects: [],
+      }
+      : { state: withoutCalendar(state, monitor), effects: [] };
+  },
   LauncherToggle(state, { monitor, sub = null }) {
     const { keyboard } = state.global;
     if (keyboard?.owner === monitor) {
