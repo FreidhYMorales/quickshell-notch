@@ -25,3 +25,10 @@ test("flightFor: a move between two shown slots flies between them", () => {
     cls: "kitty",
   });
 });
+
+test("flightFor: a move to a special fades out at the source slot", () => {
+  assert.deepEqual(
+    flightFor({ move: move(3, -98), strip, row: "workspaces" }),
+    { kind: "fade", from: 2, cls: "kitty" },
+  );
+});
