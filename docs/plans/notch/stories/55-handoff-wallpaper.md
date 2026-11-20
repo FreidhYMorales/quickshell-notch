@@ -8,7 +8,7 @@
 
 - [x] Given I saved a still image as my wallpaper in the shell, when I log in through SDDM on the next boot, then the gap between the greeter and the notch shows that image, not the hyprpaper default.
 - [x] Given I saved a GIF or video as my wallpaper, when I log in through SDDM, then the gap shows a frame of that wallpaper, not the hyprpaper default.
-- [ ] Given the shell has never saved a wallpaper (no generated startup configuration), when I log in, then the session still starts and shows the original hyprpaper wallpaper.
+- [x] Given the shell has never saved a wallpaper (no generated startup configuration), when I log in, then the session still starts and shows the original hyprpaper wallpaper.
 
 ## Plan
 
@@ -40,3 +40,4 @@ Risk: item 5 (session autostart of hyprpaper in the dotfiles), item 6 (only a re
 - L2 state (2026-11-19): `wallpaper.txt` and the generated `hyprpaper.conf` both point to `arch.png` (21:49); the running hyprpaper was started with `-c` on that file by `~/.config/hypr/deadlock/execs.lua`. The 22:01 SDDM login likely already used it, but nobody looked at the gap. Origin: split from #43 (L6, L8).
 - L3 manual C1 (2026-11-19): saved the still `black-cat-…-6597.jpg` at 22:22:13; `hyprpaper.conf` regenerated to that path. SDDM logout/login: greeter stopped 22:22:47 (`HELPER_SUCCESS`), hyprpaper started the same second with `-c ~/.local/state/quickshell-notch/hyprpaper.conf`. The user saw the black cat in the gap, not `arch.png` (the hyprpaper default).
 - L4 manual C2 (2026-11-19): saved `a_spiderman_glitch.gif` at 22:23:52; `hyprpaper.conf` points to the cached first frame `hyprpaper-frames/d43f635e….png` (reused from 2026-11-14, same source mtime and size). SDDM logout/login: greeter stopped 22:24:10, hyprpaper started 22:24:11 with the generated config. The user saw the GIF frame in the gap.
+- L5 manual C3 (2026-11-19): moved `hyprpaper.conf` aside to `hyprpaper.conf.story55` (the shell rewrites it only on a wallpaper save). SDDM logout/login: greeter stopped 22:25:40, hyprpaper started 22:25:41 with no `-c` (the `execs.lua` fallback). The session started and the user saw `arch.png` in the gap. Restored `hyprpaper.conf` (GIF frame) afterwards.
