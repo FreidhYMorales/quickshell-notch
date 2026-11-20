@@ -11,6 +11,10 @@ function slotIndex(items, id) {
 export function flightFor(args) {
   const items = args.strip.items;
   const from = slotIndex(items, args.move.from);
+  // Special workspaces have negative ids in Hyprland.
+  if (args.move.workspaceId < 0) {
+    return { kind: "fade", from, cls: args.move.cls };
+  }
   const to = slotIndex(items, args.move.workspaceId);
   return { kind: "fly", from, to, cls: args.move.cls };
 }
