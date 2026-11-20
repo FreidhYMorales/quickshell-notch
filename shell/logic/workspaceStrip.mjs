@@ -70,7 +70,11 @@ export function stripFor(args) {
   for (const id of slotRange(args)) {
     if (id === args.activeId) {
       const flashed = args.flash && args.flash.workspaceId === id;
-      items.push({ id, kind: "active", cls: flashed ? args.flash.cls : null });
+      items.push({
+        id,
+        kind: "active",
+        cls: flashed ? args.flash.cls : lastFocusedClass(windows, id),
+      });
       continue;
     }
     const cls = lastFocusedClass(windows, id);

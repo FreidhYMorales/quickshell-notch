@@ -134,7 +134,31 @@ test("stripFor: occupied slot shows the last focused class", () => {
 test("stripFor: active wins over an occupying window", () => {
   const s = strip({ activeId: 4, windows: [win("0x1", "foot", 4)] });
   assert.deepEqual(kinds(s), ["empty", "empty", "empty", "active", "empty"]);
-  assert.equal(s.items[3].cls, null);
+  assert.equal(s.items[3].cls, "foot");
+});
+
+test("stripFor: the active slot carries its last focused app", () => {
+  const s = strip({
+    activeId: 3,
+    windows: [
+      win("0x1", "kitty", 3, { focus: 4 }),
+      win("0x2", "ff", 3, { focus: 1 }),
+    ],
+  });
+  assert.deepEqual(s.items[2], { id: 3, kind: "active", cls: "ff" });
+});
+
+test("stripFor: a newly opened app wins over the active slot's app", () => {
+  const s = strip({
+    windows: [win("0x1", "foot", 1)],
+    flash: { workspaceId: 1, cls: "kitty" },
+  });
+  assert.equal(s.items[0].cls, "kitty");
+});
+
+test("stripFor: an empty active slot carries no app", () => {
+  const s = strip({ activeId: 2 });
+  assert.deepEqual(s.items[1], { id: 2, kind: "active", cls: null });
 });
 
 test("stripFor: per-monitor isolation", () => {
