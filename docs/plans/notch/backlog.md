@@ -55,12 +55,14 @@
 43. [ ] As a user, I want the SDDM greeter to compress into the central notch when I log in, exactly like the notch shell's unlock morph, so that logging in feels like one continuous motion instead of the greeter disappearing. Requires: #33
 44. [-] dropped (glow direction abandoned; WIP kept in stash only) As a user, I want an exterior battery-coloured glow around the notch while power is connected so that I can see charging and charge level at a glance.
 45. [-] dropped (glow direction abandoned) As a user, I want an intermittent low-battery glow pulse so that I notice the battery is low without a permanent glow.
-46. [ ] As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move.
+46. [-] split → #52, #53 As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move.
 47. [x] 21fb951 As a user, I want a cross-fade between idle and expanded notch content so that opening and closing the expanded view feels smooth.
 48. [x] 4e08213 As a user, I want the idle content to shift by one pixel every few minutes so that the screen is less prone to OLED burn-in.
 49. [-] dropped (glow direction abandoned) As a user, I want a permanent, subtle luminous outline along the notch's lower edge so that its geometry is distinct while its background remains black.
 50. [x] 4dfc7a3 As a user, I want the screensaver phase so that my session locks at my screensaver time showing only my wallpaper and the screen goes dark before suspending. Requires: #30, #31
 51. [x] 613faa0 As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend times and pick the screensaver wallpaper from the notch. Requires: #26, #50
+52. [x] 01fa32f As a user, I want the active workspace slot to show its app icon tinted with the palette so that I can tell where I am at a glance.
+53. [ ] As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move. Requires: #52
 
 ## Wallpaper work status
 
