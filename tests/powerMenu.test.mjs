@@ -30,9 +30,7 @@ test("powerMenu: each action maps to its command", () => {
   assert.deepEqual(commandFor("suspend"), {
     argv: ["systemctl", "suspend-then-hibernate"],
   });
-  assert.deepEqual(commandFor("logout"), {
-    argv: ["hyprctl", "dispatch", "hl.dsp.exit()"],
-  });
+  assert.deepEqual(commandFor("logout"), { argv: ["uwsm", "stop"] });
   assert.deepEqual(commandFor("reboot"), { argv: ["systemctl", "reboot"] });
   assert.deepEqual(commandFor("poweroff"), { argv: ["systemctl", "poweroff"] });
 });
