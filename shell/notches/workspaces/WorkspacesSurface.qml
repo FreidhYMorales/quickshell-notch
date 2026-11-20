@@ -122,7 +122,7 @@ NotchSurface {
         if (f.kind === "fade") {
             fadeFlight.restart();
         } else {
-            mover.x = fromX - Layout.dotSize / 2;
+            mover.x = fromX - Layout.wsDrop / 2;
             mover.opacity = 0;
             dotFlight.restart();
         }
@@ -243,8 +243,8 @@ NotchSurface {
 
             objectName: root.flyKind === "fly" ? "ws-flyer" : ""
             z: 1
-            width: Layout.dotSize
-            height: Layout.dotSize
+            width: Layout.wsDrop
+            height: Layout.wsDrop
             radius: height / 2
             y: row.y + (row.height - height) / 2
             visible: root.flying && root.flyKind === "fly"
@@ -309,7 +309,7 @@ NotchSurface {
                 NumberAnimation {
                     target: mover
                     property: "x"
-                    to: root.toX - Layout.dotSize / 2
+                    to: root.toX - Layout.wsDrop / 2
                     duration: Timings.animSlow / 2
                     easing.type: Easing.InOutCubic
                 }
