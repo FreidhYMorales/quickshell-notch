@@ -5,6 +5,7 @@ import "../../components"
 import "../../config"
 import "../../logic/cornerLayout.mjs" as CornerLayout
 import "../../logic/reveal.mjs" as Reveal
+import "../../logic/workspaceFlight.mjs" as Flight
 import "../../logic/workspaceStrip.mjs" as Strip
 import "../../services"
 
@@ -20,6 +21,10 @@ NotchSurface {
     readonly property string special: Workspaces.specialByMonitor[monitorName] ?? ""
     property var reveal: Reveal.initialReveal()
     property var menuItem: null
+    // Window move animation: where the flying icon goes and whether it fades.
+    property bool flying: false
+    property real flyTo: 0
+    property real fadeTo: 1
     readonly property bool open: Reveal.isVisible(reveal)
     // Width of the option column: the widest label plus the check mark and the
     // side padding, capped to the notch body.
@@ -51,6 +56,26 @@ NotchSurface {
             hide.restart();
         else if (r.timer === "stop")
             hide.stop();
+    }
+
+    // Centre of slot `index` in the shape's coordinates, for the flying icon.
+    function slotX(index: int): real {
+        const slot = slots.itemAt(index);
+        return slot ? row.x + slot.x + (slot.width - flyer.width) / 2 : -1;
+    }
+
+    // One flight at a time: a new move replaces the one in progress.
+    function startFlight(f) {
+        const from = slotX(f.from);
+        if (from < 0)
+            return;
+        flyer.app = f.cls;
+        flyer.x = from;
+        flyer.opacity = 1;
+        flyTo = f.kind === "fly" ? slotX(f.to) : from;
+        fadeTo = f.kind === "fade" ? 0 : 1;
+        flying = true;
+        flight.restart();
     }
 
     function activate(item) {
@@ -111,6 +136,16 @@ NotchSurface {
                 type: "Trigger",
                 flash: flash
             });
+            for (const e of events)
+                if (e.kind === "move") {
+                    const f = Flight.flightFor({
+                        move: e,
+                        strip: root.strip,
+                        row: root.reveal.row
+                    });
+                    if (f)
+                        root.startFlight(f);
+                }
         }
 
         target: Workspaces
@@ -137,6 +172,43 @@ NotchSurface {
 
         Behavior on y {
             Anim {}
+        }
+
+        // The moved app's icon, drawn above the slots while it flies or fades.
+        WorkspaceSlot {
+            id: flyer
+
+            objectName: "ws-flyer"
+            z: 1
+            y: row.y + (row.height - height) / 2
+            visible: root.flying
+            kind: "app"
+            scheme: root.scheme
+        }
+
+        SequentialAnimation {
+            id: flight
+
+            ParallelAnimation {
+                NumberAnimation {
+                    target: flyer
+                    property: "x"
+                    to: root.flyTo
+                    duration: Timings.animSlow
+                    easing.type: Easing.InOutCubic
+                }
+
+                NumberAnimation {
+                    target: flyer
+                    property: "opacity"
+                    to: root.fadeTo
+                    duration: Timings.animSlow
+                }
+            }
+
+            ScriptAction {
+                script: root.flying = false
+            }
         }
 
         Row {
@@ -173,6 +245,8 @@ NotchSurface {
             }
 
             Repeater {
+                id: slots
+
                 model: root.reveal.row === "tray" && !root.strip.pinned ? [] : root.strip.pinned ? [
                     {
                         id: 0,
