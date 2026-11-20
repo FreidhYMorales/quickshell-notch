@@ -1,0 +1,44 @@
+# Story 55: Current wallpaper in the greeter-to-shell gap
+
+## Story
+
+55. As a user, I want the gap between the SDDM greeter and the notch shell to show my current wallpaper so that the login handoff does not flash the stale default image. Requires: #54
+
+## Acceptance criteria
+
+- [x] Given I saved a still image as my wallpaper in the shell, when I log in through SDDM on the next boot, then the gap between the greeter and the notch shows that image, not the hyprpaper default.
+- [x] Given I saved a GIF or video as my wallpaper, when I log in through SDDM, then the gap shows a frame of that wallpaper, not the hyprpaper default.
+- [x] Given the shell has never saved a wallpaper (no generated startup configuration), when I log in, then the session still starts and shows the original hyprpaper wallpaper.
+
+## Plan
+
+- The behaviour is already built and merged (story 43 L6): wallpaper saves write a hyprpaper startup configuration, GIF and video use a cached first frame, and the dotfiles autostart picks that configuration when it exists. This story closes the gap between the code and a real login.
+- Confirm the generated configuration and the dotfiles autostart match the current wallpaper before each check.
+- Verify each criterion on a real SDDM login, reading the gap visually and the session journal for the hyprpaper start.
+- Fix only what the real login shows to be wrong, test first for anything the existing hyprpaper sync tests can pin.
+
+## Out of scope
+
+- Multi-monitor behaviour, including per-screen wallpapers (#42).
+- Keeping the notch visible during Hyprland's startup, or shortening the gap itself.
+- Animated playback in the gap: one still frame is enough.
+- The greeter's own background and morph (#54).
+
+## Suggestions (your call)
+
+- Criterion 3 can be exercised by moving `hyprpaper.conf` aside for one login and putting it back afterwards, instead of wiping the shell state.
+- `hyprpaper-frames/` already holds three cached frames; the GIF check can reuse the screensaver GIF that is already set up.
+
+## Size
+
+normal
+Risk: item 5 (session autostart of hyprpaper in the dotfiles), item 6 (only a real login shows the gap)
+
+## Log
+
+- L1 request (user): "/flow:story 55"
+- L2 state (2026-11-19): `wallpaper.txt` and the generated `hyprpaper.conf` both point to `arch.png` (21:49); the running hyprpaper was started with `-c` on that file by `~/.config/hypr/deadlock/execs.lua`. The 22:01 SDDM login likely already used it, but nobody looked at the gap. Origin: split from #43 (L6, L8).
+- L3 manual C1 (2026-11-19): saved the still `black-cat-…-6597.jpg` at 22:22:13; `hyprpaper.conf` regenerated to that path. SDDM logout/login: greeter stopped 22:22:47 (`HELPER_SUCCESS`), hyprpaper started the same second with `-c ~/.local/state/quickshell-notch/hyprpaper.conf`. The user saw the black cat in the gap, not `arch.png` (the hyprpaper default).
+- L4 manual C2 (2026-11-19): saved `a_spiderman_glitch.gif` at 22:23:52; `hyprpaper.conf` points to the cached first frame `hyprpaper-frames/d43f635e….png` (reused from 2026-11-14, same source mtime and size). SDDM logout/login: greeter stopped 22:24:10, hyprpaper started 22:24:11 with the generated config. The user saw the GIF frame in the gap.
+- L5 manual C3 (2026-11-19): moved `hyprpaper.conf` aside to `hyprpaper.conf.story55` (the shell rewrites it only on a wallpaper save). SDDM logout/login: greeter stopped 22:25:40, hyprpaper started 22:25:41 with no `-c` (the `execs.lua` fallback). The session started and the user saw `arch.png` in the gap. Restored `hyprpaper.conf` (GIF frame) afterwards.
+- L6 close: verifier PASS (C1, C2 manual with the user's on-screen confirmation; C3 confirmed by the running hyprpaper started 22:25:41 without `-c`; the `-c` args of the C1/C2 sessions could not be rechecked because those processes exited). Refs and HEAD unchanged across the verifier run. `make check` on 8654491: exit 0, 1023 pass, 0 fail, `smoke: config loaded`. No code changed in this story; code commit e46f14f (story 43, on `main`), covered by `tests/hyprpaperSync.test.mjs`. Branch commits are docs only (693da8b..8654491). Verifier notes for later: hyprpaper segfaults at every logout (libwayland-client `CCWlOutputD1Ev`, pre-existing, shutdown only); `sddm-theme-sync` still passes `arch.png` as the greeter background (greeter background, out of scope here). Risk: item 5 (session autostart of hyprpaper in the dotfiles), item 6 (only a real login shows the gap).
