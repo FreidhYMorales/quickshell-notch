@@ -33,8 +33,8 @@
 21. [x] 876dedd As a user, I want a notifications subpage in the control center (full list, per-item dismiss, DND, back) that clears the unread dot so that I can manage my whole history. Requires: #20, #17
 22. [x] ad0a64e As a user, I want the tray icons in the workspaces notch to open on hover so that I can see and restore apps minimised to the tray.
 23. [x] 8fe1e16 As a user, I want a tray icon's own menu on right click so that I can use its actions without restoring its window. Requires: #22
-24. [ ] LAST As a user, I want tray icons with failures hidden by Quickshell to show a recognizable fallback instead of its placeholder so that I can identify those apps. Requires: #22
-25. [ ] BLOCKED (Quickshell submenu loading) As a user, I want to navigate a tray app's submenus inside the notch and return to the parent menu so that I can use nested actions without floating windows. Requires: #23
+24. [-] dropped (edge case too unlikely to occur) As a user, I want tray icons with failures hidden by Quickshell to show a recognizable fallback instead of its placeholder so that I can identify those apps. Requires: #22
+25. [-] dropped (blocked by Quickshell submenu loading) As a user, I want to navigate a tray app's submenus inside the notch and return to the parent menu so that I can use nested actions without floating windows. Requires: #23
 26. [x] 64af4aa As a user, I want to browse and search launcher commands with a description pane so that I can understand the available setup actions. Requires: #08
 27. [x] IMPLEMENTED AND LOCALLY VERIFIED (wallpaper command view present in main; earlier PR #26 status not independently verified) As a user, I want the wallpaper command view so that I can change my wallpaper from the launcher. Requires: #26
 28. [x] 116b9a6 As a user, I want the theme command view so that I can change my theme from the launcher. Requires: #26
@@ -51,7 +51,7 @@
 39. [-] dropped (glow direction abandoned) As a user, I want a glow pulse when a notification arrives so that I notice it without being interrupted. Requires: #01
 40. [x] 1a84fdb As a user, I want a Light/Dark switch in the theme view that re-themes my apps without changing the notch so that I get the old view's light mode while the notch keeps its black look. Requires: #28
 41. [x] 37d5540 As a user, I want the theme view's colour swatches to be there the moment I open it so that browsing schemes feels instant instead of filling in over a second. Requires: #28
-42. [ ] As a user who works with external monitors, I want every notch surface and session behaviour checked on more than one screen so that multi-monitor use is verified once, as a whole, instead of finding defects one at a time. Requires: #30, #33
+42. [-] closed without a full audit (multi-monitor works in the maintainer's daily use) As a user who works with external monitors, I want every notch surface and session behaviour checked on more than one screen so that multi-monitor use is verified once, as a whole, instead of finding defects one at a time. Requires: #30, #33
 43. [-] split → #54, #55
 44. [-] dropped (glow direction abandoned; WIP kept in stash only) As a user, I want an exterior battery-coloured glow around the notch while power is connected so that I can see charging and charge level at a glance.
 45. [-] dropped (glow direction abandoned) As a user, I want an intermittent low-battery glow pulse so that I notice the battery is low without a permanent glow.
@@ -72,7 +72,7 @@
 - #34: fullscreen Quick Wallpaper picker implemented and merged into `main` via PR #27 (squash commit `1c7a44e`). The maintainer confirmed that both CI jobs passed and that local image/video preview, transitions and persistence worked.
 - #34 validation limitations: multi-monitor behavior was not tested because a second monitor was unavailable. Other unconfirmed manual edge cases (Escape/persistence, lock/session interactions, focus and click-through restoration, missing files and decoder failures) are not marked as passed; issues discovered later can be handled in follow-up stories.
 - The unreliable nested Hyprland compositor CI probe was removed. Functional validation was performed on the maintainer's own environment, not through that hosted compositor probe.
-- Remaining open stories: #24 (LAST), #25 (BLOCKED by Quickshell submenu loading), #36, #38, #40–#43, #46–#48; #35 was split into #50 (screensaver phase) and #51 (screensaver command view), both done.
+- No open stories remain (2026-11-19): #24 and #25 were dropped (#24 too unlikely to occur, #25 blocked by Quickshell submenu loading) and #42 was closed without a full audit because multi-monitor works in daily use. #35 was split into #50 (screensaver phase) and #51 (screensaver command view), both done.
 - The glow stories (#39, #44, #45, #49) were dropped: the glow did not read well on screen. New visual-feedback ideas go through `/flow:idea` as fresh stories.
 - #35-#39 cover plan SHOULD items that had no backlog entry: the screensaver, security and webapp command views (plan line 335), the calendar month view (line 337) and the notification glow pulse (line 338).
 - #41 comes from a question after #28 shipped: on the host one dry-run takes ~130 ms, the nine in series ~1.1 s and unbounded ~0.18 s at ~5.7 cores, so a disk cache plus a prefetch when the launcher opens (and three dry-runs at a time) removes most of the wait.
