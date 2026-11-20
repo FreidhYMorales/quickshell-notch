@@ -60,21 +60,17 @@ git clone <repo-url> quickshell-notch
 cd quickshell-notch
 # no .env: this project has no secrets
 make check                                   # must pass before you change anything
-qs -p shell/shell.qml                        # runs next to the old bar; Ctrl+C to stop
+qs -p shell/shell.qml                        # a second notch from the checkout; Ctrl+C to stop
 # The live config is the dotfiles submodule, symlinked as
-# ~/.config/quickshell/notch; see "Cutover and rollback" before touching it.
+# ~/.config/quickshell/notch; see "Deployment" before touching it.
 ```
 
-## Cutover and rollback
+## Deployment
 
-The notch becomes the daily shell through the dotfiles repo, never by editing
-this checkout into `~/.config/quickshell`. The dotfiles quickshell package has
-this layout:
+The notch is the only shell. It reaches `~/.config/quickshell` through the
+dotfiles repo, never by editing this checkout into place. The dotfiles
+quickshell package holds:
 
-- `.config/quickshell/default/` — the old bar, moved there in one go.
-  Quickshell treats `<config dir>/quickshell/shell.qml` as `default` and then
-  ignores every subdirectory, so the old config cannot stay at the top level;
-  bare `qs` still runs it by name and the rollback target keeps working.
 - `.config/quickshell/notch-repo/` — this repo as a git submodule.
 - `.config/quickshell/notch` — a committed relative symlink to
   `notch-repo/shell`. It points at the directory, not at `shell.qml`: a
@@ -82,33 +78,17 @@ this layout:
   directory and fails to load, a symlinked directory works.
 
 `deploy.sh quickshell` initialises submodules before stowing, so a fresh clone
-plus deploy gives `qs -c notch` with no manual link.
-`scripts/notch-cutover.sh cutover` refuses to run while
-`~/.config/quickshell/notch/shell.qml` is missing.
-
-```bash
-scripts/notch-cutover.sh cutover    # stop every Quickshell instance, remap the
-                                    # Hyprland files, start the notch
-scripts/notch-cutover.sh rollback   # restore the backups, start the old bar
-```
-
-`qs kill` only reaches one instance of the config it resolves, so the script
-kills every live instance by pid and refuses to finish with anything but one
-running. It keeps the originals in
-`~/.local/state/quickshell-notch/cutover/` and never overwrites that first
-backup; when the Hyprland lines do not match what it knows, it restores them
-and stops instead of leaving half a remap. Both shells never run together: they
-would fight over the notification D-Bus name, the polkit agent and idle
-locking. Lock-before-suspend needs no root hook: the notch shell locks itself
-on logind's `PrepareForSleep` (see below).
+plus deploy gives `qs -c notch` with no manual link. Hyprland starts it with
+`uwsm app -- qs -c notch` and every keybind calls `qs -c notch ipc call`.
+Lock-before-suspend needs no root hook: the notch shell locks itself on
+logind's `PrepareForSleep` (see below).
 
 ## Daily commands
 
 | Task | Command |
 |---|---|
 | Run the app from the checkout | `qs -p shell/shell.qml` |
-| Run the live shell (after cutover) | `qs -c notch` |
-| Cut over / roll back | `scripts/notch-cutover.sh cutover` / `rollback` |
+| Run the live shell | `qs -c notch` |
 | See every slot | set `showPlaceholders: true` in `shell/config/Flags.qml` (do not commit) |
 | Tests | `make test` (`node --test tests/`) |
 | QML runtime tests | `make qml-test` (isolated tray fixture and `qs`) |
