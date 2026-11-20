@@ -32,3 +32,39 @@ test("flightFor: a move to a special fades out at the source slot", () => {
     { kind: "fade", from: 2, cls: "kitty" },
   );
 });
+
+// Spec: nothing flies when an end is missing or the strip shows something else.
+for (
+  const [name, args] of [
+    ["destination beyond the shown slots", {
+      move: move(1, 9),
+      strip,
+      row: "workspaces",
+    }],
+    ["source beyond the shown slots", {
+      move: move(9, 1),
+      strip,
+      row: "workspaces",
+    }],
+    ["special from a slot not shown", {
+      move: move(9, -98),
+      strip,
+      row: "workspaces",
+    }],
+    ["the tray row is shown", { move: move(1, 3), strip, row: "tray" }],
+    ["the strip is pinned to a special", {
+      move: move(1, 3),
+      strip: { pinned: true, special: "magic", items: [] },
+      row: "workspaces",
+    }],
+    ["the move crosses monitors", {
+      move: move(1, 3, { cross: true }),
+      strip,
+      row: "workspaces",
+    }],
+  ]
+) {
+  test(`flightFor: nothing when ${name}`, () => {
+    assert.equal(flightFor(args), null);
+  });
+}
