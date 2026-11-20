@@ -9,12 +9,16 @@ function slotIndex(items, id) {
 
 /** flightFor({ move, strip, row }) -> { kind, from, to?, cls } | null */
 export function flightFor(args) {
+  const move = args.move;
+  // Only the workspace row of an unpinned strip shows slots; moves across
+  // monitors are not animated.
+  if (args.row === "tray" || args.strip.pinned || move.cross) return null;
   const items = args.strip.items;
-  const from = slotIndex(items, args.move.from);
+  const from = slotIndex(items, move.from);
+  if (from < 0) return null;
   // Special workspaces have negative ids in Hyprland.
-  if (args.move.workspaceId < 0) {
-    return { kind: "fade", from, cls: args.move.cls };
-  }
-  const to = slotIndex(items, args.move.workspaceId);
-  return { kind: "fly", from, to, cls: args.move.cls };
+  if (move.workspaceId < 0) return { kind: "fade", from, cls: move.cls };
+  const to = slotIndex(items, move.workspaceId);
+  if (to < 0) return null;
+  return { kind: "fly", from, to, cls: move.cls };
 }
