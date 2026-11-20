@@ -18,7 +18,4 @@ Singleton {
     // Launched apps are only logged, never started: smoke runs, probes and
     // manual tests (NOTCH_LAUNCH_DRY_RUN=1).
     readonly property bool launchDryRun: smoke || Quickshell.env("NOTCH_LAUNCH_DRY_RUN") === "1"
-    // TEMPORARY (story 53): workspace move animation prototype, picked with
-    // NOTCH_FLY_STYLE=pill|dot (default pill). Removed once one is chosen.
-    readonly property string flyStyle: Quickshell.env("NOTCH_FLY_STYLE") === "dot" ? "dot" : "pill"
 }

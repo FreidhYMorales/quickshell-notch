@@ -165,6 +165,8 @@ Singleton {
     readonly property int wsSlot: 22
     readonly property int wsSlotActive: 28
     readonly property int wsIcon: 16
+    // Longest tail of the drop the moved icon travels as between slots.
+    readonly property int wsDropTail: 10
     readonly property int wsTrayIcon: 20
     readonly property int wsDivider: 1
     readonly property int wsHotZone: 24

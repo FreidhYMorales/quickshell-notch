@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Services.SystemTray
 import "../../components"
@@ -32,6 +33,14 @@ NotchSurface {
     property int landingIndex: -1
     property real landingOpacity: 1
     property real landingScale: 1
+    // The source slot's new content (the app left there, or the empty mark)
+    // grows in while the moved icon shrinks away.
+    property int sourceIndex: -1
+    property real sourceScale: 1
+    // The travelling dot stretches into a drop: its tail length and which
+    // way it points (1 = right, -1 = left).
+    property real dropTail: 0
+    property int dropDir: 1
     readonly property bool open: Reveal.isVisible(reveal)
     // Width of the option column: the widest label plus the check mark and the
     // side padding, capped to the notch body.
@@ -72,7 +81,6 @@ NotchSurface {
     }
 
     function stopFlights() {
-        pillFlight.stop();
         dotFlight.stop();
         fadeFlight.stop();
     }
@@ -82,6 +90,9 @@ NotchSurface {
         landingIndex = -1;
         landingOpacity = 1;
         landingScale = 1;
+        sourceIndex = -1;
+        sourceScale = 1;
+        dropTail = 0;
     }
 
     // One flight at a time: a new move replaces the one in progress.
@@ -94,26 +105,26 @@ NotchSurface {
             return;
         toX = f.kind === "fly" ? slotCentre(f.to) : fromX;
         flyKind = f.kind;
+        // The moved icon keeps the look it had at its slot (tinted if active).
+        flyer.kind = strip.items[f.from]?.kind === "active" ? "active" : "app";
         flyer.app = f.cls;
         flyer.x = fromX - flyer.width / 2;
         flyer.opacity = 1;
         flyer.scale = 1;
-        mover.opacity = 1;
+        sourceIndex = f.from;
+        sourceScale = 0;
         landingIndex = f.kind === "fly" ? f.to : -1;
         landingOpacity = 0;
-        landingScale = Flags.flyStyle === "dot" ? 0 : 1;
+        landingScale = 0;
+        dropTail = 0;
+        dropDir = toX >= fromX ? 1 : -1;
         flying = true;
         if (f.kind === "fade") {
             fadeFlight.restart();
-        } else if (Flags.flyStyle === "dot") {
-            mover.width = Layout.dotSize;
+        } else {
             mover.x = fromX - Layout.dotSize / 2;
             mover.opacity = 0;
             dotFlight.restart();
-        } else {
-            mover.width = Layout.wsIcon;
-            mover.x = fromX - Layout.wsIcon / 2;
-            pillFlight.restart();
         }
     }
 
@@ -213,8 +224,8 @@ NotchSurface {
             Anim {}
         }
 
-        // The moved app's icon at its source slot: it fades out there (to a
-        // special, and under the pill) or shrinks into the dot.
+        // The moved app's icon at its source slot: it shrinks into the dot,
+        // or fades out there when the window goes to a special.
         WorkspaceSlot {
             id: flyer
 
@@ -222,95 +233,50 @@ NotchSurface {
             z: 1
             y: row.y + (row.height - height) / 2
             visible: root.flying
-            kind: "app"
             scheme: root.scheme
         }
 
-        // What travels between the slots: an accent pill that stretches from
-        // the source to the destination and contracts there, or a dot.
+        // The travelling accent dot: a round head with a tail behind it, so it
+        // stretches into a sideways drop while it moves.
         Rectangle {
             id: mover
 
             objectName: root.flyKind === "fly" ? "ws-flyer" : ""
             z: 1
-            height: Flags.flyStyle === "dot" ? Layout.dotSize : Layout.wsIcon
+            width: Layout.dotSize
+            height: Layout.dotSize
             radius: height / 2
             y: row.y + (row.height - height) / 2
             visible: root.flying && root.flyKind === "fly"
             color: root.scheme.primary
-        }
 
-        // Pill: stretch to cover both slots, then contract onto the destination,
-        // which appears as the pill fades.
-        SequentialAnimation {
-            id: pillFlight
+            Shape {
+                anchors.fill: parent
+                visible: root.dropTail > 0
+                preferredRendererType: Shape.CurveRenderer
 
-            ParallelAnimation {
-                NumberAnimation {
-                    target: mover
-                    property: "x"
-                    to: Math.min(root.fromX, root.toX) - Layout.wsIcon / 2
-                    duration: Timings.animSlow / 2
-                    easing.type: Easing.InOutCubic
+                ShapePath {
+                    fillColor: root.scheme.primary
+                    strokeWidth: -1
+                    startX: mover.width / 2
+                    startY: 0
+
+                    PathLine {
+                        x: mover.width / 2 - root.dropDir * (mover.width / 2 + root.dropTail)
+                        y: mover.height / 2
+                    }
+
+                    PathLine {
+                        x: mover.width / 2
+                        y: mover.height
+                    }
                 }
-
-                NumberAnimation {
-                    target: mover
-                    property: "width"
-                    to: Math.abs(root.toX - root.fromX) + Layout.wsIcon
-                    duration: Timings.animSlow / 2
-                    easing.type: Easing.InOutCubic
-                }
-
-                NumberAnimation {
-                    target: flyer
-                    property: "opacity"
-                    to: 0
-                    duration: Timings.animSlow / 2
-                }
-            }
-
-            ParallelAnimation {
-                NumberAnimation {
-                    target: mover
-                    property: "x"
-                    to: root.toX - Layout.wsIcon / 2
-                    duration: Timings.animSlow / 2
-                    easing.type: Easing.InOutCubic
-                }
-
-                NumberAnimation {
-                    target: mover
-                    property: "width"
-                    to: Layout.wsIcon
-                    duration: Timings.animSlow / 2
-                    easing.type: Easing.InOutCubic
-                }
-            }
-
-            ParallelAnimation {
-                NumberAnimation {
-                    target: mover
-                    property: "opacity"
-                    to: 0
-                    duration: Timings.animFast
-                }
-
-                NumberAnimation {
-                    target: root
-                    property: "landingOpacity"
-                    to: 1
-                    duration: Timings.animFast
-                }
-            }
-
-            ScriptAction {
-                script: root.endFlight()
             }
         }
 
-        // Dot: the icon shrinks into an accent dot, the dot travels, and the
-        // destination icon grows out of it.
+        // The icon shrinks into the dot while the source slot's new content
+        // grows in, the dot travels as a drop, and the destination icon grows
+        // out of it.
         SequentialAnimation {
             id: dotFlight
 
@@ -329,14 +295,44 @@ NotchSurface {
                     to: 1
                     duration: Timings.animSlow / 4
                 }
+
+                NumberAnimation {
+                    target: root
+                    property: "sourceScale"
+                    to: 1
+                    duration: Timings.animSlow / 4
+                    easing.type: Easing.OutCubic
+                }
             }
 
-            NumberAnimation {
-                target: mover
-                property: "x"
-                to: root.toX - Layout.dotSize / 2
-                duration: Timings.animSlow / 2
-                easing.type: Easing.InOutCubic
+            ParallelAnimation {
+                NumberAnimation {
+                    target: mover
+                    property: "x"
+                    to: root.toX - Layout.dotSize / 2
+                    duration: Timings.animSlow / 2
+                    easing.type: Easing.InOutCubic
+                }
+
+                // The tail grows while the dot speeds up and shrinks back as
+                // it slows down, so it leaves and lands round.
+                SequentialAnimation {
+                    NumberAnimation {
+                        target: root
+                        property: "dropTail"
+                        to: Layout.wsDropTail
+                        duration: Timings.animSlow / 4
+                        easing.type: Easing.OutQuad
+                    }
+
+                    NumberAnimation {
+                        target: root
+                        property: "dropTail"
+                        to: 0
+                        duration: Timings.animSlow / 4
+                        easing.type: Easing.InQuad
+                    }
+                }
             }
 
             ParallelAnimation {
@@ -368,15 +364,26 @@ NotchSurface {
             }
         }
 
-        // To a special: the icon just fades out at its slot.
+        // To a special: the icon fades out at its slot while the slot's new
+        // content grows in.
         SequentialAnimation {
             id: fadeFlight
 
-            NumberAnimation {
-                target: flyer
-                property: "opacity"
-                to: 0
-                duration: Timings.animSlow
+            ParallelAnimation {
+                NumberAnimation {
+                    target: flyer
+                    property: "opacity"
+                    to: 0
+                    duration: Timings.animSlow
+                }
+
+                NumberAnimation {
+                    target: root
+                    property: "sourceScale"
+                    to: 1
+                    duration: Timings.animSlow
+                    easing.type: Easing.OutCubic
+                }
             }
 
             ScriptAction {
@@ -436,7 +443,7 @@ NotchSurface {
 
                     objectName: "ws-slot-" + modelData.id
                     opacity: slotItem.index === root.landingIndex ? root.landingOpacity : 1
-                    scale: slotItem.index === root.landingIndex ? root.landingScale : 1
+                    scale: slotItem.index === root.landingIndex ? root.landingScale : slotItem.index === root.sourceIndex ? root.sourceScale : 1
                     anchors.verticalCenter: parent.verticalCenter
                     kind: modelData.kind
                     app: modelData.cls ?? ""
