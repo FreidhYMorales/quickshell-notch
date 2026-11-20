@@ -429,12 +429,14 @@ NotchSurface {
                 ] : root.strip.items
 
                 WorkspaceSlot {
+                    id: slotItem
+
                     required property var modelData
                     required property int index
 
                     objectName: "ws-slot-" + modelData.id
-                    opacity: index === root.landingIndex ? root.landingOpacity : 1
-                    scale: index === root.landingIndex ? root.landingScale : 1
+                    opacity: slotItem.index === root.landingIndex ? root.landingOpacity : 1
+                    scale: slotItem.index === root.landingIndex ? root.landingScale : 1
                     anchors.verticalCenter: parent.verticalCenter
                     kind: modelData.kind
                     app: modelData.cls ?? ""
