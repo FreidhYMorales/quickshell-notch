@@ -62,7 +62,7 @@
 50. [x] 4dfc7a3 As a user, I want the screensaver phase so that my session locks at my screensaver time showing only my wallpaper and the screen goes dark before suspending. Requires: #30, #31
 51. [x] 613faa0 As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend times and pick the screensaver wallpaper from the notch. Requires: #26, #50
 52. [x] 01fa32f As a user, I want the active workspace slot to show its app icon tinted with the palette so that I can tell where I am at a glance.
-53. [ ] As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move. Requires: #52
+53. [x] 408e888 As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move. Requires: #52
 
 ## Wallpaper work status
 

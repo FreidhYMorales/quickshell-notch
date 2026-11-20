@@ -120,12 +120,15 @@ export function diffSnapshots(prev, next, monitor, rules) {
       (p.workspaceId !== w.workspaceId || p.monitor !== w.monitor) &&
       (p.monitor === monitor || w.monitor === monitor)
     ) {
-      events.push({
+      const move = {
         kind: "move",
         workspaceId: w.workspaceId,
         cls: w.cls,
         from: p.workspaceId,
-      });
+      };
+      // Workspace ids are global: the strip must not fly across monitors.
+      if (p.monitor !== w.monitor) move.cross = true;
+      events.push(move);
     }
   }
   return events;
