@@ -49,7 +49,6 @@ docs/                  architecture, development, ADRs, plans
 - The visualizer (`cava`) never runs under `Flags.smoke`; `make smoke` must not spawn it. It runs only while the idle media layer shows and is optional at runtime.
 - Avoid permanent forking polls; prefer event watchers and `FileView`.
 - Services degrade gracefully: missing data -> hide the element + `console.warn`.
-- Reuse from `~/Mio/Configuraciones/dotfiles/quickshell/.config/quickshell` per the plan's "Reuse map".
 
 ## Do not
 

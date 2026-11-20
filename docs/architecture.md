@@ -15,7 +15,7 @@
 | Hosting / budget | n/a: local desktop shell; source on GitHub |
 | Required capabilities | Hyprland IPC + Lua dispatch bridge (`hl.dsp.*`; plain `Hyprland.dispatch` does not work on this build), Pipewire, Mpris, notifications server, polkit agent, udev brightness, matugen colours |
 | Target platforms | Arch Linux + Hyprland, Wayland only, all monitors (laptop OLED + externals) |
-| Distribution | Own git repo on GitHub, included in the dotfiles repo as a submodule at `quickshell/.config/quickshell/notch-repo` and symlinked as `~/.config/quickshell/notch`, run with `qs -c notch`; the old bar stays beside it as the named config `default` until it is retired ([ADR 0001](adr/0001-separate-repo-and-symlink.md)) |
+| Distribution | Own git repo on GitHub, included in the dotfiles repo as a submodule at `quickshell/.config/quickshell/notch-repo` and symlinked as `~/.config/quickshell/notch`, run with `qs -c notch`; it is the only shell ([ADR 0001](adr/0001-separate-repo-and-symlink.md)) |
 | Dev environments | Arch Linux only (maintainer's machine); setup in [development.md](development.md) |
 
 Host verified: Quickshell 0.3.2 (AUR `quickshell-git`), Qt 6.12, Node 26, deno 2.9, matugen 4.2.

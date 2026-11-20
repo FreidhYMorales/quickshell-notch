@@ -9,12 +9,13 @@ export function needsHold(action) {
   return HOLD.includes(action);
 }
 
-// Argv arrays (no shell). Logout uses the hl.dsp bridge: plain dispatchers do
-// not work on this Hyprland build. Lock is a request to the Session contract.
+// Argv arrays (no shell). Logout stops the uwsm session so the apps (hyprpaper)
+// exit before the compositor; killing Hyprland first made hyprpaper core dump.
+// Lock is a request to the Session contract.
 const COMMANDS = {
   lock: { lock: true },
   suspend: { argv: ["systemctl", "suspend-then-hibernate"] },
-  logout: { argv: ["hyprctl", "dispatch", "hl.dsp.exit()"] },
+  logout: { argv: ["uwsm", "stop"] },
   reboot: { argv: ["systemctl", "reboot"] },
   poweroff: { argv: ["systemctl", "poweroff"] },
 };
