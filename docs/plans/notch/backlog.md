@@ -63,7 +63,7 @@
 51. [x] 613faa0 As a user, I want the screensaver command view in the launcher so that I can tune the screensaver, lock and suspend times and pick the screensaver wallpaper from the notch. Requires: #26, #50
 52. [x] 01fa32f As a user, I want the active workspace slot to show its app icon tinted with the palette so that I can tell where I am at a glance.
 53. [x] 408e888 As a user, I want an app icon to fly between workspace slots when I move its window so that I can follow the move. Requires: #52
-54. [~] As a user, I want the SDDM greeter to compress into the central notch when I log in, and to expand back with clear feedback when the login fails or stalls, so that logging in feels like one continuous motion. Requires: #33
+54. [x] 4ed9f77 As a user, I want the SDDM greeter to compress into the central notch when I log in, and to expand back with clear feedback when the login fails or stalls, so that logging in feels like one continuous motion. Requires: #33
 55. [ ] As a user, I want the gap between the SDDM greeter and the notch shell to show my current wallpaper so that the login handoff does not flash the stale default image. Requires: #54
 
 ## Wallpaper work status
