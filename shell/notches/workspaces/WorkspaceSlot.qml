@@ -1,9 +1,11 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import "../../config"
 import "../../logic/workspaceStrip.mjs" as Strip
 
-// One strip slot. kind: active (dot, or the new app's icon while flashing),
+// One strip slot. kind: active (its app's icon tinted with the accent, else a
+// dot; a newly opened app wins while flashing),
 // app (icon of the last-focused app, else its initial), empty (dash) or
 // special (glyph for the special workspace named in `app`).
 Item {
@@ -35,6 +37,12 @@ Item {
         sourceSize: Qt.size(Layout.wsIcon, Layout.wsIcon)
         source: root.icon
         visible: root.icon !== ""
+        // The active slot's icon is tinted with the accent: "you are here".
+        layer.enabled: root.kind === "active"
+        layer.effect: MultiEffect {
+            colorization: 1
+            colorizationColor: root.scheme.primary
+        }
     }
 
     Text {
