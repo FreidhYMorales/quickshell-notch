@@ -184,6 +184,7 @@ NotchSurface {
                 WorkspaceSlot {
                     required property var modelData
 
+                    objectName: "ws-slot-" + modelData.id
                     anchors.verticalCenter: parent.verticalCenter
                     kind: modelData.kind
                     app: modelData.cls ?? ""
