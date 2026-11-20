@@ -246,7 +246,13 @@ test("diffSnapshots: moves, including to special", () => {
 
 test("diffSnapshots: a cross-monitor move reaches both monitors", () => {
   const away = win("0x1", "kitty", 3, { monitor: "B" });
-  const move = { kind: "move", workspaceId: 3, cls: "kitty", from: 1 };
+  const move = {
+    kind: "move",
+    workspaceId: 3,
+    cls: "kitty",
+    from: 1,
+    cross: true,
+  };
   assert.deepEqual(diff(snap(1, [w1], 3), snap(1, [away], 3)), [move]);
   assert.deepEqual(diff(snap(1, [w1], 3), snap(1, [away], 3), "B"), [move]);
 });
