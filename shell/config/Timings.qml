@@ -64,4 +64,7 @@ Singleton {
     // height take the whole span; the clock and the month each fade during
     // one half, so they never cross-fade on top of each other.
     readonly property int calendarMorph: Motion.animSlow
+
+    // OLED pixel shift: the idle content moves one pixel this often.
+    readonly property int pixelShift: 180000
 }
