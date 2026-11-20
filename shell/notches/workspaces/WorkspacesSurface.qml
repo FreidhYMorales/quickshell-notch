@@ -25,6 +25,8 @@ NotchSurface {
     property bool flying: false
     property real flyTo: 0
     property real fadeTo: 1
+    // The destination slot stays empty until the flying icon lands on it.
+    property int landingIndex: -1
     readonly property bool open: Reveal.isVisible(reveal)
     // Width of the option column: the widest label plus the check mark and the
     // side padding, capped to the notch body.
@@ -66,6 +68,8 @@ NotchSurface {
 
     // One flight at a time: a new move replaces the one in progress.
     function startFlight(f) {
+        // A new strip rebuilds every slot; lay them out before reading x.
+        row.forceLayout();
         const from = slotX(f.from);
         if (from < 0)
             return;
@@ -74,6 +78,7 @@ NotchSurface {
         flyer.opacity = 1;
         flyTo = f.kind === "fly" ? slotX(f.to) : from;
         fadeTo = f.kind === "fade" ? 0 : 1;
+        landingIndex = f.kind === "fly" ? f.to : -1;
         flying = true;
         flight.restart();
     }
@@ -257,8 +262,10 @@ NotchSurface {
 
                 WorkspaceSlot {
                     required property var modelData
+                    required property int index
 
                     objectName: "ws-slot-" + modelData.id
+                    opacity: root.flying && index === root.landingIndex ? 0 : 1
                     anchors.verticalCenter: parent.verticalCenter
                     kind: modelData.kind
                     app: modelData.cls ?? ""
