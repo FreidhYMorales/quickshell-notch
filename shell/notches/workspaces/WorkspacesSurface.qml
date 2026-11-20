@@ -274,9 +274,9 @@ NotchSurface {
             }
         }
 
-        // The icon shrinks into the dot while the source slot's new content
-        // grows in, the dot travels as a drop, and the destination icon grows
-        // out of it.
+        // The icon shrinks into the dot, the dot travels as a drop while the
+        // source slot's new content pops in behind it, and the destination
+        // icon grows out of it.
         SequentialAnimation {
             id: dotFlight
 
@@ -295,17 +295,18 @@ NotchSurface {
                     to: 1
                     duration: Timings.animSlow / 4
                 }
+            }
 
+            ParallelAnimation {
+                // The source slot's new content pops in once the drop leaves.
                 NumberAnimation {
                     target: root
                     property: "sourceScale"
                     to: 1
                     duration: Timings.animSlow / 4
-                    easing.type: Easing.OutCubic
+                    easing.type: Easing.OutBack
                 }
-            }
 
-            ParallelAnimation {
                 NumberAnimation {
                     target: mover
                     property: "x"
