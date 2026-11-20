@@ -39,3 +39,4 @@ Risk: item 2 (authentication flow of the login screen), item 4 (ordering between
 
 - L1 request (user): "si, dividila en #54 y #55, si al final voy a dejar sddm como greater por defecto, en lugar de greetd, por lo del autologin y esas cosas"
 - L2 origin: split from #43 (see `43-sddm-handoff.md`, L2-L7). Built and merged into `main`; verified so far: real correct-password login (L6), test-mode preview and failure feedback (L5, L7), `make check`. The L7 changes are not installed: `/usr/share/sddm/themes/notch-lock/Main.qml` differs from `sddm/notch/Main.qml`.
+- L3 install (2026-11-19): with the user's approval, removed the stale 2026-11-09 backup and ran `scripts/update-sddm-theme.py` via `pkexec`. The installed `Main.qml` is byte-identical to `sddm/notch/Main.qml` (root, 0644); the previous install (the L5/L6 version that logged in fine) is the new `/usr/share/sddm/themes/notch-lock-backup/notch-lock`. SDDM not restarted. Pending: the three real-login checks.
