@@ -26,6 +26,10 @@ function serialise(segs) {
   return parts.concat("Z").join(" ");
 }
 
+function serialiseOpen(segs) {
+  return serialise(segs).replace(/ Z$/, "");
+}
+
 // Convex bottom-right style arc, skipped when the radius is zero.
 const arc = (r, sweep, x, y) => (r > 0 ? [["A", r, sweep, x, y]] : []);
 
@@ -41,6 +45,21 @@ export function notchPath(w, h, er, cr) {
     .concat([["L", e, e]])
     .concat([["C", e, e - k, k, 0, 0, 0]]);
   return serialise(segs);
+}
+
+/** One continuous open contour around every exposed edge of a centred notch. */
+export function notchOutlinePath(w, h, er, cr) {
+  const e = clampTo(er, Math.min(h, w / 2));
+  const c = clampTo(cr, Math.min(h - e, w / 2 - e));
+  const b = c > 1 ? h - 1 : h;
+  const r = Math.min(c, b - (h - c));
+  const k = KAPPA * e;
+  const segs = [["M", 0, 0], ["C", k, 0, e, e - k, e, e]]
+    .concat([["L", e, h - c]], arc(r, 0, e + r, b))
+    .concat([["L", w - e - r, b]], arc(r, 0, w - e, h - c))
+    .concat([["L", w - e, e]])
+    .concat([["C", w - e, e - k, w - k, 0, w, 0]]);
+  return serialiseOpen(segs);
 }
 
 // Mirror helpers: a single-axis flip reverses arc sweep, two flips restore it.
@@ -77,5 +96,21 @@ export function cornerPath(w, h, anchor, er, cr) {
     .concat([["L", 0, 0]]);
   return serialise(
     mirror(segs, w, h, anchor.endsWith("Right"), anchor.startsWith("bottom")),
+  );
+}
+
+/** One continuous open contour around exposed edges of a top corner notch. */
+export function cornerOutlinePath(w, h, anchor, er, cr) {
+  if (anchor !== "topLeft" && anchor !== "topRight") return null;
+  const e = clampTo(er, Math.min(h, w) / 2);
+  const c = clampTo(cr, Math.min(h - 2 * e, w - 2 * e));
+  const k = KAPPA * e;
+  const segs = [["M", w, 0], ["C", w - k, 0, w - e, e - k, w - e, e]]
+    .concat([["L", w - e, h - e - c]])
+    .concat(arc(c, 1, w - e - c, h - e))
+    .concat([["L", e, h - e]])
+    .concat([["C", e - k, h - e, 0, h - k, 0, h]]);
+  return serialiseOpen(
+    anchor === "topLeft" ? segs : mirror(segs, w, h, true, false),
   );
 }

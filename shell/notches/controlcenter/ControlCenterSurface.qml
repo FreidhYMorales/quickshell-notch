@@ -132,6 +132,7 @@ NotchSurface {
 
     CornerEarShape {
         id: shape
+        accentColor: root.scheme.primary
 
         x: root.width - width
         width: root.size.width

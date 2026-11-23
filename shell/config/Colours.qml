@@ -18,6 +18,9 @@ Singleton {
     readonly property real raisedAlpha: 1 - (1 - tileOffAlpha) * (1 - tileOffAlpha)
     // Divider lines inside control center cards (muted at this opacity).
     readonly property real dividerAlpha: 0.3
+    // Fine accent on the exposed lower edge of black notch shapes.
+    readonly property real notchEdgeAlpha: 0.45
+    readonly property real notchEdgeWidth: 2
 
     // Low and critical battery.
     readonly property color critical: "#ff5449"

@@ -80,6 +80,7 @@ Item {
 
     NotchEarShape {
         anchors.fill: parent
+        accentColor: root.scheme.primary
     }
 
     CenterWallpaper {

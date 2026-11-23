@@ -82,6 +82,7 @@ Item {
     NotchEarShape {
         objectName: "idle-shape"
         anchors.fill: parent
+        accentColor: root.scheme.primary
     }
 
     Row {

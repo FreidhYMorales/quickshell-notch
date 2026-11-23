@@ -214,6 +214,7 @@ NotchSurface {
             objectName: "polkitBackground"
             anchors.fill: parent
             visible: root.polkit
+            accentColor: root.scheme.primary
         }
 
         Column {

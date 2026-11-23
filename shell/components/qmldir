@@ -4,6 +4,7 @@ ArtThumb ArtThumb.qml
 CornerEarShape CornerEarShape.qml
 CriticalMark CriticalMark.qml
 NotchEarShape NotchEarShape.qml
+NotchEdgeAccent NotchEdgeAccent.qml
 NotchSurface NotchSurface.qml
 NotchZone NotchZone.qml
 NotifIcon NotifIcon.qml
