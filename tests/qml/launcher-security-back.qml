@@ -59,7 +59,7 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            if (!Visual.findText(root.target.content, "Registered fingers")) {
+            if (!Visual.findNamed(root.target.content, "security-hands")) {
                 console.error("security back: view did not open");
                 return Qt.exit(1);
             }
@@ -69,7 +69,7 @@ ShellRoot {
                 console.error("security back: Escape did not return to the commands");
                 return Qt.exit(1);
             }
-            if (Visual.findText(root.target.content, "Registered fingers")) {
+            if (Visual.findNamed(root.target.content, "security-hands")) {
                 console.error("security back: the view is still shown");
                 return Qt.exit(1);
             }

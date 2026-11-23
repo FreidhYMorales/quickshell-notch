@@ -24,6 +24,9 @@ Singleton {
 
     // Low and critical battery.
     readonly property color critical: "#ff5449"
+    // Security fingerprint hover feedback: remove (red) and add (green).
+    readonly property color securityRemoveHover: "#ff5449"
+    readonly property color securityAddHover: "#4caf50"
     // Red dot shown while screen recording is active.
     readonly property color recording: "#ff3b30"
     // Opacity of the unfilled part of an arc meter.

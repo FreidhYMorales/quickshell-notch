@@ -18,6 +18,12 @@ Singleton {
     // Pause before the lock fingerprint listener restarts after a failed
     // scan, so fprintd has released the device.
     readonly property int lockFingerprintRetry: 300
+    // Fingerprint highlight and automatic verification in the security view.
+    readonly property int securityMatchFlash: 650
+    readonly property int securityVerifyRetry: 1200
+    readonly property int securityFingerPulse: 160
+    readonly property int securityFingerSettle: 220
+    readonly property int securityFingerHover: 120
     // Screenshot is cosmetic: do not let it delay a lock indefinitely.
     readonly property int lockCaptureTimeout: 500
     // The black stage paints its frame first and turns the outputs off only

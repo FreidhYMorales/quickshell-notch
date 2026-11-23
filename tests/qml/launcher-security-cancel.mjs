@@ -68,7 +68,10 @@ test("a cancelled enrollment stores nothing and leaves the list as it was", () =
     });
     const output = result.stdout + result.stderr;
     assert.equal(result.status, 0, output);
-    assert.match(output, /security cancel: \[Right index\], panel hidden/);
+    assert.match(
+      output,
+      /security cancel: left-thumb=false, right-index=true, panel hidden/,
+    );
     // Past the fake's 2 s: a stopped enrollment never stored the finger.
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2500);
     assert.equal(

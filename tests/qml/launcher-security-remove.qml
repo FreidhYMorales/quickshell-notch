@@ -63,20 +63,16 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            const remove = Visual.findNamed(root.target.content, "security-remove-right-index-finger");
+            const remove = Visual.findNamed(root.target.content, "security-print-right-index-finger");
             if (!remove) {
                 console.error("security remove: no remove action for Right index");
                 return Qt.exit(1);
             }
             mouseClick(remove);
             wait(1500);
-            const registered = Visual.findNamed(root.target.content, "security-registered");
-            const shown = [];
-            for (const label of ["Left thumb", "Right index"]) {
-                if (registered && Visual.findText([registered], label))
-                    shown.push(label);
-            }
-            console.log("security remove: [" + shown.join(", ") + "]");
+            const thumb = Visual.findNamed(root.target.content, "security-print-left-thumb");
+            const index = Visual.findNamed(root.target.content, "security-print-right-index-finger");
+            console.log("security remove: left-thumb=" + (thumb && thumb.registered) + ", right-index=" + (index && index.registered));
             Qt.exit(0);
         }
     }

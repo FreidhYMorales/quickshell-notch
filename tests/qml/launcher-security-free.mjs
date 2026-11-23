@@ -53,9 +53,9 @@ function run(fingers) {
 }
 
 test("the security view offers every finger while none is registered", () => {
-  assert.match(run([]), /security free: \[Left thumb, Right index\]/);
+  assert.match(run([]), /security free: \[left-thumb, right-index-finger\]/);
 });
 
 test("the security view does not offer a registered finger", () => {
-  assert.match(run(["right-index-finger"]), /security free: \[Left thumb\]/);
+  assert.match(run(["right-index-finger"]), /security free: \[left-thumb\]/);
 });

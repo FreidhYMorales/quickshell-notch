@@ -52,16 +52,16 @@ function run(fingers) {
   }
 }
 
-test("the security view lists the finger fprintd reports", () => {
+test("the security hand marks the enrolled finger", () => {
   assert.match(
     run(["right-index-finger"]),
-    /security fingers: \[Right index\]/,
+    /security prints: \[right-index-finger\]/,
   );
 });
 
-test("the security view lists every finger fprintd reports", () => {
+test("the security hand marks every enrolled finger", () => {
   assert.match(
     run(["left-thumb", "right-index-finger"]),
-    /security fingers: \[Left thumb, Right index\]/,
+    /security prints: \[left-thumb, right-index-finger\]/,
   );
 });

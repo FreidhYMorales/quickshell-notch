@@ -63,7 +63,7 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            const thumb = Visual.findNamed(root.target.content, "security-add-left-thumb");
+            const thumb = Visual.findNamed(root.target.content, "security-print-left-thumb");
             if (!thumb) {
                 console.error("security enroll: Left thumb is not offered");
                 return Qt.exit(1);

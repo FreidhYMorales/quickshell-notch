@@ -12,6 +12,10 @@ Item {
 
     required property var screen
     readonly property var scheme: Colours.paletteFor(screen)
+    readonly property color fieldTint: {
+        const primary = Qt.color(scheme.primary);
+        return Qt.rgba(primary.r, primary.g, primary.b, Colours.tileOffAlpha);
+    }
 
     signal back
     signal applied
@@ -20,7 +24,7 @@ Item {
     property string status: ""
     property bool statusError: false
 
-    implicitHeight: Layout.webappViewHeight
+    implicitHeight: form.implicitHeight
 
     // What each refused field says: the name never reaches the helper with a
     // path in it, and the URL must be one a browser opens.
@@ -118,8 +122,10 @@ Item {
     }
 
     Column {
+        id: form
+
         anchors.fill: parent
-        spacing: Layout.launcherGap
+        spacing: Layout.webappGap
 
         Text {
             id: title
@@ -131,86 +137,152 @@ Item {
             font.pixelSize: Fonts.launcherItem
         }
 
-        TextInput {
-            id: nameField
-
-            objectName: "webapp-name"
+        Rectangle {
             width: parent.width
             height: Layout.webappFieldHeight
-            focus: root.visible
-            color: root.scheme.onSurface
-            clip: true
-            font.family: Fonts.family
-            font.pixelSize: Fonts.launcherItem
-            // Each opening starts from an empty form.
-            onVisibleChanged: if (visible) {
-                clear();
-                forceActiveFocus();
+
+            radius: Layout.cardRadius
+            color: root.fieldTint
+
+            TextInput {
+                id: nameField
+
+                objectName: "webapp-name"
+                anchors.fill: parent
+                anchors.leftMargin: Layout.webappFieldPad
+                anchors.rightMargin: Layout.webappFieldPad
+                focus: root.visible
+                color: root.scheme.onSurface
+                verticalAlignment: TextInput.AlignVCenter
+                clip: true
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+                // Each opening starts from an empty form.
+                onVisibleChanged: if (visible) {
+                    clear();
+                    forceActiveFocus();
+                }
+                Keys.onTabPressed: event => {
+                    urlField.forceActiveFocus();
+                    event.accepted = true;
+                }
+                Keys.onReturnPressed: root.submit()
+                Keys.onEnterPressed: root.submit()
             }
-            Keys.onTabPressed: event => {
-                urlField.forceActiveFocus();
-                event.accepted = true;
+
+            Text {
+                objectName: "webapp-name-placeholder"
+                anchors.left: parent.left
+                anchors.leftMargin: Layout.webappFieldPad
+                anchors.right: parent.right
+                anchors.rightMargin: Layout.webappFieldPad
+                anchors.verticalCenter: parent.verticalCenter
+                visible: nameField.text.length === 0
+                text: Strings.webappNamePlaceholder
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
             }
-            Keys.onReturnPressed: root.submit()
-            Keys.onEnterPressed: root.submit()
         }
 
-        TextInput {
-            id: urlField
-
-            objectName: "webapp-url"
+        Rectangle {
             width: parent.width
             height: Layout.webappFieldHeight
-            color: root.scheme.onSurface
-            clip: true
-            font.family: Fonts.family
-            font.pixelSize: Fonts.launcherItem
-            Keys.onTabPressed: event => {
-                nameField.forceActiveFocus();
-                event.accepted = true;
+
+            radius: Layout.cardRadius
+            color: root.fieldTint
+
+            TextInput {
+                id: urlField
+
+                objectName: "webapp-url"
+                anchors.fill: parent
+                anchors.leftMargin: Layout.webappFieldPad
+                anchors.rightMargin: Layout.webappFieldPad
+                color: root.scheme.onSurface
+                verticalAlignment: TextInput.AlignVCenter
+                clip: true
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+                Keys.onTabPressed: event => {
+                    nameField.forceActiveFocus();
+                    event.accepted = true;
+                }
+                Keys.onReturnPressed: root.submit()
+                Keys.onEnterPressed: root.submit()
             }
-            Keys.onReturnPressed: root.submit()
-            Keys.onEnterPressed: root.submit()
+
+            Text {
+                objectName: "webapp-url-placeholder"
+                anchors.left: parent.left
+                anchors.leftMargin: Layout.webappFieldPad
+                anchors.right: parent.right
+                anchors.rightMargin: Layout.webappFieldPad
+                anchors.verticalCenter: parent.verticalCenter
+                visible: urlField.text.length === 0
+                text: Strings.webappUrlPlaceholder
+                color: root.scheme.muted
+                font.family: Fonts.family
+                font.pixelSize: Fonts.launcherItem
+            }
         }
 
         Item {
             width: parent.width
             height: Layout.webappFieldHeight
 
-            Rectangle {
-                id: installButton
+            Item {
+                id: installHitArea
 
+                readonly property bool hovered: installHover.hovered
+
+                objectName: "webapp-install-button"
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: installLabel.width + 2 * Layout.webappButtonPad
                 height: Layout.webappFieldHeight
-                radius: height / 2
-                color: Colours.cardFor(root.screen)
 
-                Text {
-                    id: installLabel
+                Rectangle {
+                    id: installButton
 
-                    objectName: "webapp-install"
-                    anchors.centerIn: parent
-                    text: Strings.webappInstall
-                    color: root.scheme.primary
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.launcherItem
+                    objectName: "webapp-install-surface"
+                    readonly property color hoverColor: root.fieldTint
+                    readonly property color restColor: Colours.cardFor(root.screen)
+
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: installHitArea.hovered ? hoverColor : restColor
+
+                    Text {
+                        id: installLabel
+
+                        objectName: "webapp-install"
+                        anchors.centerIn: parent
+                        text: Strings.webappInstall
+                        color: root.scheme.primary
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.launcherItem
+                    }
+
+                    TapHandler {
+                        onTapped: root.submit()
+                    }
                 }
 
-                TapHandler {
-                    onTapped: root.submit()
+                HoverHandler {
+                    id: installHover
                 }
             }
 
             Text {
                 objectName: "webapp-status"
-                anchors.left: installButton.right
+                anchors.left: installHitArea.right
                 anchors.leftMargin: Layout.launcherGap
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.status !== ""
                 text: root.status
+                elide: Text.ElideRight
                 color: root.statusError ? root.scheme.onSurface : root.scheme.primary
                 font.family: Fonts.family
                 font.pixelSize: Fonts.launcherItem

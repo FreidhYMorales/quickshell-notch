@@ -3,8 +3,7 @@ import QtTest
 import Quickshell
 import "visual.mjs" as Visual
 
-// Opens the security view and prints which fingers it offers to add (the
-// runner's fake fprintd-list decides which are already registered).
+// Opens the security view and prints which hand symbols remain free.
 ShellRoot {
     id: root
     property var target: null
@@ -63,15 +62,16 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            const free = Visual.findNamed(root.target.content, "security-free");
-            if (!free || !free.visible) {
-                console.error("security free: no free fingers");
+            const hands = Visual.findNamed(root.target.content, "security-hands");
+            if (!hands || !hands.visible) {
+                console.error("security free: no hand diagram");
                 return Qt.exit(1);
             }
             const shown = [];
-            for (const label of ["Left thumb", "Right index"]) {
-                if (Visual.findText([free], label))
-                    shown.push(label);
+            for (const name of ["left-thumb", "right-index-finger"]) {
+                const print = Visual.findNamed(root.target.content, "security-print-" + name);
+                if (print && !print.registered)
+                    shown.push(name);
             }
             console.log("security free: [" + shown.join(", ") + "]");
             Qt.exit(0);

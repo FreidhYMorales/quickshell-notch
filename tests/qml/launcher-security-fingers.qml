@@ -3,7 +3,7 @@ import QtTest
 import Quickshell
 import "visual.mjs" as Visual
 
-// Opens the security view and prints which fingers its registered list shows
+// Opens the security view and prints which fingerprint symbols are registered
 // (the runner's fake fprintd-list decides which are registered).
 ShellRoot {
     id: root
@@ -37,7 +37,11 @@ ShellRoot {
 
         function test_view_lists_registered_fingers() {
             const component = Qt.createComponent(Quickshell.env("NOTCH_CENTER_URL") + "/CenterSurface.qml");
-            if (component.status !== Component.Ready || Quickshell.screens.length === 0)
+            if (component.status !== Component.Ready) {
+                console.error("security fingers: CenterSurface status " + component.status + " " + component.errorString());
+                return Qt.exit(2);
+            }
+            if (Quickshell.screens.length === 0)
                 return Qt.exit(2);
             const screen = Quickshell.screens[0];
             root.target = component.createObject(null, {
@@ -63,17 +67,18 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            const registered = Visual.findNamed(root.target.content, "security-registered");
-            if (!registered || !registered.visible) {
-                console.error("security fingers: no registered list");
+            const hands = Visual.findNamed(root.target.content, "security-hands");
+            if (!hands || !hands.visible) {
+                console.error("security fingers: no hand diagram");
                 return Qt.exit(1);
             }
             const shown = [];
-            for (const label of ["Left thumb", "Right index"]) {
-                if (Visual.findText([registered], label))
-                    shown.push(label);
+            for (const name of ["left-thumb", "right-index-finger"]) {
+                const print = Visual.findNamed(root.target.content, "security-print-" + name);
+                if (print && print.registered)
+                    shown.push(name);
             }
-            console.log("security fingers: [" + shown.join(", ") + "]");
+            console.log("security prints: [" + shown.join(", ") + "]");
             Qt.exit(0);
         }
     }
