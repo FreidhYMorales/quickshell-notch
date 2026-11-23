@@ -22,8 +22,12 @@ Item {
     readonly property bool webappMode: view.sub === "webapp"
     readonly property bool screensaverMode: view.sub === "screensaver"
     readonly property bool securityMode: view.sub === "security"
+    readonly property bool searchMode: root.visible && !root.themeMode && !root.keybindsMode && !root.webappMode && !root.screensaverMode && !root.securityMode && !root.wallpaperMode
     readonly property bool commandMode: (view.query ?? "").startsWith(">")
     readonly property var results: commandMode ? LauncherSearch.rankApps(Strings.launcherCommands, (view.query ?? "").slice(1)) : LauncherSearch.rankApps(Apps.list, view.query ?? "")
+    readonly property int resultsTargetHeight: Math.max(1, Math.min(Layout.launcherRows, root.results.length)) * Layout.launcherRowHeight
+    readonly property int launcherFixedHeight: 2 * Layout.launcherPad + searchRow.implicitHeight + Layout.launcherDivider + 2 * Layout.launcherGap
+    readonly property int launcherMaxHeight: root.launcherFixedHeight + Layout.launcherRows * Layout.launcherRowHeight
 
     function send(event) {
         CenterStore.dispatch(event);
@@ -76,7 +80,7 @@ Item {
     }
 
     // The same padding on every side of the content (inside the ears).
-    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.keybindsMode ? keybindsView.implicitHeight : root.webappMode ? webappView.implicitHeight : root.screensaverMode ? screensaverView.implicitHeight : root.securityMode ? securityView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : column.implicitHeight) + 2 * Layout.launcherPad
+    implicitHeight: (root.themeMode ? themeView.implicitHeight : root.keybindsMode ? keybindsView.implicitHeight : root.webappMode ? webappView.implicitHeight : root.screensaverMode ? screensaverView.implicitHeight : root.securityMode ? securityView.implicitHeight : root.wallpaperMode ? wallpaperView.implicitHeight : root.launcherFixedHeight - 2 * Layout.launcherPad + root.resultsTargetHeight) + 2 * Layout.launcherPad
 
     NotchEarShape {
         anchors.fill: parent
@@ -196,6 +200,8 @@ Item {
 
         // Search glyph (by launcher mode) before the field.
         Row {
+            id: searchRow
+
             width: parent.width
             spacing: Layout.launcherGap
 
@@ -214,6 +220,7 @@ Item {
             TextInput {
                 id: field
 
+                objectName: "launcher-search-field"
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - glyph.width - parent.spacing
                 focus: root.visible
@@ -257,14 +264,17 @@ Item {
             opacity: Colours.dividerAlpha
         }
 
-        // Fixed per mode, so filtering does not resize the notch.
+        // The outer notch animates this available space; the input and first
+        // result remain anchored while extra results reveal/collapse below.
         Item {
             width: parent.width
-            height: (root.commandMode ? Strings.launcherCommands.length : Layout.launcherRows) * Layout.launcherRowHeight
+            objectName: "launcher-results"
+            height: Math.max(Layout.launcherRowHeight, root.height - root.launcherFixedHeight)
 
             Text {
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.centerIn: parent
                 visible: root.results.length === 0
+                objectName: "launcher-no-matches"
                 text: Strings.noMatches
                 color: root.scheme.muted
                 font.family: Fonts.family
@@ -274,15 +284,21 @@ Item {
             ListView {
                 id: list
 
+                objectName: root.commandMode ? "launcher-results-command-list" : "launcher-results-app-list"
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 width: root.commandMode ? parent.width * Layout.launcherCommandListRatio : parent.width
                 clip: true
+                visible: root.results.length > 0
                 model: root.results
                 currentIndex: root.view.index ?? 0
                 // Keeps the selection in sight while the arrows move it.
                 onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+
+                Behavior on width {
+                    Anim {}
+                }
 
                 delegate: Item {
                     id: row
