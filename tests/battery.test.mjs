@@ -6,6 +6,7 @@ import {
   criticalStep,
   edges,
   fromUPower,
+  parseSysfs,
 } from "../shell/logic/battery.mjs";
 
 const L = { low: 20, critical: 10 };
@@ -165,4 +166,53 @@ test("edges detects plug, unplug and full transitions", () => {
     Object.assign({}, none, { fullReached: true }),
   );
   assert.deepEqual(edges(bat(), bat()), none);
+});
+
+// sysfs hands each attribute over as text, newline included.
+const sysfs = (x) =>
+  Object.assign(
+    {
+      cycles: "",
+      energyNow: "",
+      energyFull: "",
+      energyFullDesign: "",
+      endThreshold: "",
+    },
+    x,
+  );
+
+test("parseSysfs reads wear, capacity and the charge limit", () => {
+  assert.deepEqual(
+    parseSysfs(sysfs({
+      cycles: "66\n",
+      energyNow: "13840000\n",
+      energyFull: "56370000\n",
+      energyFullDesign: "57000000\n",
+      endThreshold: "80\n",
+    })),
+    { health: 99, cycles: 66, energyNow: 13.8, energyFull: 56.4, limit: 80 },
+  );
+});
+
+test("parseSysfs reads micro-Wh to one decimal", () => {
+  const out = parseSysfs(
+    sysfs({ energyNow: "56369999", energyFull: "57000000" }),
+  );
+  assert.equal(out.energyNow, 56.4);
+  assert.equal(out.energyFull, 57);
+});
+
+test("parseSysfs turns missing or unreadable files into 0", () => {
+  const zero = { health: 0, cycles: 0, energyNow: 0, energyFull: 0, limit: 0 };
+  assert.deepEqual(parseSysfs(sysfs({})), zero);
+  assert.deepEqual(
+    parseSysfs(sysfs({
+      cycles: "-3",
+      energyNow: "NaN",
+      energyFull: "0",
+      energyFullDesign: "x",
+      endThreshold: "x",
+    })),
+    zero,
+  );
 });

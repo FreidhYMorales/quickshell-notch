@@ -190,6 +190,28 @@ Singleton {
     readonly property string batteryCriticalSummary: "Battery critical"
     readonly property string batteryCriticalBody: "%1% left. Plug in the charger."
     readonly property string batteryCriticalIcon: "battery-caution"
+    // Control center battery card: state line keyed by Battery.layer, the
+    // detail pieces (%1 = formatted value) and their separator.
+    readonly property var batteryStates: ({
+            none: "Discharging",
+            low: "Low",
+            charging: "Charging",
+            plugged: "Plugged in",
+            full: "Full"
+        })
+    readonly property string batteryTimeLeft: "%1 left"
+    readonly property string batteryTimeToFull: "%1 to full"
+    readonly property string batteryRate: "%1 W"
+    readonly property string batteryWh: "%1 / %2 Wh"
+    readonly property string batteryLimit: "limit %1%"
+    readonly property string batteryHealth: "health %1"
+    readonly property string batteryCycles: "%1 cyc"
+    readonly property string batteryDetailSeparator: " · "
+    // Battery card stat captions and the value shown when one is missing.
+    readonly property string batteryDrawLabel: "DRAW"
+    readonly property string batteryEnergyLabel: "ENERGY"
+    readonly property string batteryWearLabel: "WEAR"
+    readonly property string batteryUnknown: "–"
     // Power menu icons, keyed by action.
     readonly property var powerIcons: ({
             lock: "󰌾",
@@ -205,6 +227,7 @@ Singleton {
     readonly property string glyphCpu: "\uf2db"
     readonly property string glyphRam: "\uf538"
     readonly property string glyphBatteryFull: "\uf240"
+    readonly property string glyphBatteryHalf: "\uf242"
     readonly property string glyphBatteryLow: "\uf243"
     readonly property string glyphBolt: "\uf0e7"
     readonly property string glyphPlug: "\uf1e6"

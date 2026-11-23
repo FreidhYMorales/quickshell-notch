@@ -9,12 +9,12 @@ import { fileURLToPath } from "node:url";
 const probe = fileURLToPath(new URL("./power-dry-run.qml", import.meta.url));
 const services = new URL("../../shell/services", import.meta.url).href;
 
-// Fake systemctl/hyprctl first on PATH: even a broken dry run cannot touch the
+// Fake systemctl/hyprctl/uwsm first on PATH: even a broken dry run cannot touch the
 // live session, it only leaves a marker file behind.
 const runDry = (env) => {
   const dir = mkdtempSync(join(tmpdir(), "notch-power-"));
   const called = join(dir, "called");
-  for (const bin of ["systemctl", "hyprctl"]) {
+  for (const bin of ["systemctl", "hyprctl", "uwsm"]) {
     writeFileSync(join(dir, bin), `#!/bin/sh\necho "$0 $*" >> "${called}"\n`, {
       mode: 0o755,
     });
@@ -46,7 +46,7 @@ const expectDryRun = ({ output, status, ran }) => {
   assert.equal(ran, false, "a power command was executed");
   assert.match(output, /power: dry run lock/);
   assert.match(output, /power: dry run systemctl suspend-then-hibernate/);
-  assert.match(output, /power: dry run hyprctl dispatch hl\.dsp\.exit\(\)/);
+  assert.match(output, /power: dry run uwsm stop/);
   assert.match(output, /power: dry run systemctl reboot/);
   assert.match(output, /power: dry run systemctl poweroff/);
 };

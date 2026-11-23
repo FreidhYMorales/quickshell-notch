@@ -281,6 +281,10 @@ NotchSurface {
                     }
                 }
 
+                BatteryCard {
+                    scheme: root.scheme
+                }
+
                 Row {
                     spacing: Layout.ccTileGap
 

@@ -55,3 +55,32 @@ export function edges(prev, next) {
     fullReached: !prev.full && next.full,
   };
 }
+
+// sysfs reports energy in micro-Wh and everything else as plain text; an
+// unreadable or negative value becomes 0 so the card can drop that figure.
+function positive(text) {
+  const value = parseFloat(text);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function microWh(text) {
+  return Math.round(positive(text) / 1e5) / 10;
+}
+
+// Wear, capacity and the charge limit from /sys/class/power_supply/<battery>/
+// (UPower has them on D-Bus, but Quickshell exposes neither health nor cycles).
+// Health is what the pack holds today against what it held new: the `capacity`
+// file is the current charge, not wear.
+export function parseSysfs(
+  { cycles, energyNow, energyFull, energyFullDesign, endThreshold },
+) {
+  const full = microWh(energyFull);
+  const design = microWh(energyFullDesign);
+  return {
+    health: full > 0 && design > 0 ? Math.round((full / design) * 100) : 0,
+    cycles: Math.round(positive(cycles)),
+    energyNow: microWh(energyNow),
+    energyFull: full,
+    limit: Math.round(positive(endThreshold)),
+  };
+}
