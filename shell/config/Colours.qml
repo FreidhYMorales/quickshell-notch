@@ -24,6 +24,8 @@ Singleton {
 
     // Low and critical battery.
     readonly property color critical: "#ff5449"
+    readonly property color batteryMedium: "#ffbf47"
+    readonly property color batteryHigh: "#4caf50"
     // Security fingerprint hover feedback: remove (red) and add (green).
     readonly property color securityRemoveHover: "#ff5449"
     readonly property color securityAddHover: "#4caf50"

@@ -9,6 +9,7 @@ Item {
     id: root
 
     property color accentColor: Colours.global.primary
+    property real accentOpacity: 1
 
     Shape {
         anchors.fill: parent
@@ -28,5 +29,6 @@ Item {
         anchors.fill: parent
         path: EarGeometry.notchOutlinePath(root.width, root.height, Layout.earRadius, Layout.cornerRadius)
         accentColor: root.accentColor
+        opacity: root.accentOpacity
     }
 }

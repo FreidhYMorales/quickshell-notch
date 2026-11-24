@@ -32,6 +32,31 @@ export function classify(input, limits) {
   return input.percentage < limits.low ? "low" : "none";
 }
 
+// Stable colour bands for the idle notch, independent of plug state.
+export function chargeStage(percentage, limits) {
+  if (percentage < limits.low) return "low";
+  if (percentage < limits.high) return "medium";
+  return "high";
+}
+
+// Briefly reveal the side battery details when crossing a meaningful level.
+// A configured charge cap takes precedence over the generic 60% crossing.
+export function infoMilestone(previous, next, chargeLimit, limits) {
+  if (!previous || !next.present || !previous.present) return null;
+  if (
+    chargeLimit > 0 && next.plugged && next.percentage >= chargeLimit &&
+    (!previous.plugged || previous.percentage < chargeLimit)
+  ) {
+    return chargeLimit;
+  }
+  const crossed = (threshold) =>
+    (previous.percentage < threshold && next.percentage >= threshold) ||
+    (previous.percentage >= threshold && next.percentage < threshold);
+  if (crossed(limits.high)) return limits.high;
+  if (crossed(limits.low)) return limits.low;
+  return null;
+}
+
 // Dev override: forced fields replace the real ones; null keeps the input.
 export function applyOverride(input, override) {
   return override ? Object.assign({}, input, override) : input;

@@ -50,6 +50,9 @@ Singleton {
     readonly property int recordingHelperTimeout: 5000
     // The notch holds the install confirmation this long before it closes.
     readonly property int webappConfirm: 1200
+    // Battery details stay visible briefly after crossing a charge milestone.
+    readonly property int batteryMilestone: 120000
+    readonly property int batteryPulse: 1100
 
     // Unread dot blink half-period (milliseconds).
     readonly property int blink: Motion.blink

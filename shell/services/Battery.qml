@@ -41,6 +41,13 @@ Singleton {
     property real energyNow: 0
     property real energyFull: 0
     property int chargeLimit: 0
+    property bool infoVisible: false
+    property int infoMilestone: 0
+    property bool previousAtChargeLimit: false
+    readonly property string chargeStage: BatteryLogic.chargeStage(percentage, {
+        low: Limits.batteryLow,
+        high: Limits.batteryHigh
+    })
 
     readonly property string sysfsDir: "/sys/class/power_supply/" + (device && device.nativePath ? device.nativePath : "BAT0")
 
@@ -84,6 +91,7 @@ Singleton {
         energyNow = values.energyNow;
         energyFull = values.energyFull;
         chargeLimit = values.limit;
+        refresh();
     }
 
     // sysfs sends no change events, so re-read it when the plug changes.
@@ -113,6 +121,7 @@ Singleton {
         const next = BatteryLogic.applyOverride(real, Flags.batteryOverride);
         const limits = {
             low: Limits.batteryLow,
+            high: Limits.batteryHigh,
             critical: Limits.batteryCritical
         };
 
@@ -120,6 +129,10 @@ Singleton {
             armed: armed
         }, next, limits);
         const edge = previous ? BatteryLogic.edges(previous, next) : null;
+        let milestone = BatteryLogic.infoMilestone(previous, next, chargeLimit, limits);
+        const atChargeLimit = next.present && next.plugged && chargeLimit > 0 && next.percentage >= chargeLimit;
+        if (atChargeLimit && !previousAtChargeLimit)
+            milestone = chargeLimit;
 
         present = next.present;
         plugged = next.plugged;
@@ -129,6 +142,12 @@ Singleton {
         layer = BatteryLogic.classify(next, limits);
         armed = step.armed;
         previous = next;
+        previousAtChargeLimit = atChargeLimit;
+        if (milestone !== null) {
+            infoMilestone = milestone;
+            infoVisible = true;
+            infoTimer.restart();
+        }
 
         if (edge && edge.pluggedIn)
             pluggedIn();
@@ -143,6 +162,12 @@ Singleton {
     }
 
     Component.onCompleted: refresh()
+
+    Timer {
+        id: infoTimer
+        interval: Timings.batteryMilestone
+        onTriggered: root.infoVisible = false
+    }
 
     // One FileView per sysfs attribute: plain text, no process and no poll.
     FileView {
