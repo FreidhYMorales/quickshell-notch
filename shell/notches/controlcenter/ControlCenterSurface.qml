@@ -352,11 +352,45 @@ NotchSurface {
                 visible: root.view === "resources"
                 spacing: Layout.ccGap
 
-                Text {
-                    text: Strings.resourcesTitle
-                    color: root.scheme.onSurface
-                    font.family: Fonts.family
-                    font.pixelSize: Fonts.title
+                Row {
+                    spacing: Layout.ccGap
+
+                    Item {
+                        objectName: "cc-resource-back"
+                        width: Layout.ccClearButton
+                        height: width
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: backHover.hovered ? root.scheme.primary : "transparent"
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: Strings.glyphChevronLeft
+                            color: backHover.hovered ? Colours.background : root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.body
+                        }
+
+                        HoverHandler {
+                            id: backHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.view = ControlNav.back()
+                        }
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Strings.resourcesTitle
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.title
+                    }
                 }
 
                 Row {
