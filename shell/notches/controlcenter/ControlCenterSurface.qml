@@ -19,6 +19,8 @@ NotchSurface {
     id: root
 
     readonly property var scheme: Colours.paletteFor(screen)
+    // Defaults to the live service; tests can provide deterministic readings.
+    property var resourceStats: SysInfo
     property bool open: false
     // 0 hidden .. 1 shown; animated instead of y (see slideOffset).
     property real progress: open ? 1 : 0
@@ -344,14 +346,54 @@ NotchSurface {
                 onBackRequested: root.view = ControlNav.back()
             }
 
-            Text {
+            Column {
                 id: resourceView
 
                 visible: root.view === "resources"
-                text: Strings.resourcesTitle
-                color: root.scheme.onSurface
-                font.family: Fonts.family
-                font.pixelSize: Fonts.title
+                spacing: Layout.ccGap
+
+                Text {
+                    text: Strings.resourcesTitle
+                    color: root.scheme.onSurface
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.title
+                }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesCpu
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: root.resourceStats.cpu === null ? Strings.resourcesMeasuring : Math.round(root.resourceStats.cpu) + "%"
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesRam
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: root.resourceStats.ram === null ? Strings.resourcesMeasuring : Math.round(root.resourceStats.ram) + "%"
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
             }
         }
     }
