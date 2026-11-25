@@ -370,7 +370,7 @@ NotchSurface {
                     }
 
                     Text {
-                        text: root.resourceStats.cpu === null ? Strings.resourcesMeasuring : Math.round(root.resourceStats.cpu) + "%"
+                        text: Number.isFinite(root.resourceStats.cpu) ? Math.round(root.resourceStats.cpu) + "%" : Strings.resourcesMeasuring
                         color: root.scheme.onSurface
                         font.family: Fonts.family
                         font.pixelSize: Fonts.body
@@ -388,7 +388,7 @@ NotchSurface {
                     }
 
                     Text {
-                        text: root.resourceStats.ram === null ? Strings.resourcesMeasuring : Math.round(root.resourceStats.ram) + "%"
+                        text: Number.isFinite(root.resourceStats.ram) ? Math.round(root.resourceStats.ram) + "%" : Strings.resourcesMeasuring
                         color: root.scheme.onSurface
                         font.family: Fonts.family
                         font.pixelSize: Fonts.body
