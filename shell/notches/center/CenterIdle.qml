@@ -7,11 +7,10 @@ import "../../logic/format.mjs" as Format
 import "../../logic/pixelShift.mjs" as PixelShift
 import "../../logic/sideLayer.mjs" as SideLayer
 
-// Idle centre notch content: `(cpu) date . time (ram)` centred, so the clock
-// never moves. The width is content-driven: `baseWidth` fits the row, and a
-// side layer places its two items adjacent to the row; `sideNeed` is what the
-// surface adds on EACH side (the wider item plus the row gap).
-// Reading Battery and SysInfo here also starts those lazy singletons.
+// Idle centre notch content shows only the date and time. The width is
+// content-driven: `baseWidth` fits the row, and a side layer places its two
+// items adjacent to the row; `sideNeed` is what the surface adds on EACH side.
+// Reading Battery here also starts its lazy singleton.
 Item {
     id: root
 
@@ -93,13 +92,6 @@ Item {
         spacing: Layout.rowGap
         visible: Recorder.countdown === 0
 
-        ArcMeter {
-            anchors.verticalCenter: parent.verticalCenter
-            value: SysInfo.cpu ?? 0
-            icon: Strings.glyphCpu
-            ringColor: root.scheme.primary
-        }
-
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: Format.shortDate(Time.month, Time.dayOfMonth, Strings.months) + Strings.dateTimeSeparator + Format.clock(Time.hours, Time.minutes)
@@ -108,12 +100,6 @@ Item {
             font.pixelSize: Fonts.idleClock
         }
 
-        ArcMeter {
-            anchors.verticalCenter: parent.verticalCenter
-            value: SysInfo.ram ?? 0
-            icon: Strings.glyphRam
-            ringColor: root.scheme.primary
-        }
     }
 
     Text {
