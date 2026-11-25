@@ -216,6 +216,59 @@ NotchSurface {
                     }
                 }
 
+                Row {
+                    width: Layout.ccListWidth
+                    spacing: Layout.ccTileGap
+
+                    Repeater {
+                        model: [
+                            {
+                                label: Strings.resourcesCpu,
+                                value: root.resourceStats.cpu,
+                                icon: Strings.glyphCpu
+                            },
+                            {
+                                label: Strings.resourcesRam,
+                                value: root.resourceStats.ram,
+                                icon: Strings.glyphRam
+                            }
+                        ]
+
+                        Row {
+                            required property var modelData
+
+                            width: (Layout.ccListWidth - Layout.ccTileGap) / 2
+                            spacing: Layout.ccTileGap
+
+                            ArcMeter {
+                                anchors.verticalCenter: parent.verticalCenter
+                                value: Number.isFinite(parent.modelData.value) ? parent.modelData.value : 0
+                                icon: parent.modelData.icon
+                                ringColor: root.scheme.primary
+                            }
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+
+                                Text {
+                                    text: parent.parent.modelData.label
+                                    color: root.scheme.muted
+                                    font.family: Fonts.family
+                                    font.pixelSize: Fonts.small
+                                }
+
+                                Text {
+                                    text: Number.isFinite(parent.parent.modelData.value) ? Math.round(parent.parent.modelData.value) + "%" : Strings.resourcesMeasuring
+                                    color: root.scheme.onSurface
+                                    font.family: Fonts.family
+                                    font.pixelSize: Fonts.body
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Session actions, same icons and hover look as the power menu,
                 // on a pill tinted like the notifications card. Tile-wide cells
                 // spread edge to edge, so the icons line up with the tiles.
