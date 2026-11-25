@@ -56,3 +56,6 @@ Risk: none
 - Focused regression run: 10 tests passed, 0 failed.
 - Full `make check`: unit tests passed (736), but the existing `tests/qml/power-dry-run.mjs` tests fail because they expect `hyprctl dispatch hl.dsp.exit()` while unchanged `shell/logic/powerMenu.mjs` uses `uwsm stop`. Both files match `main`; no unrelated test was changed.
 - Paused before closing the story because the project test command remains red and fixing the existing power tests would require changing tests outside this story. `make check-fast` passes.
+- User authorized correcting the stale power dry-run expectations. Regression fix `4d2831e` updates the expected `uwsm stop` command and stubs `uwsm` on PATH to ensure a broken dry run cannot end the session; `node --test tests/qml/power-dry-run.mjs` passes (2/2).
+- Final `make check` passes: 736 unit tests; all QML test groups pass (2 optional nested-Cage tests skipped); smoke config loads.
+- Risk: none. Manual visual checks: none required by this story.
