@@ -134,6 +134,7 @@ NotchSurface {
     anchors.right: true
     implicitWidth: Layout.ccWidth
     implicitHeight: Layout.ccHeight
+    wantsKeyboard: root.view === "resources"
     maskItem: maskBox
 
     CornerEarShape {
@@ -350,6 +351,8 @@ NotchSurface {
                 id: resourceView
 
                 visible: root.view === "resources"
+                focus: visible
+                Keys.onEscapePressed: root.view = ControlNav.back()
                 spacing: Layout.ccGap
 
                 Row {
