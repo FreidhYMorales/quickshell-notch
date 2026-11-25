@@ -82,6 +82,10 @@ NotchSurface {
         Notifs.markSeen();
     }
 
+    function showResources() {
+        view = "resources";
+    }
+
     // A power row click always collapses the panel. Lock and suspend run here;
     // the session-ending ones open this monitor's power menu, preselected, so
     // they still need the hold.
@@ -158,8 +162,8 @@ NotchSurface {
             y: Layout.ccPad
             // Both views are built even while hidden, so the panel always
             // knows the root's height (see panelHeight).
-            implicitWidth: Math.max(rootView.implicitWidth, subView.width)
-            implicitHeight: ControlNav.panelHeight(root.view, rootView.implicitHeight, subView.height)
+            implicitWidth: Math.max(rootView.implicitWidth, subView.width, resourceView.implicitWidth)
+            implicitHeight: ControlNav.panelHeight(root.view, rootView.implicitHeight, Math.max(subView.height, resourceView.implicitHeight))
 
             Column {
                 id: rootView
@@ -316,15 +320,38 @@ NotchSurface {
                     scheme: root.scheme
                     onSeeAllRequested: root.showNotifications()
                 }
+
+                Text {
+                    objectName: "cc-resource-entry"
+                    text: Strings.resourcesTitle
+                    color: root.scheme.primary
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.small
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.showResources()
+                    }
+                }
             }
 
             NotifSubpage {
                 id: subView
 
-                visible: !root.rootView
+                visible: root.view === ControlNav.NOTIFICATIONS
                 scheme: root.scheme
                 minHeight: rootView.implicitHeight
                 onBackRequested: root.view = ControlNav.back()
+            }
+
+            Text {
+                id: resourceView
+
+                visible: root.view === "resources"
+                text: Strings.resourcesTitle
+                color: root.scheme.onSurface
+                font.family: Fonts.family
+                font.pixelSize: Fonts.title
             }
         }
     }

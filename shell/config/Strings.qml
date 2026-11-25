@@ -18,6 +18,7 @@ Singleton {
     // Control center notifications section; %1 = how many.
     readonly property string notificationsTitle: "Notifications (%1)"
     readonly property string noNotifications: "No notifications"
+    readonly property string resourcesTitle: "Resources"
     readonly property string wallpaperTitle: "Wallpaper"
     readonly property string wallpaperEmpty: "No wallpapers found"
     readonly property string wallpaperVideo: "Video"
