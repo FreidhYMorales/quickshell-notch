@@ -99,7 +99,6 @@ Item {
             font.family: Fonts.family
             font.pixelSize: Fonts.idleClock
         }
-
     }
 
     Text {

@@ -222,8 +222,16 @@ NotchSurface {
 
                     Repeater {
                         model: [
-                            { label: Strings.resourcesCpu, value: root.resourceStats.cpu, icon: Strings.glyphCpu },
-                            { label: Strings.resourcesRam, value: root.resourceStats.ram, icon: Strings.glyphRam }
+                            {
+                                label: Strings.resourcesCpu,
+                                value: root.resourceStats.cpu,
+                                icon: Strings.glyphCpu
+                            },
+                            {
+                                label: Strings.resourcesRam,
+                                value: root.resourceStats.ram,
+                                icon: Strings.glyphRam
+                            }
                         ]
 
                         Row {
