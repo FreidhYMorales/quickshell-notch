@@ -47,7 +47,7 @@ test("an open month grows the notch and fills it with this month's grid", () => 
     assert.match(
       output,
       new RegExp(
-        "calendar month: week 112, month 274, title " + title +
+        "calendar month: week 112, month 246, title " + title +
           ", days 42, today " + now.getDate() + ", week strip false",
       ),
     );

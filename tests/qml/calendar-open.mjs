@@ -20,7 +20,7 @@ const MONTHS = [
   "December",
 ];
 
-test("clicking the clock card opens the month and Esc returns to the week", () => {
+test("directly opening the month lets Esc return to media and close the notch", () => {
   mkdirSync("/tmp/opencode", { recursive: true });
   const dir = mkdtempSync("/tmp/opencode/notch-calendar-open-");
   try {
@@ -47,8 +47,8 @@ test("clicking the clock card opens the month and Esc returns to the week", () =
     assert.match(
       output,
       new RegExp(
-        "calendar open: before 112 no-title strip; opened 274 " + title +
-          " no-strip no-close; back 112 no-title strip",
+        "calendar open: direct 246 " + title +
+          " no-strip; back 112 no-title strip; pinned after back true; keyboard focus exclusive; media focus true; pinned after close false; keyboard focus after close undefined",
       ),
     );
   } finally {

@@ -30,7 +30,8 @@ Item {
         month: Time.month
     }, offset)
     readonly property var grid: Calendar.monthGrid(shown, today)
-    readonly property real cellWidth: width / 7
+    readonly property real gridWidth: Math.min(width, Layout.monthGridWidth)
+    readonly property real cellWidth: gridWidth / 7
 
     function step(steps: int) {
         CenterStore.dispatch({
@@ -50,20 +51,18 @@ Item {
         onWheel: event => root.scroll(event.angleDelta.y)
     }
 
-    // Esc is the only way back to the media and week view.
-    Keys.onEscapePressed: CenterStore.dispatch({
-        type: "CalendarBack",
-        monitor: root.monitor
-    })
     onVisibleChanged: if (visible)
         forceActiveFocus()
 
     Column {
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: root.gridWidth
+        height: parent.height
         spacing: Layout.monthGap
 
         Item {
-            width: parent.width
+            width: root.gridWidth
             height: Layout.monthHeaderHeight
 
             Row {
@@ -122,6 +121,8 @@ Item {
         }
 
         Row {
+            width: root.gridWidth
+
             Repeater {
                 model: Strings.weekdays
 
@@ -133,13 +134,14 @@ Item {
                     text: modelData
                     color: root.scheme.muted
                     font.family: Fonts.family
-                    font.pixelSize: Fonts.small
+                    font.pixelSize: Fonts.body
                 }
             }
         }
 
         Grid {
             objectName: "calendar-grid"
+            width: root.gridWidth
             columns: 7
 
             Repeater {
@@ -169,7 +171,7 @@ Item {
                         color: cell.modelData.today ? Colours.background : root.scheme.onSurface
                         opacity: cell.modelData.inMonth ? 1 : Colours.outsideAlpha
                         font.family: Fonts.family
-                        font.pixelSize: Fonts.body
+                        font.pixelSize: Fonts.title
                     }
                 }
             }

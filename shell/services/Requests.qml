@@ -15,6 +15,7 @@ Singleton {
 
     signal controlCenter(string view, string monitor)
     signal expanded(string monitor)
+    signal calendar(string monitor)
 
     // A keybind can arrive before the compositor has listed its monitors
     // (right after login). Hold every request until it does instead of
@@ -43,6 +44,8 @@ Singleton {
             const request = taken.ready[i];
             if (request.kind === "controlcenter")
                 root.controlCenter(request.view, monitor);
+            else if (request.kind === "calendar")
+                root.calendar(monitor);
             else
                 root.expanded(monitor);
         }
@@ -70,6 +73,12 @@ Singleton {
     function toggleExpanded(): void {
         request({
             kind: "expanded"
+        });
+    }
+
+    function toggleCalendar(): void {
+        request({
+            kind: "calendar"
         });
     }
 
@@ -113,6 +122,10 @@ Singleton {
 
             function toggle(): void {
                 root.toggleExpanded();
+            }
+
+            function calendar(): void {
+                root.toggleCalendar();
             }
         }
     }

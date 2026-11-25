@@ -49,6 +49,16 @@ const withoutCalendar = (state, name) => {
   });
 };
 
+const withoutKeyboardFocus = (state, name) => {
+  const monitor = {};
+  for (const key in state.monitors[name]) {
+    if (key !== "keyboardFocus") monitor[key] = state.monitors[name][key];
+  }
+  return merge(state, {
+    monitors: merge(state.monitors, { [name]: monitor }),
+  });
+};
+
 // Once the expanded notch closes (neither hovered nor pinned) a browsed date
 // or an open month is forgotten: it reopens on the week around today.
 const closeCalendar = (state, name) => {
@@ -118,13 +128,28 @@ const handlers = {
   },
   ExpandedToggle(state, { monitor }) {
     if (!state.monitors[monitor]) return unchanged(state);
+    const pinned = !state.monitors[monitor].pinned;
+    const toggled = withMonitor(state, monitor, { pinned });
+    const focused = pinned
+      ? withMonitor(toggled, monitor, { keyboardFocus: true })
+      : withoutKeyboardFocus(toggled, monitor);
     return {
       state: closeCalendar(
-        withMonitor(state, monitor, {
-          pinned: !state.monitors[monitor].pinned,
-        }),
+        focused,
         monitor,
       ),
+      effects: [],
+    };
+  },
+  ExpandedClose(state, { monitor }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    const closed = withMonitor(state, monitor, {
+      hovered: false,
+      pinned: false,
+      calendar: null,
+    });
+    return {
+      state: withoutKeyboardFocus(closed, monitor),
       effects: [],
     };
   },
@@ -137,9 +162,41 @@ const handlers = {
       effects: [],
     };
   },
+  CalendarOpen(state, { monitor }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    return setGlobal(
+      withMonitor(state, monitor, {
+        pinned: true,
+        keyboardFocus: true,
+        calendar: { view: "month", offset: 0 },
+      }),
+      { keyboard: null },
+    );
+  },
+  CalendarToggle(state, { monitor }) {
+    if (!state.monitors[monitor]) return unchanged(state);
+    if (state.monitors[monitor].calendar?.view === "month") {
+      const closed = withMonitor(state, monitor, {
+        hovered: false,
+        pinned: false,
+        calendar: null,
+      });
+      return {
+        state: withoutKeyboardFocus(closed, monitor),
+        effects: [],
+      };
+    }
+    return handlers.CalendarOpen(state, { monitor });
+  },
   CalendarBack(state, { monitor }) {
     if (!state.monitors[monitor]) return unchanged(state);
-    return { state: withoutCalendar(state, monitor), effects: [] };
+    return {
+      state: withoutCalendar(
+        withMonitor(state, monitor, { keyboardFocus: true }),
+        monitor,
+      ),
+      effects: [],
+    };
   },
   // Weeks in the week strip, months in the month grid; positive is later.
   CalendarScroll(state, { monitor, steps }) {

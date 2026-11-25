@@ -46,13 +46,14 @@ Singleton {
     readonly property int expandedClockWidth: 250
     // An open calendar month grows the expanded notch downwards to fit the
     // title, the weekday header and six weeks of cells.
-    // Laid out like the old bar's calendar: 36 px header, 32 px day cells
+    // Laid out like the old bar's calendar: 36 px header, 28 px day cells
     // and a 24 px today square; height = pads + header + labels + 6 rows.
-    readonly property int monthHeight: 274
-    readonly property int monthCellHeight: 32
+    readonly property int monthHeight: 246
+    readonly property int monthCellHeight: 28
     readonly property int monthHeaderHeight: 36
-    readonly property int monthGap: 6
+    readonly property int monthGap: 4
     readonly property int monthArrow: 28
+    readonly property int monthGridWidth: 420
     readonly property int monthToday: 24
     readonly property int monthTodayRadius: 6
 

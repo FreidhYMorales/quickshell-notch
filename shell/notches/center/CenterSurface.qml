@@ -409,6 +409,7 @@ NotchSurface {
             visible: opacity > 0 && !root.takenOver
             screen: root.screen
             calendar: root.view.calendar ?? null
+            keyboardMode: root.view.keyboardFocus === "exclusive"
 
             Behavior on opacity {
                 Anim {}
