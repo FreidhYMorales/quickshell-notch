@@ -39,3 +39,6 @@ Risk: none
 
 - L1 request: Load the `flow-pair` skill and follow it. 02
 - TDD pause: The unusable-CPU summary test passed immediately against the code from the first green step (`ControlCenterSurface.qml` already renders `Measuring…` instead of zero). Strict TDD requires a failing test before a code change; no test-only commit was made.
+- The idle-center test was red with 3 row children and passed after removing both meters (`0964ed2` -> `91ad018`). Focused resource and idle checks pass (4/4).
+- `make check` reached the QML suite after 736 unit tests and all prior QML groups passed, but `calendar-open.mjs` failed: it expects the old idle width of 112 px after returning from the calendar, while the date/time-only row now has width 32 px. This pre-existing expectation must change for the accepted layout; paused without modifying it (Strict TDD stop rule 3). `make check-fast` passes.
+- Risk: none. Manual visual checks: not run.
