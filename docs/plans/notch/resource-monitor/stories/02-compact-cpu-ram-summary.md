@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given CPU and RAM readings are usable, when the Control Center root is open, then a compact summary shows both labeled percentages in stable positions.
-- [ ] Given either reading is not usable yet, when the summary is shown, then its labeled slot remains and displays a placeholder/status rather than zero.
-- [ ] Given the central notch is showing its idle view, including during lock transitions that use that view, when I look at it, then I see only date and time and no CPU/RAM meters.
+- [x] Given CPU and RAM readings are usable, when the Control Center root is open, then a compact summary shows both labeled percentages in stable positions.
+- [x] Given either reading is not usable yet, when the summary is shown, then its labeled slot remains and displays a placeholder/status rather than zero.
+- [x] Given the central notch is showing its idle view, including during lock transitions that use that view, when I look at it, then I see only date and time and no CPU/RAM meters.
 
 ## Plan
 
@@ -41,4 +41,6 @@ Risk: none
 - TDD pause: The unusable-CPU summary test passed immediately against the code from the first green step (`ControlCenterSurface.qml` already renders `Measuring…` instead of zero). Strict TDD requires a failing test before a code change; no test-only commit was made.
 - The idle-center test was red with 3 row children and passed after removing both meters (`0964ed2` -> `91ad018`). Focused resource and idle checks pass (4/4).
 - `make check` reached the QML suite after 736 unit tests and all prior QML groups passed, but `calendar-open.mjs` failed: it expects the old idle width of 112 px after returning from the calendar, while the date/time-only row now has width 32 px. This pre-existing expectation must change for the accepted layout; paused without modifying it (Strict TDD stop rule 3). `make check-fast` passes.
+- User approved updating the stale calendar-width assertion. Regression fix `95ec99b` changes the post-calendar idle expectation to 32 px; `node --test tests/qml/calendar-open.mjs` passes.
+- Final `make check` passes: 736 unit tests, all QML groups (two optional nested-Cage tests skipped), and smoke config load. Formatting follow-up: `3c46355`.
 - Risk: none. Manual visual checks: not run.

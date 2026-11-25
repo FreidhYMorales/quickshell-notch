@@ -11,7 +11,7 @@
 ## Backlog
 
 01. [x] 7392ca6 As a Control Center user, I want to open the resource view and see current CPU and RAM usage so that I can inspect system load at a glance.
-02. [~] As a Control Center user, I want a compact CPU/RAM summary and a central notch that shows only date and time so that resource details stay in the Control Center. Requires: #01
+02. [x] 91ad018 As a Control Center user, I want a compact CPU/RAM summary and a central notch that shows only date and time so that resource details stay in the Control Center. Requires: #01
 03. [ ] As a user troubleshooting performance, I want CPU core count, load averages, memory availability, and swap details so that I can understand resource pressure. Requires: #01
 04. [ ] As a user managing disk space, I want root-filesystem used, total, and free capacity in the summary and detail view so that I can see how much space remains. Requires: #01
 05. [ ] As a user troubleshooting storage, I want read/write rates when the backing device can be identified reliably so that I can see current disk activity. Requires: #04
