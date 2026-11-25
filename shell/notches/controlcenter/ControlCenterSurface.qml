@@ -19,6 +19,8 @@ NotchSurface {
     id: root
 
     readonly property var scheme: Colours.paletteFor(screen)
+    // Defaults to the live service; tests can provide deterministic readings.
+    property var resourceStats: SysInfo
     property bool open: false
     // 0 hidden .. 1 shown; animated instead of y (see slideOffset).
     property real progress: open ? 1 : 0
@@ -82,6 +84,10 @@ NotchSurface {
         Notifs.markSeen();
     }
 
+    function showResources() {
+        view = "resources";
+    }
+
     // A power row click always collapses the panel. Lock and suspend run here;
     // the session-ending ones open this monitor's power menu, preselected, so
     // they still need the hold.
@@ -128,6 +134,7 @@ NotchSurface {
     anchors.right: true
     implicitWidth: Layout.ccWidth
     implicitHeight: Layout.ccHeight
+    wantsKeyboard: root.view === "resources"
     maskItem: maskBox
 
     CornerEarShape {
@@ -158,8 +165,8 @@ NotchSurface {
             y: Layout.ccPad
             // Both views are built even while hidden, so the panel always
             // knows the root's height (see panelHeight).
-            implicitWidth: Math.max(rootView.implicitWidth, subView.width)
-            implicitHeight: ControlNav.panelHeight(root.view, rootView.implicitHeight, subView.height)
+            implicitWidth: Math.max(rootView.implicitWidth, subView.width, resourceView.implicitWidth)
+            implicitHeight: ControlNav.panelHeight(root.view, rootView.implicitHeight, Math.max(subView.height, resourceView.implicitHeight))
 
             Column {
                 id: rootView
@@ -316,15 +323,114 @@ NotchSurface {
                     scheme: root.scheme
                     onSeeAllRequested: root.showNotifications()
                 }
+
+                Text {
+                    objectName: "cc-resource-entry"
+                    text: Strings.resourcesTitle
+                    color: root.scheme.primary
+                    font.family: Fonts.family
+                    font.pixelSize: Fonts.small
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.showResources()
+                    }
+                }
             }
 
             NotifSubpage {
                 id: subView
 
-                visible: !root.rootView
+                visible: root.view === ControlNav.NOTIFICATIONS
                 scheme: root.scheme
                 minHeight: rootView.implicitHeight
                 onBackRequested: root.view = ControlNav.back()
+            }
+
+            Column {
+                id: resourceView
+
+                visible: root.view === "resources"
+                focus: visible
+                Keys.onEscapePressed: root.view = ControlNav.back()
+                spacing: Layout.ccGap
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Item {
+                        objectName: "cc-resource-back"
+                        width: Layout.ccClearButton
+                        height: width
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: backHover.hovered ? root.scheme.primary : "transparent"
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: Strings.glyphChevronLeft
+                            color: backHover.hovered ? Colours.background : root.scheme.onSurface
+                            font.family: Fonts.family
+                            font.pixelSize: Fonts.body
+                        }
+
+                        HoverHandler {
+                            id: backHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.view = ControlNav.back()
+                        }
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Strings.resourcesTitle
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.title
+                    }
+                }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesCpu
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: Number.isFinite(root.resourceStats.cpu) ? Math.round(root.resourceStats.cpu) + "%" : Strings.resourcesMeasuring
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesRam
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: Number.isFinite(root.resourceStats.ram) ? Math.round(root.resourceStats.ram) + "%" : Strings.resourcesMeasuring
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
             }
         }
     }
