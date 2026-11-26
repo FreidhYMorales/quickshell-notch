@@ -158,6 +158,13 @@ NotchSurface {
         const rate = activity[propertyName];
         return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(root.resourceStats.diskActivityStatus);
     }
+    function networkActivityRate(propertyName) {
+        const activity = root.resourceStats.networkActivity;
+        if (!activity)
+            return root.detailStatus(root.resourceStats.networkActivityStatus);
+        const rate = activity[propertyName];
+        return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(root.resourceStats.networkActivityStatus);
+    }
     function detailStatus(status) {
         return status === "unavailable" ? Strings.resourcesUnavailable : Strings.resourcesMeasuring;
     }
@@ -638,6 +645,16 @@ NotchSurface {
                 ResourceDetailRow {
                     label: Strings.resourcesDiskActivityLabels[1]
                     value: root.diskActivityRate("writeBytesPerSecond")
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesNetworkLabels[0]
+                    value: root.networkActivityRate("receiveBytesPerSecond")
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesNetworkLabels[1]
+                    value: root.networkActivityRate("transmitBytesPerSecond")
                 }
 
                 Row {
