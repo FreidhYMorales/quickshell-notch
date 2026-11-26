@@ -117,6 +117,21 @@ NotchSurface {
     function formatMemoryPair(used, total) {
         return Number.isFinite(used) && Number.isFinite(total) ? formatMemory(used) + " / " + formatMemory(total) : Strings.resourcesMeasuring;
     }
+    function formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes < 0)
+            return Strings.resourcesMeasuring;
+        const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+        let value = bytes;
+        let unit = 0;
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024;
+            unit += 1;
+        }
+        return (unit === 0 ? Math.round(value) : value.toFixed(1)) + " " + units[unit];
+    }
+    function formatBytePair(used, total) {
+        return Number.isFinite(used) && Number.isFinite(total) ? formatBytes(used) + " / " + formatBytes(total) : Strings.resourcesMeasuring;
+    }
     function detailStatus(status) {
         return status === "unavailable" ? Strings.resourcesUnavailable : Strings.resourcesMeasuring;
     }
@@ -265,19 +280,26 @@ NotchSurface {
                                 label: Strings.resourcesRam,
                                 value: root.resourceStats.ram,
                                 icon: Strings.glyphRam
+                            },
+                            {
+                                label: Strings.resourcesDisk,
+                                value: root.resourceStats.rootFilesystem ? root.resourceStats.rootFilesystem.usedPercent : null,
+                                icon: Strings.glyphDisk
                             }
                         ]
 
                         Row {
+                            id: resourceMetric
+
                             required property var modelData
 
-                            width: (Layout.ccListWidth - Layout.ccTileGap) / 2
+                            width: (Layout.ccListWidth - 2 * Layout.ccTileGap) / 3
                             spacing: Layout.ccTileGap
 
                             ArcMeter {
                                 anchors.verticalCenter: parent.verticalCenter
-                                value: Number.isFinite(parent.modelData.value) ? parent.modelData.value : 0
-                                icon: parent.modelData.icon
+                                value: Number.isFinite(resourceMetric.modelData.value) ? resourceMetric.modelData.value : 0
+                                icon: resourceMetric.modelData.icon
                                 ringColor: root.scheme.primary
                             }
 
@@ -286,14 +308,14 @@ NotchSurface {
                                 spacing: 2
 
                                 Text {
-                                    text: parent.parent.modelData.label
+                                    text: resourceMetric.modelData.label
                                     color: root.scheme.muted
                                     font.family: Fonts.family
                                     font.pixelSize: Fonts.small
                                 }
 
                                 Text {
-                                    text: Number.isFinite(parent.parent.modelData.value) ? Math.round(parent.parent.modelData.value) + "%" : Strings.resourcesMeasuring
+                                    text: Number.isFinite(resourceMetric.modelData.value) ? Math.round(resourceMetric.modelData.value) + "%" : Strings.resourcesMeasuring
                                     color: root.scheme.onSurface
                                     font.family: Fonts.family
                                     font.pixelSize: Fonts.body
@@ -536,6 +558,16 @@ NotchSurface {
                 ResourceDetailRow {
                     label: Strings.resourcesMemoryLabels[2]
                     value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.swapUsedKiB, root.resourceStats.memoryDetails.swapTotalKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesDiskLabels[0]
+                    value: root.resourceStats.rootFilesystem ? root.formatBytePair(root.resourceStats.rootFilesystem.usedBytes, root.resourceStats.rootFilesystem.totalBytes) : Strings.resourcesMeasuring
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesDiskLabels[1]
+                    value: root.resourceStats.rootFilesystem ? root.formatBytes(root.resourceStats.rootFilesystem.availableBytes) : Strings.resourcesMeasuring
                 }
 
                 Row {

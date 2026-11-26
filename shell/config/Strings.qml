@@ -21,6 +21,8 @@ Singleton {
     readonly property string resourcesTitle: "Resources"
     readonly property string resourcesCpu: "CPU"
     readonly property string resourcesRam: "RAM"
+    readonly property string resourcesDisk: "DISK"
+    readonly property var resourcesDiskLabels: ["Disk used / total", "Free space"]
     readonly property string resourcesMeasuring: "Measuring…"
     readonly property string resourcesUnavailable: "Unavailable"
     readonly property string resourcesLogicalCpus: "Logical CPUs"
@@ -237,6 +239,7 @@ Singleton {
     // Nerd Font glyphs for the idle row and battery layers.
     readonly property string glyphCpu: "\uf2db"
     readonly property string glyphRam: "\uf538"
+    readonly property string glyphDisk: "\uf0a0"
     readonly property string glyphBatteryFull: "\uf240"
     readonly property string glyphBatteryHalf: "\uf242"
     readonly property string glyphBatteryLow: "\uf243"
