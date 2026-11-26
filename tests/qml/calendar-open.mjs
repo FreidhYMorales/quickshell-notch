@@ -48,7 +48,7 @@ test("clicking the clock card opens the month and Esc returns to the week", () =
       output,
       new RegExp(
         "calendar open: before 112 no-title strip; opened 274 " + title +
-          " no-strip no-close; back 32 no-title no-strip",
+          " no-strip no-close; back 112 no-title strip",
       ),
     );
   } finally {

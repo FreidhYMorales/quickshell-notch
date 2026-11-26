@@ -18,6 +18,28 @@ import "../center"
 NotchSurface {
     id: root
 
+    component ResourceDetailRow: Row {
+        id: detail
+
+        required property string label
+        required property string value
+
+        spacing: Layout.ccGap
+
+        Text {
+            text: detail.label
+            color: root.scheme.muted
+            font.family: Fonts.family
+            font.pixelSize: Fonts.body
+        }
+        Text {
+            text: detail.value
+            color: root.scheme.onSurface
+            font.family: Fonts.family
+            font.pixelSize: Fonts.body
+        }
+    }
+
     readonly property var scheme: Colours.paletteFor(screen)
     // Defaults to the live service; tests can provide deterministic readings.
     property var resourceStats: SysInfo
@@ -86,6 +108,17 @@ NotchSurface {
 
     function showResources() {
         view = "resources";
+    }
+
+    function formatMemory(kib) {
+        const mib = kib / 1024;
+        return Number.isFinite(kib) ? (mib >= 1024 ? (mib / 1024).toFixed(1) + " GiB" : Math.round(mib) + " MiB") : Strings.resourcesMeasuring;
+    }
+    function formatMemoryPair(used, total) {
+        return Number.isFinite(used) && Number.isFinite(total) ? formatMemory(used) + " / " + formatMemory(total) : Strings.resourcesMeasuring;
+    }
+    function detailStatus(status) {
+        return status === "unavailable" ? Strings.resourcesUnavailable : Strings.resourcesMeasuring;
     }
 
     // A power row click always collapses the panel. Lock and suspend run here;
@@ -479,6 +512,57 @@ NotchSurface {
 
                     Text {
                         text: Number.isFinite(root.resourceStats.ram) ? Math.round(root.resourceStats.ram) + "%" : Strings.resourcesMeasuring
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesMemoryLabels[0]
+                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.usedKiB, root.resourceStats.memoryDetails.totalKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesMemoryLabels[1]
+                    value: root.resourceStats.memoryDetails ? root.formatMemory(root.resourceStats.memoryDetails.availableKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesMemoryLabels[2]
+                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.swapUsedKiB, root.resourceStats.memoryDetails.swapTotalKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
+                }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesLogicalCpus
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: Number.isFinite(root.resourceStats.logicalCpuCount) ? root.resourceStats.logicalCpuCount : root.detailStatus(root.resourceStats.logicalCpuCountStatus)
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesLoadAverage
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : root.detailStatus(root.resourceStats.loadAverageStatus)
                         color: root.scheme.onSurface
                         font.family: Fonts.family
                         font.pixelSize: Fonts.body
