@@ -44,6 +44,7 @@ NotchSurface {
     // Defaults to the live service; tests can provide deterministic readings.
     property var resourceStats: SysInfo
     property bool open: false
+    property bool keyboardMode: false
     // 0 hidden .. 1 shown; animated instead of y (see slideOffset).
     property real progress: open ? 1 : 0
     // Root content, or the notifications subpage.
@@ -98,10 +99,21 @@ NotchSurface {
     // up without a watcher process.
     onOpenChanged: {
         SysInfo.setControlCenterOpen(root.screen.name, root.open);
-        if (open)
+        if (open) {
             PowerProfile.refresh();
+            if (keyboardMode)
+                focusTimer.restart();
+        } else {
+            keyboardMode = false;
+        }
     }
     Component.onDestruction: SysInfo.setControlCenterOpen(root.screen.name, false)
+    onWantsKeyboardChanged: if (wantsKeyboard)
+        focusTimer.restart()
+    onViewChanged: if (open && keyboardMode)
+        focusTimer.restart()
+    Component.onCompleted: if (open && keyboardMode)
+        focusTimer.restart()
 
     // Both entries ("See all" and the DND right click) open the subpage, and
     // only opening it clears the unread dot.
@@ -180,11 +192,13 @@ NotchSurface {
         function onControlCenter(view, monitor) {
             if (monitor !== root.screen.name)
                 return;
-            if (view === ControlNav.NOTIFICATIONS)
+            const next = ControlNav.toggleCommand(root.open, root.view, view);
+            root.keyboardMode = next.open;
+            if (next.open && view === ControlNav.NOTIFICATIONS)
                 root.showNotifications();
             else
-                root.view = view;
-            root.open = true;
+                root.view = next.view;
+            root.open = next.open;
         }
     }
 
@@ -196,7 +210,7 @@ NotchSurface {
     anchors.right: true
     implicitWidth: Layout.ccWidth
     implicitHeight: Layout.ccHeight
-    wantsKeyboard: root.view === "resources"
+    wantsKeyboard: root.view === "resources" || (root.open && root.keyboardMode)
     maskItem: maskBox
 
     CornerEarShape {
@@ -221,8 +235,27 @@ NotchSurface {
                 leaveTimer.stop()
         }
 
-        Item {
+        FocusScope {
             id: panel
+
+            objectName: "cc-keyboard-scope"
+            focus: root.open && root.keyboardMode
+
+            function focusFirst() {
+                if (root.rootView && powerRepeater.count > 0)
+                    powerRepeater.itemAt(0).forceActiveFocus();
+                else
+                    subView.focusFirst();
+            }
+
+            Keys.onEscapePressed: {
+                if (!root.rootView) {
+                    root.view = ControlNav.back();
+                    Qt.callLater(panel.focusFirst);
+                } else {
+                    root.collapse();
+                }
+            }
 
             x: Layout.earRadius + Layout.ccPad
             y: Layout.ccPad
@@ -357,6 +390,8 @@ NotchSurface {
                         spacing: (Layout.ccListWidth - PowerMenu.ACTIONS.length * Layout.ccTile) / (PowerMenu.ACTIONS.length - 1)
 
                         Repeater {
+                            id: powerRepeater
+
                             model: PowerMenu.ACTIONS
 
                             Text {
@@ -364,13 +399,15 @@ NotchSurface {
 
                                 required property string modelData
 
+                                objectName: "cc-power-" + modelData
                                 width: Layout.ccTile
                                 height: Layout.ccTile
+                                activeFocusOnTab: true
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignHCenter
                                 text: Strings.powerIcons[modelData]
-                                color: powerHover.hovered ? root.scheme.primary : root.scheme.onSurface
-                                scale: powerHover.hovered ? Layout.powerSelectedScale : 1
+                                color: powerHover.hovered || activeFocus ? root.scheme.primary : root.scheme.onSurface
+                                scale: powerHover.hovered || activeFocus ? Layout.powerSelectedScale : 1
                                 font.family: Fonts.family
                                 font.pixelSize: Fonts.control
 
@@ -402,6 +439,14 @@ NotchSurface {
 
                                 HoverHandler {
                                     id: powerHover
+                                }
+
+                                Keys.onPressed: event => {
+                                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                        event.accepted = true;
+                                        if (!event.isAutoRepeat)
+                                            root.powerClicked(powerIcon.modelData);
+                                    }
                                 }
 
                                 TapHandler {
@@ -654,8 +699,10 @@ NotchSurface {
         onHoverChanged: on => {
             if (on) {
                 leaveTimer.stop();
-                if (!root.open)
+                if (!root.open) {
+                    root.keyboardMode = false;
                     root.view = ControlNav.initialView();
+                }
                 root.open = true;
             } else if (ControlNav.closeOnLeave(root.view) === "now") {
                 root.collapse();
@@ -663,6 +710,15 @@ NotchSurface {
                 leaveTimer.restart();
             }
         }
+    }
+
+    Timer {
+        id: focusTimer
+
+        interval: 100
+        repeat: false
+        onTriggered: if (root.open && root.keyboardMode)
+            panel.focusFirst()
     }
 
     Timer {

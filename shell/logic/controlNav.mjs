@@ -23,6 +23,15 @@ export function commandView(command) {
   return null;
 }
 
+// A panel keybind is a toggle for its own view, and a switch when another
+// control-center view is already open.
+export function toggleCommand(open, currentView, requestedView) {
+  if (open && currentView === requestedView) {
+    return { open: false, view: currentView };
+  }
+  return { open: true, view: requestedView };
+}
+
 export function back() {
   return ROOT;
 }

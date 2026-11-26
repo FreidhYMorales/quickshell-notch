@@ -14,6 +14,10 @@ ShellRoot {
         function onControlCenter(view, monitor) {
             console.log("controlcenter: " + view + " " + monitor);
         }
+
+        function onCalendar(monitor) {
+            console.log("calendar: " + monitor);
+        }
     }
 
     Timer {

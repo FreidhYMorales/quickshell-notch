@@ -1,6 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseSleepSignal, sleepStep } from "../shell/logic/sleepLock.mjs";
+import {
+  monitorRetryDelay,
+  parsePreparingForSleep,
+  parseSleepSignal,
+  sleepStep,
+} from "../shell/logic/sleepLock.mjs";
+
+test("the logind property reply reports an in-progress sleep", () => {
+  assert.equal(parsePreparingForSleep("(<true>,)"), true);
+  assert.equal(parsePreparingForSleep("(<false>,)"), false);
+  assert.equal(parsePreparingForSleep("not a property reply"), null);
+});
+
+test("monitor retry delay backs off and stays bounded", () => {
+  assert.deepEqual(
+    [1, 2, 3, 4, 5, 6, 20].map(monitorRetryDelay),
+    [250, 500, 1000, 2000, 4000, 5000, 5000],
+  );
+});
 
 const prefix =
   "/org/freedesktop/login1: org.freedesktop.login1.Manager.PrepareForSleep ";

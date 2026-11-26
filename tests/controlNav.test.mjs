@@ -7,6 +7,7 @@ import {
   initialView,
   openSubpage,
   panelHeight,
+  toggleCommand,
 } from "../shell/logic/controlNav.mjs";
 
 test("initialView opens the control center at the root", () => {
@@ -27,6 +28,25 @@ test("commandView maps the control center IPC commands and ignores unknown ones"
   assert.equal(commandView("open"), "root");
   assert.equal(commandView("notifications"), "notifications");
   assert.equal(commandView("toggle"), null);
+});
+
+test("a control center command closes its active view or opens the requested one", () => {
+  assert.deepEqual(toggleCommand(false, "root", "root"), {
+    open: true,
+    view: "root",
+  });
+  assert.deepEqual(toggleCommand(true, "root", "root"), {
+    open: false,
+    view: "root",
+  });
+  assert.deepEqual(toggleCommand(true, "root", "notifications"), {
+    open: true,
+    view: "notifications",
+  });
+  assert.deepEqual(toggleCommand(true, "notifications", "notifications"), {
+    open: false,
+    view: "notifications",
+  });
 });
 
 test("panelHeight never shrinks below the root around a subpage", () => {
