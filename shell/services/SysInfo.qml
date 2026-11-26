@@ -16,10 +16,22 @@ Singleton {
     property var logicalCpuCount: null
     property var loadAverage: null
     property var memoryDetails: null
+    property var rootFilesystem: null
+    property string rootFilesystemStatus: "measuring"
+    property var openControlCenters: ({})
     property string logicalCpuCountStatus: "measuring"
     property string loadAverageStatus: "measuring"
     property string memoryDetailsStatus: "measuring"
     readonly property var ram: root.memoryDetails ? Math.round((1 - root.memoryDetails.availableKiB / root.memoryDetails.totalKiB) * 100) : null
+
+    function setControlCenterOpen(monitor, open) {
+        const monitors = Object.assign({}, root.openControlCenters);
+        if (open)
+            monitors[monitor] = true;
+        else
+            delete monitors[monitor];
+        root.openControlCenters = monitors;
+    }
 
     Timer {
         interval: Timings.sysPoll
@@ -30,6 +42,35 @@ Singleton {
             stat.reload();
             meminfo.reload();
             loadavg.reload();
+        }
+    }
+
+    Timer {
+        interval: Timings.sysPoll
+        repeat: true
+        running: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
+        triggeredOnStart: true
+        onTriggered: if (!diskProcess.running)
+            diskProcess.running = true
+    }
+
+    Process {
+        id: diskProcess
+
+        command: ["df", "-B1", "--output=size,used,avail,pcent", "/"]
+        stdout: StdioCollector {
+            id: diskOutput
+
+            onStreamFinished: {
+                root.rootFilesystem = SysStats.parseRootFilesystem(diskOutput.text);
+                root.rootFilesystemStatus = root.rootFilesystem ? "available" : "unavailable";
+            }
+        }
+        onExited: code => {
+            if (code !== 0) {
+                root.rootFilesystem = null;
+                root.rootFilesystemStatus = "unavailable";
+            }
         }
     }
 

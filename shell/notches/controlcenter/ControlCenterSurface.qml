@@ -96,8 +96,12 @@ NotchSurface {
 
     // Re-read the profile when the panel opens: a change made elsewhere shows
     // up without a watcher process.
-    onOpenChanged: if (open)
-        PowerProfile.refresh()
+    onOpenChanged: {
+        SysInfo.setControlCenterOpen(root.screen.name, root.open);
+        if (open)
+            PowerProfile.refresh();
+    }
+    Component.onDestruction: SysInfo.setControlCenterOpen(root.screen.name, false)
 
     // Both entries ("See all" and the DND right click) open the subpage, and
     // only opening it clears the unread dot.
