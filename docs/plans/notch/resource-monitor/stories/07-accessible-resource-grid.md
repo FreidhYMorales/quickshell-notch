@@ -39,3 +39,5 @@ Risk: none
 - Confirmed keyboard navigation: Tab/Shift+Tab through Back and each card, with the focused card scrolled into view; no arrow-key grid navigation.
 - Approved test list: bounded complete grid (integration); pointer wheel/drag scrolling (integration); Tab/Shift+Tab reachability, focus visibility, and return-to-root (integration).
 - Safety net before UI changes: `node --test --test-concurrency=1 tests/sysStats.test.mjs tests/qml/controlcenter-network.mjs tests/qml/controlcenter-resource-back.mjs tests/qml/controlcenter-resource-escape.mjs tests/qml/controlcenter-keyboard.mjs` passed (19/19).
+- Bounded-grid integration test `2758cbf` is red for the expected reason: `resource view: clipped scrolling viewport is missing or does not contain the complete grid`; the accompanying `tests/sysStats.test.mjs` passed 15/15.
+- Paused before production changes under stop rule 5: formatting expanded the test step to 64 added lines across two files, exceeding the approximately 50-line step budget. No production code changed; the red marker records this test commit.
