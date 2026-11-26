@@ -42,3 +42,5 @@ Risk: item 4 (shared resource sampling state)
 - Approved test list: root-device rate calculation, unusable device/counter/interval handling, active-only lifecycle integration, and smoke-mode integration.
 - Rate-calculation unit cycle: `9cd2fc0` red -> `62ca9ea` green (`node --test tests/sysStats.test.mjs`, 12/12).
 - Unusable-sample test `6b599c8` is red as expected: incomplete mountinfo was incorrectly accepted and produced rates. Before production changes, stopped because formatting the new test also reformatted four lines in the already committed rate test (flow-pair stop rule 3). Risk: item 4 (shared resource sampling state); your call.
+- User approved keeping that formatting-only normalization. Unusable-sample cycle `6b599c8` -> `d3bea6b` is green (`tests/sysStats.test.mjs`, 13/13).
+- Lifecycle integration probe currently fails because diskstats acquisition is not implemented. The probe is 62 lines across two files, exceeding the ~50-line step limit; stopped before committing the test or writing production code. Probe files remain untracked. Risk: item 4 (shared resource sampling state); your call.
