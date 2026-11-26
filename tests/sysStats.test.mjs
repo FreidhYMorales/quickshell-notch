@@ -69,6 +69,30 @@ test("parseRam is used memory as a rounded percentage", () => {
   );
 });
 
+test("memory details include available memory and optional swap in KiB", () => {
+  const meminfo =
+    "MemTotal: 16000000 kB\nMemAvailable: 4000000 kB\n" +
+    "SwapTotal: 8000000 kB\nSwapFree: 6000000 kB\n";
+  assert.equal(typeof SysStats.parseMemoryDetails, "function");
+  assert.deepEqual(SysStats.parseMemoryDetails(meminfo), {
+    usedKiB: 12000000,
+    totalKiB: 16000000,
+    availableKiB: 4000000,
+    swapUsedKiB: 2000000,
+    swapTotalKiB: 8000000,
+  });
+  assert.deepEqual(
+    SysStats.parseMemoryDetails("MemTotal: 1000 kB\nMemAvailable: 250 kB\n"),
+    {
+      usedKiB: 750,
+      totalKiB: 1000,
+      availableKiB: 250,
+      swapUsedKiB: null,
+      swapTotalKiB: null,
+    },
+  );
+});
+
 test("parseRam returns null for malformed input", () => {
   assert.equal(parseRam(""), null);
   assert.equal(parseRam(undefined), null);
