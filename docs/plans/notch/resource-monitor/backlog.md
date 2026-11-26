@@ -14,7 +14,7 @@
 02. [x] 91ad018 As a Control Center user, I want a compact CPU/RAM summary and a central notch that shows only date and time so that resource details stay in the Control Center. Requires: #01
 03. [x] 6305a9c As a user troubleshooting performance, I want CPU core count, load averages, memory availability, and swap details so that I can understand resource pressure. Requires: #01
 04. [x] 24c2d1b As a user managing disk space, I want root-filesystem used, total, and free capacity in the summary and detail view so that I can see how much space remains. Requires: #01
-05. [ ] As a user troubleshooting storage, I want read/write rates when the backing device can be identified reliably so that I can see current disk activity. Requires: #04
+05. [x] 305e392 As a user troubleshooting storage, I want read/write rates when the backing device can be identified reliably so that I can see current disk activity. Requires: #04
 06. [ ] As a user troubleshooting connectivity, I want aggregate network receive/transmit rates excluding loopback so that I can see current network activity. Requires: #01
 07. [ ] As a user inspecting resources, I want a complete keyboard- and pointer-accessible grid in a monitor-bounded viewport so that every resource remains reachable. Requires: #01
 08. [ ] As a user, I want measuring, unavailable, and invalid states shown explicitly in the summary and detail cards so that missing data is never mistaken for zero. Requires: #02, #03, #04

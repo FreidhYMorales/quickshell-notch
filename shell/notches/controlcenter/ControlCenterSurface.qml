@@ -136,6 +136,16 @@ NotchSurface {
     function formatBytePair(used, total) {
         return Number.isFinite(used) && Number.isFinite(total) ? formatBytes(used) + " / " + formatBytes(total) : Strings.resourcesMeasuring;
     }
+    function formatRate(bytesPerSecond) {
+        return Number.isFinite(bytesPerSecond) && bytesPerSecond >= 0 ? formatBytes(bytesPerSecond) + Strings.resourcesRateSuffix : Strings.resourcesMeasuring;
+    }
+    function diskActivityRate(propertyName) {
+        const activity = root.resourceStats.diskActivity;
+        if (!activity)
+            return root.detailStatus(root.resourceStats.diskActivityStatus);
+        const rate = activity[propertyName];
+        return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(root.resourceStats.diskActivityStatus);
+    }
     function detailStatus(status) {
         return status === "unavailable" ? Strings.resourcesUnavailable : Strings.resourcesMeasuring;
     }
@@ -573,6 +583,16 @@ NotchSurface {
                 ResourceDetailRow {
                     label: Strings.resourcesDiskLabels[1]
                     value: root.resourceStats.rootFilesystem ? root.formatBytes(root.resourceStats.rootFilesystem.availableBytes) : root.detailStatus(root.resourceStats.rootFilesystemStatus)
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesDiskActivityLabels[0]
+                    value: root.diskActivityRate("readBytesPerSecond")
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesDiskActivityLabels[1]
+                    value: root.diskActivityRate("writeBytesPerSecond")
                 }
 
                 Row {
