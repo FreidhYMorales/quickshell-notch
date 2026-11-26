@@ -1,0 +1,41 @@
+# Story 07: Keep the resource grid accessible
+
+## Story
+
+07. As a user inspecting resources, I want a complete keyboard- and pointer-accessible grid in a monitor-bounded viewport so that every resource remains reachable.
+
+## Acceptance criteria
+
+- [ ] Given the resource view contains more content than fits on the current monitor, when it opens, then every resource card remains in the same view inside a fixed viewport and the Control Center stays within the monitor's available height and safe margins.
+- [ ] Given the resource grid is longer than its viewport, when I scroll with the pointer wheel or drag the content, then the grid moves within the clipped viewport and its first and last cards can be brought into view without the outer panel growing.
+- [ ] Given the resource view is open, when I navigate with Tab or Shift+Tab, then focus can reach the Back control and every resource card, the focused card is brought into view, and Escape or activating Back returns to the Control Center root.
+
+## Plan
+
+- Keep every resource card in one complete grid and bound the outer panel to the available monitor height with safe margins.
+- Put the grid in a clipped viewport that scrolls independently of the fixed panel.
+- Support pointer wheel/drag scrolling and keyboard traversal through Back and the cards.
+- Keep the focused card visible during keyboard navigation and preserve return-to-root behavior.
+- Verify bounds, pointer scrolling, keyboard reachability, and focus visibility with QML probes on a constrained monitor fixture.
+
+## Out of scope
+
+- Adding or changing resource metrics, telemetry sources, or polling lifecycle.
+- Hiding resource groups behind tabs or changing the compact summary and central notch.
+- Changing the content or behavior of individual resource cards beyond making them reachable by keyboard.
+
+## Suggestions (your call)
+
+- `NotifSubpage.qml` already uses a clipped `Flickable` and exposes `focusFirst()`; it is a concrete pattern for the resource viewport and its keyboard entry point.
+
+## Size
+
+normal
+Risk: none
+
+## Log
+
+- L1 request: si
+- Confirmed keyboard navigation: Tab/Shift+Tab through Back and each card, with the focused card scrolled into view; no arrow-key grid navigation.
+- Approved test list: bounded complete grid (integration); pointer wheel/drag scrolling (integration); Tab/Shift+Tab reachability, focus visibility, and return-to-root (integration).
+- Safety net before UI changes: `node --test --test-concurrency=1 tests/sysStats.test.mjs tests/qml/controlcenter-network.mjs tests/qml/controlcenter-resource-back.mjs tests/qml/controlcenter-resource-escape.mjs tests/qml/controlcenter-keyboard.mjs` passed (19/19).
