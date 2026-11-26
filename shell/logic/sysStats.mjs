@@ -189,8 +189,10 @@ export function parseNetworkActivity(previous, current, elapsedMs) {
       currentCounters.receiveBytes < previousCounters.receiveBytes ||
       currentCounters.transmitBytes < previousCounters.transmitBytes
     ) return null;
-    receiveBytes += currentCounters.receiveBytes - previousCounters.receiveBytes;
-    transmitBytes += currentCounters.transmitBytes - previousCounters.transmitBytes;
+    receiveBytes += currentCounters.receiveBytes -
+      previousCounters.receiveBytes;
+    transmitBytes += currentCounters.transmitBytes -
+      previousCounters.transmitBytes;
   }
   return {
     receiveBytesPerSecond: Math.round(receiveBytes * 1000 / elapsedMs),

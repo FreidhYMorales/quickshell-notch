@@ -20,12 +20,17 @@ Singleton {
     property string rootFilesystemStatus: "measuring"
     property var diskActivity: null
     property string diskActivityStatus: "measuring"
+    property var networkActivity: null
+    property string networkActivityStatus: "measuring"
     property string rootMountInfo: ""
     property var lastDiskStats: null
     property var lastDiskSampleTime: null
+    property string lastNetworkStats: ""
+    property var lastNetworkSampleTime: null
     property var openControlCenters: ({})
     readonly property string mountInfoPath: Quickshell.env("NOTCH_SYSINFO_MOUNTINFO") || "/proc/self/mountinfo"
     readonly property string diskStatsPath: Quickshell.env("NOTCH_SYSINFO_DISKSTATS") || "/proc/diskstats"
+    readonly property string networkStatsPath: Quickshell.env("NOTCH_SYSINFO_NETDEV") || "/proc/net/dev"
     property string logicalCpuCountStatus: "measuring"
     property string loadAverageStatus: "measuring"
     property string memoryDetailsStatus: "measuring"
@@ -44,9 +49,15 @@ Singleton {
             root.diskActivityStatus = "measuring";
             root.lastDiskStats = null;
             root.lastDiskSampleTime = null;
+            root.networkActivity = null;
+            root.networkActivityStatus = "measuring";
+            root.lastNetworkStats = "";
+            root.lastNetworkSampleTime = null;
         } else if (!open && Object.keys(monitors).length === 0) {
             root.lastDiskStats = null;
             root.lastDiskSampleTime = null;
+            root.lastNetworkStats = "";
+            root.lastNetworkSampleTime = null;
         }
     }
 
@@ -78,6 +89,7 @@ Singleton {
         onTriggered: {
             mountInfo.reload();
             diskStats.reload();
+            networkStats.reload();
         }
     }
 
@@ -123,6 +135,35 @@ Singleton {
             root.diskActivityStatus = "unavailable";
             root.lastDiskStats = null;
             root.lastDiskSampleTime = null;
+        }
+    }
+
+    FileView {
+        id: networkStats
+
+        path: root.diskPollingActive ? root.networkStatsPath : ""
+        onLoaded: {
+            if (!root.diskPollingActive)
+                return;
+            const now = Date.now();
+            const current = text();
+            if (root.lastNetworkSampleTime === null) {
+                root.lastNetworkStats = current;
+                root.lastNetworkSampleTime = now;
+                return;
+            }
+            root.networkActivity = SysStats.parseNetworkActivity(root.lastNetworkStats, current, now - root.lastNetworkSampleTime);
+            root.networkActivityStatus = root.networkActivity ? "available" : "unavailable";
+            root.lastNetworkStats = current;
+            root.lastNetworkSampleTime = now;
+        }
+        onLoadFailed: {
+            if (!root.diskPollingActive)
+                return;
+            root.networkActivity = null;
+            root.networkActivityStatus = "unavailable";
+            root.lastNetworkStats = "";
+            root.lastNetworkSampleTime = null;
         }
     }
 
