@@ -6,6 +6,7 @@ import Quickshell
 Singleton {
     // Battery percentage below which the idle notch shows the low layer.
     readonly property int batteryLow: 20
+    readonly property int batteryHigh: 60
     // At or below this (unplugged) the one-shot critical event fires.
     readonly property int batteryCritical: 10
     // cava visualizer: bars, frames per second and the ascii range of a bar.

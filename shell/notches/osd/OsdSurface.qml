@@ -87,6 +87,7 @@ NotchSurface {
 
     NotchEarShape {
         id: shape
+        accentColor: root.scheme.primary
 
         width: root.slot.width
         height: root.slot.height

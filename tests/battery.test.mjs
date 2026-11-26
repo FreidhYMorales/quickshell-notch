@@ -2,14 +2,17 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   applyOverride,
+  chargeStage,
   classify,
   criticalStep,
   edges,
   fromUPower,
+  infoMilestone,
   parseSysfs,
 } from "../shell/logic/battery.mjs";
 
 const L = { low: 20, critical: 10 };
+const C = { low: 20, high: 60 };
 const bat = (x) =>
   Object.assign(
     {
@@ -98,6 +101,70 @@ test("classify: plug replaces low, limits come from the caller", () => {
   assert.equal(
     classify(bat({ percentage: 29 }), { low: 30, critical: 10 }),
     "low",
+  );
+});
+
+test("chargeStage maps low, medium and high charge to stable bands", () => {
+  assert.deepEqual([0, 19, 20, 59, 60, 80, 100].map((n) => chargeStage(n, C)), [
+    "low",
+    "low",
+    "medium",
+    "medium",
+    "high",
+    "high",
+    "high",
+  ]);
+});
+
+test("infoMilestone reports crossed bands in either direction", () => {
+  assert.equal(
+    infoMilestone(bat({ percentage: 19 }), bat({ percentage: 20 }), 80, C),
+    20,
+  );
+  assert.equal(
+    infoMilestone(bat({ percentage: 60 }), bat({ percentage: 59 }), 80, C),
+    60,
+  );
+  assert.equal(
+    infoMilestone(bat({ percentage: 59 }), bat({ percentage: 60 }), 80, C),
+    60,
+  );
+  assert.equal(
+    infoMilestone(bat({ percentage: 20 }), bat({ percentage: 21 }), 80, C),
+    null,
+  );
+});
+
+test("infoMilestone prefers the configured charge limit over a band crossing", () => {
+  assert.equal(
+    infoMilestone(
+      bat({ plugged: true, charging: true, percentage: 79 }),
+      bat({ plugged: true, percentage: 80 }),
+      80,
+      C,
+    ),
+    80,
+  );
+});
+
+test("infoMilestone ignores missing batteries and absent charge limits", () => {
+  assert.equal(
+    infoMilestone(
+      bat({ present: false, percentage: 19 }),
+      bat({ present: false, percentage: 20 }),
+      80,
+      C,
+    ),
+    null,
+  );
+  assert.equal(
+    infoMilestone(
+      bat({ percentage: 79 }),
+      bat({ plugged: true, percentage: 80 }),
+      0,
+      C,
+    ),
+    null,
   );
 });
 

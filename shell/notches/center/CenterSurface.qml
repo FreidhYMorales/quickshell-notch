@@ -58,6 +58,7 @@ NotchSurface {
     })
     readonly property bool expanded: view.mode === "expanded"
     readonly property bool month: CenterView.shapeMode(view) === "month"
+    property bool calendarMorphActive: month
     // An open month keeps the expanded width and only grows downwards.
     readonly property int expandedW: CenterLayout.expandedWidth({
         hasPlayer: Mpris.hasPlayer,
@@ -81,10 +82,19 @@ NotchSurface {
         return Qt.rgba(p.r, p.g, p.b, Colours.tileOffAlpha);
     }
 
+    onMonthChanged: {
+        if (month) {
+            calendarMorphActive = true;
+            calendarMorphTimer.stop();
+        } else if (calendarMorphActive) {
+            calendarMorphTimer.restart();
+        }
+    }
+
     slotName: "c"
     // The launcher is taller than the expanded slot; the window is masked, so
     // the extra height is invisible until the launcher fills it.
-    minHeight: Math.max(launcherView.implicitHeight, root.polkit || root.month ? root.size.height : 0)
+    minHeight: Math.max(launcherView.searchMode ? launcherView.launcherMaxHeight : launcherView.implicitHeight, root.polkit || root.month ? root.size.height : 0)
     wantsKeyboard: view.keyboardFocus === "exclusive"
     // Only the visible shape takes input; clicks beside it pass through.
     maskItem: shape
@@ -146,6 +156,7 @@ NotchSurface {
     Item {
         id: shape
 
+        objectName: "center-notch-shape"
         width: root.shown ? root.size.width : 0
         height: root.size.height
         anchors.horizontalCenter: parent.horizontalCenter
@@ -163,9 +174,10 @@ NotchSurface {
 
         // The month morph is slower than the other shape changes.
         Behavior on height {
-            Anim {
-                duration: root.month || shape.height > Layout.expandedHeight ? Timings.calendarMorph : Timings.animNormal
-                easing.type: root.month || shape.height > Layout.expandedHeight ? Easing.InOutCubic : Easing.OutCubic
+            SmoothedAnimation {
+                duration: root.calendarMorphActive ? Timings.animSlow : root.launcher ? Timings.launcherMorph : Timings.animNormal
+                velocity: root.launcher ? 600 : -1
+                easing.type: root.calendarMorphActive ? Easing.InOutCubic : Easing.OutCubic
             }
         }
 
@@ -214,6 +226,7 @@ NotchSurface {
             objectName: "polkitBackground"
             anchors.fill: parent
             visible: root.polkit
+            accentColor: root.scheme.primary
         }
 
         Column {
@@ -396,11 +409,19 @@ NotchSurface {
             visible: opacity > 0 && !root.takenOver
             screen: root.screen
             calendar: root.view.calendar ?? null
+            keyboardMode: root.view.keyboardFocus === "exclusive"
 
             Behavior on opacity {
                 Anim {}
             }
         }
+    }
+
+    Timer {
+        id: calendarMorphTimer
+
+        interval: Timings.calendarMorph
+        onTriggered: root.calendarMorphActive = false
     }
 
     // Below the content so the power icons get their own hover.

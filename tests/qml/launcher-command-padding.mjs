@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-test("command list ends after its last row", () => {
+test("command list shows five rows and keeps all commands scrollable", () => {
   const probe = fileURLToPath(
     new URL("./launcher-command-padding.qml", import.meta.url),
   );
@@ -22,5 +22,5 @@ test("command list ends after its last row", () => {
   });
   const output = result.stdout + result.stderr;
   assert.equal(result.status, 0, output);
-  assert.match(output, /launcher padding: no empty rows/);
+  assert.match(output, /launcher padding: six commands in a five-row viewport/);
 });

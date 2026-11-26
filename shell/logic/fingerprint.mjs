@@ -53,6 +53,29 @@ const fingers = [
   "right-little-finger",
 ];
 
+const handPositions = [
+  { name: "left-little-finger", x: 0.06, y: 18, rotation: -10 },
+  { name: "left-ring-finger", x: 0.15, y: 2, rotation: -5 },
+  { name: "left-middle-finger", x: 0.24, y: 0, rotation: 0 },
+  { name: "left-index-finger", x: 0.33, y: 8, rotation: 5 },
+  { name: "left-thumb", x: 0.42, y: 38, rotation: 32 },
+  { name: "right-thumb", x: 0.58, y: 38, rotation: -32 },
+  { name: "right-index-finger", x: 0.67, y: 8, rotation: -5 },
+  { name: "right-middle-finger", x: 0.76, y: 0, rotation: 0 },
+  { name: "right-ring-finger", x: 0.85, y: 2, rotation: 5 },
+  { name: "right-little-finger", x: 0.94, y: 18, rotation: 10 },
+];
+
+export function fingerLayout() {
+  return handPositions.map((entry) => Object.assign({}, entry));
+}
+
+export function fingerMatchFromSignal(line) {
+  const match = /VerifyFingerMatched\s+\(['"]([^'"]+)['"]/.exec(line);
+  if (match === null || fingers.indexOf(match[1]) === -1) return null;
+  return match[1];
+}
+
 export function freeFingers(enrolled) {
   return fingers.filter((name) => enrolled.indexOf(name) === -1);
 }

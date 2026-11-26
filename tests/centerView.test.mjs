@@ -30,6 +30,8 @@ test("expanded: hover or pin lifts idle to expanded, per monitor", () => {
   const s = play([hoverA, { type: "ExpandedToggle", monitor: "B" }]);
   assert.equal(viewFor(s, "A").mode, "expanded");
   assert.equal(viewFor(s, "B").mode, "expanded");
+  assert.equal(viewFor(s, "A").keyboardFocus, "none");
+  assert.equal(viewFor(s, "B").keyboardFocus, "exclusive");
   assert.equal(viewFor(play([hoverA]), "B").mode, "idle");
 });
 

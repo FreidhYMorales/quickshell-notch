@@ -18,9 +18,17 @@ Singleton {
     readonly property real raisedAlpha: 1 - (1 - tileOffAlpha) * (1 - tileOffAlpha)
     // Divider lines inside control center cards (muted at this opacity).
     readonly property real dividerAlpha: 0.3
+    // Fine accent on the exposed lower edge of black notch shapes.
+    readonly property real notchEdgeAlpha: 0.45
+    readonly property real notchEdgeWidth: 2
 
     // Low and critical battery.
     readonly property color critical: "#ff5449"
+    readonly property color batteryMedium: "#ffbf47"
+    readonly property color batteryHigh: "#4caf50"
+    // Security fingerprint hover feedback: remove (red) and add (green).
+    readonly property color securityRemoveHover: "#ff5449"
+    readonly property color securityAddHover: "#4caf50"
     // Red dot shown while screen recording is active.
     readonly property color recording: "#ff3b30"
     // Opacity of the unfilled part of an arc meter.

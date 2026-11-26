@@ -47,6 +47,7 @@ export function viewFor(state, name) {
   // the keyboard, like the launcher, so Esc can close it.
   if (mode === "expanded") {
     view.calendar = monitor.calendar ?? { view: "week", offset: 0 };
+    if (monitor.keyboardFocus) view.keyboardFocus = "exclusive";
     if (view.calendar.view === "month") view.keyboardFocus = "exclusive";
   }
   return view;

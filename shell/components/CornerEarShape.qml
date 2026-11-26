@@ -3,21 +3,30 @@ import QtQuick.Shapes
 import "../config"
 import "../logic/earGeometry.mjs" as EarGeometry
 
-// Black corner outline: `anchor` is the square screen corner
-// ("topLeft", "topRight", "bottomRight" or "bottomLeft").
-Shape {
+// Black corner shape with an accent along its exposed lower contour.
+Item {
     id: root
 
     property string anchor: "topLeft"
+    property color accentColor: Colours.global.primary
 
-    preferredRendererType: Shape.CurveRenderer
+    Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
 
-    ShapePath {
-        fillColor: Colours.background
-        strokeWidth: -1
+        ShapePath {
+            fillColor: Colours.background
+            strokeWidth: -1
 
-        PathSvg {
-            path: EarGeometry.cornerPath(root.width, root.height, root.anchor, Layout.earRadius, Layout.cornerRadius) ?? ""
+            PathSvg {
+                path: EarGeometry.cornerPath(root.width, root.height, root.anchor, Layout.earRadius, Layout.cornerRadius) ?? ""
+            }
         }
+    }
+
+    NotchEdgeAccent {
+        anchors.fill: parent
+        path: EarGeometry.cornerOutlinePath(root.width, root.height, root.anchor, Layout.earRadius, Layout.cornerRadius) ?? ""
+        accentColor: root.accentColor
     }
 }

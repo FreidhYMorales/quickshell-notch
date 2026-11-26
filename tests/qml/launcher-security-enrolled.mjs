@@ -63,7 +63,7 @@ test("a completed enrollment lists the new finger and closes the panel", () => {
     assert.equal(result.status, 0, output);
     assert.match(
       output,
-      /security enrolled: \[Left thumb, Right index\], panel hidden/,
+      /security enrolled: left-thumb=true, right-index=true, panel hidden/,
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });

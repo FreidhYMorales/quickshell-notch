@@ -5,7 +5,6 @@ import "../../services"
 import "../../logic/centerLayout.mjs" as CenterLayout
 import "../../logic/format.mjs" as Format
 import "../../logic/pixelShift.mjs" as PixelShift
-import "../../logic/sideLayer.mjs" as SideLayer
 
 // Idle centre notch content shows only the date and time. The width is
 // content-driven: `baseWidth` fits the row, and a side layer places its two
@@ -18,6 +17,7 @@ Item {
     property var view: null
     // OLED pixel shift: which spot of the one-pixel cycle the content is at.
     property int shiftStep: 0
+    property real batteryPulseOpacity: 1
     readonly property var shiftOffset: PixelShift.shiftOffset(shiftStep)
     // none, charging, plugged, full, low or media (CenterStore.sideLayer).
     property string batteryLayer: CenterStore.sideLayer
@@ -26,18 +26,15 @@ Item {
         pad: Layout.idlePad,
         ear: Layout.earRadius
     })
-    readonly property int sideNeed: SideLayer.sideWidth(batteryLayer, {
-        battery: CenterLayout.sideExtent({
+    readonly property int sideNeed: mediaShown ? CenterLayout.sideExtent({
+        left: art.implicitWidth,
+        right: viz.implicitWidth,
+        gap: Layout.rowGap
+    }) : (layerShown ? CenterLayout.sideExtent({
             left: layerGlyph.implicitWidth,
             right: layerPercent.implicitWidth,
             gap: Layout.rowGap
-        }),
-        media: CenterLayout.sideExtent({
-            left: art.implicitWidth,
-            right: viz.implicitWidth,
-            gap: Layout.rowGap
-        })
-    })
+        }) : 0)
     readonly property bool mediaShown: batteryLayer === "media" && Recorder.countdown === 0
     // Outermost item of each side: the dots sit beyond it.
     readonly property Item leftEdge: mediaShown ? art : (layerShown ? layerGlyph : row)
@@ -47,20 +44,18 @@ Item {
     readonly property int dotExtent: critical.visible ? Layout.rowGap + critical.implicitWidth : (unread.visible ? Layout.rowGap + Layout.dotSize : 0)
 
     readonly property var scheme: Colours.paletteFor(screen)
-    readonly property bool layerShown: batteryLayer !== "none" && !mediaShown && Recorder.countdown === 0
-    readonly property color layerColor: batteryLayer === "low" ? Colours.critical : scheme.primary
+    readonly property bool layerShown: Battery.present && Battery.infoVisible && !mediaShown && Recorder.countdown === 0
+    readonly property bool atChargeLimit: Battery.plugged && Battery.chargeLimit > 0 && Battery.percentage >= Battery.chargeLimit
+    readonly property color layerColor: Battery.chargeStage === "low" ? Colours.critical : (Battery.chargeStage === "medium" ? Colours.batteryMedium : Colours.batteryHigh)
 
     function glyphFor(): string {
-        switch (batteryLayer) {
-        case "charging":
-            return Strings.glyphBolt;
-        case "plugged":
+        if (root.atChargeLimit || (Battery.plugged && !Battery.charging))
             return Strings.glyphPlug;
-        case "full":
+        if (Battery.charging)
+            return Strings.glyphBolt;
+        if (Battery.full)
             return Strings.glyphBatteryFull;
-        default:
-            return Strings.glyphBatteryLow;
-        }
+        return Strings.glyphBatteryLow;
     }
 
     // Moves every content item but the black shape, so the notch stays put.
@@ -81,6 +76,27 @@ Item {
     NotchEarShape {
         objectName: "idle-shape"
         anchors.fill: parent
+        accentColor: Battery.present ? root.layerColor : root.scheme.primary
+        accentOpacity: root.batteryPulseOpacity
+    }
+
+    SequentialAnimation on batteryPulseOpacity {
+        loops: Animation.Infinite
+        running: Battery.present && Battery.charging && !root.atChargeLimit
+        onStopped: root.batteryPulseOpacity = 1
+
+        NumberAnimation {
+            from: 0.35
+            to: 1
+            duration: Timings.batteryPulse / 2
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            from: 1
+            to: 0.35
+            duration: Timings.batteryPulse / 2
+            easing.type: Easing.InOutSine
+        }
     }
 
     Row {

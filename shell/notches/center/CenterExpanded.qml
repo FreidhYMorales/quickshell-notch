@@ -11,7 +11,46 @@ Item {
     property var screen: null
     // The expanded view's calendar: { view: "week" | "month", offset }.
     property var calendar: null
+    property bool keyboardMode: false
     readonly property bool month: calendar !== null && calendar.view === "month"
+
+    focus: true
+
+    function focusControls() {
+        if (root.month)
+            return;
+        if (Mpris.hasPlayer)
+            media.focusFirst();
+        else
+            root.forceActiveFocus();
+    }
+
+    onKeyboardModeChanged: if (keyboardMode)
+        focusTimer.restart()
+    onVisibleChanged: if (visible && keyboardMode)
+        focusTimer.restart()
+    onMonthChanged: if (!month && keyboardMode)
+        focusTimer.restart()
+
+    function handleEscape() {
+        if (root.month) {
+            CenterStore.dispatch({
+                type: "CalendarBack",
+                monitor: root.screen ? root.screen.name : ""
+            });
+            Qt.callLater(root.forceActiveFocus);
+        } else {
+            CenterStore.dispatch({
+                type: "ExpandedClose",
+                monitor: root.screen ? root.screen.name : ""
+            });
+        }
+    }
+
+    Keys.onEscapePressed: event => {
+        event.accepted = true;
+        root.handleEscape();
+    }
 
     readonly property var scheme: Colours.paletteFor(screen)
     // What a visible `!` adds on each side (CenterLayout.expandedWidth).
@@ -19,6 +58,7 @@ Item {
 
     NotchEarShape {
         anchors.fill: parent
+        accentColor: root.scheme.primary
     }
 
     Item {
@@ -31,6 +71,8 @@ Item {
         anchors.bottomMargin: Layout.expandedPad
 
         CenterMedia {
+            id: media
+
             anchors.left: parent.left
             anchors.right: card.left
             anchors.rightMargin: Layout.expandedGap
@@ -38,6 +80,7 @@ Item {
             opacity: root.month ? 0 : 1
             visible: Mpris.hasPlayer && opacity > 0
             scheme: root.scheme
+            keyboardMode: root.keyboardMode && !root.month
 
             Behavior on opacity {
                 SequentialAnimation {
@@ -98,6 +141,15 @@ Item {
             monitor: root.screen ? root.screen.name : ""
             offset: root.month ? root.calendar.offset : 0
         }
+    }
+
+    Timer {
+        id: focusTimer
+
+        interval: 100
+        repeat: false
+        onTriggered: if (root.visible && root.keyboardMode)
+            root.focusControls()
     }
 
     // Waiting criticals: a round `!` button in its own column right of the card.

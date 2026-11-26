@@ -327,6 +327,18 @@ Singleton {
         target: Requests
     }
 
+    Connections {
+        // Alt+C toggles the month just like the control-center keybinds.
+        function onCalendar(monitor) {
+            root.dispatch({
+                type: "CalendarToggle",
+                monitor: monitor
+            });
+        }
+
+        target: Requests
+    }
+
     // The battery's one-shot critical event becomes a critical toast.
     function postBatteryCritical() {
         Notifs.post(Strings.batteryCriticalApp, Strings.batteryCriticalSummary, Strings.batteryCriticalBody.arg(Battery.percentage), Strings.batteryCriticalIcon);

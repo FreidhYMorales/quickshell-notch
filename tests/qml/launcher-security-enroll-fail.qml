@@ -64,21 +64,17 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            const thumb = Visual.findNamed(root.target.content, "security-add-left-thumb");
+            const thumb = Visual.findNamed(root.target.content, "security-print-left-thumb");
             if (!thumb) {
                 console.error("security enroll fail: Left thumb is not offered");
                 return Qt.exit(1);
             }
             mouseClick(thumb);
             wait(3000);
-            const registered = Visual.findNamed(root.target.content, "security-registered");
-            const shown = [];
-            for (const label of ["Left thumb", "Right index"]) {
-                if (registered && Visual.findText([registered], label))
-                    shown.push(label);
-            }
+            const registered = Visual.findNamed(root.target.content, "security-print-left-thumb");
+            const other = Visual.findNamed(root.target.content, "security-print-right-index-finger");
             const panel = Visual.findNamed(root.target.content, "security-enroll-title");
-            console.log("security enroll fail: [" + shown.join(", ") + "], panel " + (panel ? "shown" : "hidden"));
+            console.log("security enroll fail: left-thumb=" + (registered && registered.registered) + ", right-index=" + (other && other.registered) + ", panel " + (panel ? "shown" : "hidden"));
             Qt.exit(0);
         }
     }

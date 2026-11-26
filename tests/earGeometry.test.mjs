@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cornerPath, notchPath } from "../shell/logic/earGeometry.mjs";
+import {
+  cornerOutlinePath,
+  cornerPath,
+  notchOutlinePath,
+  notchPath,
+} from "../shell/logic/earGeometry.mjs";
 
 // Concave ears: the edge touching the screen flares OUTWARD past the body and
 // curves into the body side (quarter circle centred on the screen edge).
@@ -49,6 +54,27 @@ test("notchPath: exact concave path, top edge full width, sides inset by er", ()
     notchPath(100, 40, 10, 8),
     "M 0 0 L 100 0 C 94.477 0 90 4.477 90 10 L 90 32 A 8 8 0 0 1 82 40 " +
       "L 18 40 A 8 8 0 0 1 10 32 L 10 10 C 10 4.477 5.523 0 0 0 Z",
+  );
+});
+
+test("notchOutlinePath is one continuous exposed contour through both ears", () => {
+  assert.equal(
+    notchOutlinePath(100, 40, 10, 8),
+    "M 0 0 C 5.523 0 10 4.477 10 10 L 10 32 A 7 7 0 0 0 17 39 L 83 39 A 7 7 0 0 0 90 32 L 90 10 C 90 4.477 94.477 0 100 0",
+  );
+});
+
+test("notchOutlinePath insets the lower stroke to avoid clipping at the bounds", () => {
+  assert.equal(
+    notchOutlinePath(100, 40, 10, 8),
+    "M 0 0 C 5.523 0 10 4.477 10 10 L 10 32 A 7 7 0 0 0 17 39 L 83 39 A 7 7 0 0 0 90 32 L 90 10 C 90 4.477 94.477 0 100 0",
+  );
+});
+
+test("notchOutlinePath clamps ear and corner radii", () => {
+  assert.equal(
+    notchOutlinePath(12, 8, 99, 99),
+    "M 0 0 C 3.314 0 6 2.686 6 6 L 6 8 L 6 8 L 6 6 C 6 2.686 8.686 0 12 0",
   );
 });
 
@@ -120,6 +146,18 @@ test("cornerPath topRight: mirrored on x", () => {
     "M 100 0 L 0 0 C 5.523 0 10 4.477 10 10 L 10 22 A 8 8 0 0 0 18 30 " +
       "L 90 30 C 95.523 30 100 34.477 100 40 L 100 0 Z",
   );
+});
+
+test("cornerOutlinePath draws top ear and lower contour as one continuous path", () => {
+  assert.equal(
+    cornerOutlinePath(100, 40, "topLeft", 10, 8),
+    "M 100 0 C 94.477 0 90 4.477 90 10 L 90 22 A 8 8 0 0 1 82 30 L 10 30 C 4.477 30 0 34.477 0 40",
+  );
+  assert.equal(
+    cornerOutlinePath(100, 40, "topRight", 10, 8),
+    "M 0 0 C 5.523 0 10 4.477 10 10 L 10 22 A 8 8 0 0 0 18 30 L 90 30 C 95.523 30 100 34.477 100 40",
+  );
+  assert.equal(cornerOutlinePath(100, 40, "bottomLeft", 10, 8), null);
 });
 
 test("cornerPath bottomLeft: mirrored on y", () => {

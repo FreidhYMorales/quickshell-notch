@@ -64,7 +64,7 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            const thumb = Visual.findNamed(root.target.content, "security-add-left-thumb");
+            const thumb = Visual.findNamed(root.target.content, "security-print-left-thumb");
             if (!thumb) {
                 console.error("security cancel: Left thumb is not offered");
                 return Qt.exit(1);
@@ -78,14 +78,10 @@ ShellRoot {
             }
             mouseClick(cancel);
             wait(800);
-            const registered = Visual.findNamed(root.target.content, "security-registered");
-            const shown = [];
-            for (const label of ["Left thumb", "Right index"]) {
-                if (registered && Visual.findText([registered], label))
-                    shown.push(label);
-            }
+            const registered = Visual.findNamed(root.target.content, "security-print-left-thumb");
+            const other = Visual.findNamed(root.target.content, "security-print-right-index-finger");
             const panel = Visual.findNamed(root.target.content, "security-enroll-title");
-            console.log("security cancel: [" + shown.join(", ") + "], panel " + (panel ? "shown" : "hidden"));
+            console.log("security cancel: left-thumb=" + (registered && registered.registered) + ", right-index=" + (other && other.registered) + ", panel " + (panel ? "shown" : "hidden"));
             Qt.exit(0);
         }
     }

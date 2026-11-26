@@ -63,16 +63,54 @@ ShellRoot {
                 return Qt.exit(3);
             launcher.launch(0);
             wait(1000);
-            if (!Visual.findNamed(root.target.content, "webapp-name")) {
+            const name = Visual.findNamed(root.target.content, "webapp-name");
+            if (!name) {
                 console.error("webapp view: name field missing");
                 return Qt.exit(1);
             }
-            if (!Visual.findNamed(root.target.content, "webapp-url")) {
+            const url = Visual.findNamed(root.target.content, "webapp-url");
+            if (!url) {
                 console.error("webapp view: url field missing");
+                return Qt.exit(1);
+            }
+            if (!Visual.findNamed(root.target.content, "webapp-name-placeholder")
+                || !Visual.findNamed(root.target.content, "webapp-url-placeholder")) {
+                console.error("webapp view: input placeholders missing");
+                return Qt.exit(1);
+            }
+            if (!name.parent.color || !url.parent.color || name.parent.color.a <= 0 || url.parent.color.a <= 0) {
+                console.error("webapp view: input background missing");
                 return Qt.exit(1);
             }
             if (!Visual.findNamed(root.target.content, "webapp-install")) {
                 console.error("webapp view: install action missing");
+                return Qt.exit(1);
+            }
+            const installButton = Visual.findNamed(root.target.content, "webapp-install-button");
+            const installSurface = Visual.findNamed(root.target.content, "webapp-install-surface");
+            mouseMove(installButton, installButton.width / 2, installButton.height / 2);
+            wait(150);
+            if (!installButton.hovered) {
+                console.error("webapp view: install action did not respond to hover");
+                return Qt.exit(1);
+            }
+            if (installSurface.color.toString() !== installSurface.hoverColor.toString()) {
+                console.error("webapp view: install hover color is not applied directly");
+                return Qt.exit(1);
+            }
+            wait(600);
+            if (!installButton.hovered) {
+                console.error("webapp view: install hover did not remain active");
+                return Qt.exit(1);
+            }
+            mouseMove(name, name.width / 2, name.height / 2);
+            wait(200);
+            if (installButton.hovered) {
+                console.error("webapp view: install hover stayed active after leaving the button");
+                return Qt.exit(1);
+            }
+            if (installSurface.color.toString() !== installSurface.restColor.toString()) {
+                console.error("webapp view: install color did not return after leaving hover");
                 return Qt.exit(1);
             }
             console.log("webapp view: name, url and install shown");

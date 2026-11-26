@@ -32,6 +32,7 @@ Item {
 
     NotchEarShape {
         anchors.fill: parent
+        accentColor: root.scheme.primary
     }
 
     // The body click sits under the header and buttons, which take their own clicks.

@@ -7,6 +7,7 @@ import QtMultimedia
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../components"
 import "../config"
 import "../services"
 import "../notches/center"
@@ -746,16 +747,9 @@ Scope {
                     }
                 }
 
-                Shape {
+                NotchEarShape {
                     anchors.fill: parent
-                    preferredRendererType: Shape.CurveRenderer
-                    ShapePath {
-                        fillColor: Colours.background
-                        strokeWidth: -1
-                        PathSvg {
-                            path: EarGeometry.notchPath(lockedNotch.width, lockedNotch.height, Layout.earRadius, Layout.cornerRadius)
-                        }
-                    }
+                    accentColor: Colours.paletteFor(surface.screen).primary
                 }
 
                 Text {

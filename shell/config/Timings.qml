@@ -18,6 +18,12 @@ Singleton {
     // Pause before the lock fingerprint listener restarts after a failed
     // scan, so fprintd has released the device.
     readonly property int lockFingerprintRetry: 300
+    // Fingerprint highlight and automatic verification in the security view.
+    readonly property int securityMatchFlash: 650
+    readonly property int securityVerifyRetry: 1200
+    readonly property int securityFingerPulse: 160
+    readonly property int securityFingerSettle: 220
+    readonly property int securityFingerHover: 120
     // Screenshot is cosmetic: do not let it delay a lock indefinitely.
     readonly property int lockCaptureTimeout: 500
     // The black stage paints its frame first and turns the outputs off only
@@ -44,6 +50,9 @@ Singleton {
     readonly property int recordingHelperTimeout: 5000
     // The notch holds the install confirmation this long before it closes.
     readonly property int webappConfirm: 1200
+    // Battery details stay visible briefly after crossing a charge milestone.
+    readonly property int batteryMilestone: 120000
+    readonly property int batteryPulse: 1100
 
     // Unread dot blink half-period (milliseconds).
     readonly property int blink: Motion.blink
@@ -60,6 +69,7 @@ Singleton {
     readonly property int animFast: Motion.animFast
     readonly property int animNormal: Motion.animNormal
     readonly property int animSlow: Motion.animSlow
+    readonly property int launcherMorph: Motion.launcherMorph
     // Clock card growing into the month (and back): the card and the notch
     // height take the whole span; the clock and the month each fade during
     // one half, so they never cross-fade on top of each other.

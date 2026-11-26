@@ -46,13 +46,14 @@ Singleton {
     readonly property int expandedClockWidth: 250
     // An open calendar month grows the expanded notch downwards to fit the
     // title, the weekday header and six weeks of cells.
-    // Laid out like the old bar's calendar: 36 px header, 32 px day cells
+    // Laid out like the old bar's calendar: 36 px header, 28 px day cells
     // and a 24 px today square; height = pads + header + labels + 6 rows.
-    readonly property int monthHeight: 274
-    readonly property int monthCellHeight: 32
+    readonly property int monthHeight: 246
+    readonly property int monthCellHeight: 28
     readonly property int monthHeaderHeight: 36
-    readonly property int monthGap: 6
+    readonly property int monthGap: 4
     readonly property int monthArrow: 28
+    readonly property int monthGridWidth: 420
     readonly property int monthToday: 24
     readonly property int monthTodayRadius: 6
 
@@ -103,6 +104,12 @@ Singleton {
     readonly property int launcherDivider: 1
     // The selected app grows slightly, like the power menu selection.
     readonly property real launcherSelectedScale: 1.1
+    readonly property int securityHandsHeight: 100
+    readonly property int securityFingerTopMargin: 8
+    readonly property int securityFingerSize: 36
+    readonly property int securityFingerGlyph: 26
+    readonly property real securityFingerHoverScale: 1.12
+    readonly property real securityFingerPulseScale: 1.3
 
     readonly property int wallpaperViewHeight: 260
     readonly property int wallpaperCardWidth: 116
@@ -124,15 +131,16 @@ Singleton {
     readonly property int keybindsPillHeight: 24
     readonly property int keybindsPillPad: 8
 
-    // Webapp sub-view: fixed height so typing never resizes the notch.
-    readonly property int webappViewHeight: 220
+    // Webapp sub-view: compact form, fields padded inside battery-tinted cards.
+    readonly property int webappGap: 8
+    readonly property int webappFieldHeight: 40
+    readonly property int webappFieldPad: 12
+    readonly property int webappButtonPad: 16
     // Screensaver sub-view: its wallpaper picker, a row of thumbnails under
     // the switch.
     readonly property int screensaverPickerHeight: 72
     readonly property int screensaverPickerWidth: 128
     readonly property int screensaverChosenBorder: 2
-    readonly property int webappFieldHeight: 40
-    readonly property int webappButtonPad: 16
 
     // Expanded content: padding inside the ears, gap between columns, the
     // clock card beside a player, and the album art.

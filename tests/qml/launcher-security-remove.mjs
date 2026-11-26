@@ -67,7 +67,10 @@ test("removing a finger drops it from the list and keeps the others", () => {
     });
     const output = result.stdout + result.stderr;
     assert.equal(result.status, 0, output);
-    assert.match(output, /security remove: \[Left thumb\]/);
+    assert.match(
+      output,
+      /security remove: left-thumb=true, right-index=false/,
+    );
     assert.equal(
       readFileSync(join(dir, "delete-args"), "utf8"),
       "me -f right-index-finger\n",

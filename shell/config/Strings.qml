@@ -39,6 +39,7 @@ Singleton {
     readonly property string securityFingerprintUnlock: "Fingerprint unlock"
     readonly property string securityRegistered: "Registered fingers"
     readonly property string securityAdd: "Add a finger"
+    readonly property string securityHandHint: "Click a bright print to remove it, or a dim one to add it."
     readonly property string securityEnrolling: "Enrolling %1"
     readonly property string securityTouches: "Touches: %1"
     // Enrollment hints keyed by fprintd-enroll's status (without "enroll-").
@@ -77,6 +78,8 @@ Singleton {
     readonly property string idleSwitchOn: "󰄲"
     readonly property string idleSwitchOff: "󰄱"
     readonly property string webappInstall: "Install"
+    readonly property string webappNamePlaceholder: "Web app name"
+    readonly property string webappUrlPlaceholder: "https://example.com"
     readonly property string webappInstalled: "Installed"
     readonly property string webappInstallFailed: "Installation failed"
     readonly property string webappNameMissing: "Name is required"

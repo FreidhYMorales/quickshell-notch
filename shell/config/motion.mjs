@@ -9,6 +9,7 @@
 export const animFast = 120;
 export const animNormal = 220;
 export const animSlow = 400;
+export const launcherMorph = 280;
 export const blink = 700;
 
 // greetd login surface.

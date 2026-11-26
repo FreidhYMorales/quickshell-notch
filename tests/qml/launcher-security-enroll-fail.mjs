@@ -61,7 +61,7 @@ test("a failed enrollment leaves the list as it was and closes the panel", () =>
     assert.equal(result.status, 0, output);
     assert.match(
       output,
-      /security enroll fail: \[Right index\], panel hidden/,
+      /security enroll fail: left-thumb=false, right-index=true, panel hidden/,
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });

@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   enrolledFingers,
   enrollResult,
+  fingerLayout,
+  fingerMatchFromSignal,
   freeFingers,
 } from "../shell/logic/fingerprint.mjs";
 
@@ -123,4 +125,46 @@ test("registered fingers are not offered again", () => {
     "right-little-finger",
   ]);
   assert.deepEqual(freeFingers(allFingers), []);
+});
+
+test("fingerLayout arranges all ten prints like two facing hands", () => {
+  const layout = fingerLayout();
+  assert.deepEqual(layout.map((entry) => entry.name), [
+    "left-little-finger",
+    "left-ring-finger",
+    "left-middle-finger",
+    "left-index-finger",
+    "left-thumb",
+    "right-thumb",
+    "right-index-finger",
+    "right-middle-finger",
+    "right-ring-finger",
+    "right-little-finger",
+  ]);
+  assert.ok(layout[0].y > layout[2].y);
+  assert.ok(layout[4].y > layout[3].y);
+  assert.ok(layout[5].y > layout[6].y);
+  assert.ok(layout[9].y > layout[7].y);
+  assert.ok(layout.every((entry) => entry.x >= 0 && entry.x <= 1));
+});
+
+test("fingerMatchFromSignal extracts only a known matched finger", () => {
+  assert.equal(
+    fingerMatchFromSignal(
+      "/net/reactivated/Fprint/Device/0: net.reactivated.Fprint.Device.VerifyFingerMatched ('right-index-finger',)",
+    ),
+    "right-index-finger",
+  );
+  assert.equal(
+    fingerMatchFromSignal(
+      "/net/reactivated/Fprint/Device/0: net.reactivated.Fprint.Device.VerifyStatus ('verify-match', true)",
+    ),
+    null,
+  );
+  assert.equal(
+    fingerMatchFromSignal(
+      "/net/reactivated/Fprint/Device/0: net.reactivated.Fprint.Device.VerifyFingerMatched ('unknown-finger',)",
+    ),
+    null,
+  );
 });

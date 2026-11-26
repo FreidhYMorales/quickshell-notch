@@ -66,9 +66,22 @@ test("Hover: unknown monitor is ignored", () => {
 test("ExpandedToggle: toggles pinned on one monitor only", () => {
   const on = reduce(two(), { type: "ExpandedToggle", monitor: "A" });
   assert.equal(on.state.monitors.A.pinned, true);
+  assert.equal(on.state.monitors.A.keyboardFocus, true);
   assert.equal(on.state.monitors.B.pinned, false);
   const off = reduce(on.state, { type: "ExpandedToggle", monitor: "A" });
   assert.equal(off.state.monitors.A.pinned, false);
+  assert.equal(off.state.monitors.A.keyboardFocus, undefined);
+});
+
+test("ExpandedClose: closes the expanded notch regardless of hover or pin", () => {
+  const state = reduce(two(), { type: "Hover", monitor: "A", on: true }).state;
+  const pinned = reduce(state, { type: "ExpandedToggle", monitor: "A" }).state;
+  const closed = reduce(pinned, { type: "ExpandedClose", monitor: "A" }).state;
+  assert.equal(closed.monitors.A.hovered, false);
+  assert.equal(closed.monitors.A.pinned, false);
+  assert.equal(closed.monitors.A.keyboardFocus, undefined);
+  assert.equal(closed.monitors.A.calendar, null);
+  assert.deepEqual(closed.monitors.B, two().monitors.B);
 });
 
 test("ScreensChanged: adds new monitors and keeps existing slices", () => {
@@ -873,6 +886,48 @@ test("CalendarMonth opens this month's grid on that monitor only", () => {
   });
 });
 
+test("CalendarOpen pins the expanded notch and opens this month's grid", () => {
+  const s = reduce(two(), { type: "CalendarOpen", monitor: "A" }).state;
+  assert.deepEqual(s.monitors.A, {
+    hovered: false,
+    pinned: true,
+    toastHovered: false,
+    keyboardFocus: true,
+    calendar: { view: "month", offset: 0 },
+  });
+  assert.deepEqual(s.monitors.B, two().monitors.B);
+});
+
+test("CalendarToggle opens on the first press and closes on the second", () => {
+  const opened = reduce(two(), { type: "CalendarToggle", monitor: "A" }).state;
+  assert.equal(opened.monitors.A.pinned, true);
+  assert.equal(opened.monitors.A.keyboardFocus, true);
+  assert.deepEqual(opened.monitors.A.calendar, { view: "month", offset: 0 });
+
+  const closed = reduce(opened, { type: "CalendarToggle", monitor: "A" }).state;
+  assert.deepEqual(closed.monitors.A, {
+    hovered: false,
+    pinned: false,
+    toastHovered: false,
+    calendar: null,
+  });
+});
+
+test("CalendarOpen replaces a keyboard panel so the month is visible", () => {
+  const launcher = reduce(two(), {
+    type: "LauncherToggle",
+    monitor: "A",
+  }).state;
+  const opened = reduce(launcher, {
+    type: "CalendarOpen",
+    monitor: "A",
+  }).state;
+  assert.equal(opened.global.keyboard, null);
+  assert.equal(opened.monitors.A.pinned, true);
+  assert.equal(opened.monitors.A.keyboardFocus, true);
+  assert.deepEqual(opened.monitors.A.calendar, { view: "month", offset: 0 });
+});
+
 test("CalendarBack returns to the week centred on today", () => {
   const state = run(
     two(),
@@ -884,6 +939,7 @@ test("CalendarBack returns to the week centred on today", () => {
     hovered: true,
     pinned: false,
     toastHovered: false,
+    keyboardFocus: true,
   });
 });
 

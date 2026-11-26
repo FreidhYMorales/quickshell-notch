@@ -133,6 +133,7 @@ test("the greeter morphs with the shell's shared motion tokens", () => {
   );
   assert.match(timings, /import "motion\.mjs" as Motion/);
   assert.match(timings, /animSlow:\s*Motion\.animSlow/);
+  assert.match(timings, /launcherMorph:\s*Motion\.launcherMorph/);
 });
 
 test("preview merges the shipped SDDM presets with staged overrides", () => {
