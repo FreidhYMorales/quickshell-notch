@@ -14,6 +14,23 @@ export function parseCpu(text) {
   return { idle: parts[3] + parts[4], total };
 }
 
+// Count online logical CPUs from the per-CPU lines in /proc/stat.
+export function parseLogicalCpuCount(text) {
+  const count = String(text || "").split(/\r?\n/).filter((line) =>
+    /^cpu\d+\s+\d+(?:\s+\d+)*$/.test(line.trim())
+  ).length;
+  return count || null;
+}
+
+// The first three fields in /proc/loadavg are the 1, 5, and 15-minute averages.
+export function parseLoadAverage(text) {
+  const match = /^(\S+)\s+(\S+)\s+(\S+)/.exec(String(text || "").trim());
+  if (!match) return null;
+  const values = match.slice(1).map(Number);
+  if (values.some((value) => !Number.isFinite(value) || value < 0)) return null;
+  return { one: values[0], five: values[1], fifteen: values[2] };
+}
+
 // Busy share (0-100) between two samples, or null without a usable delta.
 export function cpuPercent(prev, next) {
   if (!prev || !next) return null;
