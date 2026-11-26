@@ -14,6 +14,8 @@ Singleton {
     property var cpu: null
     property var ram: null
     property var lastCpu: null
+    property var logicalCpuCount: null
+    property var loadAverage: null
 
     Timer {
         interval: Timings.sysPoll
@@ -23,6 +25,7 @@ Singleton {
         onTriggered: {
             stat.reload();
             meminfo.reload();
+            loadavg.reload();
         }
     }
 
@@ -31,6 +34,7 @@ Singleton {
 
         path: "/proc/stat"
         onLoaded: {
+            root.logicalCpuCount = SysStats.parseLogicalCpuCount(text());
             const sample = SysStats.parseCpu(text());
             if (sample === null) {
                 console.warn("SysInfo: unreadable /proc/stat");
@@ -40,6 +44,14 @@ Singleton {
             root.lastCpu = sample;
         }
         onLoadFailed: root.cpu = null
+    }
+
+    FileView {
+        id: loadavg
+
+        path: "/proc/loadavg"
+        onLoaded: root.loadAverage = SysStats.parseLoadAverage(text())
+        onLoadFailed: root.loadAverage = null
     }
 
     FileView {

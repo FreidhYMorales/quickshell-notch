@@ -484,6 +484,42 @@ NotchSurface {
                         font.pixelSize: Fonts.body
                     }
                 }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesLogicalCpus
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: Number.isFinite(root.resourceStats.logicalCpuCount) ? root.resourceStats.logicalCpuCount : Strings.resourcesMeasuring
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
+
+                Row {
+                    spacing: Layout.ccGap
+
+                    Text {
+                        text: Strings.resourcesLoadAverage
+                        color: root.scheme.muted
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+
+                    Text {
+                        text: root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : Strings.resourcesMeasuring
+                        color: root.scheme.onSurface
+                        font.family: Fonts.family
+                        font.pixelSize: Fonts.body
+                    }
+                }
             }
         }
     }

@@ -22,6 +22,8 @@ Singleton {
     readonly property string resourcesCpu: "CPU"
     readonly property string resourcesRam: "RAM"
     readonly property string resourcesMeasuring: "Measuring…"
+    readonly property string resourcesLogicalCpus: "Logical CPUs"
+    readonly property string resourcesLoadAverage: "Load avg 1/5/15 min"
     readonly property string wallpaperTitle: "Wallpaper"
     readonly property string wallpaperEmpty: "No wallpapers found"
     readonly property string wallpaperVideo: "Video"
