@@ -18,7 +18,14 @@ Singleton {
     property var memoryDetails: null
     property var rootFilesystem: null
     property string rootFilesystemStatus: "measuring"
+    property var diskActivity: null
+    property string diskActivityStatus: "measuring"
+    property string rootMountInfo: ""
+    property var lastDiskStats: null
+    property var lastDiskSampleTime: null
     property var openControlCenters: ({})
+    readonly property string mountInfoPath: Quickshell.env("NOTCH_SYSINFO_MOUNTINFO") || "/proc/self/mountinfo"
+    readonly property string diskStatsPath: Quickshell.env("NOTCH_SYSINFO_DISKSTATS") || "/proc/diskstats"
     property string logicalCpuCountStatus: "measuring"
     property string loadAverageStatus: "measuring"
     property string memoryDetailsStatus: "measuring"
@@ -31,6 +38,15 @@ Singleton {
         else
             delete monitors[monitor];
         root.openControlCenters = monitors;
+        if (open && Object.keys(monitors).length === 1) {
+            root.diskActivity = null;
+            root.diskActivityStatus = "measuring";
+            root.lastDiskStats = null;
+            root.lastDiskSampleTime = null;
+        } else if (!open && Object.keys(monitors).length === 0) {
+            root.lastDiskStats = null;
+            root.lastDiskSampleTime = null;
+        }
     }
 
     Timer {
@@ -52,6 +68,53 @@ Singleton {
         triggeredOnStart: true
         onTriggered: if (!diskProcess.running)
             diskProcess.running = true
+    }
+
+    Timer {
+        interval: Timings.sysPoll
+        repeat: true
+        running: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
+        triggeredOnStart: true
+        onTriggered: mountInfo.reload()
+    }
+
+    FileView {
+        id: mountInfo
+
+        path: root.mountInfoPath
+        onLoaded: {
+            root.rootMountInfo = text();
+            diskStats.reload();
+        }
+        onLoadFailed: {
+            root.rootMountInfo = "";
+            diskStats.reload();
+        }
+    }
+
+    FileView {
+        id: diskStats
+
+        path: root.diskStatsPath
+        onLoaded: {
+            const now = Date.now();
+            const current = text();
+            if (root.lastDiskStats === null) {
+                root.lastDiskStats = current;
+                root.lastDiskSampleTime = now;
+                return;
+            }
+            root.diskActivity = SysStats.parseDiskActivity(root.rootMountInfo, root.lastDiskStats, current, now - root.lastDiskSampleTime);
+            root.diskActivityStatus = root.diskActivity ? "available" : "unavailable";
+            root.lastDiskStats = current;
+            root.lastDiskSampleTime = now;
+        }
+        onLoadFailed: {
+            root.diskActivity = null;
+            root.diskActivityStatus = "unavailable";
+            root.lastDiskStats = null;
+            root.lastDiskSampleTime = null;
+        }
     }
 
     Process {
