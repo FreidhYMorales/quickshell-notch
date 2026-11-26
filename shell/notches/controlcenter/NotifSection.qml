@@ -49,6 +49,8 @@ Rectangle {
             }
 
             Rectangle {
+                id: clearButton
+
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.count > 0
@@ -56,6 +58,11 @@ Rectangle {
                 height: Layout.ccClearButton
                 radius: Layout.ccClearButton / 2
                 color: clearHover.hovered ? root.scheme.primary : root.tint
+                scale: clearHover.hovered || clearInput.activeFocus ? Layout.powerSelectedScale : 1
+
+                Behavior on scale {
+                    Anim {}
+                }
 
                 Behavior on color {
                     ColorAnimation {
@@ -80,7 +87,17 @@ Rectangle {
                 }
 
                 MouseArea {
+                    id: clearInput
+
                     anchors.fill: parent
+                    activeFocusOnTab: clearButton.visible
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                            event.accepted = true;
+                            if (!event.isAutoRepeat)
+                                Notifs.clearAll();
+                        }
+                    }
                     onClicked: Notifs.clearAll()
                 }
             }
@@ -150,12 +167,19 @@ Rectangle {
             visible: root.count > 0
 
             Text {
+                id: seeAllText
+
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 text: Strings.seeAll + " " + Strings.glyphChevronRight
                 color: seeAllHover.hovered ? root.scheme.primary : root.scheme.muted
+                scale: seeAllHover.hovered || seeAllInput.activeFocus ? Layout.powerSelectedScale : 1
                 font.family: Fonts.family
                 font.pixelSize: Fonts.small
+
+                Behavior on scale {
+                    Anim {}
+                }
             }
 
             HoverHandler {
@@ -165,7 +189,17 @@ Rectangle {
             }
 
             MouseArea {
+                id: seeAllInput
+
                 anchors.fill: parent
+                activeFocusOnTab: parent.visible
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                        event.accepted = true;
+                        if (!event.isAutoRepeat)
+                            root.seeAllRequested();
+                    }
+                }
                 onClicked: root.seeAllRequested()
             }
         }

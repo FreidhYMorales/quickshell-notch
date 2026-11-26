@@ -28,6 +28,10 @@ Rectangle {
     readonly property real baseHeight: 2 * Layout.ccCardPad + Layout.ccClearButton + 2 * Layout.ccRowGap + Layout.ccDivider
     readonly property real listHeight: Math.max(Layout.ccListHeight, minHeight - baseHeight)
 
+    function focusFirst() {
+        backInput.forceActiveFocus();
+    }
+
     width: Layout.ccListWidth
     height: count > 0 ? baseHeight + listHeight : Math.max(minHeight, baseHeight + emptyLabel.implicitHeight)
     radius: Layout.cardRadius
@@ -54,6 +58,11 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Layout.ccClearButton
                 height: width
+                scale: backHover.hovered || backInput.activeFocus ? Layout.powerSelectedScale : 1
+
+                Behavior on scale {
+                    Anim {}
+                }
 
                 Rectangle {
                     anchors.fill: parent
@@ -82,7 +91,17 @@ Rectangle {
                 }
 
                 MouseArea {
+                    id: backInput
+
                     anchors.fill: parent
+                    activeFocusOnTab: true
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                            event.accepted = true;
+                            if (!event.isAutoRepeat)
+                                root.backRequested();
+                        }
+                    }
                     onClicked: root.backRequested()
                 }
             }
@@ -110,6 +129,11 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Layout.ccPill
                 height: Layout.ccClearButton
+                scale: dndHover.hovered || dndInput.activeFocus ? Layout.powerSelectedScale : 1
+
+                Behavior on scale {
+                    Anim {}
+                }
 
                 readonly property color accent: Qt.color(root.scheme.primary)
 
@@ -149,11 +173,23 @@ Rectangle {
                 }
 
                 HoverHandler {
+                    id: dndHover
+
                     cursorShape: Qt.PointingHandCursor
                 }
 
                 MouseArea {
+                    id: dndInput
+
                     anchors.fill: parent
+                    activeFocusOnTab: true
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                            event.accepted = true;
+                            if (!event.isAutoRepeat)
+                                Notifs.toggleDnd();
+                        }
+                    }
                     onClicked: Notifs.toggleDnd()
                 }
             }
@@ -166,6 +202,11 @@ Rectangle {
                 width: Layout.ccClearButton
                 height: width
                 visible: root.count > 0
+                scale: clearHover.hovered || clearInput.activeFocus ? Layout.powerSelectedScale : 1
+
+                Behavior on scale {
+                    Anim {}
+                }
 
                 Rectangle {
                     anchors.fill: parent
@@ -194,7 +235,17 @@ Rectangle {
                 }
 
                 MouseArea {
+                    id: clearInput
+
                     anchors.fill: parent
+                    activeFocusOnTab: clearButton.visible
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                            event.accepted = true;
+                            if (!event.isAutoRepeat)
+                                Notifs.clearAll();
+                        }
+                    }
                     onClicked: Notifs.clearAll()
                 }
             }
@@ -274,6 +325,11 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: Layout.ccClearButton
                             height: parent.height
+                            scale: dismissHover.hovered || dismissInput.activeFocus ? Layout.powerSelectedScale : 1
+
+                            Behavior on scale {
+                                Anim {}
+                            }
 
                             Text {
                                 anchors.centerIn: parent
@@ -290,7 +346,17 @@ Rectangle {
                             }
 
                             MouseArea {
+                                id: dismissInput
+
                                 anchors.fill: parent
+                                activeFocusOnTab: true
+                                Keys.onPressed: event => {
+                                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                        event.accepted = true;
+                                        if (!event.isAutoRepeat)
+                                            row.modelData.dismiss();
+                                    }
+                                }
                                 onClicked: row.modelData.dismiss()
                             }
                         }
