@@ -89,8 +89,9 @@ export function parseRootFilesystem(text) {
   const availableBytes = Number(match[3]);
   const usedPercent = Number(match[4]);
   if (
-    totalBytes <= 0 || usedBytes > totalBytes || availableBytes > totalBytes ||
-    usedPercent > 100
+    totalBytes <= 0 || totalBytes > 9007199254740991 ||
+    usedBytes > totalBytes || availableBytes > totalBytes ||
+    usedBytes + availableBytes > totalBytes || usedPercent > 100
   ) {
     return null;
   }
