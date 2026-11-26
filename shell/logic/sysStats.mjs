@@ -76,3 +76,23 @@ export function parseMemoryDetails(text) {
     swapTotalKiB: swapUsable ? swapTotal : null,
   };
 }
+
+// GNU df output requested with --output=size,used,avail,pcent, in bytes.
+export function parseRootFilesystem(text) {
+  const lines = String(text || "").trim().split(/\r?\n/);
+  const row = lines[lines.length - 1] || "";
+  const match = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)%\s*$/.exec(row);
+  if (!match) return null;
+
+  const totalBytes = Number(match[1]);
+  const usedBytes = Number(match[2]);
+  const availableBytes = Number(match[3]);
+  const usedPercent = Number(match[4]);
+  if (
+    totalBytes <= 0 || usedBytes > totalBytes || availableBytes > totalBytes ||
+    usedPercent > 100
+  ) {
+    return null;
+  }
+  return { totalBytes, usedBytes, availableBytes, usedPercent };
+}
