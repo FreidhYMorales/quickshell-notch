@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given at least one Control Center is open and the root filesystem's backing block device is identified with two valid samples, when the resource view is shown, then it displays read and write rates for that device in clear human-readable units; after the last Control Center closes, sampling stops.
-- [ ] Given a rate is still measuring or the root device/counters cannot be identified or read reliably, when the resource view is shown, then the storage rates are labeled with their status rather than shown as zero.
-- [ ] Given disk counters reset, roll back, or have an invalid sample interval, when a rate is calculated, then it is unavailable rather than a misleading value.
+- [x] Given at least one Control Center is open and the root filesystem's backing block device is identified with two valid samples, when the resource view is shown, then it displays read and write rates for that device in clear human-readable units; after the last Control Center closes, sampling stops.
+- [x] Given a rate is still measuring or the root device/counters cannot be identified or read reliably, when the resource view is shown, then the storage rates are labeled with their status rather than shown as zero.
+- [x] Given disk counters reset, roll back, or have an invalid sample interval, when a rate is calculated, then it is unavailable rather than a misleading value.
 
 ## Plan
 
@@ -46,3 +46,5 @@ Risk: item 4 (shared resource sampling state)
 - Initial combined lifecycle probe failed because diskstats acquisition was not implemented. It was 62 lines across two files, exceeding the ~50-line step limit, so it was split before committing that probe or writing production code.
 - Split the probe into an open-sampling test. `885ba8a` red -> `25403cd` green (`tests/qml/controlcenter-disk-polling.mjs`, 1/1). The production commit added 63 lines, exceeding the ~50-line step limit; paused before the separate stop-after-close test. Risk: item 4 (shared resource sampling state); your call.
 - Stop-after-close characterization test `8778dda` passed 1/1 on its first run because the active-only timer was already implemented in `25403cd`; user approved keeping it as test-only coverage. No production change.
+- Smoke-mode cycle: `05dd0b5` red -> `305e392` green (`tests/qml/controlcenter-disk-smoke.mjs`, 1/1). The initial failure showed that `FileView` loaded its path during initialization even with its timer stopped; inactive paths now prevent those reads. Formatting-only follow-up: `aa73593`.
+- Final `make check`: passed (763 main tests, 0 failures; all remaining checks passed, 2 unrelated nested-Cage tests skipped). Independent high-risk verification: PASS; no blocking findings. Risk: item 4 (shared resource sampling state).
