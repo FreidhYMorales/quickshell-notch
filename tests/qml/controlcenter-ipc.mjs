@@ -60,3 +60,30 @@ test("controlcenter opens the root and notifications views on the focused monito
     shell.kill();
   }
 });
+
+test("expanded calendar IPC opens the month on the focused monitor", async () => {
+  const monitor = focusedMonitor();
+  const shell = spawn("qs", ["-p", probe], { env });
+  let output = "";
+  shell.stdout.on("data", (chunk) => (output += chunk));
+  shell.stderr.on("data", (chunk) => (output += chunk));
+  const exited = new Promise((resolve) => shell.on("exit", resolve));
+  try {
+    await sleep(1000);
+    const result = spawnSync("qs", [
+      "-p",
+      probe,
+      "ipc",
+      "call",
+      "expanded",
+      "calendar",
+    ], { encoding: "utf8", timeout: 5000, env });
+    await sleep(300);
+    shell.kill();
+    await exited;
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(output, new RegExp("calendar: " + monitor));
+  } finally {
+    shell.kill();
+  }
+});
