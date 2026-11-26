@@ -42,4 +42,7 @@ Risk: none
 - CPU parser cycle: `e7e5e26` red -> `e056c80` green (`node --test tests/sysStats.test.mjs`, 8/8).
 - Memory parser cycle: `c11d271` red -> `7312d06` green (`node --test tests/sysStats.test.mjs`, 9/9).
 - CPU detail UI cycle: `c20175d` red -> `f17b3cf` green (`node --test tests/qml/controlcenter-cpu-details.mjs`, 1/1).
-- Memory detail UI test `f8b2a56` was red for missing “Memory used / total”; implementation now passes the focused QML test, but the code diff is 62 lines across three files, exceeding the flow-pair per-step limit. Paused before the code commit; implementation remains uncommitted and needs a smaller approved step.
+- Memory detail UI cycle: `f8b2a56` red -> `50a5139` green (`node --test tests/qml/controlcenter-memory-details.mjs`, 1/1); implementation was reduced to a reusable detail row.
+- Missing-source status cycle: `162ce30` red -> `6305a9c` green (`node --test tests/qml/controlcenter-details-status.mjs`, 1/1); service distinguishes measuring from unavailable and the view does not render missing values as zero.
+- Focused regression: `node --test tests/qml/controlcenter-details-status.mjs tests/qml/controlcenter-memory-details.mjs tests/qml/controlcenter-cpu-details.mjs tests/sysStats.test.mjs` passed (12/12).
+- Full check paused: `make check` fails at `deno fmt --check` because `shell/logic/sysStats.mjs` and the committed test `tests/sysStats.test.mjs` are unformatted. The test is committed and must not be edited under Strict TDD; needs user direction before proceeding.
