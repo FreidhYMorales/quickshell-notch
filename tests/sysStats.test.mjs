@@ -99,3 +99,36 @@ test("parseRam returns null for malformed input", () => {
   assert.equal(parseRam("MemTotal: 0 kB\nMemAvailable: 0 kB\n"), null);
   assert.equal(parseRam("MemTotal: 100 kB\nMemAvailable: 200 kB\n"), null);
 });
+
+test("root filesystem capacity parses the fixed-byte df output", () => {
+  assert.deepEqual(
+    SysStats.parseRootFilesystem(
+      "1B-blocks Used Available Use%\n100000 25000 70000 25%\n",
+    ),
+    {
+      totalBytes: 100000,
+      usedBytes: 25000,
+      availableBytes: 70000,
+      usedPercent: 25,
+    },
+  );
+});
+
+test("root filesystem capacity rejects missing and impossible df readings", () => {
+  assert.equal(SysStats.parseRootFilesystem(""), null);
+  assert.equal(SysStats.parseRootFilesystem("df failed\n"), null);
+  assert.equal(
+    SysStats.parseRootFilesystem("1B-blocks Used Available Use%\n"),
+    null,
+  );
+  assert.equal(
+    SysStats.parseRootFilesystem("100000 50000 70000 42%\n"),
+    null,
+  );
+  assert.equal(
+    SysStats.parseRootFilesystem(
+      "999999999999999999 1 1 1%\n",
+    ),
+    null,
+  );
+});
