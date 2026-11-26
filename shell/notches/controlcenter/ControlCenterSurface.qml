@@ -117,6 +117,9 @@ NotchSurface {
     function formatMemoryPair(used, total) {
         return Number.isFinite(used) && Number.isFinite(total) ? formatMemory(used) + " / " + formatMemory(total) : Strings.resourcesMeasuring;
     }
+    function detailStatus(status) {
+        return status === "unavailable" ? Strings.resourcesUnavailable : Strings.resourcesMeasuring;
+    }
 
     // A power row click always collapses the panel. Lock and suspend run here;
     // the session-ending ones open this monitor's power menu, preselected, so
@@ -517,17 +520,17 @@ NotchSurface {
 
                 ResourceDetailRow {
                     label: Strings.resourcesMemoryLabels[0]
-                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.usedKiB, root.resourceStats.memoryDetails.totalKiB) : Strings.resourcesMeasuring
+                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.usedKiB, root.resourceStats.memoryDetails.totalKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesMemoryLabels[1]
-                    value: root.resourceStats.memoryDetails ? root.formatMemory(root.resourceStats.memoryDetails.availableKiB) : Strings.resourcesMeasuring
+                    value: root.resourceStats.memoryDetails ? root.formatMemory(root.resourceStats.memoryDetails.availableKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesMemoryLabels[2]
-                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.swapUsedKiB, root.resourceStats.memoryDetails.swapTotalKiB) : Strings.resourcesMeasuring
+                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.swapUsedKiB, root.resourceStats.memoryDetails.swapTotalKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
                 }
 
                 Row {
@@ -541,7 +544,7 @@ NotchSurface {
                     }
 
                     Text {
-                        text: Number.isFinite(root.resourceStats.logicalCpuCount) ? root.resourceStats.logicalCpuCount : Strings.resourcesMeasuring
+                        text: Number.isFinite(root.resourceStats.logicalCpuCount) ? root.resourceStats.logicalCpuCount : root.detailStatus(root.resourceStats.logicalCpuCountStatus)
                         color: root.scheme.onSurface
                         font.family: Fonts.family
                         font.pixelSize: Fonts.body
@@ -559,7 +562,7 @@ NotchSurface {
                     }
 
                     Text {
-                        text: root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : Strings.resourcesMeasuring
+                        text: root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : root.detailStatus(root.resourceStats.loadAverageStatus)
                         color: root.scheme.onSurface
                         font.family: Fonts.family
                         font.pixelSize: Fonts.body
