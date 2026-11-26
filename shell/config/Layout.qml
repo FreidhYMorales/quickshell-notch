@@ -188,7 +188,7 @@ Singleton {
     // drawn shape (which follows its content), so it keeps room for the tray
     // and power rows on the way.
     readonly property int ccWidth: 320
-    readonly property int ccHeight: 420
+    readonly property int ccHeight: 470
     readonly property int ccHotZone: 24
     readonly property int ccPad: 14
     readonly property int ccGap: 12

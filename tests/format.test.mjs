@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   clock,
+  formatDecimal,
   formatPercent,
   formatUptime,
   parseUptime,
@@ -80,5 +81,16 @@ for (
 ) {
   test(`formatUptime ${seconds} -> ${text}`, () => {
     assert.equal(formatUptime(seconds), text);
+  });
+}
+
+for (
+  const [value, text] of [[13.84, "13.8"], [56.37, "56.4"], [57, "57.0"], [
+    0,
+    "0.0",
+  ]]
+) {
+  test(`formatDecimal ${value} -> ${text}`, () => {
+    assert.equal(formatDecimal(value), text);
   });
 }

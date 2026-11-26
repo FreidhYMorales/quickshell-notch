@@ -20,6 +20,12 @@ export function formatPercent(value) {
   return Math.round(value) + "%";
 }
 
+// One decimal, for watts and watt-hours: 13.84 -> "13.8", 57 -> "57.0".
+export function formatDecimal(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(1) : "0.0";
+}
+
 // Whole seconds from /proc/uptime ("11520.37 45678.90"); null if unreadable.
 export function parseUptime(text) {
   const seconds = Math.floor(parseFloat(text));

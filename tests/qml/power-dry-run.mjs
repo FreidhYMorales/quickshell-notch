@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const probe = fileURLToPath(new URL("./power-dry-run.qml", import.meta.url));
 const services = new URL("../../shell/services", import.meta.url).href;
 
-// Fake power commands first on PATH: even a broken dry run cannot touch the
+// Fake systemctl/hyprctl/uwsm first on PATH: even a broken dry run cannot touch the
 // live session, it only leaves a marker file behind.
 const runDry = (env) => {
   const dir = mkdtempSync(join(tmpdir(), "notch-power-"));
