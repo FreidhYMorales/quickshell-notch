@@ -54,3 +54,24 @@ export function parseRam(text) {
   if (total <= 0 || available > total) return null;
   return Math.round((1 - available / total) * 100);
 }
+
+// Memory and swap sizes from /proc/meminfo, in KiB. Swap is optional.
+export function parseMemoryDetails(text) {
+  const source = String(text || "");
+  const total = kbField(source, "MemTotal");
+  const available = kbField(source, "MemAvailable");
+  if (total === null || available === null || total <= 0 || available > total) {
+    return null;
+  }
+  const swapTotal = kbField(source, "SwapTotal");
+  const swapFree = kbField(source, "SwapFree");
+  const swapUsable = swapTotal !== null && swapFree !== null &&
+    swapFree <= swapTotal;
+  return {
+    usedKiB: total - available,
+    totalKiB: total,
+    availableKiB: available,
+    swapUsedKiB: swapUsable ? swapTotal - swapFree : null,
+    swapTotalKiB: swapUsable ? swapTotal : null,
+  };
+}
