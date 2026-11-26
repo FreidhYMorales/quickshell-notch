@@ -7,10 +7,14 @@ test("df samples while a control center is open, not after it closes", () => {
   const dir = mkdtempSync("/tmp/opencode/cc-df-gating-");
   const log = `${dir}/calls`;
   try {
-    writeFileSync(`${dir}/df`, `#!/bin/sh
+    writeFileSync(
+      `${dir}/df`,
+      `#!/bin/sh
 printf '%s\\n' "$*" >> "${log}"
 printf '1B-blocks Used Available Use%%\\n100000 25000 70000 25%%\\n'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
     const result = spawnSync("qs", [
       "-p",
       new URL("./controlcenter-df-gating.qml", import.meta.url).pathname,
