@@ -97,3 +97,48 @@ export function parseRootFilesystem(text) {
   }
   return { totalBytes, usedBytes, availableBytes, usedPercent };
 }
+
+function diskStatsForDevice(text, majorMinor) {
+  let result = null;
+  for (const line of String(text || "").trim().split(/\r?\n/)) {
+    const fields = line.trim().split(/\s+/);
+    if (fields.length < 14 || `${fields[0]}:${fields[1]}` !== majorMinor) {
+      continue;
+    }
+    if (result !== null) return null;
+    const readSectors = Number(fields[5]);
+    const writeSectors = Number(fields[9]);
+    if (
+      !Number.isSafeInteger(readSectors) || readSectors < 0 ||
+      !Number.isSafeInteger(writeSectors) || writeSectors < 0
+    ) return null;
+    result = { device: fields[2], readSectors, writeSectors };
+  }
+  return result;
+}
+
+// Derive root-device byte rates from consecutive /proc/diskstats snapshots.
+export function parseDiskActivity(mountInfo, previous, current, elapsedMs) {
+  let majorMinor = null;
+  for (const line of String(mountInfo || "").split(/\r?\n/)) {
+    const fields = line.trim().split(/\s+/);
+    if (fields[4] !== "/") continue;
+    if (majorMinor !== null || !/^\d+:\d+$/.test(fields[2] || "")) return null;
+    majorMinor = fields[2];
+  }
+  if (majorMinor === null || !Number.isFinite(elapsedMs) || elapsedMs <= 0) {
+    return null;
+  }
+  const before = diskStatsForDevice(previous, majorMinor);
+  const after = diskStatsForDevice(current, majorMinor);
+  if (
+    !before || !after || before.device !== after.device ||
+    after.readSectors < before.readSectors ||
+    after.writeSectors < before.writeSectors
+  ) return null;
+  return {
+    device: after.device,
+    readBytesPerSecond: Math.round((after.readSectors - before.readSectors) * 512000 / elapsedMs),
+    writeBytesPerSecond: Math.round((after.writeSectors - before.writeSectors) * 512000 / elapsedMs),
+  };
+}
