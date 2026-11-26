@@ -284,6 +284,7 @@ NotchSurface {
                             {
                                 label: Strings.resourcesDisk,
                                 value: root.resourceStats.rootFilesystem ? root.resourceStats.rootFilesystem.usedPercent : null,
+                                status: root.resourceStats.rootFilesystemStatus,
                                 icon: Strings.glyphDisk
                             }
                         ]
@@ -315,7 +316,7 @@ NotchSurface {
                                 }
 
                                 Text {
-                                    text: Number.isFinite(resourceMetric.modelData.value) ? Math.round(resourceMetric.modelData.value) + "%" : Strings.resourcesMeasuring
+                                    text: Number.isFinite(resourceMetric.modelData.value) ? Math.round(resourceMetric.modelData.value) + "%" : root.detailStatus(resourceMetric.modelData.status)
                                     color: root.scheme.onSurface
                                     font.family: Fonts.family
                                     font.pixelSize: Fonts.body
@@ -562,12 +563,12 @@ NotchSurface {
 
                 ResourceDetailRow {
                     label: Strings.resourcesDiskLabels[0]
-                    value: root.resourceStats.rootFilesystem ? root.formatBytePair(root.resourceStats.rootFilesystem.usedBytes, root.resourceStats.rootFilesystem.totalBytes) : Strings.resourcesMeasuring
+                    value: root.resourceStats.rootFilesystem ? root.formatBytePair(root.resourceStats.rootFilesystem.usedBytes, root.resourceStats.rootFilesystem.totalBytes) : root.detailStatus(root.resourceStats.rootFilesystemStatus)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesDiskLabels[1]
-                    value: root.resourceStats.rootFilesystem ? root.formatBytes(root.resourceStats.rootFilesystem.availableBytes) : Strings.resourcesMeasuring
+                    value: root.resourceStats.rootFilesystem ? root.formatBytes(root.resourceStats.rootFilesystem.availableBytes) : root.detailStatus(root.resourceStats.rootFilesystemStatus)
                 }
 
                 Row {
