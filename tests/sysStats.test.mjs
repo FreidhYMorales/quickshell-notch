@@ -113,3 +113,22 @@ test("root filesystem capacity parses the fixed-byte df output", () => {
     },
   );
 });
+
+test("root filesystem capacity rejects missing and impossible df readings", () => {
+  assert.equal(SysStats.parseRootFilesystem(""), null);
+  assert.equal(SysStats.parseRootFilesystem("df failed\n"), null);
+  assert.equal(
+    SysStats.parseRootFilesystem("1B-blocks Used Available Use%\n"),
+    null,
+  );
+  assert.equal(
+    SysStats.parseRootFilesystem("100000 50000 70000 42%\n"),
+    null,
+  );
+  assert.equal(
+    SysStats.parseRootFilesystem(
+      "999999999999999999 1 1 1%\n",
+    ),
+    null,
+  );
+});
