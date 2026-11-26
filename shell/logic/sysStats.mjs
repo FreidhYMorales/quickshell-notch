@@ -148,3 +148,54 @@ export function parseDiskActivity(mountInfo, previous, current, elapsedMs) {
     ),
   };
 }
+
+function networkCounters(text) {
+  const counters = {};
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const separator = line.indexOf(":");
+    if (separator < 0) continue;
+    const name = line.slice(0, separator).trim();
+    if (!name || name === "lo") continue;
+    if (Object.prototype.hasOwnProperty.call(counters, name)) return null;
+    const fields = line.slice(separator + 1).trim().split(/\s+/);
+    const receiveBytes = Number(fields[0]);
+    const transmitBytes = Number(fields[8]);
+    if (
+      fields.length < 16 ||
+      !Number.isSafeInteger(receiveBytes) || receiveBytes < 0 ||
+      !Number.isSafeInteger(transmitBytes) || transmitBytes < 0
+    ) return null;
+    counters[name] = { receiveBytes, transmitBytes };
+  }
+  return Object.keys(counters).length > 0 ? counters : null;
+}
+
+// Derive aggregate non-loopback receive/transmit byte rates from /proc/net/dev.
+export function parseNetworkActivity(previous, current, elapsedMs) {
+  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) return null;
+  const before = networkCounters(previous);
+  const after = networkCounters(current);
+  if (!before || !after) return null;
+  const names = Object.keys(before);
+  if (names.length !== Object.keys(after).length) return null;
+
+  let receiveBytes = 0;
+  let transmitBytes = 0;
+  for (const name of names) {
+    if (!Object.prototype.hasOwnProperty.call(after, name)) return null;
+    const previousCounters = before[name];
+    const currentCounters = after[name];
+    if (
+      currentCounters.receiveBytes < previousCounters.receiveBytes ||
+      currentCounters.transmitBytes < previousCounters.transmitBytes
+    ) return null;
+    receiveBytes += currentCounters.receiveBytes -
+      previousCounters.receiveBytes;
+    transmitBytes += currentCounters.transmitBytes -
+      previousCounters.transmitBytes;
+  }
+  return {
+    receiveBytesPerSecond: Math.round(receiveBytes * 1000 / elapsedMs),
+    transmitBytesPerSecond: Math.round(transmitBytes * 1000 / elapsedMs),
+  };
+}
