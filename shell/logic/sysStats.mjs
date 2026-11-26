@@ -123,6 +123,8 @@ export function parseDiskActivity(mountInfo, previous, current, elapsedMs) {
   for (const line of String(mountInfo || "").split(/\r?\n/)) {
     const fields = line.trim().split(/\s+/);
     if (fields[4] !== "/") continue;
+    const separator = fields.indexOf("-");
+    if (separator < 6 || separator + 3 >= fields.length) return null;
     if (majorMinor !== null || !/^\d+:\d+$/.test(fields[2] || "")) return null;
     majorMinor = fields[2];
   }
