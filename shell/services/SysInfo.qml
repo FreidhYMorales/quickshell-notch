@@ -30,6 +30,7 @@ Singleton {
     property string loadAverageStatus: "measuring"
     property string memoryDetailsStatus: "measuring"
     readonly property var ram: root.memoryDetails ? Math.round((1 - root.memoryDetails.availableKiB / root.memoryDetails.totalKiB) * 100) : null
+    readonly property bool diskPollingActive: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
 
     function setControlCenterOpen(monitor, open) {
         const monitors = Object.assign({}, root.openControlCenters);
@@ -73,30 +74,33 @@ Singleton {
     Timer {
         interval: Timings.sysPoll
         repeat: true
-        running: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
-        triggeredOnStart: true
-        onTriggered: mountInfo.reload()
+        running: root.diskPollingActive
+        onTriggered: {
+            mountInfo.reload();
+            diskStats.reload();
+        }
     }
 
     FileView {
         id: mountInfo
 
-        path: root.mountInfoPath
+        path: root.diskPollingActive ? root.mountInfoPath : ""
         onLoaded: {
+            if (!root.diskPollingActive) return;
             root.rootMountInfo = text();
-            diskStats.reload();
         }
         onLoadFailed: {
+            if (!root.diskPollingActive) return;
             root.rootMountInfo = "";
-            diskStats.reload();
         }
     }
 
     FileView {
         id: diskStats
 
-        path: root.diskStatsPath
+        path: root.diskPollingActive ? root.diskStatsPath : ""
         onLoaded: {
+            if (!root.diskPollingActive) return;
             const now = Date.now();
             const current = text();
             if (root.lastDiskStats === null) {
@@ -110,6 +114,7 @@ Singleton {
             root.lastDiskSampleTime = now;
         }
         onLoadFailed: {
+            if (!root.diskPollingActive) return;
             root.diskActivity = null;
             root.diskActivityStatus = "unavailable";
             root.lastDiskStats = null;
