@@ -23,6 +23,8 @@ Singleton {
     readonly property string resourcesRam: "RAM"
     readonly property string resourcesDisk: "DISK"
     readonly property var resourcesDiskLabels: ["Disk used / total", "Free space"]
+    readonly property var resourcesDiskActivityLabels: ["Read rate", "Write rate"]
+    readonly property string resourcesRateSuffix: "/s"
     readonly property string resourcesMeasuring: "Measuring…"
     readonly property string resourcesUnavailable: "Unavailable"
     readonly property string resourcesLogicalCpus: "Logical CPUs"
