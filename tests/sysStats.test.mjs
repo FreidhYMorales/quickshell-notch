@@ -135,11 +135,9 @@ test("root filesystem capacity rejects missing and impossible df readings", () =
 
 test("disk activity resolves the root device and calculates byte rates", () => {
   const mountInfo = "31 22 259:2 / / rw,relatime - ext4 /dev/nvme0n1p2 rw\n";
-  const before =
-    "259 0 nvme0n1 0 0 1000 0 0 0 2000 0 0 0 0\n" +
+  const before = "259 0 nvme0n1 0 0 1000 0 0 0 2000 0 0 0 0\n" +
     "259 2 nvme0n1p2 100 0 10 1 20 0 20 2 0 0 0\n";
-  const after =
-    "259 0 nvme0n1 0 0 2000 0 0 0 4000 0 0 0 0\n" +
+  const after = "259 0 nvme0n1 0 0 2000 0 0 0 4000 0 0 0 0\n" +
     "259 2 nvme0n1p2 110 0 15 2 24 0 24 3 0 0 0\n";
   assert.deepEqual(
     SysStats.parseDiskActivity(mountInfo, before, after, 1000),
@@ -148,5 +146,26 @@ test("disk activity resolves the root device and calculates byte rates", () => {
       readBytesPerSecond: 2560,
       writeBytesPerSecond: 2048,
     },
+  );
+});
+
+test("disk activity rejects incomplete and unusable root samples", () => {
+  const mountInfo = "31 22 259:2 / / rw,relatime - ext4 /dev/nvme0n1p2 rw\n";
+  const incompleteMount = "31 22 259:2 / / rw,relatime\n";
+  const before = "259 2 nvme0n1p2 100 0 10 1 20 0 20 2 0 0 0\n";
+  const after = "259 2 nvme0n1p2 110 0 15 2 24 0 24 3 0 0 0\n";
+  assert.equal(
+    SysStats.parseDiskActivity(incompleteMount, before, after, 1000),
+    null,
+  );
+  assert.equal(SysStats.parseDiskActivity(mountInfo, before, "", 1000), null);
+  assert.equal(SysStats.parseDiskActivity(mountInfo, before, after, 0), null);
+  assert.equal(
+    SysStats.parseDiskActivity(mountInfo, after, before, 1000),
+    null,
+  );
+  assert.equal(
+    SysStats.parseDiskActivity(mountInfo + mountInfo, before, after, 1000),
+    null,
   );
 });
