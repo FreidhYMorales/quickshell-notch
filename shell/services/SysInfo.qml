@@ -12,10 +12,11 @@ Singleton {
     id: root
 
     property var cpu: null
-    property var ram: null
     property var lastCpu: null
     property var logicalCpuCount: null
     property var loadAverage: null
+    property var memoryDetails: null
+    readonly property var ram: root.memoryDetails ? Math.round((1 - root.memoryDetails.availableKiB / root.memoryDetails.totalKiB) * 100) : null
 
     Timer {
         interval: Timings.sysPoll
@@ -58,7 +59,7 @@ Singleton {
         id: meminfo
 
         path: "/proc/meminfo"
-        onLoaded: root.ram = SysStats.parseRam(text())
-        onLoadFailed: root.ram = null
+        onLoaded: root.memoryDetails = SysStats.parseMemoryDetails(text())
+        onLoadFailed: root.memoryDetails = null
     }
 }

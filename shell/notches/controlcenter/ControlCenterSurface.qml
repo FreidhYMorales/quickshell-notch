@@ -18,6 +18,28 @@ import "../center"
 NotchSurface {
     id: root
 
+    component ResourceDetailRow: Row {
+        id: detail
+
+        required property string label
+        required property string value
+
+        spacing: Layout.ccGap
+
+        Text {
+            text: detail.label
+            color: root.scheme.muted
+            font.family: Fonts.family
+            font.pixelSize: Fonts.body
+        }
+        Text {
+            text: detail.value
+            color: root.scheme.onSurface
+            font.family: Fonts.family
+            font.pixelSize: Fonts.body
+        }
+    }
+
     readonly property var scheme: Colours.paletteFor(screen)
     // Defaults to the live service; tests can provide deterministic readings.
     property var resourceStats: SysInfo
@@ -86,6 +108,14 @@ NotchSurface {
 
     function showResources() {
         view = "resources";
+    }
+
+    function formatMemory(kib) {
+        const mib = kib / 1024;
+        return Number.isFinite(kib) ? (mib >= 1024 ? (mib / 1024).toFixed(1) + " GiB" : Math.round(mib) + " MiB") : Strings.resourcesMeasuring;
+    }
+    function formatMemoryPair(used, total) {
+        return Number.isFinite(used) && Number.isFinite(total) ? formatMemory(used) + " / " + formatMemory(total) : Strings.resourcesMeasuring;
     }
 
     // A power row click always collapses the panel. Lock and suspend run here;
@@ -483,6 +513,21 @@ NotchSurface {
                         font.family: Fonts.family
                         font.pixelSize: Fonts.body
                     }
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesMemoryLabels[0]
+                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.usedKiB, root.resourceStats.memoryDetails.totalKiB) : Strings.resourcesMeasuring
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesMemoryLabels[1]
+                    value: root.resourceStats.memoryDetails ? root.formatMemory(root.resourceStats.memoryDetails.availableKiB) : Strings.resourcesMeasuring
+                }
+
+                ResourceDetailRow {
+                    label: Strings.resourcesMemoryLabels[2]
+                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.swapUsedKiB, root.resourceStats.memoryDetails.swapTotalKiB) : Strings.resourcesMeasuring
                 }
 
                 Row {
