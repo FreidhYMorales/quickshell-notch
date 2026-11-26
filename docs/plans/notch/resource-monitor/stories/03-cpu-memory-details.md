@@ -38,3 +38,8 @@ Risk: none
 ## Log
 
 - L1 request: okay, porque me interesa mantener limpio el worktree, vamos con la siguiente storie
+- Approved test list: parser tests for CPU and memory; separate QML integration steps for CPU and memory; final QML coverage for measuring/unavailable states.
+- CPU parser cycle: `e7e5e26` red -> `e056c80` green (`node --test tests/sysStats.test.mjs`, 8/8).
+- Memory parser cycle: `c11d271` red -> `7312d06` green (`node --test tests/sysStats.test.mjs`, 9/9).
+- CPU detail UI cycle: `c20175d` red -> `f17b3cf` green (`node --test tests/qml/controlcenter-cpu-details.mjs`, 1/1).
+- Memory detail UI test `f8b2a56` was red for missing “Memory used / total”; implementation now passes the focused QML test, but the code diff is 62 lines across three files, exceeding the flow-pair per-step limit. Paused before the code commit; implementation remains uncommitted and needs a smaller approved step.
