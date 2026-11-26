@@ -16,9 +16,10 @@ export function parseCpu(text) {
 
 // Count online logical CPUs from the per-CPU lines in /proc/stat.
 export function parseLogicalCpuCount(text) {
-  const count = String(text || "").split(/\r?\n/).filter((line) =>
-    /^cpu\d+\s+\d+(?:\s+\d+)*$/.test(line.trim())
-  ).length;
+  const count =
+    String(text || "").split(/\r?\n/).filter((line) =>
+      /^cpu\d+\s+\d+(?:\s+\d+)*$/.test(line.trim())
+    ).length;
   return count || null;
 }
 

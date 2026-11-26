@@ -70,8 +70,7 @@ test("parseRam is used memory as a rounded percentage", () => {
 });
 
 test("memory details include available memory and optional swap in KiB", () => {
-  const meminfo =
-    "MemTotal: 16000000 kB\nMemAvailable: 4000000 kB\n" +
+  const meminfo = "MemTotal: 16000000 kB\nMemAvailable: 4000000 kB\n" +
     "SwapTotal: 8000000 kB\nSwapFree: 6000000 kB\n";
   assert.equal(typeof SysStats.parseMemoryDetails, "function");
   assert.deepEqual(SysStats.parseMemoryDetails(meminfo), {
