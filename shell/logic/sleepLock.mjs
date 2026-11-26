@@ -2,6 +2,16 @@
 
 const SIGNAL = "org.freedesktop.login1.Manager.PrepareForSleep (";
 
+export function parsePreparingForSleep(reply) {
+  if (reply.includes("<true>")) return true;
+  if (reply.includes("<false>")) return false;
+  return null;
+}
+
+export function monitorRetryDelay(attempt) {
+  return Math.min(250 * 2 ** Math.max(0, attempt - 1), 5000);
+}
+
 // A `gdbus monitor` line -> true (going to sleep), false (resumed) or null.
 export function parseSleepSignal(line) {
   const at = line.indexOf(SIGNAL);

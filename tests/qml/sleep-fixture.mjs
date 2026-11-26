@@ -10,12 +10,21 @@ const signal =
 
 // Fake gdbus: announces sleep at once, and resume once `resume` exists.
 // Fake systemd-inhibit: logs start and stop of the inhibitor.
-export function fakeTools(dir) {
+export function fakeTools(dir, failFirstMonitor = false) {
   const log = join(dir, "events.log");
   writeFileSync(
     join(dir, "gdbus"),
     `#!/bin/bash
 echo "gdbus $*" >> "${log}"
+if [[ "$*" == *"monitor"* ]] && [[ "${failFirstMonitor}" == "true" ]] && [[ ! -e "${dir}/monitor-failed" ]]; then
+  touch "${dir}/monitor-failed"
+  exit 1
+fi
+if [[ "$*" == *"PreparingForSleep" ]]; then
+  echo "(<false>,)"
+  exit 0
+fi
+echo "Monitoring signals on object /org/freedesktop/login1 owned by org.freedesktop.login1"
 echo "${signal} (true,)"
 while [[ ! -e "${dir}/resume" ]]; do sleep 0.1; done
 echo "${signal} (false,)"
@@ -26,7 +35,7 @@ sleep 30
     join(dir, "systemd-inhibit"),
     `#!/bin/bash
 echo "inhibit start $*" >> "${log}"
-trap 'echo "inhibit stop" >> "${log}"; exit 0' TERM INT
+trap 'echo "inhibit stop $*" >> "${log}"; exit 0' TERM INT
 while true; do sleep 0.1; done
 `,
   );
