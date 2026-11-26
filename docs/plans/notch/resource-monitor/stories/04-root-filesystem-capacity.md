@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given the Control Center summary is visible, when root-filesystem capacity is available, then its stable DISK slot shows the used percentage.
-- [ ] Given the resource view is open, when root-filesystem capacity is available, then it shows used, total, and free capacity available to the user in human-readable units.
-- [ ] Given root-filesystem capacity has not been measured or cannot be read, when the summary or resource view is shown, then the DISK slot remains labeled and displays a placeholder/status rather than a fabricated value.
+- [x] Given the Control Center summary is visible, when root-filesystem capacity is available, then its stable DISK slot shows the used percentage.
+- [x] Given the resource view is open, when root-filesystem capacity is available, then it shows used, total, and free capacity available to the user in human-readable units.
+- [x] Given root-filesystem capacity has not been measured or cannot be read, when the summary or resource view is shown, then the DISK slot remains labeled and displays a placeholder/status rather than a fabricated value.
 
 ## Plan
 
@@ -42,3 +42,7 @@ Risk: none
 - Available UI TDD: `3aea276` red -> `2af5fe1` green (`tests/qml/controlcenter-disk-capacity.mjs`, 1/1).
 - Status UI TDD: `8ab029e` red -> `7f8f625` green (`tests/qml/controlcenter-disk-status.mjs`, 1/1).
 - Polling-gating probe `c31416f` is red as expected because no df sample is available yet. Paused before production changes: the test step added 61 lines across two files, exceeding the pair skill's ~50-line step limit. Risk: none.
+- Resumed after splitting the implementation from the oversized test step. `24c2d1b` adds direct fixed-argument `df` polling, tracked per-monitor Control Center visibility, and smoke-mode gating. The gating probe and existing resource-view probes passed.
+- Smoke characterization test `c54bf8b` passed 1/1 on its first run because smoke gating was already present; retained as requested, without a production-code change.
+- Final `make check`: passed on rerun. The first full run had one transient failure in existing `tests/qml/polkit-retry.mjs`; that test passed when rerun alone and in the successful full rerun.
+- Risk: none.
