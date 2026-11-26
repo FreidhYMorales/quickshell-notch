@@ -187,3 +187,18 @@ test("network activity aggregates receive and transmit rates without loopback", 
     transmitBytesPerSecond: 350,
   });
 });
+
+test("network activity rejects missing, malformed, reset, or invalid samples", () => {
+  const before = "  eth0: 1000 0 0 0 0 0 0 0 2000 0 0 0 0 0 0 0\n" +
+    " wlan0: 3000 0 0 0 0 0 0 0 5000 0 0 0 0 0 0 0\n";
+  const after = "  eth0: 1100 0 0 0 0 0 0 0 2200 0 0 0 0 0 0 0\n" +
+    " wlan0: 3400 0 0 0 0 0 0 0 5500 0 0 0 0 0 0 0\n";
+  const reset = "  eth0: 10 0 0 0 0 0 0 0 2200 0 0 0 0 0 0 0\n" +
+    " wlan0: 3400 0 0 0 0 0 0 0 5500 0 0 0 0 0 0 0\n";
+  const malformed = "  eth0: invalid 0 0 0 0 0 0 0 2200 0 0 0 0 0 0 0\n";
+
+  assert.equal(SysStats.parseNetworkActivity(null, after, 1000), null);
+  assert.equal(SysStats.parseNetworkActivity(before, malformed, 1000), null);
+  assert.equal(SysStats.parseNetworkActivity(before, reset, 1000), null);
+  assert.equal(SysStats.parseNetworkActivity(before, after, 0), null);
+});
