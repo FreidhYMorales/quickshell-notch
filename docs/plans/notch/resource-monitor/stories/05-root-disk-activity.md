@@ -45,3 +45,4 @@ Risk: item 4 (shared resource sampling state)
 - User approved keeping that formatting-only normalization. Unusable-sample cycle `6b599c8` -> `d3bea6b` is green (`tests/sysStats.test.mjs`, 13/13).
 - Initial combined lifecycle probe failed because diskstats acquisition was not implemented. It was 62 lines across two files, exceeding the ~50-line step limit, so it was split before committing that probe or writing production code.
 - Split the probe into an open-sampling test. `885ba8a` red -> `25403cd` green (`tests/qml/controlcenter-disk-polling.mjs`, 1/1). The production commit added 63 lines, exceeding the ~50-line step limit; paused before the separate stop-after-close test. Risk: item 4 (shared resource sampling state); your call.
+- Stop-after-close characterization test `8778dda` passed 1/1 on its first run because the active-only timer was already implemented in `25403cd`; user approved keeping it as test-only coverage. No production change.
