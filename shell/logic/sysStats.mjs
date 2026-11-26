@@ -140,7 +140,11 @@ export function parseDiskActivity(mountInfo, previous, current, elapsedMs) {
   ) return null;
   return {
     device: after.device,
-    readBytesPerSecond: Math.round((after.readSectors - before.readSectors) * 512000 / elapsedMs),
-    writeBytesPerSecond: Math.round((after.writeSectors - before.writeSectors) * 512000 / elapsedMs),
+    readBytesPerSecond: Math.round(
+      (after.readSectors - before.readSectors) * 512000 / elapsedMs,
+    ),
+    writeBytesPerSecond: Math.round(
+      (after.writeSectors - before.writeSectors) * 512000 / elapsedMs,
+    ),
   };
 }

@@ -86,11 +86,13 @@ Singleton {
 
         path: root.diskPollingActive ? root.mountInfoPath : ""
         onLoaded: {
-            if (!root.diskPollingActive) return;
+            if (!root.diskPollingActive)
+                return;
             root.rootMountInfo = text();
         }
         onLoadFailed: {
-            if (!root.diskPollingActive) return;
+            if (!root.diskPollingActive)
+                return;
             root.rootMountInfo = "";
         }
     }
@@ -100,7 +102,8 @@ Singleton {
 
         path: root.diskPollingActive ? root.diskStatsPath : ""
         onLoaded: {
-            if (!root.diskPollingActive) return;
+            if (!root.diskPollingActive)
+                return;
             const now = Date.now();
             const current = text();
             if (root.lastDiskStats === null) {
@@ -114,7 +117,8 @@ Singleton {
             root.lastDiskSampleTime = now;
         }
         onLoadFailed: {
-            if (!root.diskPollingActive) return;
+            if (!root.diskPollingActive)
+                return;
             root.diskActivity = null;
             root.diskActivityStatus = "unavailable";
             root.lastDiskStats = null;
