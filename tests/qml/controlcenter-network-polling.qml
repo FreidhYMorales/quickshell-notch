@@ -5,7 +5,7 @@ import "visual.mjs" as Visual
 
 ShellRoot { id: root; property var target: null
     Timer { interval: 400; running: true
-        onTriggered: { const c = Qt.createComponent(Quickshell.env("NOTCH_CC_URL") + "/ControlCenterSurface.qml"); if (c.status !== Component.Ready || Quickshell.screens.length === 0) return Qt.exit(2); root.target = c.createObject(null, { screen: Quickshell.screens[0], open: true }); }}
+        onTriggered: { const c = Qt.createComponent(Quickshell.env("NOTCH_CC_URL") + "/ControlCenterSurface.qml"); if (c.status !== Component.Ready || Quickshell.screens.length === 0) return Qt.exit(2); root.target = c.createObject(null, { screen: Quickshell.screens[0], open: true, view: "resources" }); }}
     TestCase { name: "ControlCenterNetworkPolling"; when: root.target !== null
         function test_network_activity_appears_after_two_samples() {
             wait(2800);
