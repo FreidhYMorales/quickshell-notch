@@ -59,6 +59,23 @@ function kbField(text, name) {
   return match ? Number(match[1]) : null;
 }
 
+// Swap may not exist on a system. If its fields are present but malformed,
+// inconsistent, or outside safe integer bounds, the source is invalid instead.
+export function parseMemorySwapStatus(text) {
+  const source = String(text || "");
+  const hasTotal = /^SwapTotal:/m.test(source);
+  const hasFree = /^SwapFree:/m.test(source);
+  if (!hasTotal && !hasFree) return "unavailable";
+  if (!hasTotal || !hasFree) return "invalid";
+  const total = kbField(source, "SwapTotal");
+  const free = kbField(source, "SwapFree");
+  if (
+    !Number.isSafeInteger(total) || total < 0 ||
+    !Number.isSafeInteger(free) || free < 0 || free > total
+  ) return "invalid";
+  return "available";
+}
+
 // Used memory (0-100) from MemTotal and MemAvailable, or null.
 export function parseRam(text) {
   const source = String(text || "");
