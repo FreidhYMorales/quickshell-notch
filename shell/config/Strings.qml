@@ -28,6 +28,7 @@ Singleton {
     readonly property string resourcesRateSuffix: "/s"
     readonly property string resourcesMeasuring: "Measuring…"
     readonly property string resourcesUnavailable: "Unavailable"
+    readonly property string resourcesInvalid: "Invalid reading"
     readonly property string resourcesLogicalCpus: "Logical CPUs"
     readonly property string resourcesLoadAverage: "Load avg 1/5/15 min"
     readonly property var resourcesMemoryLabels: ["Memory used / total", "Available memory", "Swap used / total"]

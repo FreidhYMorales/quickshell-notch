@@ -2,12 +2,28 @@
 
 const CPU_FIELDS = 8; // user nice system idle iowait irq softirq steal
 
+// Source availability, reading validity, and sample readiness are separate
+// states: a valid first sample establishes a baseline but is not a rate yet.
+export function resourceReadingStatus({
+  sourceAvailable,
+  readingValid,
+  sampleReady,
+}) {
+  if (sourceAvailable === false) return "unavailable";
+  if (readingValid === false) return "invalid";
+  if (sampleReady === false) return "measuring";
+  return "available";
+}
+
 // Aggregate "cpu" line -> { idle, total } in jiffies (idle includes iowait).
 export function parseCpu(text) {
   const match = /^cpu\s+(.+)$/m.exec(String(text || ""));
   if (!match) return null;
   const parts = match[1].trim().split(/\s+/).slice(0, CPU_FIELDS).map(Number);
-  if (parts.length < CPU_FIELDS || parts.some((n) => !Number.isFinite(n))) {
+  if (
+    parts.length < CPU_FIELDS ||
+    parts.some((n) => !Number.isFinite(n) || n < 0)
+  ) {
     return null;
   }
   const total = parts.reduce((sum, n) => sum + n, 0);
@@ -44,6 +60,23 @@ export function cpuPercent(prev, next) {
 function kbField(text, name) {
   const match = new RegExp("^" + name + ":\\s+(\\d+)", "m").exec(text);
   return match ? Number(match[1]) : null;
+}
+
+// Swap may not exist on a system. If its fields are present but malformed,
+// inconsistent, or outside safe integer bounds, the source is invalid instead.
+export function parseMemorySwapStatus(text) {
+  const source = String(text || "");
+  const hasTotal = /^SwapTotal:/m.test(source);
+  const hasFree = /^SwapFree:/m.test(source);
+  if (!hasTotal && !hasFree) return "unavailable";
+  if (!hasTotal || !hasFree) return "invalid";
+  const total = kbField(source, "SwapTotal");
+  const free = kbField(source, "SwapFree");
+  if (
+    !Number.isSafeInteger(total) || total < 0 ||
+    !Number.isSafeInteger(free) || free < 0 || free > total
+  ) return "invalid";
+  return "available";
 }
 
 // Used memory (0-100) from MemTotal and MemAvailable, or null.

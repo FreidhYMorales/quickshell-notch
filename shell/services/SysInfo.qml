@@ -12,12 +12,15 @@ Singleton {
     id: root
 
     property var cpu: null
+    property string cpuStatus: "measuring"
+    property string ramStatus: "measuring"
     property var lastCpu: null
     property var logicalCpuCount: null
     property var loadAverage: null
     property var memoryDetails: null
     property var rootFilesystem: null
     property string rootFilesystemStatus: "measuring"
+    property string rootMountInfoStatus: "measuring"
     property var diskActivity: null
     property string diskActivityStatus: "measuring"
     property var networkActivity: null
@@ -34,6 +37,7 @@ Singleton {
     property string logicalCpuCountStatus: "measuring"
     property string loadAverageStatus: "measuring"
     property string memoryDetailsStatus: "measuring"
+    property string memorySwapStatus: "measuring"
     readonly property var ram: root.memoryDetails ? Math.round((1 - root.memoryDetails.availableKiB / root.memoryDetails.totalKiB) * 100) : null
     readonly property bool diskPollingActive: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
 
@@ -101,11 +105,13 @@ Singleton {
             if (!root.diskPollingActive)
                 return;
             root.rootMountInfo = text();
+            root.rootMountInfoStatus = text().length > 0 ? "available" : "invalid";
         }
         onLoadFailed: {
             if (!root.diskPollingActive)
                 return;
             root.rootMountInfo = "";
+            root.rootMountInfoStatus = "unavailable";
         }
     }
 
@@ -121,10 +127,22 @@ Singleton {
             if (root.lastDiskStats === null) {
                 root.lastDiskStats = current;
                 root.lastDiskSampleTime = now;
+                if (root.rootMountInfoStatus === "unavailable") {
+                    root.diskActivityStatus = "unavailable";
+                } else if (root.rootMountInfoStatus === "measuring") {
+                    root.diskActivityStatus = "measuring";
+                } else {
+                    const baseline = SysStats.parseDiskActivity(root.rootMountInfo, current, current, 1);
+                    root.diskActivityStatus = baseline === null ? "invalid" : "measuring";
+                }
                 return;
             }
             root.diskActivity = SysStats.parseDiskActivity(root.rootMountInfo, root.lastDiskStats, current, now - root.lastDiskSampleTime);
-            root.diskActivityStatus = root.diskActivity ? "available" : "unavailable";
+            root.diskActivityStatus = SysStats.resourceReadingStatus({
+                sourceAvailable: root.rootMountInfoStatus !== "unavailable",
+                readingValid: root.diskActivity !== null,
+                sampleReady: true
+            });
             root.lastDiskStats = current;
             root.lastDiskSampleTime = now;
         }
@@ -150,10 +168,16 @@ Singleton {
             if (root.lastNetworkSampleTime === null) {
                 root.lastNetworkStats = current;
                 root.lastNetworkSampleTime = now;
+                const baseline = SysStats.parseNetworkActivity(current, current, 1);
+                root.networkActivityStatus = baseline === null ? "invalid" : "measuring";
                 return;
             }
             root.networkActivity = SysStats.parseNetworkActivity(root.lastNetworkStats, current, now - root.lastNetworkSampleTime);
-            root.networkActivityStatus = root.networkActivity ? "available" : "unavailable";
+            root.networkActivityStatus = SysStats.resourceReadingStatus({
+                sourceAvailable: true,
+                readingValid: root.networkActivity !== null,
+                sampleReady: true
+            });
             root.lastNetworkStats = current;
             root.lastNetworkSampleTime = now;
         }
@@ -176,7 +200,11 @@ Singleton {
 
             onStreamFinished: {
                 root.rootFilesystem = SysStats.parseRootFilesystem(diskOutput.text);
-                root.rootFilesystemStatus = root.rootFilesystem ? "available" : "unavailable";
+                root.rootFilesystemStatus = SysStats.resourceReadingStatus({
+                    sourceAvailable: true,
+                    readingValid: root.rootFilesystem !== null,
+                    sampleReady: true
+                });
             }
         }
         onExited: code => {
@@ -193,17 +221,32 @@ Singleton {
         path: "/proc/stat"
         onLoaded: {
             root.logicalCpuCount = SysStats.parseLogicalCpuCount(text());
-            root.logicalCpuCountStatus = root.logicalCpuCount === null ? "unavailable" : "available";
+            root.logicalCpuCountStatus = SysStats.resourceReadingStatus({
+                sourceAvailable: true,
+                readingValid: root.logicalCpuCount !== null,
+                sampleReady: true
+            });
             const sample = SysStats.parseCpu(text());
             if (sample === null) {
+                root.cpu = null;
+                root.lastCpu = null;
+                root.cpuStatus = "invalid";
                 console.warn("SysInfo: unreadable /proc/stat");
                 return;
             }
-            root.cpu = SysStats.cpuPercent(root.lastCpu, sample);
+            const previous = root.lastCpu;
+            root.cpu = SysStats.cpuPercent(previous, sample);
+            root.cpuStatus = SysStats.resourceReadingStatus({
+                sourceAvailable: true,
+                readingValid: previous === null || root.cpu !== null,
+                sampleReady: previous !== null
+            });
             root.lastCpu = sample;
         }
         onLoadFailed: {
             root.cpu = null;
+            root.cpuStatus = "unavailable";
+            root.lastCpu = null;
             root.logicalCpuCount = null;
             root.logicalCpuCountStatus = "unavailable";
         }
@@ -215,7 +258,11 @@ Singleton {
         path: "/proc/loadavg"
         onLoaded: {
             root.loadAverage = SysStats.parseLoadAverage(text());
-            root.loadAverageStatus = root.loadAverage === null ? "unavailable" : "available";
+            root.loadAverageStatus = SysStats.resourceReadingStatus({
+                sourceAvailable: true,
+                readingValid: root.loadAverage !== null,
+                sampleReady: true
+            });
         }
         onLoadFailed: {
             root.loadAverage = null;
@@ -229,11 +276,19 @@ Singleton {
         path: "/proc/meminfo"
         onLoaded: {
             root.memoryDetails = SysStats.parseMemoryDetails(text());
-            root.memoryDetailsStatus = root.memoryDetails === null ? "unavailable" : "available";
+            root.memoryDetailsStatus = SysStats.resourceReadingStatus({
+                sourceAvailable: true,
+                readingValid: root.memoryDetails !== null,
+                sampleReady: true
+            });
+            root.ramStatus = root.memoryDetailsStatus;
+            root.memorySwapStatus = root.memoryDetails === null ? root.memoryDetailsStatus : SysStats.parseMemorySwapStatus(text());
         }
         onLoadFailed: {
             root.memoryDetails = null;
             root.memoryDetailsStatus = "unavailable";
+            root.ramStatus = "unavailable";
+            root.memorySwapStatus = "unavailable";
         }
     }
 }

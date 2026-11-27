@@ -69,11 +69,12 @@ checking system load.
 - The current `SysInfo` CPU/RAM values are consumed only by `CenterIdle`.
   Remove those meters and gate shared CPU/RAM sampling with Control Center
   visibility.
-- Keep hardware-specific GPU, NPU, and temperature sources optional. Missing,
-  unreadable, malformed, reset, or implausible counters must yield unavailable
-  data, not a fabricated zero or percentage.
+- Keep hardware-specific GPU, NPU, and temperature sources optional. Missing or
+  unreadable sources yield unavailable data; malformed, reset, rolled-back, or
+  implausible readings and invalid sample intervals yield invalid data, never a
+  fabricated zero or percentage.
 - The first counter sample establishes a baseline; rate/utilization values stay
-  unavailable until a valid second sample.
+  measuring until a valid second sample.
 - Avoid spawning recurring external processes for telemetry, except root
   filesystem capacity: sample it with GNU `df` only while at least one Control
   Center instance is open, and stop after the last instance closes.
@@ -157,7 +158,7 @@ corresponding status inline.
    data; lifecycle tests cover two monitors opening and closing independently;
    QML probes cover navigation and unavailable devices.
 9. Unit tests verify root-mount capacity and correct rate units; counter
-   rollback or invalid elapsed time yields unavailable rates.
+   rollback or invalid elapsed time yields invalid rates, not numeric values.
 10. `make check` passes.
 
 ## Implementation notes

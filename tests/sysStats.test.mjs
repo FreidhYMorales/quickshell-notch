@@ -8,6 +8,42 @@ const STAT = "cpu  100 5 50 800 40 3 2 0 0 0\ncpu0 50 2 25 400 20 1 1 0 0 0\n";
 const MEMINFO = "MemTotal:       16000000 kB\nMemFree:         2000000 kB\n" +
   "MemAvailable:    4000000 kB\nBuffers:          100000 kB\n";
 
+test("resource status distinguishes measuring, unavailable, invalid, and valid zero", () => {
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: true,
+      readingValid: true,
+      sampleReady: false,
+    }),
+    "measuring",
+  );
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: false,
+      readingValid: false,
+      sampleReady: false,
+    }),
+    "unavailable",
+  );
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: true,
+      readingValid: false,
+      sampleReady: true,
+    }),
+    "invalid",
+  );
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: true,
+      readingValid: true,
+      sampleReady: true,
+      value: 0,
+    }),
+    "available",
+  );
+});
+
 test("parseCpu reads the aggregate line: idle includes iowait", () => {
   assert.deepEqual(parseCpu(STAT), { idle: 840, total: 1000 });
 });
@@ -25,6 +61,7 @@ test("parseCpu returns null for malformed input", () => {
   assert.equal(parseCpu("cpu0 1 2 3 4 5 6 7 8\n"), null);
   assert.equal(parseCpu("cpu  1 2 x 4 5 6 7 8\n"), null);
   assert.equal(parseCpu("cpu  1 2 3\n"), null);
+  assert.equal(parseCpu("cpu  1 2 -3 4 5 6 7 8\n"), null);
 });
 
 test("CPU details count online processors and parse load averages", () => {
@@ -89,6 +126,33 @@ test("memory details include available memory and optional swap in KiB", () => {
       swapUsedKiB: null,
       swapTotalKiB: null,
     },
+  );
+});
+
+test("memory swap status distinguishes absent, invalid, and valid zero sources", () => {
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "MemTotal: 1000 kB\nMemAvailable: 250 kB\n",
+    ),
+    "unavailable",
+  );
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "SwapTotal: 100 kB\nSwapFree: malformed kB\n",
+    ),
+    "invalid",
+  );
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "SwapTotal: 0 kB\nSwapFree: 0 kB\n",
+    ),
+    "available",
+  );
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "SwapTotal: 100 kB\nSwapFree: 101 kB\n",
+    ),
+    "invalid",
   );
 });
 

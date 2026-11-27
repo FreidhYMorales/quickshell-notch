@@ -17,7 +17,7 @@
 05. [x] 305e392 As a user troubleshooting storage, I want read/write rates when the backing device can be identified reliably so that I can see current disk activity. Requires: #04
 06. [x] 35eb15b As a user troubleshooting connectivity, I want aggregate network receive/transmit rates excluding loopback so that I can see current network activity. Requires: #01
 07. [x] 29ee45c As a user inspecting resources, I want a complete keyboard- and pointer-accessible grid in a monitor-bounded viewport so that every resource remains reachable. Requires: #01
-08. [ ] As a user, I want measuring, unavailable, and invalid states shown explicitly in the summary and detail cards so that missing data is never mistaken for zero. Requires: #02, #03, #04
+08. [x] 2a5c910 As a user, I want measuring, unavailable, and invalid states shown explicitly in the summary and detail cards so that missing data is never mistaken for zero. Requires: #02, #03, #04
 09. [ ] As a user, I want polling active while any monitor's Control Center is open, stopped after the last closes, and disabled in smoke mode so that telemetry stays current without continuous background polling. Requires: #01
 10. [ ] As an Intel GPU user, I want available GPU utilization and frequency shown per GT so that I can inspect accelerator activity. Requires: #01, #09
 11. [ ] As an Intel NPU user, I want available NPU utilization, frequency, and memory readings so that I can inspect NPU activity. Requires: #01, #09
