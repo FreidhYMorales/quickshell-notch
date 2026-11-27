@@ -194,12 +194,12 @@ NotchSurface {
         return Number.isFinite(value) ? formatter(value) : detailStatus(status);
     }
     function memoryValue(value, status, formatter) {
-        if (root.resourceStats.memoryDetailsStatus !== "available")
+        if (root.resourceStats.memoryDetailsStatus && root.resourceStats.memoryDetailsStatus !== "available")
             return root.detailStatus(root.resourceStats.memoryDetailsStatus);
         return root.detailValue(value, status, formatter);
     }
     function memorySwapPair() {
-        if (root.resourceStats.memoryDetailsStatus !== "available")
+        if (root.resourceStats.memoryDetailsStatus && root.resourceStats.memoryDetailsStatus !== "available")
             return root.detailStatus(root.resourceStats.memoryDetailsStatus);
         const status = root.resourceStats.memorySwapStatus;
         if (status && status !== "available")
