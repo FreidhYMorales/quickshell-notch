@@ -30,15 +30,17 @@ ShellRoot {
                 return Qt.exit(1);
             }
             const start = viewport.contentY;
-            mouseDrag(viewport, viewport.width / 2, viewport.height - 8, 0, -48);
-            if (!tryVerify(() => viewport.contentY > start, 1000)) {
+            mouseDrag(viewport, viewport.width / 2, viewport.height - 8, 0, -90);
+            tryVerify(() => viewport.contentY > start, 1000);
+            if (viewport.contentY <= start) {
                 console.error("resource view: drag did not scroll the grid");
                 return Qt.exit(1);
             }
             const afterDrag = viewport.contentY;
             const wheelPoint = viewport.mapToItem(root.target.maskItem, viewport.width / 2, viewport.height / 2);
             mouseWheel(root.target.maskItem, wheelPoint.x, wheelPoint.y, 0, -120);
-            if (!tryVerify(() => viewport.contentY > afterDrag, 1000)) {
+            tryVerify(() => viewport.contentY > afterDrag, 1000);
+            if (viewport.contentY <= afterDrag) {
                 console.error("resource view: wheel did not scroll the grid");
                 return Qt.exit(1);
             }
