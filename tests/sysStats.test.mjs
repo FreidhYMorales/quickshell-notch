@@ -8,6 +8,42 @@ const STAT = "cpu  100 5 50 800 40 3 2 0 0 0\ncpu0 50 2 25 400 20 1 1 0 0 0\n";
 const MEMINFO = "MemTotal:       16000000 kB\nMemFree:         2000000 kB\n" +
   "MemAvailable:    4000000 kB\nBuffers:          100000 kB\n";
 
+test("resource status distinguishes measuring, unavailable, invalid, and valid zero", () => {
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: true,
+      readingValid: true,
+      sampleReady: false,
+    }),
+    "measuring",
+  );
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: false,
+      readingValid: false,
+      sampleReady: false,
+    }),
+    "unavailable",
+  );
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: true,
+      readingValid: false,
+      sampleReady: true,
+    }),
+    "invalid",
+  );
+  assert.equal(
+    SysStats.resourceReadingStatus({
+      sourceAvailable: true,
+      readingValid: true,
+      sampleReady: true,
+      value: 0,
+    }),
+    "available",
+  );
+});
+
 test("parseCpu reads the aggregate line: idle includes iowait", () => {
   assert.deepEqual(parseCpu(STAT), { idle: 840, total: 1000 });
 });
