@@ -216,7 +216,7 @@ NotchSurface {
     anchors.left: false
     anchors.right: true
     implicitWidth: Layout.ccWidth
-    implicitHeight: Layout.ccHeight
+    implicitHeight: Math.min(Layout.ccHeight, (screen ? screen.height : Layout.ccHeight) - 2 * Layout.ccPad)
     wantsKeyboard: root.view === "resources" || (root.open && root.keyboardMode)
     maskItem: maskBox
 
@@ -268,8 +268,8 @@ NotchSurface {
             y: Layout.ccPad
             // Both views are built even while hidden, so the panel always
             // knows the root's height (see panelHeight).
-            implicitWidth: Math.max(rootView.implicitWidth, subView.width, resourceView.implicitWidth)
-            implicitHeight: ControlNav.panelHeight(root.view, rootView.implicitHeight, Math.max(subView.height, resourceView.implicitHeight))
+            implicitWidth: Math.max(rootView.implicitWidth, subView.width, resourceViewport.width)
+            implicitHeight: ControlNav.panelHeight(root.view, rootView.implicitHeight, Math.max(subView.height, resourceViewport.height))
 
             Column {
                 id: rootView
@@ -527,6 +527,19 @@ NotchSurface {
                 onBackRequested: root.view = ControlNav.back()
             }
 
+            Flickable {
+                id: resourceViewport
+
+                objectName: "cc-resource-grid-viewport"
+                visible: root.view === "resources"
+                width: resourceView.implicitWidth
+                height: Math.min(Layout.ccListHeight, Math.max(0, root.height - 2 * Layout.ccPad - Layout.earRadius - Layout.ccGap - resourceHeader.height))
+                contentWidth: width
+                contentHeight: resourceView.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+            }
+
             Column {
                 id: resourceView
 
@@ -534,8 +547,11 @@ NotchSurface {
                 focus: visible
                 Keys.onEscapePressed: root.view = ControlNav.back()
                 spacing: Layout.ccGap
+                parent: resourceViewport
+                width: resourceViewport.width
 
                 Row {
+                    id: resourceHeader
                     spacing: Layout.ccGap
 
                     Item {
