@@ -24,17 +24,27 @@ NotchSurface {
         required property string label
         required property string value
 
+        objectName: "cc-resource-card-" + label
+        activeFocusOnTab: true
         spacing: Layout.ccGap
+
+        onActiveFocusChanged: if (activeFocus) {
+            const y = mapToItem(resourceViewport.contentItem, 0, 0).y;
+            if (y < resourceViewport.contentY)
+                resourceViewport.contentY = y;
+            else if (y + height > resourceViewport.contentY + resourceViewport.height)
+                resourceViewport.contentY = y + height - resourceViewport.height;
+        }
 
         Text {
             text: detail.label
-            color: root.scheme.muted
+            color: detail.activeFocus ? root.scheme.primary : root.scheme.muted
             font.family: Fonts.family
             font.pixelSize: Fonts.body
         }
         Text {
             text: detail.value
-            color: root.scheme.onSurface
+            color: detail.activeFocus ? root.scheme.primary : root.scheme.onSurface
             font.family: Fonts.family
             font.pixelSize: Fonts.body
         }
@@ -251,6 +261,8 @@ NotchSurface {
             function focusFirst() {
                 if (root.rootView && powerRepeater.count > 0)
                     powerRepeater.itemAt(0).forceActiveFocus();
+                else if (root.view === "resources")
+                    resourceBack.forceActiveFocus();
                 else
                     subView.focusFirst();
             }
@@ -555,20 +567,22 @@ NotchSurface {
                     spacing: Layout.ccGap
 
                     Item {
+                        id: resourceBack
                         objectName: "cc-resource-back"
                         width: Layout.ccClearButton
                         height: width
+                        activeFocusOnTab: true
 
                         Rectangle {
                             anchors.fill: parent
                             radius: width / 2
-                            color: backHover.hovered ? root.scheme.primary : "transparent"
+                            color: backHover.hovered || resourceBack.activeFocus ? root.scheme.primary : "transparent"
                         }
 
                         Text {
                             anchors.centerIn: parent
                             text: Strings.glyphChevronLeft
-                            color: backHover.hovered ? Colours.background : root.scheme.onSurface
+                            color: backHover.hovered || resourceBack.activeFocus ? Colours.background : root.scheme.onSurface
                             font.family: Fonts.family
                             font.pixelSize: Fonts.body
                         }
@@ -581,6 +595,13 @@ NotchSurface {
                             anchors.fill: parent
                             onClicked: root.view = ControlNav.back()
                         }
+
+                        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                event.accepted = true;
+                                root.view = ControlNav.back();
+                            }
+                        }
                     }
 
                     Text {
@@ -592,40 +613,14 @@ NotchSurface {
                     }
                 }
 
-                Row {
-                    spacing: Layout.ccGap
-
-                    Text {
-                        text: Strings.resourcesCpu
-                        color: root.scheme.muted
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
-
-                    Text {
-                        text: Number.isFinite(root.resourceStats.cpu) ? Math.round(root.resourceStats.cpu) + "%" : Strings.resourcesMeasuring
-                        color: root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
+                ResourceDetailRow {
+                    label: Strings.resourcesCpu
+                    value: Number.isFinite(root.resourceStats.cpu) ? Math.round(root.resourceStats.cpu) + "%" : Strings.resourcesMeasuring
                 }
 
-                Row {
-                    spacing: Layout.ccGap
-
-                    Text {
-                        text: Strings.resourcesRam
-                        color: root.scheme.muted
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
-
-                    Text {
-                        text: Number.isFinite(root.resourceStats.ram) ? Math.round(root.resourceStats.ram) + "%" : Strings.resourcesMeasuring
-                        color: root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
+                ResourceDetailRow {
+                    label: Strings.resourcesRam
+                    value: Number.isFinite(root.resourceStats.ram) ? Math.round(root.resourceStats.ram) + "%" : Strings.resourcesMeasuring
                 }
 
                 ResourceDetailRow {
@@ -673,40 +668,14 @@ NotchSurface {
                     value: root.networkActivityRate("transmitBytesPerSecond")
                 }
 
-                Row {
-                    spacing: Layout.ccGap
-
-                    Text {
-                        text: Strings.resourcesLogicalCpus
-                        color: root.scheme.muted
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
-
-                    Text {
-                        text: Number.isFinite(root.resourceStats.logicalCpuCount) ? root.resourceStats.logicalCpuCount : root.detailStatus(root.resourceStats.logicalCpuCountStatus)
-                        color: root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
+                ResourceDetailRow {
+                    label: Strings.resourcesLogicalCpus
+                    value: Number.isFinite(root.resourceStats.logicalCpuCount) ? root.resourceStats.logicalCpuCount : root.detailStatus(root.resourceStats.logicalCpuCountStatus)
                 }
 
-                Row {
-                    spacing: Layout.ccGap
-
-                    Text {
-                        text: Strings.resourcesLoadAverage
-                        color: root.scheme.muted
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
-
-                    Text {
-                        text: root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : root.detailStatus(root.resourceStats.loadAverageStatus)
-                        color: root.scheme.onSurface
-                        font.family: Fonts.family
-                        font.pixelSize: Fonts.body
-                    }
+                ResourceDetailRow {
+                    label: Strings.resourcesLoadAverage
+                    value: root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : root.detailStatus(root.resourceStats.loadAverageStatus)
                 }
             }
         }
