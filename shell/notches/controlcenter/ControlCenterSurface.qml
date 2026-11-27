@@ -162,18 +162,24 @@ NotchSurface {
         return Number.isFinite(bytesPerSecond) && bytesPerSecond >= 0 ? formatBytes(bytesPerSecond) + Strings.resourcesRateSuffix : Strings.resourcesMeasuring;
     }
     function diskActivityRate(propertyName) {
+        const status = root.resourceStats.diskActivityStatus;
+        if (status && status !== "available")
+            return root.detailStatus(status);
         const activity = root.resourceStats.diskActivity;
         if (!activity)
-            return root.detailStatus(root.resourceStats.diskActivityStatus);
+            return root.detailStatus(status);
         const rate = activity[propertyName];
-        return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(root.resourceStats.diskActivityStatus);
+        return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(status || "invalid");
     }
     function networkActivityRate(propertyName) {
+        const status = root.resourceStats.networkActivityStatus;
+        if (status && status !== "available")
+            return root.detailStatus(status);
         const activity = root.resourceStats.networkActivity;
         if (!activity)
-            return root.detailStatus(root.resourceStats.networkActivityStatus);
+            return root.detailStatus(status);
         const rate = activity[propertyName];
-        return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(root.resourceStats.networkActivityStatus);
+        return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(status || "invalid");
     }
     function detailStatus(status) {
         if (status === "unavailable")
@@ -181,6 +187,34 @@ NotchSurface {
         if (status === "invalid")
             return Strings.resourcesInvalid;
         return Strings.resourcesMeasuring;
+    }
+    function detailValue(value, status, formatter) {
+        if (status && status !== "available")
+            return detailStatus(status);
+        return Number.isFinite(value) ? formatter(value) : detailStatus(status);
+    }
+    function memoryValue(value, status, formatter) {
+        if (root.resourceStats.memoryDetailsStatus !== "available")
+            return root.detailStatus(root.resourceStats.memoryDetailsStatus);
+        return root.detailValue(value, status, formatter);
+    }
+    function memorySwapPair() {
+        if (root.resourceStats.memoryDetailsStatus !== "available")
+            return root.detailStatus(root.resourceStats.memoryDetailsStatus);
+        const status = root.resourceStats.memorySwapStatus;
+        if (status && status !== "available")
+            return root.detailStatus(status);
+        const details = root.resourceStats.memoryDetails;
+        if (Number.isFinite(details.swapUsedKiB) && Number.isFinite(details.swapTotalKiB))
+            return root.formatMemoryPair(details.swapUsedKiB, details.swapTotalKiB);
+        if (details.swapUsedKiB === null && details.swapTotalKiB === null)
+            return root.detailStatus("unavailable");
+        return root.detailStatus("invalid");
+    }
+    function summaryPercent(value, status) {
+        if (status && status !== "available")
+            return root.detailStatus(status);
+        return Number.isFinite(value) ? Math.round(value) + "%" : root.detailStatus(status);
     }
 
     // A power row click always collapses the panel. Lock and suspend run here;
@@ -388,7 +422,7 @@ NotchSurface {
                                 }
 
                                 Text {
-                                    text: Number.isFinite(resourceMetric.modelData.value) ? Math.round(resourceMetric.modelData.value) + "%" : root.detailStatus(resourceMetric.modelData.status)
+                                    text: root.summaryPercent(resourceMetric.modelData.value, resourceMetric.modelData.status)
                                     color: root.scheme.onSurface
                                     font.family: Fonts.family
                                     font.pixelSize: Fonts.body
@@ -621,37 +655,37 @@ NotchSurface {
 
                 ResourceDetailRow {
                     label: Strings.resourcesCpu
-                    value: Number.isFinite(root.resourceStats.cpu) ? Math.round(root.resourceStats.cpu) + "%" : Strings.resourcesMeasuring
+                    value: root.detailValue(root.resourceStats.cpu, root.resourceStats.cpuStatus, value => Math.round(value) + "%")
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesRam
-                    value: Number.isFinite(root.resourceStats.ram) ? Math.round(root.resourceStats.ram) + "%" : Strings.resourcesMeasuring
+                    value: root.detailValue(root.resourceStats.ram, root.resourceStats.ramStatus, value => Math.round(value) + "%")
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesMemoryLabels[0]
-                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.usedKiB, root.resourceStats.memoryDetails.totalKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
+                    value: root.resourceStats.memoryDetails ? root.memoryValue(root.resourceStats.memoryDetails.usedKiB, root.resourceStats.memoryDetailsStatus, value => root.formatMemoryPair(value, root.resourceStats.memoryDetails.totalKiB)) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesMemoryLabels[1]
-                    value: root.resourceStats.memoryDetails ? root.formatMemory(root.resourceStats.memoryDetails.availableKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
+                    value: root.resourceStats.memoryDetails ? root.memoryValue(root.resourceStats.memoryDetails.availableKiB, root.resourceStats.memoryDetailsStatus, value => root.formatMemory(value)) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesMemoryLabels[2]
-                    value: root.resourceStats.memoryDetails ? root.formatMemoryPair(root.resourceStats.memoryDetails.swapUsedKiB, root.resourceStats.memoryDetails.swapTotalKiB) : root.detailStatus(root.resourceStats.memoryDetailsStatus)
+                    value: root.resourceStats.memoryDetails ? root.memorySwapPair() : root.detailStatus(root.resourceStats.memoryDetailsStatus)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesDiskLabels[0]
-                    value: root.resourceStats.rootFilesystem ? root.formatBytePair(root.resourceStats.rootFilesystem.usedBytes, root.resourceStats.rootFilesystem.totalBytes) : root.detailStatus(root.resourceStats.rootFilesystemStatus)
+                    value: root.resourceStats.rootFilesystem ? root.detailValue(root.resourceStats.rootFilesystem.usedBytes, root.resourceStats.rootFilesystemStatus, value => root.formatBytePair(value, root.resourceStats.rootFilesystem.totalBytes)) : root.detailStatus(root.resourceStats.rootFilesystemStatus)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesDiskLabels[1]
-                    value: root.resourceStats.rootFilesystem ? root.formatBytes(root.resourceStats.rootFilesystem.availableBytes) : root.detailStatus(root.resourceStats.rootFilesystemStatus)
+                    value: root.resourceStats.rootFilesystem ? root.detailValue(root.resourceStats.rootFilesystem.availableBytes, root.resourceStats.rootFilesystemStatus, value => root.formatBytes(value)) : root.detailStatus(root.resourceStats.rootFilesystemStatus)
                 }
 
                 ResourceDetailRow {
@@ -676,12 +710,12 @@ NotchSurface {
 
                 ResourceDetailRow {
                     label: Strings.resourcesLogicalCpus
-                    value: Number.isFinite(root.resourceStats.logicalCpuCount) ? root.resourceStats.logicalCpuCount : root.detailStatus(root.resourceStats.logicalCpuCountStatus)
+                    value: root.detailValue(root.resourceStats.logicalCpuCount, root.resourceStats.logicalCpuCountStatus, value => value)
                 }
 
                 ResourceDetailRow {
                     label: Strings.resourcesLoadAverage
-                    value: root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : root.detailStatus(root.resourceStats.loadAverageStatus)
+                    value: root.resourceStats.loadAverageStatus && root.resourceStats.loadAverageStatus !== "available" ? root.detailStatus(root.resourceStats.loadAverageStatus) : root.resourceStats.loadAverage && Number.isFinite(root.resourceStats.loadAverage.one) && Number.isFinite(root.resourceStats.loadAverage.five) && Number.isFinite(root.resourceStats.loadAverage.fifteen) ? Number(root.resourceStats.loadAverage.one).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.five).toFixed(2) + " · " + Number(root.resourceStats.loadAverage.fifteen).toFixed(2) : root.detailStatus(root.resourceStats.loadAverageStatus || "invalid")
                 }
             }
         }
