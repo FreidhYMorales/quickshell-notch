@@ -22,6 +22,14 @@ NotchSurface {
     readonly property string special: Workspaces.specialByMonitor[monitorName] ?? ""
     property var reveal: Reveal.initialReveal()
     property var menuItem: null
+    property bool menuLoadingFallback: false
+    onMenuItemChanged: {
+        menuLoadingFallback = false;
+        if (menuItem)
+            menuLoadingTimer.restart();
+        else
+            menuLoadingTimer.stop();
+    }
     // Window move animation. `flyKind` is "fly" or "fade" (to a special);
     // fromX/toX are slot centres in the shape's coordinates.
     property bool flying: false
@@ -55,7 +63,7 @@ NotchSurface {
     })
     readonly property var size: CornerLayout.cornerShape({
         contentWidth: Math.max(row.implicitWidth, menuItem ? menuContentWidth : 0),
-        contentHeight: Layout.idleHeight + menuColumn.implicitHeight + (menuItem ? Layout.wsMenuSeparator + Layout.wsMenuPadBottom : 0),
+        contentHeight: menuLoadingFallback ? root.implicitHeight : Layout.idleHeight + menuColumn.implicitHeight + (menuItem ? Layout.wsMenuSeparator + Layout.wsMenuPadBottom : 0),
         pad: Layout.wsPad,
         ear: Layout.earRadius,
         maxWidth: root.implicitWidth,
@@ -164,6 +172,14 @@ NotchSurface {
     }
 
     Timer {
+        id: menuLoadingTimer
+
+        interval: 250
+        onTriggered: if (root.menuItem && menuColumn.implicitHeight === 0)
+            root.menuLoadingFallback = true
+    }
+
+    Timer {
         interval: Timings.startupGate
         running: true
         onTriggered: root.step({
@@ -204,6 +220,15 @@ NotchSurface {
     QsMenuOpener {
         id: menuOpener
         menu: root.menuItem ? root.menuItem.menu : null
+    }
+
+    Connections {
+        target: menuColumn
+
+        function onImplicitHeightChanged() {
+            if (menuColumn.implicitHeight > 0)
+                root.menuLoadingFallback = false;
+        }
     }
 
     CornerEarShape {
