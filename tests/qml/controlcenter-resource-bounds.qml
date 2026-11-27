@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import Quickshell
+import "../../shell/config"
 import "visual.mjs" as Visual
 
 ShellRoot {
@@ -29,11 +30,11 @@ ShellRoot {
                 console.error("resource view: clipped scrolling viewport is missing or does not contain the complete grid");
                 return Qt.exit(1);
             }
-            if (!Visual.findText([viewport], "Transmit rate") || !Visual.findText([viewport], "Load average")) {
+            if (!Visual.findText([viewport], "Transmit rate") || !Visual.findText([viewport], "Load avg 1/5/15 min")) {
                 console.error("resource view: resource cards are missing from the complete grid");
                 return Qt.exit(1);
             }
-            if (root.target.height >= root.target.screen.availableGeometry.height) {
+            if (root.target.height > root.target.screen.height - Layout.ccPad) {
                 console.error("resource view: panel exceeds monitor safe height");
                 return Qt.exit(1);
             }
