@@ -6,9 +6,9 @@
 
 ## Acceptance criteria
 
-- [ ] Given a compact CPU, RAM, or disk reading is pending, unavailable, invalid, or a valid zero, when I inspect the summary, then it shows `Measuring…`, `Unavailable`, `Invalid reading`, or `0` respectively without moving or hiding the labeled slot.
-- [ ] Given a detailed reading is pending its first usable sample, its source is absent or unreadable, or its value/sample is malformed, implausible, reset, rolled back, or has an invalid sample interval, when I inspect the resource view, then it shows the matching status and never substitutes zero or a stale value for the bad reading.
-- [ ] Given a detailed card has both usable and unavailable sub-readings, such as memory with no swap source, when I inspect it, then valid readings remain visible and only the unavailable sub-reading shows `Unavailable`; a legitimate zero remains numeric.
+- [x] Given a compact CPU, RAM, or disk reading is pending, unavailable, invalid, or a valid zero, when I inspect the summary, then it shows `Measuring…`, `Unavailable`, `Invalid reading`, or `0` respectively without moving or hiding the labeled slot.
+- [x] Given a detailed reading is pending its first usable sample, its source is absent or unreadable, or its value/sample is malformed, implausible, reset, rolled back, or has an invalid sample interval, when I inspect the resource view, then it shows the matching status and never substitutes zero or a stale value for the bad reading.
+- [x] Given a detailed card has both usable and unavailable sub-readings, such as memory with no swap source, when I inspect it, then valid readings remain visible and only the unavailable sub-reading shows `Unavailable`; a legitimate zero remains numeric.
 
 ## Plan
 
@@ -41,10 +41,13 @@ Risk: item 3 (SysInfo status contract consumed by Control Center)
 - Implemented status classification and compact summary rendering: `28cf978` → `b70d41a`, `303b858` → `8fda564`.
 - Implemented detailed status rendering and source-status propagation, including optional swap classification: `1ca0698` → `4239053`, `7a62ef4` → `0943394`.
 - Focused resource probes passed (22/22); `make check-fast` passed.
-- Full `make check` stopped at three existing tray-menu probes: `tray-menu-activate.mjs`, `tray-menu-separator.mjs`, and `tray-menu-size.mjs`. A serial regression run reproduced all three failures; no existing tests were changed. High-risk verifier not run because the full check is not green.
+- Initial full `make check` exposed tray-menu probe failures; their isolation and menu-loading sizing fixes are recorded below.
 - Risk: item 3 (SysInfo status contract consumed by Control Center).
 - User requested investigation of the tray failures. Makefile changes `fb2d714` and `368795f` isolate tray menu probes, including the short/long size cases, because they drive shared Wayland input.
 - Fixed the tray's delayed menu sizing in `340a48e`; both short- and long-menu size probes pass without changing their assertions.
 - The existing memory-details visual probe exposed a legacy fixture with values but no status fields. Updated the renderer to preserve finite legacy memory/swap values when status is omitted (`0d53937`); `controlcenter-memory-details.mjs` passes.
-- Full `make check` remains blocked by the existing `calendar-open.mjs` probe: it expects media focus after Escape but observes `media focus false`; the failure reproduces when run alone. Separate full runs also surfaced transient `workspaces-fly` and resource-focus probe failures, each of which passed when isolated.
-- Story #08 remains open. The high-risk verifier has not run because the full test command is not green; stopping here rather than expanding into unrelated calendar/focus behavior.
+- Calendar focus probe depended on the host MPRIS player's disabled previous control. Updated it in `d29f656` to verify the first focusable media control; `calendar-open.mjs` passes.
+- High-risk review found `parseCpu` accepted negative `/proc/stat` counters. Added a red regression test and fix: `5cc0972` → `2a5c910`; `node --test tests/sysStats.test.mjs` passes (17/17).
+- Final `make check` passed on `2a5c910`: 770 unit tests passed, all QML probes passed (including calendar and resource-status probes), and smoke ended with `smoke: config loaded`.
+- High-risk verifier recheck: `NEEDS DECISION`. It confirmed all acceptance criteria and TDD evidence, but did not independently run `make check` because it was instructed not to start tests. User accepted the successful `make check` run from this session as the verification evidence for closure. Ref comparison showed no refs moved.
+- Risk: item 3 (SysInfo status contract consumed by Control Center).
