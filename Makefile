@@ -55,7 +55,8 @@ qml-test:
 	node --test tests/qml/tray-menu-fixture.mjs tests/qml/tray-menu-entry.mjs
 	# Each tray menu probe drives the shared Wayland pointer; isolate its runner.
 	node --test tests/qml/tray-menu-open.mjs
-	node --test tests/qml/tray-menu-size.mjs
+	node --test --test-name-pattern="short menu" tests/qml/tray-menu-size.mjs
+	node --test --test-name-pattern="long menu" tests/qml/tray-menu-size.mjs
 	node --test tests/qml/tray-menu-activate.mjs
 	node --test tests/qml/tray-menu-disabled.mjs
 	node --test tests/qml/tray-menu-separator.mjs
