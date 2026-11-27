@@ -128,6 +128,33 @@ test("memory details include available memory and optional swap in KiB", () => {
   );
 });
 
+test("memory swap status distinguishes absent, invalid, and valid zero sources", () => {
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "MemTotal: 1000 kB\nMemAvailable: 250 kB\n",
+    ),
+    "unavailable",
+  );
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "SwapTotal: 100 kB\nSwapFree: malformed kB\n",
+    ),
+    "invalid",
+  );
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "SwapTotal: 0 kB\nSwapFree: 0 kB\n",
+    ),
+    "available",
+  );
+  assert.equal(
+    SysStats.parseMemorySwapStatus(
+      "SwapTotal: 100 kB\nSwapFree: 101 kB\n",
+    ),
+    "invalid",
+  );
+});
+
 test("parseRam returns null for malformed input", () => {
   assert.equal(parseRam(""), null);
   assert.equal(parseRam(undefined), null);
