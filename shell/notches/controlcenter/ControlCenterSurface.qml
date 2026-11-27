@@ -176,7 +176,11 @@ NotchSurface {
         return Number.isFinite(rate) && rate >= 0 ? root.formatRate(rate) : root.detailStatus(root.resourceStats.networkActivityStatus);
     }
     function detailStatus(status) {
-        return status === "unavailable" ? Strings.resourcesUnavailable : Strings.resourcesMeasuring;
+        if (status === "unavailable")
+            return Strings.resourcesUnavailable;
+        if (status === "invalid")
+            return Strings.resourcesInvalid;
+        return Strings.resourcesMeasuring;
     }
 
     // A power row click always collapses the panel. Lock and suspend run here;
@@ -340,11 +344,13 @@ NotchSurface {
                             {
                                 label: Strings.resourcesCpu,
                                 value: root.resourceStats.cpu,
+                                status: root.resourceStats.cpuStatus,
                                 icon: Strings.glyphCpu
                             },
                             {
                                 label: Strings.resourcesRam,
                                 value: root.resourceStats.ram,
+                                status: root.resourceStats.ramStatus,
                                 icon: Strings.glyphRam
                             },
                             {
