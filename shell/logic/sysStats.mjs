@@ -20,7 +20,10 @@ export function parseCpu(text) {
   const match = /^cpu\s+(.+)$/m.exec(String(text || ""));
   if (!match) return null;
   const parts = match[1].trim().split(/\s+/).slice(0, CPU_FIELDS).map(Number);
-  if (parts.length < CPU_FIELDS || parts.some((n) => !Number.isFinite(n))) {
+  if (
+    parts.length < CPU_FIELDS ||
+    parts.some((n) => !Number.isFinite(n) || n < 0)
+  ) {
     return null;
   }
   const total = parts.reduce((sum, n) => sum + n, 0);
