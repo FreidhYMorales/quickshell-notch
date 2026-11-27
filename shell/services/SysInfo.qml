@@ -31,6 +31,7 @@ Singleton {
     property string lastNetworkStats: ""
     property var lastNetworkSampleTime: null
     property var openControlCenters: ({})
+    readonly property string statPath: Quickshell.env("NOTCH_SYSINFO_STAT") || "/proc/stat"
     readonly property string mountInfoPath: Quickshell.env("NOTCH_SYSINFO_MOUNTINFO") || "/proc/self/mountinfo"
     readonly property string diskStatsPath: Quickshell.env("NOTCH_SYSINFO_DISKSTATS") || "/proc/diskstats"
     readonly property string networkStatsPath: Quickshell.env("NOTCH_SYSINFO_NETDEV") || "/proc/net/dev"
@@ -221,7 +222,7 @@ Singleton {
     FileView {
         id: stat
 
-        path: root.resourcePollingActive ? "/proc/stat" : ""
+        path: root.resourcePollingActive ? root.statPath : ""
         onLoaded: {
             if (!root.resourcePollingActive)
                 return;
