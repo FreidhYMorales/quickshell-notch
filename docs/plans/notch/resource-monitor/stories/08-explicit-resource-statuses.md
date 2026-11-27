@@ -43,3 +43,6 @@ Risk: item 3 (SysInfo status contract consumed by Control Center)
 - Focused resource probes passed (22/22); `make check-fast` passed.
 - Full `make check` stopped at three existing tray-menu probes: `tray-menu-activate.mjs`, `tray-menu-separator.mjs`, and `tray-menu-size.mjs`. A serial regression run reproduced all three failures; no existing tests were changed. High-risk verifier not run because the full check is not green.
 - Risk: item 3 (SysInfo status contract consumed by Control Center).
+- User requested investigation of the tray failures. Makefile changes `fb2d714` and `368795f` isolate tray menu probes, including the short/long size cases, because they drive shared Wayland input.
+- The revised `make qml-test` still fails intermittently in the long-menu size probe: it observes 61 px instead of the expected 450 px; the probe sometimes passes when run alone. Temporary diagnostics showed the menu surface had not yet expanded when the fixed-delay assertion ran. The test has not been changed.
+- Stopped after two regression-fix attempts per the flow-pair stop rule. The full test command and high-risk verifier remain pending.
