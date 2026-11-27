@@ -31,6 +31,7 @@ Singleton {
     property string lastNetworkStats: ""
     property var lastNetworkSampleTime: null
     property var openControlCenters: ({})
+    readonly property string statPath: Quickshell.env("NOTCH_SYSINFO_STAT") || "/proc/stat"
     readonly property string mountInfoPath: Quickshell.env("NOTCH_SYSINFO_MOUNTINFO") || "/proc/self/mountinfo"
     readonly property string diskStatsPath: Quickshell.env("NOTCH_SYSINFO_DISKSTATS") || "/proc/diskstats"
     readonly property string networkStatsPath: Quickshell.env("NOTCH_SYSINFO_NETDEV") || "/proc/net/dev"
@@ -39,7 +40,7 @@ Singleton {
     property string memoryDetailsStatus: "measuring"
     property string memorySwapStatus: "measuring"
     readonly property var ram: root.memoryDetails ? Math.round((1 - root.memoryDetails.availableKiB / root.memoryDetails.totalKiB) * 100) : null
-    readonly property bool diskPollingActive: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
+    readonly property bool resourcePollingActive: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
 
     function setControlCenterOpen(monitor, open) {
         const monitors = Object.assign({}, root.openControlCenters);
@@ -49,6 +50,9 @@ Singleton {
             delete monitors[monitor];
         root.openControlCenters = monitors;
         if (open && Object.keys(monitors).length === 1) {
+            root.cpu = null;
+            root.cpuStatus = "measuring";
+            root.lastCpu = null;
             root.diskActivity = null;
             root.diskActivityStatus = "measuring";
             root.lastDiskStats = null;
@@ -68,7 +72,7 @@ Singleton {
     Timer {
         interval: Timings.sysPoll
         repeat: true
-        running: !Flags.smoke
+        running: root.resourcePollingActive
         triggeredOnStart: true
         onTriggered: {
             stat.reload();
@@ -80,7 +84,7 @@ Singleton {
     Timer {
         interval: Timings.sysPoll
         repeat: true
-        running: !Flags.smoke && Object.keys(root.openControlCenters).length > 0
+        running: root.resourcePollingActive
         triggeredOnStart: true
         onTriggered: if (!diskProcess.running)
             diskProcess.running = true
@@ -89,7 +93,7 @@ Singleton {
     Timer {
         interval: Timings.sysPoll
         repeat: true
-        running: root.diskPollingActive
+        running: root.resourcePollingActive
         onTriggered: {
             mountInfo.reload();
             diskStats.reload();
@@ -100,15 +104,15 @@ Singleton {
     FileView {
         id: mountInfo
 
-        path: root.diskPollingActive ? root.mountInfoPath : ""
+        path: root.resourcePollingActive ? root.mountInfoPath : ""
         onLoaded: {
-            if (!root.diskPollingActive)
+            if (!root.resourcePollingActive)
                 return;
             root.rootMountInfo = text();
             root.rootMountInfoStatus = text().length > 0 ? "available" : "invalid";
         }
         onLoadFailed: {
-            if (!root.diskPollingActive)
+            if (!root.resourcePollingActive)
                 return;
             root.rootMountInfo = "";
             root.rootMountInfoStatus = "unavailable";
@@ -118,9 +122,9 @@ Singleton {
     FileView {
         id: diskStats
 
-        path: root.diskPollingActive ? root.diskStatsPath : ""
+        path: root.resourcePollingActive ? root.diskStatsPath : ""
         onLoaded: {
-            if (!root.diskPollingActive)
+            if (!root.resourcePollingActive)
                 return;
             const now = Date.now();
             const current = text();
@@ -147,7 +151,7 @@ Singleton {
             root.lastDiskSampleTime = now;
         }
         onLoadFailed: {
-            if (!root.diskPollingActive)
+            if (!root.resourcePollingActive)
                 return;
             root.diskActivity = null;
             root.diskActivityStatus = "unavailable";
@@ -159,9 +163,9 @@ Singleton {
     FileView {
         id: networkStats
 
-        path: root.diskPollingActive ? root.networkStatsPath : ""
+        path: root.resourcePollingActive ? root.networkStatsPath : ""
         onLoaded: {
-            if (!root.diskPollingActive)
+            if (!root.resourcePollingActive)
                 return;
             const now = Date.now();
             const current = text();
@@ -182,7 +186,7 @@ Singleton {
             root.lastNetworkSampleTime = now;
         }
         onLoadFailed: {
-            if (!root.diskPollingActive)
+            if (!root.resourcePollingActive)
                 return;
             root.networkActivity = null;
             root.networkActivityStatus = "unavailable";
@@ -218,8 +222,10 @@ Singleton {
     FileView {
         id: stat
 
-        path: "/proc/stat"
+        path: root.resourcePollingActive ? root.statPath : ""
         onLoaded: {
+            if (!root.resourcePollingActive)
+                return;
             root.logicalCpuCount = SysStats.parseLogicalCpuCount(text());
             root.logicalCpuCountStatus = SysStats.resourceReadingStatus({
                 sourceAvailable: true,
@@ -244,6 +250,8 @@ Singleton {
             root.lastCpu = sample;
         }
         onLoadFailed: {
+            if (!root.resourcePollingActive)
+                return;
             root.cpu = null;
             root.cpuStatus = "unavailable";
             root.lastCpu = null;
@@ -255,8 +263,10 @@ Singleton {
     FileView {
         id: loadavg
 
-        path: "/proc/loadavg"
+        path: root.resourcePollingActive ? "/proc/loadavg" : ""
         onLoaded: {
+            if (!root.resourcePollingActive)
+                return;
             root.loadAverage = SysStats.parseLoadAverage(text());
             root.loadAverageStatus = SysStats.resourceReadingStatus({
                 sourceAvailable: true,
@@ -265,6 +275,8 @@ Singleton {
             });
         }
         onLoadFailed: {
+            if (!root.resourcePollingActive)
+                return;
             root.loadAverage = null;
             root.loadAverageStatus = "unavailable";
         }
@@ -273,8 +285,10 @@ Singleton {
     FileView {
         id: meminfo
 
-        path: "/proc/meminfo"
+        path: root.resourcePollingActive ? "/proc/meminfo" : ""
         onLoaded: {
+            if (!root.resourcePollingActive)
+                return;
             root.memoryDetails = SysStats.parseMemoryDetails(text());
             root.memoryDetailsStatus = SysStats.resourceReadingStatus({
                 sourceAvailable: true,
@@ -285,6 +299,8 @@ Singleton {
             root.memorySwapStatus = root.memoryDetails === null ? root.memoryDetailsStatus : SysStats.parseMemorySwapStatus(text());
         }
         onLoadFailed: {
+            if (!root.resourcePollingActive)
+                return;
             root.memoryDetails = null;
             root.memoryDetailsStatus = "unavailable";
             root.ramStatus = "unavailable";
