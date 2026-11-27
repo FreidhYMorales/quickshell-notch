@@ -61,6 +61,7 @@ test("parseCpu returns null for malformed input", () => {
   assert.equal(parseCpu("cpu0 1 2 3 4 5 6 7 8\n"), null);
   assert.equal(parseCpu("cpu  1 2 x 4 5 6 7 8\n"), null);
   assert.equal(parseCpu("cpu  1 2 3\n"), null);
+  assert.equal(parseCpu("cpu  1 2 -3 4 5 6 7 8\n"), null);
 });
 
 test("CPU details count online processors and parse load averages", () => {
