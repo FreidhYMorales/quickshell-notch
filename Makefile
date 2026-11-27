@@ -62,6 +62,7 @@ qml-test:
 	node --test tests/qml/power-*.mjs
 	NOTCH_CC_URL="file://$(CURDIR)/shell/notches/controlcenter" NOTCH_SMOKE=1 QT_QPA_PLATFORM=wayland QS_DISABLE_CRASH_HANDLER=1 timeout 15 qs -p tests/qml/controlcenter-resource-pointer.qml
 	NOTCH_CC_URL="file://$(CURDIR)/shell/notches/controlcenter" NOTCH_SMOKE=1 QT_QPA_PLATFORM=wayland QS_DISABLE_CRASH_HANDLER=1 timeout 15 qs -p tests/qml/controlcenter-resource-focus.qml
+	NOTCH_CC_URL="file://$(CURDIR)/shell/notches/controlcenter" NOTCH_SMOKE=1 QT_QPA_PLATFORM=wayland QS_DISABLE_CRASH_HANDLER=1 timeout 15 qs -p tests/qml/controlcenter-resource-status-summary.qml
 	node --test tests/qml/wallpaper-*.mjs tests/qml/caffeine-*.mjs tests/qml/idle-*.mjs tests/qml/sleep-*.mjs tests/qml/controlcenter-*.mjs tests/qml/expanded-*.mjs tests/qml/workspaces-*.mjs $(filter-out $(THEME_KEYS),$(THEME_PROBES))
 	# Serial: lock screen probes take the keyboard.
 	node --test --test-concurrency=1 tests/qml/lock-*.mjs
