@@ -58,8 +58,10 @@ qml-test:
 	node --test tests/qml/tray-menu-scroll.mjs tests/qml/tray-menu-indicator.mjs tests/qml/tray-menu-header.mjs
 	node --test tests/qml/tray-menu-width.mjs tests/qml/tray-menu-checkmark.mjs tests/qml/tray-menu-app-separator.mjs
 	node --test tests/qml/qs-runtime.mjs tests/qml/tray-icon.mjs tests/qml/tray-generic.mjs tests/qml/tray-placeholder.mjs tests/qml/tray-hover.mjs tests/qml/tray-empty.mjs tests/qml/tray-switch.mjs tests/qml/tray-activate.mjs tests/qml/tray-close.mjs tests/qml/tray-closing-priority.mjs tests/qml/tray-open-priority.mjs tests/qml/tray-divider.mjs tests/qml/tray-icon-size.mjs tests/qml/tray-image-error.mjs tests/qml/tray-image-ready.mjs tests/qml/tray-multiple.mjs
-	node --test tests/qml/recording-*.mjs
+	node --test --test-concurrency=1 tests/qml/recording-*.mjs
 	node --test tests/qml/power-*.mjs
+	NOTCH_CC_URL="file://$(CURDIR)/shell/notches/controlcenter" NOTCH_SMOKE=1 QT_QPA_PLATFORM=wayland QS_DISABLE_CRASH_HANDLER=1 timeout 15 qs -p tests/qml/controlcenter-resource-pointer.qml
+	NOTCH_CC_URL="file://$(CURDIR)/shell/notches/controlcenter" NOTCH_SMOKE=1 QT_QPA_PLATFORM=wayland QS_DISABLE_CRASH_HANDLER=1 timeout 15 qs -p tests/qml/controlcenter-resource-focus.qml
 	node --test tests/qml/wallpaper-*.mjs tests/qml/caffeine-*.mjs tests/qml/idle-*.mjs tests/qml/sleep-*.mjs tests/qml/controlcenter-*.mjs tests/qml/expanded-*.mjs tests/qml/workspaces-*.mjs $(filter-out $(THEME_KEYS),$(THEME_PROBES))
 	# Serial: lock screen probes take the keyboard.
 	node --test --test-concurrency=1 tests/qml/lock-*.mjs
