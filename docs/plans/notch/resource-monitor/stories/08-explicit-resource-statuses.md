@@ -44,5 +44,7 @@ Risk: item 3 (SysInfo status contract consumed by Control Center)
 - Full `make check` stopped at three existing tray-menu probes: `tray-menu-activate.mjs`, `tray-menu-separator.mjs`, and `tray-menu-size.mjs`. A serial regression run reproduced all three failures; no existing tests were changed. High-risk verifier not run because the full check is not green.
 - Risk: item 3 (SysInfo status contract consumed by Control Center).
 - User requested investigation of the tray failures. Makefile changes `fb2d714` and `368795f` isolate tray menu probes, including the short/long size cases, because they drive shared Wayland input.
-- The revised `make qml-test` still fails intermittently in the long-menu size probe: it observes 61 px instead of the expected 450 px; the probe sometimes passes when run alone. Temporary diagnostics showed the menu surface had not yet expanded when the fixed-delay assertion ran. The test has not been changed.
-- Stopped after two regression-fix attempts per the flow-pair stop rule. The full test command and high-risk verifier remain pending.
+- Fixed the tray's delayed menu sizing in `340a48e`; both short- and long-menu size probes pass without changing their assertions.
+- The existing memory-details visual probe exposed a legacy fixture with values but no status fields. Updated the renderer to preserve finite legacy memory/swap values when status is omitted (`0d53937`); `controlcenter-memory-details.mjs` passes.
+- Full `make check` remains blocked by the existing `calendar-open.mjs` probe: it expects media focus after Escape but observes `media focus false`; the failure reproduces when run alone. Separate full runs also surfaced transient `workspaces-fly` and resource-focus probe failures, each of which passed when isolated.
+- Story #08 remains open. The high-risk verifier has not run because the full test command is not green; stopping here rather than expanding into unrelated calendar/focus behavior.
