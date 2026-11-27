@@ -2,6 +2,19 @@
 
 const CPU_FIELDS = 8; // user nice system idle iowait irq softirq steal
 
+// Source availability, reading validity, and sample readiness are separate
+// states: a valid first sample establishes a baseline but is not a rate yet.
+export function resourceReadingStatus({
+  sourceAvailable,
+  readingValid,
+  sampleReady,
+}) {
+  if (sourceAvailable === false) return "unavailable";
+  if (readingValid === false) return "invalid";
+  if (sampleReady === false) return "measuring";
+  return "available";
+}
+
 // Aggregate "cpu" line -> { idle, total } in jiffies (idle includes iowait).
 export function parseCpu(text) {
   const match = /^cpu\s+(.+)$/m.exec(String(text || ""));
